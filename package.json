@@ -12,6 +12,6 @@
     "bump:shared": "node scripts/bump-shared.mjs"
   },
   "dependencies": {
-    "@kttf/shared": "github:goats-web-studio/kttf-shared#2ae89dba2ddc9b66efa34b4ed51af3bbe1e9f2ae"
+    "@kttf/shared": "github:goats-web-studio/kttf-shared#3d25cf1b41435e733ba925fcaa8763e63383e03c"
   }
 }
