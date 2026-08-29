@@ -1,0 +1,2 @@
+allowBuilds:
+  "@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/f5bbfca39b108f7bd6ee3db989e8ef01c37da699": true
