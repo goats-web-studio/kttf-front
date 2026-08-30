@@ -53,6 +53,13 @@ export const kk: Record<MessageKey, string> = {
   'error.api.FORBIDDEN': 'Құқық жеткіліксіз',
   'error.api.RATE_LIMITED': 'Сұраныс тым көп, кейінірек көріңіз',
   'error.api.INTERNAL_ERROR': 'Серверде қате',
+  'error.api.TOURNAMENT_NOT_RUNNING': 'Турнир жүріп жатқан жоқ',
+  'error.api.MATCH_NOT_READY': 'Кездесу қатысушылары әлі белгісіз',
+  'error.api.MATCH_ALREADY_FINISHED': 'Нәтиже енгізілген',
+  'error.api.MATCH_HAS_NO_RESULT': 'Кездесудің нәтижесі жоқ',
+  'error.api.INVALID_SCORE': 'Есеп кездесу схемасына сәйкес келмейді',
+  'error.api.DOWNSTREAM_MATCH_PLAYED': 'Келесі кездесу ойналған — алдымен оны болдырмаңыз',
+  'error.api.TIE_DECISION_INVALID': 'Бұл қатысушылар орынды бөліспейді',
 
   'pwa.update.message': 'Жаңа нұсқа қолжетімді',
   'pwa.update.apply': 'Жаңарту',

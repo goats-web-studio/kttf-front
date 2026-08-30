@@ -51,6 +51,13 @@ export const ru = {
   'error.api.FORBIDDEN': 'Недостаточно прав',
   'error.api.RATE_LIMITED': 'Слишком много запросов, попробуйте позже',
   'error.api.INTERNAL_ERROR': 'Ошибка на сервере',
+  'error.api.TOURNAMENT_NOT_RUNNING': 'Турнир не идёт',
+  'error.api.MATCH_NOT_READY': 'Участники встречи ещё не определены',
+  'error.api.MATCH_ALREADY_FINISHED': 'Результат уже введён',
+  'error.api.MATCH_HAS_NO_RESULT': 'У встречи нет результата',
+  'error.api.INVALID_SCORE': 'Счёт не соответствует схеме встречи',
+  'error.api.DOWNSTREAM_MATCH_PLAYED': 'Следующая встреча уже сыграна — сначала отмените её',
+  'error.api.TIE_DECISION_INVALID': 'Эти участники не делят место',
 
   'pwa.update.message': 'Доступна новая версия',
   'pwa.update.apply': 'Обновить',
