@@ -12,8 +12,8 @@ importers:
         specifier: ^5.9.1
         version: 5.9.1(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.86.0(react@19.2.8))(zod@4.5.2)
       '@kttf/shared':
-        specifier: github:goats-web-studio/kttf-shared#e4acf11c024c11e361b2189a833773c581af6a52
-        version: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/e4acf11c024c11e361b2189a833773c581af6a52(zod@4.5.2)
+        specifier: github:goats-web-studio/kttf-shared#6808251994be5deb8ebc4424d3c5ec1eda087159
+        version: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/6808251994be5deb8ebc4424d3c5ec1eda087159(zod@4.5.2)
       '@tanstack/react-query':
         specifier: ^5.102.8
         version: 5.102.8(react@19.2.8)
@@ -829,8 +829,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/e4acf11c024c11e361b2189a833773c581af6a52':
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/e4acf11c024c11e361b2189a833773c581af6a52}
+  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/6808251994be5deb8ebc4424d3c5ec1eda087159':
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/6808251994be5deb8ebc4424d3c5ec1eda087159}
     version: 0.1.0
     engines: {node: '>=24'}
     peerDependencies:
@@ -3894,7 +3894,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/e4acf11c024c11e361b2189a833773c581af6a52(zod@4.5.2)':
+  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/6808251994be5deb8ebc4424d3c5ec1eda087159(zod@4.5.2)':
     dependencies:
       zod: 4.5.2
 
