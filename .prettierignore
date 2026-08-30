@@ -1,0 +1,9 @@
+dist/
+dev-dist/
+coverage/
+pnpm-lock.yaml
+src/routeTree.gen.ts
+
+# Файл ведёт scripts/bump-shared.mjs построчно: он ищет заголовок allowBuilds
+# и правит строку общего кода на месте. Переформатирование сломает разбор.
+pnpm-workspace.yaml

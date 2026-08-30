@@ -1,0 +1,26 @@
+{
+  "extends": "@kttf/shared/config/tsconfig.base.json",
+  "compilerOptions": {
+    // Общая база рассчитана на Node: NodeNext и голый ES2023 без DOM.
+    // Здесь код исполняется в браузере и проходит через сборщик, поэтому
+    // разрешение модулей и набор библиотек переопределяются.
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+
+    // Сборку делает Vite, компилятор здесь только проверяет типы.
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+
+    "types": ["node"],
+
+    // Алиас заведён сразу: shadcn/ui и все последующие импорты рассчитывают
+    // именно на него, а перенос импортов задним числом трогает весь код.
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "vitest.config.ts"]
+}
