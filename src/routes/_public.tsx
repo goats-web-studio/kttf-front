@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import { useSessionStore } from '@/features/auth/session-store';
 
 export const Route = createFileRoute('/_public')({
   component: PublicLayout,
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_public')({
  */
 function PublicLayout(): ReactNode {
   const t = useT();
+  const user = useSessionStore((state) => state.user);
 
   return (
     <div className="flex min-h-full flex-col bg-white">
@@ -29,6 +31,15 @@ function PublicLayout(): ReactNode {
           <Link to="/tournaments" className="text-slate-600">
             {t('nav.tournaments')}
           </Link>
+          {user === null ? (
+            <Link to="/login" className="ml-auto text-slate-600">
+              {t('page.login.title')}
+            </Link>
+          ) : (
+            <Link to="/cabinet" className="ml-auto text-slate-600">
+              {t('page.cabinet.title')}
+            </Link>
+          )}
         </nav>
       </header>
       <main className="grow">

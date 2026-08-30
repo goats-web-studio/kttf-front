@@ -24,6 +24,20 @@ export const kk: Record<MessageKey, string> = {
   'page.console.title': 'Төреші консолі',
   'page.screen.title': 'Зал экраны',
 
+  'page.login.title': 'Кіру',
+  'login.lead': 'Телефон нөміріне бір реттік код жібереміз. Құпия сөз жоқ.',
+  'login.phone.label': 'Телефон нөмірі',
+  'login.phone.placeholder': '+7XXXXXXXXXX',
+  'login.code.label': 'Хабарламадағы код',
+  'login.code.sent': 'Код мына нөмірге жіберілді',
+  'login.submit.requestCode': 'Код алу',
+  'login.submit.verify': 'Кіру',
+  'login.changePhone': 'Нөмірді өзгерту',
+  'login.signOut': 'Шығу',
+
+  'error.form.phone': 'Нөмір +7XXXXXXXXXX пішімінде күтіледі',
+  'error.form.code': 'Код алты саннан тұрады',
+
   'common.soon': 'Бөлім дайындалуда.',
   'common.loading': 'Жүктелуде',
 

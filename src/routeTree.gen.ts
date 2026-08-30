@@ -14,6 +14,7 @@ import { Route as PublicRouteImport } from './routes/_public'
 import { Route as ConsoleRouteImport } from './routes/console'
 import { Route as AppCabinetRouteImport } from './routes/_app/cabinet'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicRatingsRouteImport } from './routes/_public/ratings'
 import { Route as PublicTournamentsRouteImport } from './routes/_public/tournaments'
 import { Route as ConsoleIndexRouteImport } from './routes/console/index'
@@ -41,6 +42,11 @@ const AppCabinetRoute = AppCabinetRouteImport.update({
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicLoginRoute = PublicLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicRatingsRoute = PublicRatingsRouteImport.update({
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/console': typeof ConsoleRouteWithChildren
   '/cabinet': typeof AppCabinetRoute
+  '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
   '/tournaments': typeof PublicTournamentsRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/cabinet': typeof AppCabinetRoute
+  '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
   '/tournaments': typeof PublicTournamentsRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/_public': typeof PublicRouteWithChildren
   '/console': typeof ConsoleRouteWithChildren
   '/_app/cabinet': typeof AppCabinetRoute
+  '/_public/login': typeof PublicLoginRoute
   '/_public/ratings': typeof PublicRatingsRoute
   '/_public/tournaments': typeof PublicTournamentsRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/console'
     | '/cabinet'
+    | '/login'
     | '/ratings'
     | '/tournaments'
     | '/screen/$publicToken'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cabinet'
+    | '/login'
     | '/ratings'
     | '/tournaments'
     | '/screen/$publicToken'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/_public'
     | '/console'
     | '/_app/cabinet'
+    | '/_public/login'
     | '/_public/ratings'
     | '/_public/tournaments'
     | '/screen/$publicToken'
@@ -179,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/login': {
+      id: '/_public/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof PublicLoginRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/ratings': {
       id: '/_public/ratings'
       path: '/ratings'
@@ -228,6 +247,7 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface PublicRouteChildren {
+  PublicLoginRoute: typeof PublicLoginRoute
   PublicRatingsRoute: typeof PublicRatingsRoute
   PublicTournamentsRoute: typeof PublicTournamentsRoute
   PublicIndexRoute: typeof PublicIndexRoute
@@ -235,6 +255,7 @@ interface PublicRouteChildren {
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicLoginRoute: PublicLoginRoute,
   PublicRatingsRoute: PublicRatingsRoute,
   PublicTournamentsRoute: PublicTournamentsRoute,
   PublicIndexRoute: PublicIndexRoute,

@@ -22,13 +22,16 @@
     "bump:shared": "node scripts/bump-shared.mjs"
   },
   "dependencies": {
-    "@kttf/shared": "github:goats-web-studio/kttf-shared#6e0540fa058512f6cb5bdc9a2060e555c7405a19",
+    "@hookform/resolvers": "^5.9.1",
+    "@kttf/shared": "github:goats-web-studio/kttf-shared#e4acf11c024c11e361b2189a833773c581af6a52",
     "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-router": "^1.170.32",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-hook-form": "^7.86.0",
     "workbox-window": "^7.4.1",
-    "zod": "^4.5.2"
+    "zod": "^4.5.2",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

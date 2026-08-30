@@ -22,6 +22,20 @@ export const ru = {
   'page.console.title': 'Консоль судьи',
   'page.screen.title': 'Экран зала',
 
+  'page.login.title': 'Вход',
+  'login.lead': 'Пришлём одноразовый код на номер телефона. Пароля нет.',
+  'login.phone.label': 'Номер телефона',
+  'login.phone.placeholder': '+7XXXXXXXXXX',
+  'login.code.label': 'Код из сообщения',
+  'login.code.sent': 'Код отправлен на номер',
+  'login.submit.requestCode': 'Получить код',
+  'login.submit.verify': 'Войти',
+  'login.changePhone': 'Изменить номер',
+  'login.signOut': 'Выйти',
+
+  'error.form.phone': 'Номер ожидается в формате +7XXXXXXXXXX',
+  'error.form.code': 'Код состоит из шести цифр',
+
   'common.soon': 'Раздел готовится.',
   'common.loading': 'Загрузка',
 

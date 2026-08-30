@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router'
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import { signOut } from '@/features/auth/session';
 
 export const Route = createFileRoute('/_app')({
   /**
@@ -12,11 +13,11 @@ export const Route = createFileRoute('/_app')({
    * проверяет бэкенд guard'ами, интерфейс только не показывает того,
    * чего человек всё равно не получит.
    */
-  beforeLoad: ({ context }) => {
+  beforeLoad: ({ context, location }) => {
     if (context.session === null) {
-      // Страницы входа ещё нет — она появится вместе с аутентификацией.
-      // До тех пор возврат на публичную часть.
-      throw redirect({ to: '/' });
+      // Адрес запоминается: человек, открывший ссылку на кабинет, обязан
+      // попасть именно туда после входа, а не на главную.
+      throw redirect({ to: '/login', search: { redirect: location.href } });
     }
   },
   component: AppLayout,
@@ -32,6 +33,15 @@ function AppLayout(): ReactNode {
           <Link to="/" className="font-semibold text-slate-900">
             {t('app.name')}
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              void signOut();
+            }}
+            className="ml-auto text-sm text-slate-600 underline"
+          >
+            {t('login.signOut')}
+          </button>
         </nav>
       </header>
       <main className="grow">

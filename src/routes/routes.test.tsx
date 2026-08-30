@@ -1,4 +1,4 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
@@ -29,9 +29,14 @@ async function renderAt(
 ): Promise<ReturnType<typeof createAppRouter>> {
   window.history.pushState({}, '', path);
 
-  const router = createAppRouter({ queryClient: new QueryClient(), session });
+  const queryClient = new QueryClient();
+  const router = createAppRouter({ queryClient, session });
 
-  render(<RouterProvider router={router} />);
+  render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
   await screen.findByRole('heading');
 
   return router;
@@ -67,11 +72,14 @@ describe('маршрутизация', () => {
 });
 
 describe('охрана кабинета', () => {
-  it('без сессии уводит на публичную часть', async () => {
+  it('без сессии уводит на вход и запоминает, куда человек шёл', async () => {
     const router = await renderAt('/cabinet');
 
-    expect(screen.getByRole('heading', { name: ru['page.home.title'] })).toBeDefined();
-    expect(router.state.location.pathname).toBe('/');
+    expect(screen.getByRole('heading', { name: ru['page.login.title'] })).toBeDefined();
+    expect(router.state.location.pathname).toBe('/login');
+    // Иначе человек, открывший ссылку на кабинет, после входа попадёт
+    // на главную и будет искать дорогу обратно.
+    expect(router.state.location.search).toEqual({ redirect: '/cabinet' });
   });
 
   it('с сессией пускает', async () => {

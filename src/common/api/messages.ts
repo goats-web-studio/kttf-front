@@ -1,6 +1,8 @@
-import type { ErrorCode } from '@kttf/shared/errors';
+import { isAppError, type ErrorCode } from '@kttf/shared/errors';
 
 import type { MessageKey } from '@/common/i18n';
+
+import { isNetworkError } from './network-error';
 
 /**
  * Локализованный текст для каждого кода ошибки.
@@ -18,3 +20,23 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   RATE_LIMITED: 'error.api.RATE_LIMITED',
   INTERNAL_ERROR: 'error.api.INTERNAL_ERROR',
 };
+
+/**
+ * Ключ текста для любого отказа.
+ *
+ * Пользователю никогда не показывается `message` из ответа сервера: он
+ * диагностический и английский — бриф 3.4. Показывается то, что подобрано
+ * по коду. Отсутствие сети — отдельный случай, для консоли в зале он
+ * означает не ошибку, а обычное состояние.
+ */
+export function errorMessageKey(error: unknown): MessageKey {
+  if (isNetworkError(error)) {
+    return 'error.network';
+  }
+
+  if (isAppError(error)) {
+    return ERROR_MESSAGE_KEYS[error.code];
+  }
+
+  return 'error.unexpected.title';
+}
