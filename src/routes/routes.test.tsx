@@ -3,9 +3,21 @@ import { RouterProvider } from '@tanstack/react-router';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import type { AuthUserView } from '@kttf/shared/types';
+
 import { createAppRouter } from '@/app/router';
 import { ru } from '@/common/i18n/ru';
-import type { Session } from '@/common/session/session';
+
+/** Вошедший пользователь без ролей и без профиля игрока — минимум для охраны. */
+const SIGNED_IN: AuthUserView = {
+  id: '00000000-0000-4000-8000-000000000001',
+  phone: '+77011234567',
+  email: null,
+  locale: 'ru',
+  createdAt: '2026-08-30T00:00:00.000Z',
+  playerId: null,
+  clubRoles: [],
+};
 
 /**
  * Тексты берутся из словаря, а не переписываются строками: иначе тест
@@ -13,7 +25,7 @@ import type { Session } from '@/common/session/session';
  */
 async function renderAt(
   path: string,
-  session: Session | null = null,
+  session: AuthUserView | null = null,
 ): Promise<ReturnType<typeof createAppRouter>> {
   window.history.pushState({}, '', path);
 
@@ -63,7 +75,7 @@ describe('охрана кабинета', () => {
   });
 
   it('с сессией пускает', async () => {
-    await renderAt('/cabinet', { userId: 'user-1' });
+    await renderAt('/cabinet', SIGNED_IN);
 
     expect(screen.getByRole('heading', { name: ru['page.cabinet.title'] })).toBeDefined();
   });

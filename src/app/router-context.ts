@@ -1,6 +1,5 @@
+import type { AuthUserView } from '@kttf/shared/types';
 import type { QueryClient } from '@tanstack/react-query';
-
-import type { Session } from '@/common/session/session';
 
 /**
  * Контекст роутера.
@@ -12,6 +11,11 @@ import type { Session } from '@/common/session/session';
  */
 export interface RouterContext {
   readonly queryClient: QueryClient;
-  /** `null` — не вошёл. Охрана маршрутов кабинета смотрит только на это. */
-  readonly session: Session | null;
+  /**
+   * Вошедший пользователь либо `null`.
+   *
+   * Тип общий с бэкендом — это ровно то, что возвращает ТС 7.1. Охрана
+   * маршрутов кабинета смотрит только на наличие, состав нужен экранам.
+   */
+  readonly session: AuthUserView | null;
 }

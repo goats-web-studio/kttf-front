@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@kttf/shared':
-        specifier: github:goats-web-studio/kttf-shared#3d25cf1b41435e733ba925fcaa8763e63383e03c
-        version: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/3d25cf1b41435e733ba925fcaa8763e63383e03c
+        specifier: github:goats-web-studio/kttf-shared#6e0540fa058512f6cb5bdc9a2060e555c7405a19
+        version: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/6e0540fa058512f6cb5bdc9a2060e555c7405a19(zod@4.5.2)
       '@tanstack/react-query':
         specifier: ^5.102.8
         version: 5.102.8(react@19.2.8)
@@ -26,6 +26,9 @@ importers:
       workbox-window:
         specifier: ^7.4.1
         version: 7.4.1
+      zod:
+        specifier: ^4.5.2
+        version: 4.5.2
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -739,10 +742,12 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/3d25cf1b41435e733ba925fcaa8763e63383e03c':
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/3d25cf1b41435e733ba925fcaa8763e63383e03c}
+  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/6e0540fa058512f6cb5bdc9a2060e555c7405a19':
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/6e0540fa058512f6cb5bdc9a2060e555c7405a19}
     version: 0.1.0
     engines: {node: '>=24'}
+    peerDependencies:
+      zod: ^4.5.2
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -2971,8 +2976,8 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
-  zod@4.5.1:
-    resolution: {integrity: sha512-P3GqeAEOEDqKvafVGLezbg+39YW/ze4xrD4qdS0adOY8eoI3zfjv1PQM4UwQzgT8mZKXEbqtVt8K+ZKGqkMFKg==}
+  zod@4.5.2:
+    resolution: {integrity: sha512-XkYXCol10+ba/6F/cueWV+TezUeOqXW0hdeJt5CdXjTYeAgAQg5N03RQdJ80mhfFE72+pblvYMW4wy2Qp4Qbrg==}
 
 snapshots:
 
@@ -3766,7 +3771,9 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/3d25cf1b41435e733ba925fcaa8763e63383e03c': {}
+  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/6e0540fa058512f6cb5bdc9a2060e555c7405a19(zod@4.5.2)':
+    dependencies:
+      zod: 4.5.2
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
@@ -4049,7 +4056,7 @@ snapshots:
       jiti: 2.7.0
       magic-string: 0.30.21
       prettier: 3.9.6
-      zod: 4.5.1
+      zod: 4.5.2
     transitivePeerDependencies:
       - supports-color
 
@@ -4063,7 +4070,7 @@ snapshots:
       '@tanstack/router-utils': 1.162.2
       chokidar: 5.0.0
       unplugin: 3.3.0(rolldown@1.2.6)(rollup@4.63.1)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0)(terser@5.51.2))
-      zod: 4.5.1
+      zod: 4.5.2
     optionalDependencies:
       '@tanstack/react-router': 1.170.32(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       vite: 8.2.2(@types/node@26.4.0)(jiti@2.7.0)(terser@5.51.2)
@@ -4638,8 +4645,8 @@ snapshots:
       '@babel/parser': 7.29.8
       eslint: 10.9.1(jiti@2.7.0)
       hermes-parser: 0.25.1
-      zod: 4.5.1
-      zod-validation-error: 4.0.2(zod@4.5.1)
+      zod: 4.5.2
+      zod-validation-error: 4.0.2(zod@4.5.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -6000,8 +6007,8 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-validation-error@4.0.2(zod@4.5.1):
+  zod-validation-error@4.0.2(zod@4.5.2):
     dependencies:
-      zod: 4.5.1
+      zod: 4.5.2
 
-  zod@4.5.1: {}
+  zod@4.5.2: {}

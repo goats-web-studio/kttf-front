@@ -22,12 +22,13 @@
     "bump:shared": "node scripts/bump-shared.mjs"
   },
   "dependencies": {
-    "@kttf/shared": "github:goats-web-studio/kttf-shared#3d25cf1b41435e733ba925fcaa8763e63383e03c",
+    "@kttf/shared": "github:goats-web-studio/kttf-shared#6e0540fa058512f6cb5bdc9a2060e555c7405a19",
     "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-router": "^1.170.32",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "workbox-window": "^7.4.1"
+    "workbox-window": "^7.4.1",
+    "zod": "^4.5.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
