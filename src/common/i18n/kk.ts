@@ -60,6 +60,9 @@ export const kk: Record<MessageKey, string> = {
   'error.api.INVALID_SCORE': 'Есеп кездесу схемасына сәйкес келмейді',
   'error.api.DOWNSTREAM_MATCH_PLAYED': 'Келесі кездесу ойналған — алдымен оны болдырмаңыз',
   'error.api.TIE_DECISION_INVALID': 'Бұл қатысушылар орынды бөліспейді',
+  'error.api.TOURNAMENT_NOT_COMPLETE': 'Барлық кездесу ойналмаған',
+  'error.api.TIES_UNRESOLVED': 'Барлық топта орындар анықталмаған',
+  'error.api.RATING_SNAPSHOT_MISSING': 'Қатысушының турнир басындағы рейтингі жоқ',
 
   'pwa.update.message': 'Жаңа нұсқа қолжетімді',
   'pwa.update.apply': 'Жаңарту',

@@ -58,6 +58,9 @@ export const ru = {
   'error.api.INVALID_SCORE': 'Счёт не соответствует схеме встречи',
   'error.api.DOWNSTREAM_MATCH_PLAYED': 'Следующая встреча уже сыграна — сначала отмените её',
   'error.api.TIE_DECISION_INVALID': 'Эти участники не делят место',
+  'error.api.TOURNAMENT_NOT_COMPLETE': 'Сыграны не все встречи',
+  'error.api.TIES_UNRESOLVED': 'Не во всех группах определены места',
+  'error.api.RATING_SNAPSHOT_MISSING': 'У участника нет рейтинга, снятого на старте турнира',
 
   'pwa.update.message': 'Доступна новая версия',
   'pwa.update.apply': 'Обновить',
