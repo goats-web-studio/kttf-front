@@ -7,3 +7,4 @@ export {
 } from './client';
 export { ERROR_MESSAGE_KEYS, errorMessageKey } from './messages';
 export { isNetworkError, NetworkError } from './network-error';
+export { queryString } from './query-string';
