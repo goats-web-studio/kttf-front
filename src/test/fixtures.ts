@@ -29,6 +29,8 @@ const STAGE_ID = '00000000-0000-4000-8000-000000000003';
 const GROUP_ID = '00000000-0000-4000-8000-000000000004';
 const SEMIFINAL_ID = '00000000-0000-4000-8000-000000000011';
 const FINAL_ID = '00000000-0000-4000-8000-000000000012';
+export const PLAYING_MATCH_ID = '00000000-0000-4000-8000-000000000031';
+export const QUEUED_MATCH_ID = '00000000-0000-4000-8000-000000000032';
 
 function player(id: string, lastName: string, rating: string): PlayerView {
   return {
@@ -158,6 +160,8 @@ const STAGES: StageView[] = [
         resultType: 'WALKOVER',
         bracketRound: 1,
         bracketSlot: 0,
+        startedAt: '2026-09-05T10:00:00.000Z',
+        finishedAt: '2026-09-05T10:25:00.000Z',
       },
     ],
   },
@@ -183,6 +187,8 @@ const STAGES: StageView[] = [
         resultType: 'NORMAL',
         bracketRound: 1,
         bracketSlot: 0,
+        startedAt: '2026-09-05T10:00:00.000Z',
+        finishedAt: '2026-09-05T10:25:00.000Z',
       },
       // Финал ждёт победителя полуфинала: участники не определены (ADR-019).
       {
@@ -200,6 +206,8 @@ const STAGES: StageView[] = [
         resultType: null,
         bracketRound: 2,
         bracketSlot: 0,
+        startedAt: null,
+        finishedAt: null,
       },
     ],
   },
@@ -312,3 +320,63 @@ export function pageOf<T>(items: readonly T[]): {
 } {
   return { items, total: items.length, page: 1, limit: 20 };
 }
+
+/**
+ * Снимок идущего турнира для консоли судьи.
+ *
+ * Отличается от `RESULTS` тем, что турнир не закончен: одна встреча на столе,
+ * одна ждёт в очереди, обе с известными участниками. Иначе проверять на
+ * экране судьи нечего — очередь пуста.
+ */
+export const CONSOLE_STATE: TournamentResultsView = {
+  ...RESULTS,
+  tournament: { ...TOURNAMENT, status: 'RUNNING', tableCount: 2, ratedAt: null, finishedAt: null },
+  stages: [
+    {
+      id: STAGE_ID,
+      order: 1,
+      type: 'ROUND_ROBIN',
+      name: 'Круговая',
+      groups: [],
+      matches: [
+        {
+          id: PLAYING_MATCH_ID,
+          stageId: STAGE_ID,
+          groupId: null,
+          playerAId: PLAYER_IDS.first,
+          playerBId: PLAYER_IDS.second,
+          sourceA: null,
+          sourceB: null,
+          status: 'PLAYING',
+          tableNumber: 1,
+          setsA: null,
+          setsB: null,
+          resultType: null,
+          bracketRound: 1,
+          bracketSlot: 0,
+          startedAt: '2026-09-05T10:00:00.000Z',
+          finishedAt: null,
+        },
+        {
+          id: QUEUED_MATCH_ID,
+          stageId: STAGE_ID,
+          groupId: null,
+          playerAId: PLAYER_IDS.third,
+          playerBId: PLAYER_IDS.fourth,
+          sourceA: null,
+          sourceB: null,
+          status: 'PENDING',
+          tableNumber: null,
+          setsA: null,
+          setsB: null,
+          resultType: null,
+          bracketRound: 1,
+          bracketSlot: 1,
+          startedAt: null,
+          finishedAt: null,
+        },
+      ],
+    },
+  ],
+  standings: { tournamentId: TOURNAMENT_ID, groups: [] },
+};

@@ -1,7 +1,18 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 export const Route = createFileRoute('/console')({
+  /**
+   * Консоль требует входа: каждое её действие уходит с токеном, а без него
+   * сервер отвергнет и назначение на стол, и ввод счёта. Показывать судье
+   * рабочий экран, который откажет на первом же касании, — хуже, чем
+   * попросить войти.
+   */
+  beforeLoad: ({ context, location }) => {
+    if (context.session === null) {
+      throw redirect({ to: '/login', search: { redirect: location.href } });
+    }
+  },
   component: ConsoleLayout,
 });
 

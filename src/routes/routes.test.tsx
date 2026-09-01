@@ -56,7 +56,7 @@ describe('маршрутизация', () => {
   });
 
   it('консоль лежит вне публичной оболочки и открывается своим маршрутом', async () => {
-    await renderAt('/console');
+    await renderAt('/console', SIGNED_IN);
 
     expect(screen.getByRole('heading', { name: ru['page.console.title'] })).toBeDefined();
     // Шапки публичной части здесь быть не должно: всё, что в неё входит,
@@ -68,6 +68,16 @@ describe('маршрутизация', () => {
     await renderAt('/screen/abc123');
 
     expect(screen.getByRole('heading', { name: ru['page.screen.title'] })).toBeDefined();
+  });
+});
+
+describe('охрана консоли', () => {
+  it('без сессии уводит на вход', async () => {
+    // Каждое действие консоли уходит с токеном. Рабочий экран, который
+    // откажет на первом же касании, хуже просьбы войти.
+    const router = await renderAt('/console');
+
+    expect(router.state.location.pathname).toBe('/login');
   });
 });
 

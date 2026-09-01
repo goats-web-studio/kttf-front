@@ -17,6 +17,7 @@ import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicRatingsRouteImport } from './routes/_public/ratings'
 import { Route as ConsoleIndexRouteImport } from './routes/console/index'
+import { Route as ConsoleTournamentIdRouteImport } from './routes/console/$tournamentId'
 import { Route as ScreenPublicTokenRouteImport } from './routes/screen.$publicToken'
 import { Route as PublicPlayersPlayerIdRouteImport } from './routes/_public/players.$playerId'
 import { Route as PublicTournamentsIndexRouteImport } from './routes/_public/tournaments.index'
@@ -60,6 +61,11 @@ const ConsoleIndexRoute = ConsoleIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ConsoleRoute,
 } as any)
+const ConsoleTournamentIdRoute = ConsoleTournamentIdRouteImport.update({
+  id: '/$tournamentId',
+  path: '/$tournamentId',
+  getParentRoute: () => ConsoleRoute,
+} as any)
 const ScreenPublicTokenRoute = ScreenPublicTokenRouteImport.update({
   id: '/screen/$publicToken',
   path: '/screen/$publicToken',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/cabinet': typeof AppCabinetRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
+  '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console/': typeof ConsoleIndexRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/cabinet': typeof AppCabinetRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
+  '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console': typeof ConsoleIndexRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/_app/cabinet': typeof AppCabinetRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/ratings': typeof PublicRatingsRoute
+  '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/_public/': typeof PublicIndexRoute
   '/console/': typeof ConsoleIndexRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/login'
     | '/ratings'
+    | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/console/'
     | '/players/$playerId'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/login'
     | '/ratings'
+    | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/console'
     | '/players/$playerId'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/_app/cabinet'
     | '/_public/login'
     | '/_public/ratings'
+    | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/_public/'
     | '/console/'
@@ -225,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsoleIndexRouteImport
       parentRoute: typeof ConsoleRoute
     }
+    '/console/$tournamentId': {
+      id: '/console/$tournamentId'
+      path: '/$tournamentId'
+      fullPath: '/console/$tournamentId'
+      preLoaderRoute: typeof ConsoleTournamentIdRouteImport
+      parentRoute: typeof ConsoleRoute
+    }
     '/screen/$publicToken': {
       id: '/screen/$publicToken'
       path: '/screen/$publicToken'
@@ -288,10 +307,12 @@ const PublicRouteWithChildren =
   PublicRoute._addFileChildren(PublicRouteChildren)
 
 interface ConsoleRouteChildren {
+  ConsoleTournamentIdRoute: typeof ConsoleTournamentIdRoute
   ConsoleIndexRoute: typeof ConsoleIndexRoute
 }
 
 const ConsoleRouteChildren: ConsoleRouteChildren = {
+  ConsoleTournamentIdRoute: ConsoleTournamentIdRoute,
   ConsoleIndexRoute: ConsoleIndexRoute,
 }
 
