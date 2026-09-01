@@ -16,10 +16,11 @@ import { Route as AppCabinetRouteImport } from './routes/_app/cabinet'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicRatingsRouteImport } from './routes/_public/ratings'
-import { Route as PublicTournamentsRouteImport } from './routes/_public/tournaments'
 import { Route as ConsoleIndexRouteImport } from './routes/console/index'
 import { Route as ScreenPublicTokenRouteImport } from './routes/screen.$publicToken'
 import { Route as PublicPlayersPlayerIdRouteImport } from './routes/_public/players.$playerId'
+import { Route as PublicTournamentsIndexRouteImport } from './routes/_public/tournaments.index'
+import { Route as PublicTournamentsTournamentIdRouteImport } from './routes/_public/tournaments.$tournamentId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -54,11 +55,6 @@ const PublicRatingsRoute = PublicRatingsRouteImport.update({
   path: '/ratings',
   getParentRoute: () => PublicRoute,
 } as any)
-const PublicTournamentsRoute = PublicTournamentsRouteImport.update({
-  id: '/tournaments',
-  path: '/tournaments',
-  getParentRoute: () => PublicRoute,
-} as any)
 const ConsoleIndexRoute = ConsoleIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -74,6 +70,17 @@ const PublicPlayersPlayerIdRoute = PublicPlayersPlayerIdRouteImport.update({
   path: '/players/$playerId',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicTournamentsIndexRoute = PublicTournamentsIndexRouteImport.update({
+  id: '/tournaments/',
+  path: '/tournaments/',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicTournamentsTournamentIdRoute =
+  PublicTournamentsTournamentIdRouteImport.update({
+    id: '/tournaments/$tournamentId',
+    path: '/tournaments/$tournamentId',
+    getParentRoute: () => PublicRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -81,20 +88,22 @@ export interface FileRoutesByFullPath {
   '/cabinet': typeof AppCabinetRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
-  '/tournaments': typeof PublicTournamentsRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console/': typeof ConsoleIndexRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
+  '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/tournaments/': typeof PublicTournamentsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/cabinet': typeof AppCabinetRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
-  '/tournaments': typeof PublicTournamentsRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console': typeof ConsoleIndexRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
+  '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/tournaments': typeof PublicTournamentsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -104,11 +113,12 @@ export interface FileRoutesById {
   '/_app/cabinet': typeof AppCabinetRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/ratings': typeof PublicRatingsRoute
-  '/_public/tournaments': typeof PublicTournamentsRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/_public/': typeof PublicIndexRoute
   '/console/': typeof ConsoleIndexRoute
   '/_public/players/$playerId': typeof PublicPlayersPlayerIdRoute
+  '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
+  '/_public/tournaments/': typeof PublicTournamentsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,20 +128,22 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/login'
     | '/ratings'
-    | '/tournaments'
     | '/screen/$publicToken'
     | '/console/'
     | '/players/$playerId'
+    | '/tournaments/$tournamentId'
+    | '/tournaments/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cabinet'
     | '/login'
     | '/ratings'
-    | '/tournaments'
     | '/screen/$publicToken'
     | '/console'
     | '/players/$playerId'
+    | '/tournaments/$tournamentId'
+    | '/tournaments'
   id:
     | '__root__'
     | '/_app'
@@ -140,11 +152,12 @@ export interface FileRouteTypes {
     | '/_app/cabinet'
     | '/_public/login'
     | '/_public/ratings'
-    | '/_public/tournaments'
     | '/screen/$publicToken'
     | '/_public/'
     | '/console/'
     | '/_public/players/$playerId'
+    | '/_public/tournaments/$tournamentId'
+    | '/_public/tournaments/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -205,13 +218,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicRatingsRouteImport
       parentRoute: typeof PublicRoute
     }
-    '/_public/tournaments': {
-      id: '/_public/tournaments'
-      path: '/tournaments'
-      fullPath: '/tournaments'
-      preLoaderRoute: typeof PublicTournamentsRouteImport
-      parentRoute: typeof PublicRoute
-    }
     '/console/': {
       id: '/console/'
       path: '/'
@@ -233,6 +239,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicPlayersPlayerIdRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/tournaments/': {
+      id: '/_public/tournaments/'
+      path: '/tournaments'
+      fullPath: '/tournaments/'
+      preLoaderRoute: typeof PublicTournamentsIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/tournaments/$tournamentId': {
+      id: '/_public/tournaments/$tournamentId'
+      path: '/tournaments/$tournamentId'
+      fullPath: '/tournaments/$tournamentId'
+      preLoaderRoute: typeof PublicTournamentsTournamentIdRouteImport
+      parentRoute: typeof PublicRoute
+    }
   }
 }
 
@@ -249,17 +269,19 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 interface PublicRouteChildren {
   PublicLoginRoute: typeof PublicLoginRoute
   PublicRatingsRoute: typeof PublicRatingsRoute
-  PublicTournamentsRoute: typeof PublicTournamentsRoute
   PublicIndexRoute: typeof PublicIndexRoute
   PublicPlayersPlayerIdRoute: typeof PublicPlayersPlayerIdRoute
+  PublicTournamentsTournamentIdRoute: typeof PublicTournamentsTournamentIdRoute
+  PublicTournamentsIndexRoute: typeof PublicTournamentsIndexRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
   PublicLoginRoute: PublicLoginRoute,
   PublicRatingsRoute: PublicRatingsRoute,
-  PublicTournamentsRoute: PublicTournamentsRoute,
   PublicIndexRoute: PublicIndexRoute,
   PublicPlayersPlayerIdRoute: PublicPlayersPlayerIdRoute,
+  PublicTournamentsTournamentIdRoute: PublicTournamentsTournamentIdRoute,
+  PublicTournamentsIndexRoute: PublicTournamentsIndexRoute,
 }
 
 const PublicRouteWithChildren =
