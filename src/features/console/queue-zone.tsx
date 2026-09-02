@@ -43,8 +43,12 @@ export default function QueueZone({
               className="rounded border border-slate-700 bg-slate-800 p-3 text-sm"
             >
               <p className="text-xs text-slate-400">
+                {/* «Круговая · Круговая» — у круговой схемы единственная
+                    группа названа как этап. Повторять незачем. */}
                 {item.stageName}
-                {item.groupLabel === null ? '' : ` · ${item.groupLabel}`}
+                {item.groupLabel === null || item.groupLabel === item.stageName
+                  ? ''
+                  : ` · ${item.groupLabel}`}
               </p>
               <MatchLine match={item.match} names={names} />
 

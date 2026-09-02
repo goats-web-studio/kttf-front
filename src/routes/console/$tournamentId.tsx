@@ -119,6 +119,7 @@ function ConsoleScreen(): ReactNode {
 
             <TiePanel
               groups={snapshot.standings.groups}
+              stages={snapshot.stages}
               names={view.names}
               onDecide={(input) => {
                 tie(input);

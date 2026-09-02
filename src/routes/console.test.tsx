@@ -1,4 +1,4 @@
-import type { AuthUserView } from '@kttf/shared/types';
+import type { AuthUserView, TournamentSnapshotView } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -30,6 +30,8 @@ const SIGNED_IN: AuthUserView = {
 
 /** Запросы, ушедшие на сервер: по ним видно, что действие правда отправлено. */
 let sent: string[] = [];
+/** Снимок, который отдаёт сервер. Тесты равенства меняют его под себя. */
+let snapshot: TournamentSnapshotView = CONSOLE_SNAPSHOT;
 
 function reply(body: unknown): Response {
   return {
@@ -41,7 +43,7 @@ function reply(body: unknown): Response {
 
 function answer(url: string): Promise<Response> {
   if (url.endsWith('/snapshot')) {
-    return Promise.resolve(reply(CONSOLE_SNAPSHOT));
+    return Promise.resolve(reply(snapshot));
   }
 
   // Сервер молчит. Для консоли это обычное состояние зала, а не сбой:
@@ -64,6 +66,7 @@ function renderConsole(): void {
 
 beforeEach(async () => {
   sent = [];
+  snapshot = CONSOLE_SNAPSHOT;
   await db.snapshots.clear();
   await db.outbox.clear();
   vi.stubGlobal('fetch', (input: unknown) => {
@@ -165,5 +168,53 @@ describe('экран проведения', () => {
     // Судья открыл консоль в зале без интернета и обязан увидеть турнир.
     expect(await screen.findByText(ru['console.playing.title'])).toBeDefined();
     expect(sent).toHaveLength(0);
+  });
+});
+
+describe('разрешение равенства', () => {
+  /** Снимок, у которого равенство есть, а встречи ещё идут. */
+  function withTie(played: boolean): TournamentSnapshotView {
+    const stage = CONSOLE_SNAPSHOT.stages[0];
+    if (stage === undefined) throw new Error('фикстура без этапа');
+
+    return {
+      ...CONSOLE_SNAPSHOT,
+      stages: [
+        {
+          ...stage,
+          matches: stage.matches.map((match) =>
+            played ? { ...match, status: 'FINISHED' } : match,
+          ),
+        },
+      ],
+      standings: {
+        ...CONSOLE_SNAPSHOT.standings,
+        groups: CONSOLE_SNAPSHOT.standings.groups.map((group) => ({
+          ...group,
+          stageId: stage.id,
+          // Круговая: единственная группа — сам этап, отдельной группы нет.
+          groupId: null,
+        })),
+      },
+    };
+  }
+
+  it('не спрашивает судью, пока группа не доиграна', async () => {
+    // В начале турнира по нулям стоят все, и равенство есть у всех со всеми.
+    // Решение, принятое в этот момент, попало бы в журнал (ADR-008).
+    snapshot = withTie(false);
+
+    renderConsole();
+
+    expect(await screen.findByText(ru['console.standings.title'])).toBeDefined();
+    expect(screen.queryByText(ru['console.tie.title'])).toBeNull();
+  });
+
+  it('спрашивает, когда сыграна последняя встреча группы', async () => {
+    snapshot = withTie(true);
+
+    renderConsole();
+
+    expect(await screen.findByText(ru['console.tie.title'])).toBeDefined();
   });
 });

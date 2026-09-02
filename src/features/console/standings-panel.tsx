@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 
+import { matchesOf } from './group-matches';
+
 interface StandingsPanelProps {
   readonly groups: readonly GroupStandingsView[];
   readonly stages: readonly StageView[];
@@ -49,12 +51,6 @@ export default function StandingsPanel({
       ))}
     </section>
   );
-}
-
-function matchesOf(stages: readonly StageView[], group: GroupStandingsView): readonly MatchView[] {
-  const stage = stages.find((current) => current.id === group.stageId);
-
-  return stage?.matches.filter((match) => match.groupId === group.groupId) ?? [];
 }
 
 /** Счёт личной встречи глазами игрока `a`. `null` — ещё не играли. */

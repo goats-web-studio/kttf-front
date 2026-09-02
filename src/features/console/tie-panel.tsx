@@ -1,10 +1,13 @@
-import type { GroupStandingsView, TieDecisionInput } from '@kttf/shared/types';
+import type { GroupStandingsView, StageView, TieDecisionInput } from '@kttf/shared/types';
 import { useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 
+import { isPlayedOut, matchesOf } from './group-matches';
+
 interface TiePanelProps {
   readonly groups: readonly GroupStandingsView[];
+  readonly stages: readonly StageView[];
   readonly names: ReadonlyMap<string, string>;
   readonly onDecide: (input: TieDecisionInput) => void;
   readonly isPending: boolean;
@@ -18,12 +21,23 @@ interface TiePanelProps {
  * участников в том порядке, который выбрал, — жребий бросает человек,
  * а не система.
  *
- * Панель показывается только при неразрешённом равенстве: в обычном турнире
- * судья её не видит.
+ * Панель показывается только у **доигранной** группы. До последней встречи
+ * равенство очков — обычное дело: в начале турнира по нулям стоят все, и
+ * панель висела бы с первой секунды. Хуже того, решение, принятое рано,
+ * записывается в журнал и способно зафиксировать места по случайному выбору
+ * судьи, сделанному до того, как сыграна половина группы.
  */
-export default function TiePanel({ groups, names, onDecide, isPending }: TiePanelProps): ReactNode {
+export default function TiePanel({
+  groups,
+  stages,
+  names,
+  onDecide,
+  isPending,
+}: TiePanelProps): ReactNode {
   const t = useT();
-  const pending = groups.filter((group) => group.unresolved.length > 0);
+  const pending = groups.filter(
+    (group) => group.unresolved.length > 0 && isPlayedOut(matchesOf(stages, group)),
+  );
 
   if (pending.length === 0) {
     return null;
