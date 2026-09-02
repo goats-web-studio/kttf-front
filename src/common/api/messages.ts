@@ -1,4 +1,4 @@
-import { isAppError, type ErrorCode } from '@kttf/shared/errors';
+import { ERROR_CODES, isAppError, type ErrorCode } from '@kttf/shared/errors';
 
 import type { MessageKey } from '@/common/i18n';
 
@@ -53,4 +53,23 @@ export function errorMessageKey(error: unknown): MessageKey {
   }
 
   return 'error.unexpected.title';
+}
+
+/**
+ * Отказ, означающий «по этой ссылке ничего нет».
+ *
+ * Неверный по форме идентификатор сервер отвергает проверкой схемы
+ * (`VALIDATION_FAILED`), несуществующий — «не найдено». Для человека,
+ * открывшего ссылку, это один случай, и общий текст проверки ему не подходит:
+ * он про заполненные поля, а на странице, открытой по ссылке, полей нет.
+ *
+ * Отдельно от `errorMessageKey`, потому что текст зависит от страницы: не
+ * найтись может игрок, турнир или экран зала, и «не найдено» без указания,
+ * что именно, человеку ничего не объясняет.
+ */
+export function isMissingResource(error: unknown): boolean {
+  return (
+    isAppError(error) &&
+    (error.code === ERROR_CODES.NOT_FOUND || error.code === ERROR_CODES.VALIDATION_FAILED)
+  );
 }

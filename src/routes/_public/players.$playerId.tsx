@@ -1,9 +1,9 @@
-import { ERROR_CODES, isAppError } from '@kttf/shared/errors';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
+import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
@@ -54,7 +54,7 @@ function PlayerPage(): ReactNode {
 
   const [opponentId, setOpponentId] = useState<string | null>(null);
 
-  if (!isKnownId || isMissingPlayer(player.error)) {
+  if (!isKnownId || isMissingResource(player.error)) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-10">
         <p role="alert" className="py-10 text-center text-slate-600">
@@ -127,20 +127,5 @@ function PlayerPage(): ReactNode {
         </>
       )}
     </section>
-  );
-}
-
-/**
- * Отказ, означающий «такого игрока нет».
- *
- * Неверный идентификатор сервер отвергает проверкой схемы, а несуществующий —
- * «не найдено». Для человека это один случай: ссылка не ведёт к игроку.
- * Общий текст `VALIDATION_FAILED` здесь не годится — он про заполненные поля,
- * а на этой странице нет ни одного.
- */
-function isMissingPlayer(error: unknown): boolean {
-  return (
-    isAppError(error) &&
-    (error.code === ERROR_CODES.NOT_FOUND || error.code === ERROR_CODES.VALIDATION_FAILED)
   );
 }

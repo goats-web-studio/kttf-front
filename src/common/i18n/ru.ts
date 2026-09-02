@@ -105,6 +105,7 @@ export const ru = {
   'tournament.entryFee': 'Взнос',
   'tournament.entryFee.free': 'Бесплатно',
   'tournaments.empty': 'Турниров не найдено',
+  'tournament.notFound': 'Турнир не найден. Проверьте ссылку — она могла оборваться.',
 
   'registration.status.REGISTERED': 'Зарегистрирован',
   'registration.status.WAITLIST': 'Лист ожидания',
@@ -270,6 +271,7 @@ export const ru = {
   'screen.standings.sets': 'Сеты',
   'screen.standings.balls': 'Мячи',
   'screen.offline': 'Нет связи',
+  'screen.notFound': 'Экран не найден. Проверьте ссылку на турнир.',
   'console.failure.lead': 'Не отправлено:',
   'console.failure.retry': 'Повторить',
   'console.failure.dismiss': 'Скрыть',

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useMemo, type ReactNode } from 'react';
 
+import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
@@ -57,30 +58,39 @@ function TournamentPage(): ReactNode {
       </Link>
 
       <div className="mt-4">
-        <QueryState
-          isPending={results.isPending}
-          error={results.error}
-          onRetry={() => void results.refetch()}
-        >
-          {data === undefined ? null : (
-            <>
-              <TournamentSummary
-                tournament={data.tournament}
-                clubName={clubs.data?.get(data.tournament.clubId)?.name ?? null}
-              />
-              <ResultsPlacements
-                participants={data.participants}
-                shared={data.shared}
-                unresolved={data.unresolved}
-                names={names}
-              />
-              <ResultsStandings standings={data.standings} names={names} />
-              <ResultsBracket stages={data.stages} names={names} />
-              <ResultsMatches stages={data.stages} names={names} />
-              <ResultsRatings ratings={data.ratings} names={names} />
-            </>
-          )}
-        </QueryState>
+        {/* Ссылку на результаты пересылают в чат клуба, и обрывается она там
+            же. Общий текст проверки схемы («проверьте заполненные поля») на
+            странице без единого поля человеку ничего не объясняет. */}
+        {isMissingResource(results.error) ? (
+          <p role="alert" className="py-10 text-center text-slate-600">
+            {t('tournament.notFound')}
+          </p>
+        ) : (
+          <QueryState
+            isPending={results.isPending}
+            error={results.error}
+            onRetry={() => void results.refetch()}
+          >
+            {data === undefined ? null : (
+              <>
+                <TournamentSummary
+                  tournament={data.tournament}
+                  clubName={clubs.data?.get(data.tournament.clubId)?.name ?? null}
+                />
+                <ResultsPlacements
+                  participants={data.participants}
+                  shared={data.shared}
+                  unresolved={data.unresolved}
+                  names={names}
+                />
+                <ResultsStandings standings={data.standings} names={names} />
+                <ResultsBracket stages={data.stages} names={names} />
+                <ResultsMatches stages={data.stages} names={names} />
+                <ResultsRatings ratings={data.ratings} names={names} />
+              </>
+            )}
+          </QueryState>
+        )}
       </div>
     </section>
   );

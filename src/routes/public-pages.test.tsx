@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { ru } from '@/common/i18n/ru';
 import { playerName } from '@/features/players/player-name';
 import { CLUB, pageOf, PLAYERS, RESULTS, TOURNAMENT, TOURNAMENT_ID } from '@/test/fixtures';
 
@@ -104,5 +105,27 @@ describe('рейтинг', () => {
 
     expect(players[0]).toContain(PLAYERS.first.lastName);
     expect(players[1]).toContain(PLAYERS.second.lastName);
+  });
+});
+
+describe('неверная ссылка на турнир', () => {
+  it('объясняет оборванную ссылку вместо просьбы проверить поля', async () => {
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve({
+        ok: false,
+        status: 400,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              error: { code: 'VALIDATION_FAILED', message: 'Request failed schema validation' },
+            }),
+          ),
+      } as unknown as Response),
+    );
+
+    renderAt('/tournaments/af194089');
+
+    // Ссылку на результаты пересылают в чат клуба, и обрывается она там же.
+    expect(await screen.findByText(ru['tournament.notFound'])).toBeDefined();
   });
 });

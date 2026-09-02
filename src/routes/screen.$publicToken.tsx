@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, type ReactNode } from 'react';
 
+import { isMissingResource } from '@/common/api';
 import { formatDateTime, useLocale, useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { buildQueue, buildTables } from '@/features/console/queue';
@@ -43,6 +44,20 @@ function ScreenPage(): ReactNode {
       ratings: ratingsOf(view.players),
     };
   }, [view]);
+
+  // Неизвестный токен — не сбой связи, а неверная ссылка, и висеть на стене
+  // с просьбой проверить заполненные поля экран не должен. Отказ приходит
+  // только когда состояния нет вовсе: при обрыве связи `view` остаётся, и
+  // стена продолжает показывать последнее известное.
+  if (isMissingResource(error)) {
+    return (
+      <div className="flex min-h-full items-center justify-center bg-black px-6 text-center">
+        <p role="alert" className="text-3xl text-slate-400">
+          {t('screen.notFound')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-black px-6 py-5 text-white">

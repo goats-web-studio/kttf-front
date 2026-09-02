@@ -5,6 +5,6 @@ export {
   configureAuth,
   type RequestOptions,
 } from './client';
-export { ERROR_MESSAGE_KEYS, errorMessageKey } from './messages';
+export { ERROR_MESSAGE_KEYS, errorMessageKey, isMissingResource } from './messages';
 export { isNetworkError, NetworkError } from './network-error';
 export { queryString } from './query-string';

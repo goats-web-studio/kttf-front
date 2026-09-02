@@ -107,6 +107,7 @@ export const kk: Record<MessageKey, string> = {
   'tournament.entryFee': 'Жарна',
   'tournament.entryFee.free': 'Тегін',
   'tournaments.empty': 'Турнирлер табылмады',
+  'tournament.notFound': 'Турнир табылмады. Сілтемені тексеріңіз — ол үзілген болуы мүмкін.',
 
   'registration.status.REGISTERED': 'Тіркелген',
   'registration.status.WAITLIST': 'Кезек тізімі',
@@ -270,6 +271,7 @@ export const kk: Record<MessageKey, string> = {
   'screen.standings.sets': 'Сеттер',
   'screen.standings.balls': 'Доптар',
   'screen.offline': 'Байланыс жоқ',
+  'screen.notFound': 'Экран табылмады. Турнир сілтемесін тексеріңіз.',
   'console.failure.lead': 'Жіберілмеді:',
   'console.failure.retry': 'Қайталау',
   'console.failure.dismiss': 'Жасыру',

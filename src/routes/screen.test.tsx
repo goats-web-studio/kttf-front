@@ -115,3 +115,24 @@ describe('экран зала', () => {
     expect(screen.getByRole('heading', { name: SCREEN_STATE.tournament.name })).toBeDefined();
   });
 });
+
+describe('неверная ссылка на экран', () => {
+  it('объясняет неизвестный токен, а не просит проверить поля', async () => {
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve({
+        ok: false,
+        status: 404,
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Screen not found' } }),
+          ),
+      } as unknown as Response),
+    );
+
+    renderScreen();
+
+    // Стена висит в зале, и «проверьте заполненные поля» на ней бессмысленно:
+    // полей у экрана нет, а поправить нужно ссылку.
+    expect(await screen.findByText(ru['screen.notFound'])).toBeDefined();
+  });
+});
