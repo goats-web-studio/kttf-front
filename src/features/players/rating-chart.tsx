@@ -26,14 +26,11 @@ export default function RatingChart({ scale }: RatingChartProps): ReactNode {
 
   return (
     <figure className="mt-4">
-      <div className="flex justify-between text-xs text-slate-500">
-        <span>
-          {t('player.chart.highest')} <span className="tabular-nums">{scale.highest}</span>
-        </span>
-        <span>
-          {t('player.chart.lowest')} <span className="tabular-nums">{scale.lowest}</span>
-        </span>
-      </div>
+      {/* Подписи стоят у своих линий: обе в одной строке читались бы как
+          легенда, и «минимум» оказывался бы сверху над верхней границей. */}
+      <p className="text-xs text-slate-500">
+        {t('player.chart.highest')} <span className="tabular-nums">{scale.highest}</span>
+      </p>
 
       <svg
         viewBox={`0 0 ${String(scale.width)} ${String(scale.height)}`}
@@ -82,6 +79,10 @@ export default function RatingChart({ scale }: RatingChartProps): ReactNode {
           </circle>
         ))}
       </svg>
+
+      <p className="text-xs text-slate-500">
+        {t('player.chart.lowest')} <span className="tabular-nums">{scale.lowest}</span>
+      </p>
 
       <figcaption className="mt-1 flex justify-between text-xs text-slate-500">
         <span>{formatDate(scale.from, locale)}</span>
