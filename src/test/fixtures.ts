@@ -83,6 +83,7 @@ export const TOURNAMENT: TournamentView = {
   tableCount: 4,
   formatConfig: {
     type: 'GROUPS_KNOCKOUT',
+    groupRounds: 1,
     groupCount: 2,
     advancePerGroup: 2,
     groupSetsToWin: 3,

@@ -6,6 +6,7 @@ describe('длина встречи по схеме', () => {
   it('у групп и плей-офф она разная', () => {
     const config = {
       type: 'GROUPS_KNOCKOUT',
+      groupRounds: 1,
       groupCount: 2,
       advancePerGroup: 2,
       groupSetsToWin: 2,
