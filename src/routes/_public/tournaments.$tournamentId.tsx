@@ -7,7 +7,9 @@ import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { playerName } from '@/features/players/player-name';
-import { tournamentResultsQuery } from '@/features/tournaments/queries';
+import ParticipantsPanel from '@/features/tournaments/participants-panel';
+import { registrationsQuery, tournamentResultsQuery } from '@/features/tournaments/queries';
+import RegistrationPanel from '@/features/tournaments/registration-panel';
 import ResultsBracket from '@/features/tournaments/results-bracket';
 import ResultsMatches from '@/features/tournaments/results-matches';
 import ResultsPlacements from '@/features/tournaments/results-placements';
@@ -35,6 +37,7 @@ function TournamentPage(): ReactNode {
   const { tournamentId } = Route.useParams();
 
   const results = useQuery(tournamentResultsQuery(tournamentId));
+  const registrations = useQuery(registrationsQuery(tournamentId));
   const clubs = useQuery(clubDirectoryQuery);
 
   // Таблицы, сетки и встречи ссылаются на игрока идентификатором, а состав
@@ -77,16 +80,34 @@ function TournamentPage(): ReactNode {
                   tournament={data.tournament}
                   clubName={clubs.data?.get(data.tournament.clubId)?.name ?? null}
                 />
-                <ResultsPlacements
-                  participants={data.participants}
-                  shared={data.shared}
-                  unresolved={data.unresolved}
-                  names={names}
+                {/* Запись и состав идут сразу за карточкой: пока турнир не
+                    сыгран, это единственное, ради чего его страницу
+                    открывают. Результаты ниже до старта пусты. */}
+                <RegistrationPanel
+                  tournament={data.tournament}
+                  registrations={registrations.data ?? []}
                 />
-                <ResultsStandings standings={data.standings} names={names} />
-                <ResultsBracket stages={data.stages} names={names} />
-                <ResultsMatches stages={data.stages} names={names} />
-                <ResultsRatings ratings={data.ratings} names={names} />
+                <ParticipantsPanel
+                  tournament={data.tournament}
+                  registrations={registrations.data ?? []}
+                />
+                {/* Результаты — у начатого турнира. До старта места «не
+                    определены», а изменения рейтинга нулевые у всех: такие
+                    таблицы выглядят поломкой, а не пустотой. */}
+                {data.tournament.startedAt !== null && (
+                  <>
+                    <ResultsPlacements
+                      participants={data.participants}
+                      shared={data.shared}
+                      unresolved={data.unresolved}
+                      names={names}
+                    />
+                    <ResultsStandings standings={data.standings} names={names} />
+                    <ResultsBracket stages={data.stages} names={names} />
+                    <ResultsMatches stages={data.stages} names={names} />
+                    <ResultsRatings ratings={data.ratings} names={names} />
+                  </>
+                )}
               </>
             )}
           </QueryState>

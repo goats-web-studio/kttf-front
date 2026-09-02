@@ -30,6 +30,12 @@ function answer(url: string): Response {
     return reply(RESULTS);
   }
 
+  // Состав участников — отдельный запрос страницы турнира (ТЗ 4.3). Проверка
+  // ветки записи живёт в `features/tournaments/registration.test.tsx`.
+  if (url.includes('/registrations')) {
+    return reply([]);
+  }
+
   if (url.includes('/tournaments')) {
     return reply(pageOf([TOURNAMENT]));
   }

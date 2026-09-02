@@ -1,7 +1,7 @@
 import type { ListTournamentsQuery } from '@kttf/shared/types';
 import { queryOptions } from '@tanstack/react-query';
 
-import { fetchTournament, fetchTournamentResults, listTournaments } from './api';
+import { fetchTournament, fetchTournamentResults, listRegistrations, listTournaments } from './api';
 
 /** Ключи кэша турниров. Фильтры входят в ключ списка целиком. */
 export const tournamentKeys = {
@@ -9,7 +9,21 @@ export const tournamentKeys = {
   list: (query: ListTournamentsQuery) => ['tournaments', 'list', query] as const,
   detail: (id: string) => ['tournaments', 'detail', id] as const,
   results: (id: string) => ['tournaments', 'results', id] as const,
+  registrations: (id: string) => ['tournaments', 'registrations', id] as const,
 };
+
+/**
+ * Состав участников — ТЗ 4.3.
+ *
+ * Отдельным запросом от результатов: в результатах участник приходит без
+ * идентификатора записи, а снять её или поправить без него нечем.
+ */
+export function registrationsQuery(id: string) {
+  return queryOptions({
+    queryKey: tournamentKeys.registrations(id),
+    queryFn: () => listRegistrations(id),
+  });
+}
 
 export function tournamentsQuery(query: ListTournamentsQuery) {
   return queryOptions({

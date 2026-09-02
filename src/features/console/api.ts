@@ -26,10 +26,7 @@ export function fetchSnapshot(tournamentId: string): Promise<TournamentSnapshotV
   return apiRequest<TournamentSnapshotView>(`/tournaments/${tournamentId}/snapshot`);
 }
 
-export function sendOperations(
-  tournamentId: string,
-  request: SyncRequest,
-): Promise<SyncResult> {
+export function sendOperations(tournamentId: string, request: SyncRequest): Promise<SyncResult> {
   return apiRequest<SyncResult>(`/tournaments/${tournamentId}/sync`, {
     method: 'POST',
     body: request,

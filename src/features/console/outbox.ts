@@ -79,7 +79,10 @@ export function toOperations(items: readonly OutboxItem[]): SyncOperation[] {
   return items.map((item) => ({ ...item.operation, seq: item.seq }));
 }
 
-export async function markSynced(items: readonly OutboxItem[], applied: readonly string[]): Promise<void> {
+export async function markSynced(
+  items: readonly OutboxItem[],
+  applied: readonly string[],
+): Promise<void> {
   const accepted = new Set(applied);
   const now = Date.now();
 

@@ -117,7 +117,9 @@ describe('экран проведения', () => {
   it('введённое ложится в очередь на диск — ТЗ 6.4', async () => {
     renderConsole();
 
-    fireEvent.click(await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }),
+    );
     fireEvent.click(await screen.findByRole('button', { name: '3:1' }));
 
     // Список в памяти не пережил бы перезагрузку вкладки посреди турнира.
@@ -139,7 +141,9 @@ describe('экран проведения', () => {
     expect(await screen.findByRole('status')).toBeDefined();
     expect(screen.getByRole('button', { name: ru['console.sync.now'] })).toBeDefined();
 
-    fireEvent.click(await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }),
+    );
     fireEvent.click(await screen.findByRole('button', { name: '3:1' }));
 
     // Судья видит, что счёт ещё не уехал, до конца турнира, а не после него.

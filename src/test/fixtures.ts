@@ -567,3 +567,36 @@ export const USER_WITH_PROFILE: AuthUserView = {
   playerId: PLAYER_IDS.first,
   clubRoles: [{ clubId: CLUB.id, role: 'OWNER' }],
 };
+
+/**
+ * Состав участников — ответ `GET /tournaments/:id/registrations`.
+ *
+ * Первый — игрок, за которым закреплён `USER_WITH_PROFILE`: по нему
+ * проверяются «вы записаны» и отмена записи.
+ */
+export const OWN_REGISTRATION: RegistrationView = {
+  id: '00000000-0000-4000-8000-000000000071',
+  tournamentId: TOURNAMENT_ID,
+  status: 'CONFIRMED',
+  isRated: true,
+  seed: 1,
+  ratingAtStart: null,
+  matchesAtStart: null,
+  createdAt: '2026-09-01T10:00:00.000Z',
+  player: PLAYERS.first,
+};
+
+export const REGISTRATIONS: RegistrationView[] = [
+  OWN_REGISTRATION,
+  {
+    id: '00000000-0000-4000-8000-000000000072',
+    tournamentId: TOURNAMENT_ID,
+    status: 'CONFIRMED',
+    isRated: false,
+    seed: null,
+    ratingAtStart: null,
+    matchesAtStart: null,
+    createdAt: '2026-09-01T10:05:00.000Z',
+    player: PLAYERS.third,
+  },
+];

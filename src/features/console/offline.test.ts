@@ -1,7 +1,12 @@
 import type { SyncResult } from '@kttf/shared/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CONSOLE_SNAPSHOT, PLAYING_MATCH_ID, QUEUED_MATCH_ID, TOURNAMENT_ID } from '@/test/fixtures';
+import {
+  CONSOLE_SNAPSHOT,
+  PLAYING_MATCH_ID,
+  QUEUED_MATCH_ID,
+  TOURNAMENT_ID,
+} from '@/test/fixtures';
 
 import { db } from './db';
 import { applyPending } from './offline-state';
@@ -94,7 +99,9 @@ describe('снимок турнира', () => {
     );
 
     const state = await loadState(TOURNAMENT_ID);
-    const match = state.stages.flatMap((stage) => stage.matches).find((m) => m.id === PLAYING_MATCH_ID);
+    const match = state.stages
+      .flatMap((stage) => stage.matches)
+      .find((m) => m.id === PLAYING_MATCH_ID);
 
     // Иначе перезагрузка вкладки посреди турнира стёрла бы с экрана счёт,
     // который сервер ещё не видел.
@@ -179,10 +186,7 @@ describe('синхронизация', () => {
   });
 
   it('отказ сети оставляет очередь на диске', async () => {
-    await enqueue(
-      TOURNAMENT_ID,
-      newOperation({ type: 'MATCH_CANCEL', matchId: PLAYING_MATCH_ID }),
-    );
+    await enqueue(TOURNAMENT_ID, newOperation({ type: 'MATCH_CANCEL', matchId: PLAYING_MATCH_ID }));
 
     vi.stubGlobal('fetch', () => Promise.reject(new TypeError('Failed to fetch')));
 

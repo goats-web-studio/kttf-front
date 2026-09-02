@@ -1,4 +1,8 @@
-import type { MatchResultInput, TieDecisionInput, TournamentSnapshotView } from '@kttf/shared/types';
+import type {
+  MatchResultInput,
+  TieDecisionInput,
+  TournamentSnapshotView,
+} from '@kttf/shared/types';
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -196,7 +200,13 @@ export function useConsole(tournamentId: string) {
     },
     finish,
     queue: {
-      connection: !online ? 'OFFLINE' : sync.isPending ? 'SYNCING' : queued > 0 ? 'SYNCING' : 'SYNCED',
+      connection: !online
+        ? 'OFFLINE'
+        : sync.isPending
+          ? 'SYNCING'
+          : queued > 0
+            ? 'SYNCING'
+            : 'SYNCED',
       queued,
       rejected: queue.data?.rejected ?? [],
       syncNow,
