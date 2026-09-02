@@ -1,14 +1,16 @@
+import { checkEligibility, type EligibilityProblem } from '@kttf/shared/eligibility';
 import type { RegistrationView, TournamentView } from '@kttf/shared/types';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { formatDateTime, useLocale, useT } from '@/common/i18n';
 import { useSessionStore } from '@/features/auth/session-store';
+import { playerQuery } from '@/features/players/queries';
 
 import { registerForTournament, removeRegistration } from './api';
-import { eligibilityProblems } from './eligibility-problems';
+import { eligibilityProblems, problemKeys } from './eligibility-problems';
 import { tournamentKeys } from './queries';
 
 interface RegistrationPanelProps {
@@ -50,6 +52,39 @@ export default function RegistrationPanel({
     user?.playerId == null
       ? undefined
       : registrations.find((registration) => registration.player.id === user.playerId);
+
+  // Свой профиль читается ради допуска: в сессии лежит только идентификатор
+  // игрока (ТС 7.1), а правилу нужны рейтинг, год рождения и пол. Запрос идёт
+  // только у вошедшего с профилем — гостю проверять нечего.
+  const playerId = user?.playerId ?? null;
+  const profile = useQuery({
+    ...playerQuery(playerId ?? ''),
+    enabled: playerId !== null,
+  });
+
+  // Правило одно на сервер и на экран — @kttf/shared/eligibility (ADR-029).
+  // Пока профиль не пришёл, причин нет: показать «нельзя» до того, как стало
+  // известно почему, хуже, чем подождать.
+  const problems: readonly EligibilityProblem[] =
+    profile.data === undefined
+      ? []
+      : checkEligibility(
+          {
+            // Рейтинг в правило идёт числом: с планкой его только сравнивают,
+            // и от последней сотой результат сравнения не зависит. На экране
+            // он остаётся строкой, как пришёл (ADR-014, ADR-029).
+            rating: Number(profile.data.rating),
+            birthYear: profile.data.birthYear,
+            gender: profile.data.gender,
+          },
+          {
+            ratingCapMax: numberOrNull(tournament.ratingCapMax),
+            ratingCapMin: numberOrNull(tournament.ratingCapMin),
+            birthYearFrom: tournament.birthYearFrom,
+            birthYearTo: tournament.birthYearTo,
+            genderLimit: tournament.genderLimit,
+          },
+        );
 
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
@@ -107,9 +142,11 @@ export default function RegistrationPanel({
         ) : (
           <Join
             isExpired={isExpired}
-            hasProfile={user?.playerId != null}
+            hasProfile={playerId !== null}
             isSignedIn={user !== null}
             isPending={join.isPending}
+            isChecking={playerId !== null && profile.data === undefined}
+            problems={problems}
             error={join.error}
             tournamentId={tournament.id}
             onJoin={() => {
@@ -199,6 +236,8 @@ function Join({
   hasProfile,
   isSignedIn,
   isPending,
+  isChecking,
+  problems,
   error,
   tournamentId,
   onJoin,
@@ -207,6 +246,8 @@ function Join({
   readonly hasProfile: boolean;
   readonly isSignedIn: boolean;
   readonly isPending: boolean;
+  readonly isChecking: boolean;
+  readonly problems: readonly EligibilityProblem[];
   readonly error: unknown;
   readonly tournamentId: string;
   readonly onJoin: () => void;
@@ -241,19 +282,48 @@ function Join({
     );
   }
 
+  const blocked = problems.length > 0;
+
   return (
     <>
       <button
         type="button"
-        disabled={isPending}
+        disabled={isPending || isChecking || blocked}
         onClick={onJoin}
         className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
       >
-        {isPending ? t('common.loading') : t('registration.join')}
+        {isPending || isChecking ? t('common.loading') : t('registration.join')}
       </button>
+
+      {/*
+        Причина названа до нажатия, а не после отказа сервера (ADR-029):
+        кнопка, которая гарантированно откажет, — ложное обещание. Правилом
+        это не подменяет — записывает по-прежнему сервер, и его отказ ниже.
+
+        Пока свой профиль не прочитан, кнопка занята, а не погашена молча:
+        неизвестно ещё не значит «нельзя».
+      */}
+      {blocked ? (
+        <ul role="alert" className="mt-2 text-sm text-red-700">
+          {problemKeys(problems).map((key) => (
+            <li key={key}>{t(key)}</li>
+          ))}
+        </ul>
+      ) : null}
+
       <Refusal error={error} />
     </>
   );
+}
+
+/**
+ * Планка рейтинга из строки контракта — в число для правила допуска.
+ *
+ * `Number(null)` — это ноль, то есть планка «не ниже нуля» вместо её
+ * отсутствия: пустое значение обязано остаться пустым.
+ */
+function numberOrNull(value: string | null): number | null {
+  return value === null ? null : Number(value);
 }
 
 /**

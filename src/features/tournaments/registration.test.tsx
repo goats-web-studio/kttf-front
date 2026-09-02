@@ -1,4 +1,9 @@
-import type { AuthUserView, RegistrationView, TournamentView } from '@kttf/shared/types';
+import type {
+  AuthUserView,
+  PlayerView,
+  RegistrationView,
+  TournamentView,
+} from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -25,9 +30,10 @@ import {
  * Запись на турнир — ТЗ 4.3.
  *
  * Проверяется то, ради чего страница нужна игроку: увидеть условия, записаться
- * и отменить запись. Правило допуска здесь не проверяется — оно живёт в
- * `@kttf/shared/eligibility` и покрыто там; здесь стережётся, что отказ сервера
- * доходит до человека причинами, а не общим текстом проверки схемы.
+ * и отменить запись. Само правило допуска здесь не переписывается — оно живёт
+ * в `@kttf/shared/eligibility` и покрыто там (ADR-029). Здесь стережётся, что
+ * его исход доходит до человека **до** нажатия, а отказ сервера — причинами,
+ * а не общим текстом проверки схемы.
  */
 
 interface Sent {
@@ -40,6 +46,8 @@ let sent: Sent[] = [];
 /** Турнир с открытой регистрацией: в фикстуре он уже обсчитан. */
 let tournament: TournamentView = { ...TOURNAMENT, status: 'REG_OPEN' };
 let registrations: readonly RegistrationView[] = [];
+/** Профиль вошедшего: по нему считается допуск до нажатия. */
+let profile: PlayerView = PLAYERS.first;
 /** Ответ сервера на запись. `null` — успех. */
 let refusal: { readonly code: string; readonly details?: unknown } | null = null;
 
@@ -83,6 +91,13 @@ function answer(url: string, init: RequestInit | undefined): Response {
     return reply(pageOf([CLUB]));
   }
 
+  // Свой профиль читается ради допуска до нажатия, поиск организатором — ради
+  // состава. Маршруты различаются идентификатором в конце, и путать их нельзя:
+  // страница вместо игрока дала бы правилу допуска пустой рейтинг.
+  if (/\/players\/[^/?]+$/.test(url)) {
+    return reply(profile);
+  }
+
   if (url.includes('/players')) {
     return reply(pageOf([PLAYERS.second]));
   }
@@ -112,6 +127,7 @@ beforeEach(() => {
   sent = [];
   tournament = { ...TOURNAMENT, status: 'REG_OPEN' };
   registrations = [];
+  profile = PLAYERS.first;
   refusal = null;
   vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) =>
     Promise.resolve(answer(String(input), init)),
@@ -167,6 +183,47 @@ describe('запись игрока', () => {
     // организатора клуба-хозяина (ADR-014).
     expect(request?.body).toEqual({});
     expect(request?.url).toContain(`/tournaments/${TOURNAMENT_ID}/registrations`);
+  });
+
+  it('гасит кнопку и называет причину до нажатия, а не после отказа', async () => {
+    // Рейтинг игрока 520.00 против планки 400.00: сервер откажет наверняка.
+    tournament = { ...tournament, ratingCapMax: '400.00' };
+
+    renderTournament(USER_WITH_PROFILE);
+
+    const button = await screen.findByRole('button', { name: ru['registration.join'] });
+
+    expect(button.hasAttribute('disabled')).toBe(true);
+    expect(screen.getByText(ru['registration.problem.RATING_TOO_HIGH'])).toBeDefined();
+
+    fireEvent.click(button);
+
+    // Правило считается тем же кодом, что и на сервере, поэтому спрашивать
+    // его незачем: запроса нет вовсе.
+    expect(sent.filter((request) => request.method === 'POST')).toHaveLength(0);
+  });
+
+  it('подходящему по условиям кнопку не гасит', async () => {
+    // Планка та же, но игрок под неё проходит: 300.00 против 400.00.
+    tournament = { ...tournament, ratingCapMax: '400.00' };
+    profile = PLAYERS.fourth;
+
+    renderTournament(USER_WITH_PROFILE);
+
+    const button = await screen.findByRole('button', { name: ru['registration.join'] });
+
+    expect(button.hasAttribute('disabled')).toBe(false);
+    expect(screen.queryByText(ru['registration.problem.RATING_TOO_HIGH'])).toBeNull();
+  });
+
+  it('незаданная планка не превращается в ноль', async () => {
+    // `Number(null)` — ноль, и планка «не ниже нуля» отсекла бы всех, у кого
+    // рейтинг ниже. У фикстуры планок нет: запись обязана пройти.
+    renderTournament(USER_WITH_PROFILE);
+
+    const button = await screen.findByRole('button', { name: ru['registration.join'] });
+
+    expect(button.hasAttribute('disabled')).toBe(false);
   });
 
   it('называет причины недопуска, а не общий текст проверки схемы', async () => {
