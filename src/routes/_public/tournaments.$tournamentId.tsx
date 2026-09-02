@@ -10,6 +10,7 @@ import { playerName } from '@/features/players/player-name';
 import ParticipantsPanel from '@/features/tournaments/participants-panel';
 import { registrationsQuery, tournamentResultsQuery } from '@/features/tournaments/queries';
 import RegistrationPanel from '@/features/tournaments/registration-panel';
+import RepeatTournament from '@/features/tournaments/repeat-tournament';
 import ResultsBracket from '@/features/tournaments/results-bracket';
 import ResultsMatches from '@/features/tournaments/results-matches';
 import ResultsPlacements from '@/features/tournaments/results-placements';
@@ -91,6 +92,10 @@ function TournamentPage(): ReactNode {
                   tournament={data.tournament}
                   registrations={registrations.data ?? []}
                 />
+                {/* «Повторить прошлый» — ТЗ 4.2. Стоит у турнира, а не в
+                    форме создания: копирует настройки сервер, и брать их
+                    неоткуда, кроме как у самого турнира. */}
+                <RepeatTournament tournament={data.tournament} />
                 {/* Результаты — у начатого турнира. До старта места «не
                     определены», а изменения рейтинга нулевые у всех: такие
                     таблицы выглядят поломкой, а не пустотой. */}

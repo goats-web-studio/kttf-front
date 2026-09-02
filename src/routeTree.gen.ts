@@ -19,6 +19,7 @@ import { Route as PublicRatingsRouteImport } from './routes/_public/ratings'
 import { Route as ConsoleIndexRouteImport } from './routes/console/index'
 import { Route as ConsoleTournamentIdRouteImport } from './routes/console/$tournamentId'
 import { Route as ScreenPublicTokenRouteImport } from './routes/screen.$publicToken'
+import { Route as AppTournamentsNewRouteImport } from './routes/_app/tournaments.new'
 import { Route as PublicPlayersPlayerIdRouteImport } from './routes/_public/players.$playerId'
 import { Route as PublicTournamentsIndexRouteImport } from './routes/_public/tournaments.index'
 import { Route as PublicTournamentsTournamentIdRouteImport } from './routes/_public/tournaments.$tournamentId'
@@ -71,6 +72,11 @@ const ScreenPublicTokenRoute = ScreenPublicTokenRouteImport.update({
   path: '/screen/$publicToken',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppTournamentsNewRoute = AppTournamentsNewRouteImport.update({
+  id: '/tournaments/new',
+  path: '/tournaments/new',
+  getParentRoute: () => AppRoute,
+} as any)
 const PublicPlayersPlayerIdRoute = PublicPlayersPlayerIdRouteImport.update({
   id: '/players/$playerId',
   path: '/players/$playerId',
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console/': typeof ConsoleIndexRoute
+  '/tournaments/new': typeof AppTournamentsNewRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/tournaments/': typeof PublicTournamentsIndexRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console': typeof ConsoleIndexRoute
+  '/tournaments/new': typeof AppTournamentsNewRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/tournaments': typeof PublicTournamentsIndexRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/_public/': typeof PublicIndexRoute
   '/console/': typeof ConsoleIndexRoute
+  '/_app/tournaments/new': typeof AppTournamentsNewRoute
   '/_public/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/_public/tournaments/': typeof PublicTournamentsIndexRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/console/'
+    | '/tournaments/new'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments/'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/console'
+    | '/tournaments/new'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/tournaments'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/screen/$publicToken'
     | '/_public/'
     | '/console/'
+    | '/_app/tournaments/new'
     | '/_public/players/$playerId'
     | '/_public/tournaments/$tournamentId'
     | '/_public/tournaments/'
@@ -251,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScreenPublicTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/tournaments/new': {
+      id: '/_app/tournaments/new'
+      path: '/tournaments/new'
+      fullPath: '/tournaments/new'
+      preLoaderRoute: typeof AppTournamentsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_public/players/$playerId': {
       id: '/_public/players/$playerId'
       path: '/players/$playerId'
@@ -277,10 +296,12 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCabinetRoute: typeof AppCabinetRoute
+  AppTournamentsNewRoute: typeof AppTournamentsNewRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppCabinetRoute: AppCabinetRoute,
+  AppTournamentsNewRoute: AppTournamentsNewRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

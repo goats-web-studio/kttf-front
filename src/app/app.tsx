@@ -1,4 +1,4 @@
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useState } from 'react';
 
@@ -12,10 +12,8 @@ import UpdatePrompt from './update-prompt';
 
 export default function App(): ReactNode {
   const [queryClient] = useState(createQueryClient);
-  const [router] = useState(() => createAppRouter({ queryClient, session: null }));
   const [locale] = useState(() => detectLocale(navigator.languages));
 
-  const user = useSessionStore((state) => state.user);
   const isRestoring = useSessionStore((state) => state.isRestoring);
 
   useEffect(() => {
@@ -23,25 +21,36 @@ export default function App(): ReactNode {
     void restoreSession();
   }, []);
 
-  useEffect(() => {
-    // Охрана маршрутов читает сессию из контекста в beforeLoad. Без сброса
-    // уже вычисленных совпадений вход и выход не отразятся на текущей
-    // странице до перезагрузки.
-    void router.invalidate();
-  }, [router, user]);
-
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider locale={locale}>
-        {isRestoring ? (
-          <Restoring />
-        ) : (
-          <RouterProvider router={router} context={{ queryClient, session: user }} />
-        )}
+        {isRestoring ? <Restoring /> : <Routes queryClient={queryClient} />}
         <UpdatePrompt />
       </I18nProvider>
     </QueryClientProvider>
   );
+}
+
+/**
+ * Маршруты. Заводятся **после** восстановления сессии, а не до.
+ *
+ * Охрана оболочки `_app` читает сессию из контекста роутера в `beforeLoad`.
+ * Контекст, доставленный после создания роутера, до первого сопоставления
+ * не доходит: прямая ссылка на кабинет выбрасывала вошедшего человека на
+ * вход, и увидеть это можно было только открыв адрес ссылкой, а не переходом
+ * внутри приложения.
+ */
+function Routes({ queryClient }: { readonly queryClient: QueryClient }): ReactNode {
+  const user = useSessionStore((state) => state.user);
+  const [router] = useState(() => createAppRouter({ queryClient, session: user }));
+
+  useEffect(() => {
+    // Вход и выход происходят уже при живом роутере. Без сброса вычисленных
+    // совпадений они не отразятся на текущей странице до перезагрузки.
+    void router.invalidate();
+  }, [router, user]);
+
+  return <RouterProvider router={router} context={{ queryClient, session: user }} />;
 }
 
 /**

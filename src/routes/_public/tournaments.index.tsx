@@ -9,7 +9,9 @@ import { useMemo, useState, type ReactNode } from 'react';
 
 import { formatDateTime, useLocale, useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
+import { useSessionStore } from '@/features/auth/session-store';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { managedClubIds } from '@/features/clubs/roles';
 import { TOURNAMENT_STATUS_KEYS } from '@/features/tournaments/labels';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 
@@ -65,6 +67,11 @@ function TournamentsPage(): ReactNode {
   const tournaments = useQuery(tournamentsQuery(query));
   const clubs = useQuery(clubDirectoryQuery);
 
+  // Создание турнира стоит там, где организатор смотрит турниры, а не в
+  // отдельном разделе кабинета: разделов ТЗ кабинету не отводит.
+  const user = useSessionStore((state) => state.user);
+  const canCreate = managedClubIds(user).length > 0;
+
   const pages =
     tournaments.data === undefined
       ? 1
@@ -72,7 +79,14 @@ function TournamentsPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">{t('page.tournaments.title')}</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold text-slate-900">{t('page.tournaments.title')}</h1>
+        {canCreate && (
+          <Link to="/tournaments/new" className="rounded bg-slate-900 px-4 py-2 text-sm text-white">
+            {t('tournament.form.create')}
+          </Link>
+        )}
+      </div>
 
       <form
         className="mt-6 grid gap-3 sm:grid-cols-2"

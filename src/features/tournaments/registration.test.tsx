@@ -336,6 +336,33 @@ describe('панель организатора', () => {
     expect(screen.queryByRole('button', { name: ru['participants.add'] })).toBeNull();
   });
 
+  it('организатор повторяет турнир, меняя только дату', async () => {
+    // ТЗ 4.2 требует этот механизм: клуб проводит турнир восемь раз в месяц
+    // с теми же настройками. Копирует сервер — форма их не пересобирает.
+    renderTournament(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['tournament.form.startsAt']), {
+      target: { value: '2026-12-01T10:00' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: ru['tournament.repeat.submit'] }));
+
+    await waitFor(() => {
+      expect(sent.some((request) => request.url.includes('/duplicate'))).toBe(true);
+    });
+
+    const [request] = sent.filter((row) => row.url.includes('/duplicate'));
+
+    expect(request?.body).toEqual({ startsAt: new Date('2026-12-01T10:00').toISOString() });
+  });
+
+  it('игроку без роли в клубе повторение не предлагается', async () => {
+    renderTournament({ ...USER_WITH_PROFILE, clubRoles: [] });
+
+    await screen.findByText(ru['registration.title']);
+
+    expect(screen.queryByRole('button', { name: ru['tournament.repeat.submit'] })).toBeNull();
+  });
+
   it('состав ведёт на профиль каждого участника', async () => {
     registrations = REGISTRATIONS;
 

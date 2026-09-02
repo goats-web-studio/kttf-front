@@ -9,6 +9,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Виртуальный модуль плагина PWA существует только в сборке. Без
+      // заглушки не собирается ни один тест, рендерящий приложение целиком.
+      'virtual:pwa-register/react': fileURLToPath(
+        new URL('./src/test/pwa-register-stub.ts', import.meta.url),
+      ),
     },
   },
   test: {

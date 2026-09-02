@@ -21,3 +21,6 @@ pnpm-debug.log*
 
 # Vite: service worker, собранный для дев-сервера
 dev-dist/
+
+# Плагин маршрутов TanStack: временные файлы генерации
+.tanstack/

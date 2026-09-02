@@ -1,4 +1,6 @@
 import type {
+  CreateTournamentInput,
+  DuplicateTournamentInput,
   ListTournamentsQuery,
   Page,
   RegisterInput,
@@ -20,6 +22,33 @@ import { apiRequest, queryString } from '@/common/api';
 
 export function listTournaments(query: ListTournamentsQuery): Promise<Page<TournamentView>> {
   return apiRequest<Page<TournamentView>>(`/tournaments${queryString(query)}`);
+}
+
+/**
+ * Создание турнира — ТЗ 4.2.
+ *
+ * Право на него проверяет сервер: заводить турнир может организатор
+ * клуба-хозяина, а не всякий вошедший (ТС 8.3).
+ */
+export function createTournament(input: CreateTournamentInput): Promise<TournamentView> {
+  return apiRequest<TournamentView>('/tournaments', { method: 'POST', body: input });
+}
+
+/**
+ * «Повторить прошлый турнир» — ТЗ 4.2, обязательный механизм.
+ *
+ * Копирует сервер, а не форма. Собрать тело создания из прочитанного
+ * турнира означало бы второе место, где перечислены все поля настроек, и
+ * первое же новое поле их развело бы.
+ */
+export function duplicateTournament(
+  id: string,
+  input: DuplicateTournamentInput,
+): Promise<TournamentView> {
+  return apiRequest<TournamentView>(`/tournaments/${id}/duplicate`, {
+    method: 'POST',
+    body: input,
+  });
 }
 
 export function fetchTournament(id: string): Promise<TournamentView> {
