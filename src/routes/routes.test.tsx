@@ -1,12 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { AuthUserView } from '@kttf/shared/types';
 
 import { createAppRouter } from '@/app/router';
 import { ru } from '@/common/i18n/ru';
+import { SCREEN_STATE, SCREEN_TOKEN } from '@/test/fixtures';
 
 /** Вошедший пользователь без ролей и без профиля игрока — минимум для охраны. */
 const SIGNED_IN: AuthUserView = {
@@ -37,7 +38,9 @@ async function renderAt(
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
-  await screen.findByRole('heading');
+  // findAll, а не find: на экране зала заголовков несколько — зоны столов,
+  // очереди и таблиц. Ждём появления любого, а не единственного.
+  await screen.findAllByRole('heading');
 
   return router;
 }
@@ -65,10 +68,28 @@ describe('маршрутизация', () => {
   });
 
   it('экран зала открывается по публичному токену без входа', async () => {
-    await renderAt('/screen/abc123');
+    // Состояние приходит по токену: сессии у телевизора на стене нет.
+    vi.stubGlobal('fetch', () =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        text: () => Promise.resolve(JSON.stringify(SCREEN_STATE)),
+      } as unknown as Response),
+    );
 
-    expect(screen.getByRole('heading', { name: ru['page.screen.title'] })).toBeDefined();
+    await renderAt(`/screen/${SCREEN_TOKEN}`);
+
+    expect(
+      await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name }),
+    ).toBeDefined();
+    // Шапки публичной части на стене быть не должно: экран лежит вне
+    // публичной оболочки своим маршрутом (ADR-016).
+    expect(screen.queryByRole('link', { name: ru['nav.ratings'] })).toBeNull();
   });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('охрана консоли', () => {

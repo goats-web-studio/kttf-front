@@ -177,6 +177,22 @@ export const ru = {
   'console.tie.down': 'Ниже',
   'console.tie.confirm': 'Сохранить порядок',
   'console.finish': 'Завершить турнир и начислить рейтинг',
+
+  // Экран зала — ТЗ 6.5. Свои ключи, а не консольные: на стене другие слова
+  // и другой читатель — зритель, а не судья.
+  'screen.tables.title': 'Столы',
+  'screen.table.free': 'Свободен',
+  'screen.match.playing': 'Идёт игра',
+  'screen.match.pending': 'Участник не определён',
+  'screen.queue.title': 'Следующие встречи',
+  'screen.queue.empty': 'Очередь пуста',
+  'screen.standings.title': 'Таблицы',
+  'screen.standings.place': 'Место',
+  'screen.standings.player': 'Игрок',
+  'screen.standings.points': 'Очки',
+  'screen.standings.sets': 'Сеты',
+  'screen.standings.balls': 'Мячи',
+  'screen.offline': 'Нет связи',
   'console.failure.lead': 'Не отправлено:',
   'console.failure.retry': 'Повторить',
   'console.failure.dismiss': 'Скрыть',

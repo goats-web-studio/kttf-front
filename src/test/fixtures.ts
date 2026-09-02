@@ -2,6 +2,7 @@ import type {
   ClubView,
   PlayerView,
   ResultParticipantView,
+  ScreenView,
   StageView,
   TournamentResultsView,
   TournamentView,
@@ -379,4 +380,21 @@ export const CONSOLE_STATE: TournamentResultsView = {
     },
   ],
   standings: { tournamentId: TOURNAMENT_ID, groups: [] },
+};
+
+/** Публичный токен второго экрана — 32 символа base64url, ТС 8.3. */
+export const SCREEN_TOKEN = 'FDgV6mQ1xKq8yZ2pW7nR4tL0sB3cH5jE';
+
+/**
+ * Ответ `GET /public/screen/:publicToken` — ТС 7.7.
+ *
+ * Тот же турнир, что видит консоль, но глазами стены: состав отдельным
+ * списком, таблицы есть, журнала рейтинга нет.
+ */
+export const SCREEN_STATE: ScreenView = {
+  tournament: CONSOLE_STATE.tournament,
+  players: [PLAYERS.first, PLAYERS.second, PLAYERS.third, PLAYERS.fourth],
+  standings: RESULTS.standings,
+  stages: CONSOLE_STATE.stages,
+  updatedAt: '2026-09-05T10:30:00.000Z',
 };
