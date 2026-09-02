@@ -193,7 +193,7 @@ export const kk: Record<MessageKey, string> = {
   'standings.sets': 'Сеттер',
   'standings.balls': 'Доптар',
 
-'lifecycle.title': 'Турнирді өткізу',
+  'lifecycle.title': 'Турнирді өткізу',
   'lifecycle.status': 'Күйі',
   'lifecycle.publish': 'Жариялау',
   'lifecycle.openRegistration': 'Тіркеуді ашу',
@@ -206,15 +206,20 @@ export const kk: Record<MessageKey, string> = {
   'lifecycle.cancelYes': 'Иә, болдырмау',
   'lifecycle.cancelNo': 'Болдырмау керек емес',
   'lifecycle.console': 'Төреші консолін ашу',
-  'lifecycle.hint.DRAFT': 'Жобаны тек сіз көресіз. Жарияланғаннан кейін турнир күнтізбеде пайда болады.',
+  'lifecycle.hint.DRAFT':
+    'Жобаны тек сіз көресіз. Жарияланғаннан кейін турнир күнтізбеде пайда болады.',
   'lifecycle.hint.REG_CLOSED':
     'Бастар алдында жеребе тартыңыз: топтар мен торсыз турнир басталмайды. Қайта тарту алдыңғысын өшіреді.',
   'lifecycle.hint.FINISHED': 'Турнир аяқталды, бірақ рейтинг есептелмеді. Есептеуді қайталаңыз.',
 
   'draw.title': 'Орналастыру',
-  'draw.matches': 'кездесу',
+  'draw.matches': 'Кездесу',
   'draw.collisions': 'Бір клубтың ойыншылары бір топта',
-  'draw.collisions.why': 'Оларды бөлу мүмкін болмады: рейтинг бойынша сұрыптау клуб бойынша бөлуден маңыздырақ.',
+  'draw.collisions.why':
+    'Оларды бөлу мүмкін болмады: рейтинг бойынша сұрыптау клуб бойынша бөлуден маңыздырақ.',
+  'draw.swap.hint':
+    'Екі ойыншыны басыңыз — олар орындарын ауыстырады. Топтар мен тор өлшемі өзгермейді.',
+  'draw.bracket': 'Тор',
 
   'stage.type.GROUPS': 'Топтар',
   'stage.type.KNOCKOUT': 'Олимпиадалық тор',
@@ -357,6 +362,8 @@ export const kk: Record<MessageKey, string> = {
   'error.api.INVALID_SCORE': 'Есеп кездесу схемасына сәйкес келмейді',
   'error.api.DOWNSTREAM_MATCH_PLAYED': 'Келесі кездесу ойналған — алдымен оны болдырмаңыз',
   'error.api.TIE_DECISION_INVALID': 'Бұл қатысушылар орынды бөліспейді',
+  'error.api.DRAW_POSITION_NOT_FOUND':
+    'Ойыншы орналастыруда жоқ: ол жеребеге қатыспайды немесе алынып тасталды.',
   'error.api.TOURNAMENT_NOT_COMPLETE': 'Барлық кездесу ойналмаған',
   'error.api.TIES_UNRESOLVED': 'Барлық топта орындар анықталмаған',
   'error.api.RATING_SNAPSHOT_MISSING': 'Қатысушының турнир басындағы рейтингі жоқ',

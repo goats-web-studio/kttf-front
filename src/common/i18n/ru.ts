@@ -191,7 +191,7 @@ export const ru = {
   'standings.sets': 'Сеты',
   'standings.balls': 'Мячи',
 
-'lifecycle.title': 'Проведение турнира',
+  'lifecycle.title': 'Проведение турнира',
   'lifecycle.status': 'Состояние',
   'lifecycle.publish': 'Опубликовать',
   'lifecycle.openRegistration': 'Открыть запись',
@@ -204,15 +204,19 @@ export const ru = {
   'lifecycle.cancelYes': 'Да, отменить',
   'lifecycle.cancelNo': 'Не отменять',
   'lifecycle.console': 'Открыть консоль судьи',
-  'lifecycle.hint.DRAFT': 'Черновик видите только вы. После публикации турнир появится в календаре.',
+  'lifecycle.hint.DRAFT':
+    'Черновик видите только вы. После публикации турнир появится в календаре.',
   'lifecycle.hint.REG_CLOSED':
     'Перед стартом проведите жеребьёвку: без групп и сетки турнир не начнётся. Повторная жеребьёвка стирает предыдущую.',
   'lifecycle.hint.FINISHED': 'Турнир завершён, но рейтинг не начислен. Повторите обсчёт.',
 
   'draw.title': 'Расстановка',
-  'draw.matches': 'встреч',
+  'draw.matches': 'Встреч',
   'draw.collisions': 'Одноклубники в одной группе',
   'draw.collisions.why': 'Развести их не удалось: посев по рейтингу важнее разведения по клубам.',
+  'draw.swap.hint':
+    'Нажмите двух игроков, чтобы поменять их местами. Размеры групп и сетки при этом не меняются.',
+  'draw.bracket': 'Сетка',
 
   'stage.type.GROUPS': 'Группы',
   'stage.type.KNOCKOUT': 'Олимпийская сетка',
@@ -357,6 +361,8 @@ export const ru = {
   'error.api.INVALID_SCORE': 'Счёт не соответствует схеме встречи',
   'error.api.DOWNSTREAM_MATCH_PLAYED': 'Следующая встреча уже сыграна — сначала отмените её',
   'error.api.TIE_DECISION_INVALID': 'Эти участники не делят место',
+  'error.api.DRAW_POSITION_NOT_FOUND':
+    'Игрока нет в расстановке: он не участвует в жеребьёвке или снят.',
   'error.api.TOURNAMENT_NOT_COMPLETE': 'Сыграны не все встречи',
   'error.api.TIES_UNRESOLVED': 'Не во всех группах определены места',
   'error.api.RATING_SNAPSHOT_MISSING': 'У участника нет рейтинга, снятого на старте турнира',

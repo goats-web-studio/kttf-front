@@ -1,6 +1,7 @@
 import type {
   CreateTournamentInput,
   DrawResult,
+  DrawSwapInput,
   DuplicateTournamentInput,
   ListTournamentsQuery,
   Page,
@@ -161,4 +162,14 @@ export function finishTournament(id: string): Promise<TournamentView> {
 
 export function cancelTournament(id: string): Promise<TournamentView> {
   return apiRequest<TournamentView>(`/tournaments/${id}/cancel`, { method: 'POST' });
+}
+
+/**
+ * Ручная корректировка жеребьёвки — ТЗ 5.3, ADR-033.
+ *
+ * Обмен двумя игроками. Структура расстановки при этом не меняется: размеры
+ * групп и круги сетки остаются теми, что построил движок.
+ */
+export function swapDraw(id: string, input: DrawSwapInput): Promise<DrawResult> {
+  return apiRequest<DrawResult>(`/tournaments/${id}/draw/swap`, { method: 'POST', body: input });
 }

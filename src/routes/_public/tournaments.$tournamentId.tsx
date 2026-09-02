@@ -109,7 +109,7 @@ function TournamentPage(): ReactNode {
                 {isClubStaff(user, data.tournament.clubId) &&
                   data.tournament.startedAt === null && (
                     <>
-                      <DrawPreview stages={data.stages} names={names} />
+                      <DrawPreview tournamentId={tournamentId} stages={data.stages} names={names} />
                       <ResultsBracket stages={data.stages} names={names} />
                     </>
                   )}

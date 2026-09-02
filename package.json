@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
-    "@kttf/shared": "github:goats-web-studio/kttf-shared#1aac67729cd3f70a186ad3a240919fea67f6eaf3",
+    "@kttf/shared": "github:goats-web-studio/kttf-shared#b006a4498a83658e9cd424ccd8f7997373a626c3",
     "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-router": "^1.170.32",
     "dexie": "^4.4.5",

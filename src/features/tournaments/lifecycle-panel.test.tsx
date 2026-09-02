@@ -33,6 +33,7 @@ import {
 interface Sent {
   readonly url: string;
   readonly method: string;
+  readonly body: unknown;
 }
 
 let sent: Sent[] = [];
@@ -58,7 +59,8 @@ function answer(url: string, init: RequestInit | undefined): Response {
   const method = init?.method ?? 'GET';
 
   if (method !== 'GET') {
-    sent.push({ url, method });
+    const raw = init?.body;
+    sent.push({ url, method, body: typeof raw === 'string' ? JSON.parse(raw) : undefined });
 
     if (refusal !== null) {
       return {
@@ -206,6 +208,44 @@ describe('расстановка до старта', () => {
     expect(await screen.findByText(ru['draw.title'])).toBeDefined();
     // Состав группы — тот же, что придёт в консоль судьи.
     expect(screen.getByText('Группа A')).toBeDefined();
+  });
+
+  it('два нажатия меняют игроков местами', async () => {
+    tournament = { ...tournament, status: 'REG_CLOSED' };
+
+    renderTournament(USER_WITH_PROFILE);
+
+    const group = within(await screen.findByRole('list', { name: 'Группа A' }));
+    const first = group.getByRole('button', { name: playerName(PLAYERS.first) });
+    fireEvent.click(first);
+
+    // Первое нажатие только выбирает: обмена ещё нет.
+    expect(first.getAttribute('aria-pressed')).toBe('true');
+    expect(sent).toEqual([]);
+
+    fireEvent.click(group.getByRole('button', { name: playerName(PLAYERS.third) }));
+
+    await waitFor(() => {
+      expect(sent.some((request) => request.url.endsWith('/draw/swap'))).toBe(true);
+    });
+    expect(sent[0]?.body).toEqual({
+      playerAId: PLAYER_IDS.first,
+      playerBId: PLAYER_IDS.third,
+    });
+  });
+
+  it('повторное нажатие по выбранному отменяет выбор, а не меняет с собой', async () => {
+    tournament = { ...tournament, status: 'REG_CLOSED' };
+
+    renderTournament(USER_WITH_PROFILE);
+
+    const group = within(await screen.findByRole('list', { name: 'Группа A' }));
+    const player = group.getByRole('button', { name: playerName(PLAYERS.first) });
+    fireEvent.click(player);
+    fireEvent.click(player);
+
+    expect(player.getAttribute('aria-pressed')).toBe('false');
+    expect(sent).toEqual([]);
   });
 
   it('у начатого турнира не показывается: менять расстановку уже нечем', async () => {

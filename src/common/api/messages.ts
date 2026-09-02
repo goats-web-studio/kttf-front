@@ -28,6 +28,7 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   INVALID_SCORE: 'error.api.INVALID_SCORE',
   DOWNSTREAM_MATCH_PLAYED: 'error.api.DOWNSTREAM_MATCH_PLAYED',
   TIE_DECISION_INVALID: 'error.api.TIE_DECISION_INVALID',
+  DRAW_POSITION_NOT_FOUND: 'error.api.DRAW_POSITION_NOT_FOUND',
 
   // Завершение турнира — ТС 7.5.
   TOURNAMENT_NOT_COMPLETE: 'error.api.TOURNAMENT_NOT_COMPLETE',
