@@ -1,0 +1,23 @@
+# Что не должно попасть в контекст сборки.
+#
+# Секреты — в первую очередь: бриф, запрет №9. Остальное либо пересобирается
+# внутри образа, либо в нём не нужно.
+
+.env
+.env.*
+!.env.example
+
+node_modules
+dist
+dev-dist
+coverage
+
+.git
+.gitignore
+.gitattributes
+
+Dockerfile
+.dockerignore
+README.md
+*.log
+*.tsbuildinfo
