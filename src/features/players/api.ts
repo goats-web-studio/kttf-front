@@ -1,4 +1,5 @@
 import type {
+  CreatePlayerInput,
   HeadToHeadView,
   ListPlayersQuery,
   Page,
@@ -7,6 +8,7 @@ import type {
   PlayerView,
   RatingHistoryQuery,
   RatingHistoryView,
+  UpdatePlayerInput,
 } from '@kttf/shared/types';
 
 import { apiRequest, queryString } from '@/common/api';
@@ -25,6 +27,21 @@ export function listPlayers(query: ListPlayersQuery): Promise<Page<PlayerView>> 
 
 export function fetchPlayer(id: string): Promise<PlayerView> {
   return apiRequest<PlayerView>(`/players/${id}`);
+}
+
+/**
+ * Заведение профиля.
+ *
+ * Один маршрут на два случая, и какой именно — решает сервер по наличию
+ * профиля у вошедшего (ADR-014). Отсюда он вызывается только в первом:
+ * человек заводит профиль себе, ТЗ 2.2.
+ */
+export function createPlayer(input: CreatePlayerInput): Promise<PlayerView> {
+  return apiRequest<PlayerView>('/players', { method: 'POST', body: input });
+}
+
+export function updatePlayer(id: string, input: UpdatePlayerInput): Promise<PlayerView> {
+  return apiRequest<PlayerView>(`/players/${id}`, { method: 'PATCH', body: input });
 }
 
 /**

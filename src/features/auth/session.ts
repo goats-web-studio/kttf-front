@@ -95,6 +95,28 @@ async function performRestore(): Promise<void> {
   }
 }
 
+/**
+ * Перечитать вошедшего.
+ *
+ * Нужно там, где состав пользователя меняется от его же действия, а токены —
+ * нет: заведённый профиль игрока проставляет `playerId`, и без обновления
+ * кабинет предлагал бы завести профиль, который уже есть.
+ *
+ * Токен берётся **после** запроса, а не до: `fetchMe` мог по дороге обновить
+ * пару, и записанный заранее оказался бы прежним, уже недействительным.
+ */
+export async function reloadUser(): Promise<void> {
+  const user = await fetchMe();
+  const accessToken = useSessionStore.getState().accessToken;
+
+  if (accessToken === null) {
+    // Человек вышел, пока запрос шёл. Возвращать его в сессию нельзя.
+    return;
+  }
+
+  useSessionStore.getState().userLoaded(user, accessToken);
+}
+
 /** Выход. Сессия на сервере гасится, но отказ там не мешает выйти локально. */
 export async function signOut(): Promise<void> {
   const refreshToken = readRefreshToken();

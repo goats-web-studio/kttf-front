@@ -1,4 +1,5 @@
 import type {
+  AuthUserView,
   ClubView,
   HeadToHeadView,
   PlayerMatchView,
@@ -542,4 +543,27 @@ export const HEAD_TO_HEAD: HeadToHeadView = {
   setsWon: 7,
   setsLost: 5,
   matches: [PLAYOFF_WIN],
+};
+
+/**
+ * Вошедший, у которого профиля игрока ещё нет.
+ *
+ * Ровно то состояние, в котором человек оказывается сразу после входа по
+ * коду: аккаунт есть, `playerId` пуст, пока профиль не заведён (ТЗ 2.2).
+ */
+export const USER_WITHOUT_PROFILE: AuthUserView = {
+  id: '00000000-0000-4000-8000-000000000061',
+  phone: '+77011234567',
+  email: null,
+  locale: 'ru',
+  createdAt: '2026-09-01T00:00:00.000Z',
+  playerId: null,
+  clubRoles: [],
+};
+
+/** Тот же человек после заведения профиля и с ролью в клубе. */
+export const USER_WITH_PROFILE: AuthUserView = {
+  ...USER_WITHOUT_PROFILE,
+  playerId: PLAYER_IDS.first,
+  clubRoles: [{ clubId: CLUB.id, role: 'OWNER' }],
 };
