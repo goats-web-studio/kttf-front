@@ -21,6 +21,7 @@ import { CONSOLE_SNAPSHOT, PLAYERS, TOURNAMENT_ID } from '@/test/fixtures';
 const SIGNED_IN: AuthUserView = {
   id: '00000000-0000-4000-8000-000000000001',
   phone: '+77011234567',
+  login: null,
   email: null,
   locale: 'ru',
   createdAt: '2026-08-30T00:00:00.000Z',

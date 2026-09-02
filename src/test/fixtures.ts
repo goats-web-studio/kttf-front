@@ -555,6 +555,7 @@ export const HEAD_TO_HEAD: HeadToHeadView = {
 export const USER_WITHOUT_PROFILE: AuthUserView = {
   id: '00000000-0000-4000-8000-000000000061',
   phone: '+77011234567',
+  login: null,
   email: null,
   locale: 'ru',
   createdAt: '2026-09-01T00:00:00.000Z',

@@ -1,25 +1,27 @@
 import type {
   AuthSession,
   AuthUserView,
-  RequestCodeResult,
+  LoginInput,
+  SignUpInput,
   TokenPair,
-  VerifyCodeInput,
 } from '@kttf/shared/types';
 
 import { apiRequest } from '@/common/api';
 
 /** Контракт ТС 7.1, один в один. Формы запросов и ответов заданы документом. */
 
-export function requestCode(phone: string): Promise<RequestCodeResult> {
-  return apiRequest<RequestCodeResult>('/auth/request-code', {
+/** Вход логином или телефоном — ADR-034. */
+export function signIn(input: LoginInput): Promise<AuthSession> {
+  return apiRequest<AuthSession>('/auth/login', {
     method: 'POST',
-    body: { phone },
+    body: input,
     anonymous: true,
   });
 }
 
-export function verifyCode(input: VerifyCodeInput): Promise<AuthSession> {
-  return apiRequest<AuthSession>('/auth/verify-code', {
+/** Регистрация: аккаунт и, если человек себя назвал, привязка к игроку. */
+export function signUp(input: SignUpInput): Promise<AuthSession> {
+  return apiRequest<AuthSession>('/auth/sign-up', {
     method: 'POST',
     body: input,
     anonymous: true,

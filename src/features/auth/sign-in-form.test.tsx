@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider } from '@tanstack/react-router';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { createAppRouter } from '@/app/router';
 import { ru } from '@/common/i18n/ru';
 
 import { useSessionStore } from './session-store';
-import SignInForm from './sign-in-form';
 
 const PHONE = '+77011234567';
 
@@ -15,6 +16,7 @@ const SESSION = {
   user: {
     id: '00000000-0000-4000-8000-000000000001',
     phone: PHONE,
+    login: 'aslan',
     email: null,
     locale: 'ru',
     createdAt: '2026-08-30T00:00:00.000Z',
@@ -31,16 +33,24 @@ function reply(status: number, body: unknown): Response {
   } as unknown as Response;
 }
 
-function renderForm(): { onSignedIn: ReturnType<typeof vi.fn> } {
-  const onSignedIn = vi.fn();
+/**
+ * Форма открывается своей страницей: в ней есть ссылка на регистрацию, а
+ * `Link` без роутера не отрисовывается.
+ */
+async function renderForm(): Promise<void> {
+  window.history.pushState({}, '', '/login');
+
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const router = createAppRouter({ queryClient, session: null });
 
   render(
-    <QueryClientProvider client={new QueryClient()}>
-      <SignInForm onSignedIn={onSignedIn} />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   );
 
-  return { onSignedIn };
+  // Маршрут отрисовывается не синхронно: без ожидания полей ещё нет.
+  await screen.findByRole('button', { name: ru['login.submit'] });
 }
 
 function type(label: string, value: string): void {
@@ -61,81 +71,73 @@ afterEach(() => {
 });
 
 describe('форма входа', () => {
-  it('неверный номер не уходит на сервер', async () => {
+  it('пустые поля на сервер не уходят', async () => {
     const fetchMock = vi.fn<typeof fetch>();
     vi.stubGlobal('fetch', fetchMock);
 
-    renderForm();
-    type(ru['login.phone.label'], '87011234567');
-    press(ru['login.submit.requestCode']);
+    await renderForm();
+    press(ru['login.submit']);
 
     // Текст берётся из словаря, а не из схемы: сообщения внутри схем общие
     // с сервером и не локализуются — бриф 3.4.
-    expect(await screen.findByRole('alert')).toHaveProperty('textContent', ru['error.form.phone']);
+    expect(await screen.findByRole('alert')).toHaveProperty(
+      'textContent',
+      ru['error.form.credentials'],
+    );
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('телефон, затем код — и сессия сохранена', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn<typeof fetch>()
-        .mockResolvedValueOnce(reply(202, { expiresInSeconds: 300 }))
-        .mockResolvedValueOnce(reply(200, SESSION)),
-    );
+  it('логин с паролем — и сессия сохранена', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(reply(200, SESSION));
+    vi.stubGlobal('fetch', fetchMock);
 
-    const { onSignedIn } = renderForm();
-    type(ru['login.phone.label'], PHONE);
-    press(ru['login.submit.requestCode']);
-
-    // Второй шаг показывает номер: человек должен видеть, куда ушёл код.
-    expect(await screen.findByText(PHONE)).toBeDefined();
-
-    type(ru['login.code.label'], '123456');
-    press(ru['login.submit.verify']);
+    await renderForm();
+    type(ru['login.identifier.label'], 'aslan');
+    type(ru['login.password.label'], 'parol123');
+    press(ru['login.submit']);
 
     await waitFor(() => {
       expect(useSessionStore.getState().user?.phone).toBe(PHONE);
     });
-    expect(onSignedIn).toHaveBeenCalledOnce();
     expect(globalThis.localStorage.getItem('kttf.refresh-token')).toBe('refresh-1');
+    expect(fetchMock.mock.calls[0]?.[0] as string).toContain('/auth/login');
   });
 
-  it('превышение лимита показывается на языке интерфейса', async () => {
-    // ТС 8.3: пять запросов кода на телефон в час. Английский message
-    // сервера пользователю не показывается никогда.
+  it('телефон принимается тем же полем', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(reply(200, SESSION));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await renderForm();
+    type(ru['login.identifier.label'], PHONE);
+    type(ru['login.password.label'], 'parol123');
+    press(ru['login.submit']);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledOnce();
+    });
+    const sent = fetchMock.mock.calls[0]?.[1]?.body as string;
+    expect(sent).toContain(PHONE);
+  });
+
+  it('отказ сервера показывается на языке интерфейса', async () => {
+    // Английский `message` сервера пользователю не показывается никогда.
     vi.stubGlobal(
       'fetch',
       vi
         .fn<typeof fetch>()
-        .mockResolvedValue(reply(429, { error: { code: 'RATE_LIMITED', message: 'too many' } })),
+        .mockResolvedValue(
+          reply(401, { error: { code: 'UNAUTHORIZED', message: 'Login or password is wrong' } }),
+        ),
     );
 
-    renderForm();
-    type(ru['login.phone.label'], PHONE);
-    press(ru['login.submit.requestCode']);
+    await renderForm();
+    type(ru['login.identifier.label'], 'aslan');
+    type(ru['login.password.label'], 'ne-parol');
+    press(ru['login.submit']);
 
     expect(await screen.findByRole('alert')).toHaveProperty(
       'textContent',
-      ru['error.api.RATE_LIMITED'],
+      ru['error.api.UNAUTHORIZED'],
     );
-  });
-
-  it('короткий код не уходит на сервер', async () => {
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(reply(202, { expiresInSeconds: 300 }));
-    vi.stubGlobal('fetch', fetchMock);
-
-    renderForm();
-    type(ru['login.phone.label'], PHONE);
-    press(ru['login.submit.requestCode']);
-    await screen.findByText(PHONE);
-
-    type(ru['login.code.label'], '12345');
-    press(ru['login.submit.verify']);
-
-    expect(await screen.findByRole('alert')).toHaveProperty('textContent', ru['error.form.code']);
-    expect(fetchMock).toHaveBeenCalledOnce();
   });
 });

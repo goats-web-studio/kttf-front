@@ -16,6 +16,7 @@ import { Route as AppCabinetRouteImport } from './routes/_app/cabinet'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicRatingsRouteImport } from './routes/_public/ratings'
+import { Route as PublicSignUpRouteImport } from './routes/_public/sign-up'
 import { Route as ConsoleIndexRouteImport } from './routes/console/index'
 import { Route as ConsoleTournamentIdRouteImport } from './routes/console/$tournamentId'
 import { Route as ScreenPublicTokenRouteImport } from './routes/screen.$publicToken'
@@ -55,6 +56,11 @@ const PublicLoginRoute = PublicLoginRouteImport.update({
 const PublicRatingsRoute = PublicRatingsRouteImport.update({
   id: '/ratings',
   path: '/ratings',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicSignUpRoute = PublicSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
   getParentRoute: () => PublicRoute,
 } as any)
 const ConsoleIndexRoute = ConsoleIndexRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/cabinet': typeof AppCabinetRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
+  '/sign-up': typeof PublicSignUpRoute
   '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console/': typeof ConsoleIndexRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/cabinet': typeof AppCabinetRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
+  '/sign-up': typeof PublicSignUpRoute
   '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console': typeof ConsoleIndexRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/_app/cabinet': typeof AppCabinetRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/ratings': typeof PublicRatingsRoute
+  '/_public/sign-up': typeof PublicSignUpRoute
   '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/_public/': typeof PublicIndexRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/login'
     | '/ratings'
+    | '/sign-up'
     | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/console/'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/login'
     | '/ratings'
+    | '/sign-up'
     | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/console'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/_app/cabinet'
     | '/_public/login'
     | '/_public/ratings'
+    | '/_public/sign-up'
     | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/_public/'
@@ -240,6 +252,13 @@ declare module '@tanstack/react-router' {
       path: '/ratings'
       fullPath: '/ratings'
       preLoaderRoute: typeof PublicRatingsRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/sign-up': {
+      id: '/_public/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof PublicSignUpRouteImport
       parentRoute: typeof PublicRoute
     }
     '/console/': {
@@ -309,6 +328,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 interface PublicRouteChildren {
   PublicLoginRoute: typeof PublicLoginRoute
   PublicRatingsRoute: typeof PublicRatingsRoute
+  PublicSignUpRoute: typeof PublicSignUpRoute
   PublicIndexRoute: typeof PublicIndexRoute
   PublicPlayersPlayerIdRoute: typeof PublicPlayersPlayerIdRoute
   PublicTournamentsTournamentIdRoute: typeof PublicTournamentsTournamentIdRoute
@@ -318,6 +338,7 @@ interface PublicRouteChildren {
 const PublicRouteChildren: PublicRouteChildren = {
   PublicLoginRoute: PublicLoginRoute,
   PublicRatingsRoute: PublicRatingsRoute,
+  PublicSignUpRoute: PublicSignUpRoute,
   PublicIndexRoute: PublicIndexRoute,
   PublicPlayersPlayerIdRoute: PublicPlayersPlayerIdRoute,
   PublicTournamentsTournamentIdRoute: PublicTournamentsTournamentIdRoute,

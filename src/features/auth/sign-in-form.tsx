@@ -1,26 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { requestCodeSchema, verifyCodeSchema, type AuthSession } from '@kttf/shared/types';
+import { loginSchema } from '@kttf/shared/types';
 import { useMutation } from '@tanstack/react-query';
-import { type ReactNode, useState } from 'react';
+import { Link } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
 
-import { requestCode, verifyCode } from './api';
+import { signIn } from './api';
 import { useSessionStore } from './session-store';
-
-const codeSchema = verifyCodeSchema.pick({ code: true });
 
 interface SignInFormProps {
   readonly onSignedIn: () => void;
 }
 
 /**
- * Вход по одноразовому коду — ТЗ 2.1, контракт ТС 7.1.
+ * Вход логином или телефоном — ТЗ 2.1, ADR-034.
  *
- * Два шага в одном экране: адрес без телефона бессмыслен, а отдельный
- * маршрут под ввод кода открывался бы пустым при перезагрузке.
+ * Поле ввода одно на оба: человек вводит то, что помнит, а разбирает сервер.
+ * Два поля означали бы выбор способа входа до того, как человек начал вводить.
  *
  * Тексты ошибок берутся из словаря, а не из схемы: сообщения внутри схем
  * общие с сервером и не локализуются — бриф 3.4.
@@ -28,136 +27,77 @@ interface SignInFormProps {
 export default function SignInForm({ onSignedIn }: SignInFormProps): ReactNode {
   const t = useT();
   const signedIn = useSessionStore((state) => state.signedIn);
-  const [phone, setPhone] = useState<string | null>(null);
 
-  const phoneForm = useForm({
-    resolver: zodResolver(requestCodeSchema),
-    defaultValues: { phone: '' },
+  const form = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { identifier: '', password: '' },
   });
 
-  const codeForm = useForm({
-    resolver: zodResolver(codeSchema),
-    defaultValues: { code: '' },
-  });
-
-  const request = useMutation({
-    mutationFn: (value: string) => requestCode(value),
-    onSuccess: (_result, value) => {
-      setPhone(value);
-    },
-  });
-
-  const verify = useMutation({
-    mutationFn: (code: string): Promise<AuthSession> => {
-      if (phone === null) {
-        throw new Error('Шаг ввода кода открыт без телефона');
-      }
-
-      return verifyCode({ phone, code });
-    },
+  const login = useMutation({
+    mutationFn: signIn,
     onSuccess: (session) => {
       signedIn(session);
       onSignedIn();
     },
   });
 
-  if (phone === null) {
-    return (
-      <form
-        className="space-y-4"
-        onSubmit={(event) => {
-          void phoneForm.handleSubmit((values) => {
-            request.mutate(values.phone);
-          })(event);
-        }}
-      >
-        <p className="text-slate-600">{t('login.lead')}</p>
-
-        <label className="block">
-          <span className="text-sm text-slate-700">{t('login.phone.label')}</span>
-          <input
-            {...phoneForm.register('phone')}
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder={t('login.phone.placeholder')}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
-          />
-        </label>
-
-        {phoneForm.formState.errors.phone !== undefined && (
-          <p role="alert" className="text-sm text-red-700">
-            {t('error.form.phone')}
-          </p>
-        )}
-        {request.error !== null && (
-          <p role="alert" className="text-sm text-red-700">
-            {t(errorMessageKey(request.error))}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={request.isPending}
-          className="w-full rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
-        >
-          {request.isPending ? t('common.loading') : t('login.submit.requestCode')}
-        </button>
-      </form>
-    );
-  }
-
   return (
     <form
       className="space-y-4"
       onSubmit={(event) => {
-        void codeForm.handleSubmit((values) => {
-          verify.mutate(values.code);
+        void form.handleSubmit((values) => {
+          login.mutate(values);
         })(event);
       }}
     >
-      <p className="text-slate-600">
-        {t('login.code.sent')} <span className="font-medium text-slate-900">{phone}</span>
-      </p>
+      <p className="text-slate-600">{t('login.lead')}</p>
 
       <label className="block">
-        <span className="text-sm text-slate-700">{t('login.code.label')}</span>
+        <span className="text-sm text-slate-700">{t('login.identifier.label')}</span>
         <input
-          {...codeForm.register('code')}
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2 tracking-widest"
+          {...form.register('identifier')}
+          autoComplete="username"
+          placeholder={t('login.identifier.placeholder')}
+          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
         />
       </label>
 
-      {codeForm.formState.errors.code !== undefined && (
+      <label className="block">
+        <span className="text-sm text-slate-700">{t('login.password.label')}</span>
+        <input
+          {...form.register('password')}
+          type="password"
+          autoComplete="current-password"
+          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+        />
+      </label>
+
+      {(form.formState.errors.identifier !== undefined ||
+        form.formState.errors.password !== undefined) && (
         <p role="alert" className="text-sm text-red-700">
-          {t('error.form.code')}
+          {t('error.form.credentials')}
         </p>
       )}
-      {verify.error !== null && (
+      {login.error !== null && (
         <p role="alert" className="text-sm text-red-700">
-          {t(errorMessageKey(verify.error))}
+          {t(errorMessageKey(login.error))}
         </p>
       )}
 
       <button
         type="submit"
-        disabled={verify.isPending}
+        disabled={login.isPending}
         className="w-full rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
       >
-        {verify.isPending ? t('common.loading') : t('login.submit.verify')}
+        {login.isPending ? t('common.loading') : t('login.submit')}
       </button>
 
-      <button
-        type="button"
-        onClick={() => {
-          setPhone(null);
-        }}
-        className="w-full text-sm text-slate-600 underline"
-      >
-        {t('login.changePhone')}
-      </button>
+      <p className="text-sm text-slate-600">
+        {t('login.noAccount')}{' '}
+        <Link to="/sign-up" className="text-blue-700 underline">
+          {t('login.signUp')}
+        </Link>
+      </p>
     </form>
   );
 }
