@@ -1,67 +1,23 @@
-import type {
-  MatchResultInput,
-  MatchUpdateResult,
-  MatchView,
-  StageView,
-  TournamentResultsView,
-} from '@kttf/shared/types';
+import type { MatchResultInput, MatchView, TournamentSnapshotView } from '@kttf/shared/types';
 
 /**
- * Состояние турнира в консоли и его изменения.
+ * Снимок турнира в консоли и его изменения.
  *
  * Чистые функции над снимком: ни одна из них не ходит в сеть. Это прямое
  * следствие запрета №1 — ввод счёта не ждёт ответа сервера. Судья нажимает
- * «3:1», экран меняется сразу, запрос уходит следом.
+ * «3:1», экран меняется сразу, операция ложится в очередь на диск.
  *
- * Ничего не пересчитывается: места, очки и таблицы приходят от сервера.
- * Здесь только подстановка того, что уже известно.
+ * Ничего не пересчитывается: места, очки и таблицы приходят от сервера
+ * снимком. Здесь только подстановка того, что уже известно.
  */
 
 function mapStages(
-  state: TournamentResultsView,
+  state: TournamentSnapshotView,
   change: (match: MatchView) => MatchView,
-): TournamentResultsView {
+): TournamentSnapshotView {
   return {
     ...state,
     stages: state.stages.map((stage) => ({ ...stage, matches: stage.matches.map(change) })),
-  };
-}
-
-/** Подстановка встречи, пришедшей от сервера. */
-export function replaceMatch(
-  state: TournamentResultsView,
-  match: MatchView,
-): TournamentResultsView {
-  return mapStages(state, (current) => (current.id === match.id ? match : current));
-}
-
-/**
- * Итог действия над встречей целиком — ТС 7.6.
- *
- * Кроме самой встречи применяются `updated` (победитель уехал в следующий
- * круг) и `nextStage` (плей-офф, достроенный по итогам групп). Ради этого
- * сервер их и возвращает: турнир не перезапрашивается, и экран не мигает
- * посреди зала.
- */
-export function applyUpdate(
-  state: TournamentResultsView,
-  update: MatchUpdateResult,
-): TournamentResultsView {
-  const changed = new Map([update.match, ...update.updated].map((match) => [match.id, match]));
-  const applied = mapStages(state, (current) => changed.get(current.id) ?? current);
-
-  return update.nextStage === null ? applied : withStage(applied, update.nextStage);
-}
-
-/** Достроенный этап заменяет прежний с тем же идентификатором либо добавляется. */
-function withStage(state: TournamentResultsView, stage: StageView): TournamentResultsView {
-  const known = state.stages.some((current) => current.id === stage.id);
-
-  return {
-    ...state,
-    stages: known
-      ? state.stages.map((current) => (current.id === stage.id ? stage : current))
-      : [...state.stages, stage].sort((left, right) => left.order - right.order),
   };
 }
 
@@ -71,14 +27,14 @@ function withStage(state: TournamentResultsView, stage: StageView): TournamentRe
  * Номер стола намеренно не снимается: сервер его тоже не снимает, и стол
  * остаётся занятым закрытой встречей, пока судья не позовёт следующую пару
  * (ТЗ 6.1). Продвижение победителя по сетке здесь не изобретается — его
- * посчитает сервер и пришлёт в `updated`.
+ * посчитает сервер и пришлёт следующим снимком.
  */
 export function withOptimisticResult(
-  state: TournamentResultsView,
+  state: TournamentSnapshotView,
   matchId: string,
   input: MatchResultInput,
   now: string,
-): TournamentResultsView {
+): TournamentSnapshotView {
   return mapStages(state, (match) =>
     match.id === matchId
       ? {
@@ -95,11 +51,11 @@ export function withOptimisticResult(
 
 /** Назначение на стол, применённое до ответа сервера. */
 export function withOptimisticAssign(
-  state: TournamentResultsView,
+  state: TournamentSnapshotView,
   matchId: string,
   tableNumber: number,
   now: string,
-): TournamentResultsView {
+): TournamentSnapshotView {
   return mapStages(state, (match) =>
     match.id === matchId
       ? { ...match, tableNumber, status: 'PLAYING', startedAt: now, finishedAt: null }
@@ -109,9 +65,9 @@ export function withOptimisticAssign(
 
 /** Возврат встречи в очередь — ТЗ 6.3, ADR-021: снимаются счёт и стол. */
 export function withOptimisticCancel(
-  state: TournamentResultsView,
+  state: TournamentSnapshotView,
   matchId: string,
-): TournamentResultsView {
+): TournamentSnapshotView {
   return mapStages(state, (match) =>
     match.id === matchId
       ? {
@@ -129,18 +85,27 @@ export function withOptimisticCancel(
 }
 
 /** Имена участников: таблицы и карточки встреч ссылаются на игрока по id. */
-export function namesOf(state: TournamentResultsView): ReadonlyMap<string, string> {
+export function namesOf(state: TournamentSnapshotView): ReadonlyMap<string, string> {
   return new Map(
-    state.participants.map((participant) => [
-      participant.player.id,
-      `${participant.player.lastName} ${participant.player.firstName}`,
+    state.registrations.map((registration) => [
+      registration.player.id,
+      `${registration.player.lastName} ${registration.player.firstName}`,
     ]),
   );
 }
 
-/** Рейтинг участника на старте турнира — ТЗ 6.6 требует его рядом с фамилией. */
-export function ratingsOf(state: TournamentResultsView): ReadonlyMap<string, string> {
+/**
+ * Рейтинг участника рядом с фамилией — ТЗ 6.6.
+ *
+ * Берётся снимок на старте турнира (ТС 5.4), а не текущее значение: в зале
+ * важно, с чем игрок в турнир вошёл, и это число не меняется по ходу. До
+ * старта снимка ещё нет — тогда показывается текущий рейтинг.
+ */
+export function ratingsOf(state: TournamentSnapshotView): ReadonlyMap<string, string> {
   return new Map(
-    state.participants.map((participant) => [participant.player.id, participant.player.rating]),
+    state.registrations.map((registration) => [
+      registration.player.id,
+      registration.ratingAtStart ?? registration.player.rating,
+    ]),
   );
 }

@@ -179,6 +179,14 @@ export const kk: Record<MessageKey, string> = {
   'console.tie.down': 'Төмен',
   'console.tie.confirm': 'Ретті сақтау',
   'console.finish': 'Турнирді аяқтап, рейтинг есептеу',
+  'console.finish.queueFirst': 'Алдымен кезек жіберіледі: сервер нәтижелердің бір бөлігін әлі көрген жоқ.',
+
+  'console.sync.synced': 'Барлығы жіберілді',
+  'console.sync.syncing': 'Жіберілуде',
+  'console.sync.offline': 'Байланыс жоқ',
+  'console.sync.queued': 'кезекте',
+  'console.sync.now': 'Қазір синхрондау',
+  'console.sync.rejected': 'Сервер қабылдамады:',
 
   'screen.tables.title': 'Үстелдер',
   'screen.table.free': 'Бос',

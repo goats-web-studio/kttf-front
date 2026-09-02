@@ -177,6 +177,15 @@ export const ru = {
   'console.tie.down': 'Ниже',
   'console.tie.confirm': 'Сохранить порядок',
   'console.finish': 'Завершить турнир и начислить рейтинг',
+  'console.finish.queueFirst': 'Сначала уйдёт очередь: сервер ещё не видел часть результатов.',
+
+  // Офлайн-режим — ТЗ 6.4, ТС 6.4.
+  'console.sync.synced': 'Всё отправлено',
+  'console.sync.syncing': 'Отправляется',
+  'console.sync.offline': 'Нет связи',
+  'console.sync.queued': 'в очереди',
+  'console.sync.now': 'Синхронизировать сейчас',
+  'console.sync.rejected': 'Сервер отклонил:',
 
   // Экран зала — ТЗ 6.5. Свои ключи, а не консольные: на стене другие слова
   // и другой читатель — зритель, а не судья.

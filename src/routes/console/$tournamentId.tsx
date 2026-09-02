@@ -17,6 +17,7 @@ import QueueZone from '@/features/console/queue-zone';
 import { setsToWinFor } from '@/features/console/score';
 import StandingsPanel from '@/features/console/standings-panel';
 import { namesOf, ratingsOf } from '@/features/console/state';
+import SyncBadge from '@/features/console/sync-badge';
 import TablesZone from '@/features/console/tables-zone';
 import TiePanel from '@/features/console/tie-panel';
 import { useConsole } from '@/features/console/use-console';
@@ -31,14 +32,14 @@ export const Route = createFileRoute('/console/$tournamentId')({
  * Три зоны: столы, играется, очередь. Плюс таблицы и разрешение равенства,
  * без которого турнир не закрыть (ADR-008).
  *
- * Ни одно действие не ждёт ответа сервера — запрет №1 брифа. Неотправленное
- * висит в списке сверху с повтором и не пропадает молча.
+ * Ни одно действие не ждёт ответа сервера — запрет №1 брифа. Введённое
+ * ложится в очередь на диск и уходит на сервер само; состояние связи и длина
+ * очереди видны постоянно (ТС 6.4).
  */
 function ConsoleScreen(): ReactNode {
   const t = useT();
   const { tournamentId } = Route.useParams();
-  const { state, assign, result, cancel, tie, finish, failures, dismiss } =
-    useConsole(tournamentId);
+  const { state, assign, result, cancel, tie, finish, queue } = useConsole(tournamentId);
 
   const snapshot = state.data;
 
@@ -70,46 +71,16 @@ function ConsoleScreen(): ReactNode {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-4">
-      <header className="flex items-baseline gap-4">
-        <Link to="/console" className="text-sm text-slate-400 underline">
-          {t('page.console.title')}
-        </Link>
-        <h1 className="text-lg font-semibold">{snapshot?.tournament.name ?? ''}</h1>
-      </header>
+      <header className="flex flex-wrap items-baseline justify-between gap-4">
+        <div className="flex items-baseline gap-4">
+          <Link to="/console" className="text-sm text-slate-400 underline">
+            {t('page.console.title')}
+          </Link>
+          <h1 className="text-lg font-semibold">{snapshot?.tournament.name ?? ''}</h1>
+        </div>
 
-      {failures.length > 0 && (
-        <ul className="mt-3 space-y-2">
-          {failures.map((failure) => (
-            <li
-              key={failure.id}
-              className="flex items-center gap-3 rounded border border-red-700 bg-red-950 p-2 text-sm"
-            >
-              <span role="alert" className="grow text-red-200">
-                {t('console.failure.lead')} {t(errorMessageKey(failure.error))}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  dismiss(failure.id);
-                  failure.again();
-                }}
-                className="rounded bg-red-800 px-3 py-1"
-              >
-                {t('console.failure.retry')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  dismiss(failure.id);
-                }}
-                className="text-xs text-red-300 underline"
-              >
-                {t('console.failure.dismiss')}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+        <SyncBadge queue={queue} />
+      </header>
 
       <QueryState
         isPending={state.isPending}
@@ -126,16 +97,12 @@ function ConsoleScreen(): ReactNode {
                 names={view.names}
                 setsToWinOf={setsToWinOf}
                 onResult={(matchId, input) => {
-                  result.mutate({
-                    matchId,
-                    input,
-                    // Правка уже введённого результата идёт другим маршрутом
-                    // и фиксируется в журнале — ТЗ 6.3.
-                    correcting: false,
-                  });
+                  // Правка уже введённого результата уходит другим типом
+                  // операции и фиксируется в журнале — ТЗ 6.3.
+                  result(matchId, input, false);
                 }}
                 onCancel={(matchId) => {
-                  cancel.mutate(matchId);
+                  cancel(matchId);
                 }}
               />
 
@@ -145,7 +112,7 @@ function ConsoleScreen(): ReactNode {
                 suggested={view.suggested}
                 names={view.names}
                 onAssign={(matchId, tableNumber) => {
-                  assign.mutate({ matchId, tableNumber });
+                  assign(matchId, tableNumber);
                 }}
               />
             </div>
@@ -154,9 +121,9 @@ function ConsoleScreen(): ReactNode {
               groups={snapshot.standings.groups}
               names={view.names}
               onDecide={(input) => {
-                tie.mutate(input);
+                tie(input);
               }}
-              isPending={tie.isPending}
+              isPending={false}
             />
 
             <StandingsPanel
@@ -168,9 +135,13 @@ function ConsoleScreen(): ReactNode {
 
             {view.done && snapshot.tournament.status === 'RUNNING' && (
               <section className="rounded border border-slate-700 bg-slate-800 p-3">
+                {/* Завершение — единственное действие консоли, которому нужна
+                    сеть: рейтинг считает сервер (ТС 6.2, ADR-022). Пока очередь
+                    не ушла, закрывать турнир нечем — сервер не видел половины
+                    результатов. */}
                 <button
                   type="button"
-                  disabled={finish.isPending}
+                  disabled={finish.isPending || queue.queued > 0 || queue.connection === 'OFFLINE'}
                   onClick={() => {
                     finish.mutate();
                   }}
@@ -178,6 +149,9 @@ function ConsoleScreen(): ReactNode {
                 >
                   {t('console.finish')}
                 </button>
+                {queue.queued > 0 && (
+                  <p className="mt-2 text-sm text-amber-300">{t('console.finish.queueFirst')}</p>
+                )}
                 {finish.error !== null && (
                   <p role="alert" className="mt-2 text-sm text-red-300">
                     {t(errorMessageKey(finish.error))}

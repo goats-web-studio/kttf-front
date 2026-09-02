@@ -1,19 +1,21 @@
 import type { AuthUserView } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
 import { ru } from '@/common/i18n/ru';
-import { CONSOLE_STATE, PLAYERS, TOURNAMENT_ID } from '@/test/fixtures';
+import { db } from '@/features/console/db';
+import { pending } from '@/features/console/outbox';
+import { CONSOLE_SNAPSHOT, PLAYERS, TOURNAMENT_ID } from '@/test/fixtures';
 
 /**
- * Консоль судьи — ТЗ 6.
+ * Консоль судьи — ТЗ 6, офлайн-режим ТЗ 6.4.
  *
- * Главное, что здесь проверяется, — запрет №1 брифа: ввод счёта не ждёт
- * ответа сети. Ответ сервера в тесте не приходит вовсе, и счёт обязан
- * оказаться на экране всё равно.
+ * Главное, что здесь проверяется, — запрет №1 брифа: ввод счёта не ждёт сети.
+ * Сервер в тесте не отвечает вовсе, и счёт обязан оказаться на экране, а
+ * операция — на диске.
  */
 
 const SIGNED_IN: AuthUserView = {
@@ -38,8 +40,8 @@ function reply(body: unknown): Response {
 }
 
 function answer(url: string): Promise<Response> {
-  if (url.endsWith('/results')) {
-    return Promise.resolve(reply(CONSOLE_STATE));
+  if (url.endsWith('/snapshot')) {
+    return Promise.resolve(reply(CONSOLE_SNAPSHOT));
   }
 
   // Сервер молчит. Для консоли это обычное состояние зала, а не сбой:
@@ -60,8 +62,10 @@ function renderConsole(): void {
   );
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   sent = [];
+  await db.snapshots.clear();
+  await db.outbox.clear();
   vi.stubGlobal('fetch', (input: unknown) => {
     const url = String(input);
 
@@ -108,6 +112,54 @@ describe('экран проведения', () => {
 
     // Ответ сервера не придёт никогда, а счёт обязан быть на экране.
     expect(await screen.findByText('3:1')).toBeDefined();
-    expect(sent.some((url) => url.includes('/result'))).toBe(true);
+  });
+
+  it('введённое ложится в очередь на диск — ТЗ 6.4', async () => {
+    renderConsole();
+
+    fireEvent.click(await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }));
+    fireEvent.click(await screen.findByRole('button', { name: '3:1' }));
+
+    // Список в памяти не пережил бы перезагрузку вкладки посреди турнира.
+    await waitFor(async () => {
+      expect(await pending(TOURNAMENT_ID)).toHaveLength(1);
+    });
+
+    const [queued] = await pending(TOURNAMENT_ID);
+
+    expect(queued?.operation).toMatchObject({
+      type: 'MATCH_RESULT',
+      payload: { setsA: 3, setsB: 1 },
+    });
+  });
+
+  it('состояние связи и длина очереди видны постоянно — ТС 6.4', async () => {
+    renderConsole();
+
+    expect(await screen.findByRole('status')).toBeDefined();
+    expect(screen.getByRole('button', { name: ru['console.sync.now'] })).toBeDefined();
+
+    fireEvent.click(await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }));
+    fireEvent.click(await screen.findByRole('button', { name: '3:1' }));
+
+    // Судья видит, что счёт ещё не уехал, до конца турнира, а не после него.
+    expect(await screen.findByText(ru['console.sync.queued'], { exact: false })).toBeDefined();
+  });
+
+  it('снимок берётся с диска, когда сети нет вовсе', async () => {
+    await db.snapshots.put({
+      tournamentId: TOURNAMENT_ID,
+      snapshot: CONSOLE_SNAPSHOT,
+      storedAt: Date.now(),
+    });
+
+    // Сеть отсутствует целиком: ни один запрос не отвечает.
+    vi.stubGlobal('fetch', () => new Promise<Response>(() => undefined));
+
+    renderConsole();
+
+    // Судья открыл консоль в зале без интернета и обязан увидеть турнир.
+    expect(await screen.findByText(ru['console.playing.title'])).toBeDefined();
+    expect(sent).toHaveLength(0);
   });
 });

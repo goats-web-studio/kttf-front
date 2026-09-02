@@ -1,9 +1,11 @@
 import type {
   ClubView,
   PlayerView,
+  RegistrationView,
   ResultParticipantView,
   ScreenView,
   StageView,
+  TournamentSnapshotView,
   TournamentResultsView,
   TournamentView,
 } from '@kttf/shared/types';
@@ -397,4 +399,33 @@ export const SCREEN_STATE: ScreenView = {
   standings: RESULTS.standings,
   stages: CONSOLE_STATE.stages,
   updatedAt: '2026-09-05T10:30:00.000Z',
+};
+
+/**
+ * Снимок турнира для консоли — ТС 6.1.
+ *
+ * Тот же турнир, что в `CONSOLE_STATE`, но в форме, которую консоль кладёт
+ * на диск: участники со статусами и посевом, таблицы, этапы и версия. Журнала
+ * рейтинга нет — в зале он не нужен.
+ */
+export const CONSOLE_SNAPSHOT: TournamentSnapshotView = {
+  version: 4,
+  tournament: CONSOLE_STATE.tournament,
+  registrations: [PLAYERS.first, PLAYERS.second, PLAYERS.third, PLAYERS.fourth].map(
+    (player, index): RegistrationView => ({
+      id: `registration-${String(index)}`,
+      tournamentId: TOURNAMENT_ID,
+      status: 'PLAYING',
+      isRated: true,
+      seed: index + 1,
+      // Снимок рейтинга на старте: именно он показывается рядом с фамилией.
+      ratingAtStart: player.rating,
+      matchesAtStart: player.ratedMatches,
+      createdAt: '2026-09-01T00:00:00.000Z',
+      player,
+    }),
+  ),
+  standings: RESULTS.standings,
+  stages: CONSOLE_STATE.stages,
+  takenAt: '2026-09-05T10:30:00.000Z',
 };

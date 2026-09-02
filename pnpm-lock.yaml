@@ -12,14 +12,17 @@ importers:
         specifier: ^5.9.1
         version: 5.9.1(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.86.0(react@19.2.8))(zod@4.5.2)
       '@kttf/shared':
-        specifier: github:goats-web-studio/kttf-shared#9fe3f47c96f7610e3ac851e40d03ccbb409fbc89
-        version: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/9fe3f47c96f7610e3ac851e40d03ccbb409fbc89(zod@4.5.2)
+        specifier: github:goats-web-studio/kttf-shared#09a4072508672bef6c136d5983ebcaf5de1525b6
+        version: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/09a4072508672bef6c136d5983ebcaf5de1525b6(zod@4.5.2)
       '@tanstack/react-query':
         specifier: ^5.102.8
         version: 5.102.8(react@19.2.8)
       '@tanstack/react-router':
         specifier: ^1.170.32
         version: 1.170.32(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      dexie:
+        specifier: ^4.4.5
+        version: 4.4.5
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -78,6 +81,9 @@ importers:
       eslint-plugin-react-refresh:
         specifier: ^0.5.5
         version: 0.5.5(eslint@10.9.1(jiti@2.7.0))
+      fake-indexeddb:
+        specifier: ^6.2.5
+        version: 6.2.5
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1
@@ -829,8 +835,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/9fe3f47c96f7610e3ac851e40d03ccbb409fbc89':
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/9fe3f47c96f7610e3ac851e40d03ccbb409fbc89}
+  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/09a4072508672bef6c136d5983ebcaf5de1525b6':
+    resolution: {gitHosted: true, integrity: sha512-iQPoWkTe/LPCDvUwjbbyvEEoNt3AthICkuSMiV8UfjwcqZlDjrXjsOD5sGUwfd+rM5xH1TAOPbLZRcgWWm+d+A==, tarball: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/09a4072508672bef6c136d5983ebcaf5de1525b6}
     version: 0.1.0
     engines: {node: '>=24'}
     peerDependencies:
@@ -1671,6 +1677,9 @@ packages:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
 
+  dexie@4.4.5:
+    resolution: {integrity: sha512-wWCHdihT3dmlUSuNhn5mMZDWSpG0suxjAni7YjjiZdzabZcKmy3uNZGZ7AeYYXBoLbpSXX35fikPLkPC44Osiw==}
+
   diff@8.0.4:
     resolution: {integrity: sha512-DPi0FmjiSU5EvQV0++GFDOJ9ASQUVFh5kD+OzOnYdi7n3Wpm9hWWGfB/O2blfHcMVTL5WkQXSnRiK9makhrcnw==}
     engines: {node: '>=0.3.1'}
@@ -1809,6 +1818,10 @@ packages:
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
     engines: {node: '>=12.0.0'}
+
+  fake-indexeddb@6.2.5:
+    resolution: {integrity: sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==}
+    engines: {node: '>=18'}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -3894,7 +3907,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/9fe3f47c96f7610e3ac851e40d03ccbb409fbc89(zod@4.5.2)':
+  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/09a4072508672bef6c136d5983ebcaf5de1525b6(zod@4.5.2)':
     dependencies:
       zod: 4.5.2
 
@@ -4643,6 +4656,8 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
+  dexie@4.4.5: {}
+
   diff@8.0.4: {}
 
   dom-accessibility-api@0.5.16: {}
@@ -4854,6 +4869,8 @@ snapshots:
   eta@4.6.0: {}
 
   expect-type@1.4.0: {}
+
+  fake-indexeddb@6.2.5: {}
 
   fast-deep-equal@3.1.3: {}
 
