@@ -1,6 +1,9 @@
 import type {
   ClubView,
+  HeadToHeadView,
+  PlayerMatchView,
   PlayerView,
+  RatingHistoryView,
   RegistrationView,
   ResultParticipantView,
   ScreenView,
@@ -428,4 +431,115 @@ export const CONSOLE_SNAPSHOT: TournamentSnapshotView = {
   standings: RESULTS.standings,
   stages: CONSOLE_STATE.stages,
   takenAt: '2026-09-05T10:30:00.000Z',
+};
+
+/**
+ * Кривая рейтинга игрока — ответ `GET /players/:id/rating-history`.
+ *
+ * Собрана из трёх неочевидных случаев сразу: обычный турнир, турнир с
+ * падением рейтинга и ручная корректировка без турнира (ТЗ 12) — у неё нет
+ * ни идентификатора, ни названия, но из кривой её не выкинуть.
+ */
+export const RATING_HISTORY: RatingHistoryView = {
+  playerId: PLAYER_IDS.first,
+  current: '520.00',
+  points: [
+    {
+      tournamentId: '00000000-0000-4000-8000-000000000041',
+      tournamentName: 'Открытие сезона',
+      playedAt: '2026-03-14T09:00:00.000Z',
+      ratingBefore: '250.00',
+      ratingAfter: '495.50',
+      delta: '245.50',
+      matches: 5,
+    },
+    {
+      tournamentId: null,
+      tournamentName: null,
+      playedAt: '2026-06-01T12:00:00.000Z',
+      ratingBefore: '495.50',
+      ratingAfter: '500.00',
+      delta: '4.50',
+      matches: 0,
+    },
+    {
+      tournamentId: TOURNAMENT_ID,
+      tournamentName: TOURNAMENT.name,
+      playedAt: TOURNAMENT.startsAt,
+      ratingBefore: '500.00',
+      ratingAfter: '520.00',
+      delta: '20.00',
+      matches: 3,
+    },
+  ],
+};
+
+/** Кривая игрока, не сыгравшего ни одного обсчитанного турнира. */
+export const EMPTY_RATING_HISTORY: RatingHistoryView = {
+  playerId: PLAYER_IDS.fourth,
+  current: '250.00',
+  points: [],
+};
+
+/**
+ * История встреч — ответ `GET /players/:id/matches`.
+ *
+ * Три случая, которые различает контракт: обычная победа с начисленной
+ * дельтой, поражение и техническая победа без соперника — тот снялся до
+ * встречи, и показывать в колонке некого.
+ */
+const PLAYOFF_WIN: PlayerMatchView = {
+  matchId: '00000000-0000-4000-8000-000000000051',
+  tournamentId: TOURNAMENT_ID,
+  tournamentName: TOURNAMENT.name,
+  stageName: 'Плей-офф',
+  playedAt: '2026-09-05T10:25:00.000Z',
+  opponent: PLAYERS.second,
+  setsFor: 3,
+  setsAgainst: 1,
+  won: true,
+  resultType: 'NORMAL',
+  delta: '20.00',
+};
+
+export const PLAYER_MATCHES: PlayerMatchView[] = [
+  PLAYOFF_WIN,
+  {
+    matchId: '00000000-0000-4000-8000-000000000052',
+    tournamentId: TOURNAMENT_ID,
+    tournamentName: TOURNAMENT.name,
+    stageName: 'Группы',
+    playedAt: '2026-09-05T09:40:00.000Z',
+    opponent: PLAYERS.third,
+    setsFor: 1,
+    setsAgainst: 3,
+    won: false,
+    // Турнир ещё не обсчитан: дельты нет.
+    resultType: 'NORMAL',
+    delta: null,
+  },
+  {
+    matchId: '00000000-0000-4000-8000-000000000053',
+    tournamentId: TOURNAMENT_ID,
+    tournamentName: TOURNAMENT.name,
+    stageName: 'Группы',
+    playedAt: null,
+    opponent: null,
+    setsFor: 3,
+    setsAgainst: 0,
+    won: true,
+    resultType: 'WALKOVER',
+    delta: '0.00',
+  },
+];
+
+/** Личный счёт — ответ `GET /players/:id/head-to-head/:opponentId`. */
+export const HEAD_TO_HEAD: HeadToHeadView = {
+  playerId: PLAYER_IDS.first,
+  opponent: PLAYERS.second,
+  wins: 2,
+  losses: 1,
+  setsWon: 7,
+  setsLost: 5,
+  matches: [PLAYOFF_WIN],
 };

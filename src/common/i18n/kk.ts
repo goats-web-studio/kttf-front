@@ -141,6 +141,38 @@ export const kk: Record<MessageKey, string> = {
   'ratings.provisional': 'Уақытша',
   'ratings.empty': 'Ойыншылар табылмады',
 
+  'player.rating.matches': 'рейтингтік кездесу:',
+  'player.chart.highest': 'Ең жоғары',
+  'player.chart.lowest': 'Ең төмен',
+
+  'player.history.title': 'Рейтинг динамикасы',
+  'player.history.empty': 'Есептелген турнирлер әзірге жоқ.',
+  'player.history.date': 'Күні',
+  'player.history.tournament': 'Турнир',
+  'player.history.matches': 'Кездесу',
+  'player.history.delta': 'Өзгеріс',
+  'player.history.after': 'Рейтинг',
+  'player.history.adjustment': 'Қолмен түзету',
+
+  'player.matches.title': 'Кездесулер тарихы',
+  'player.matches.empty': 'Ойналған кездесулер әзірге жоқ.',
+  'player.matches.date': 'Күні',
+  'player.matches.tournament': 'Турнир',
+  'player.matches.opponent': 'Қарсылас',
+  'player.matches.score': 'Сеттер',
+  'player.matches.outcome': 'Нәтиже',
+  'player.matches.delta': 'Өзгеріс',
+  'player.matches.won': 'Жеңіс',
+  'player.matches.lost': 'Жеңіліс',
+  'player.matches.notRated': 'Есептелмеген',
+  'player.matches.noOpponent': 'Қарсылас бас тартты',
+
+  'player.headToHead.title': 'Жеке кездесулер',
+  'player.headToHead.close': 'Жасыру',
+  'player.headToHead.matches': 'кездесу бойынша',
+  'player.headToHead.sets': 'сет бойынша',
+  'player.headToHead.empty': 'Жеке кездесулер болмаған.',
+
   'console.pick.lead': 'Қазір өткізіп жатқан турнирді таңдаңыз.',
   'console.pick.empty': 'Жүріп жатқан турнир жоқ.',
   'console.tables.title': 'Үстелдер',
@@ -179,7 +211,8 @@ export const kk: Record<MessageKey, string> = {
   'console.tie.down': 'Төмен',
   'console.tie.confirm': 'Ретті сақтау',
   'console.finish': 'Турнирді аяқтап, рейтинг есептеу',
-  'console.finish.queueFirst': 'Алдымен кезек жіберіледі: сервер нәтижелердің бір бөлігін әлі көрген жоқ.',
+  'console.finish.queueFirst':
+    'Алдымен кезек жіберіледі: сервер нәтижелердің бір бөлігін әлі көрген жоқ.',
 
   'console.sync.synced': 'Барлығы жіберілді',
   'console.sync.syncing': 'Жіберілуде',

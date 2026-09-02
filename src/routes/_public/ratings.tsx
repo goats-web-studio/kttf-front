@@ -1,6 +1,6 @@
 import { DEFAULT_PAGE_SIZE, type ListPlayersQuery } from '@kttf/shared/types';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useMemo, useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -29,8 +29,9 @@ const EMPTY: Filters = { search: '', city: '', clubId: '' };
  * ТС 7.2: поиск, город, клуб. Пола и возрастной категории в запросе нет,
  * расхождение с ТЗ записано открытым вопросом.
  *
- * История изменений рейтинга (ТЗ 9.1) ждёт маршрута `players/:id/
- * rating-history`, которого в бэкенде ещё нет.
+ * История изменений рейтинга (ТЗ 9.1) живёт в профиле игрока, куда ведёт
+ * фамилия в таблице: кривая одного игрока в списке на сотню строк не
+ * помещается, а показывать её здесь всем сразу нечем.
  */
 function RatingsPage(): ReactNode {
   const t = useT();
@@ -154,7 +155,13 @@ function RatingsPage(): ReactNode {
                       {(page - 1) * players.data.limit + index + 1}
                     </td>
                     <td className="py-2 text-slate-900">
-                      {playerName(player)}
+                      <Link
+                        to="/players/$playerId"
+                        params={{ playerId: player.id }}
+                        className="text-blue-700 underline"
+                      >
+                        {playerName(player)}
+                      </Link>
                       {player.isProvisional && (
                         // Провизорный рейтинг двигается быстрее и означает, что
                         // игрок сыграл меньше 20 рейтинговых встреч (ТЗ 7.1).

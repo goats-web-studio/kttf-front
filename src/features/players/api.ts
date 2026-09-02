@@ -1,4 +1,13 @@
-import type { ListPlayersQuery, Page, PlayerView } from '@kttf/shared/types';
+import type {
+  HeadToHeadView,
+  ListPlayersQuery,
+  Page,
+  PlayerMatchesQuery,
+  PlayerMatchView,
+  PlayerView,
+  RatingHistoryQuery,
+  RatingHistoryView,
+} from '@kttf/shared/types';
 
 import { apiRequest, queryString } from '@/common/api';
 
@@ -16,4 +25,30 @@ export function listPlayers(query: ListPlayersQuery): Promise<Page<PlayerView>> 
 
 export function fetchPlayer(id: string): Promise<PlayerView> {
   return apiRequest<PlayerView>(`/players/${id}`);
+}
+
+/**
+ * История игрока — ТС 7.2, экран ТЗ 9.3.
+ *
+ * Открыта без входа, как и остальное чтение: результаты турниров — спортивный
+ * факт, а не персональные данные.
+ */
+
+export function fetchRatingHistory(
+  id: string,
+  query: RatingHistoryQuery = {},
+): Promise<RatingHistoryView> {
+  return apiRequest<RatingHistoryView>(`/players/${id}/rating-history${queryString(query)}`);
+}
+
+export function fetchPlayerMatches(
+  id: string,
+  query: PlayerMatchesQuery,
+): Promise<Page<PlayerMatchView>> {
+  return apiRequest<Page<PlayerMatchView>>(`/players/${id}/matches${queryString(query)}`);
+}
+
+/** Личный счёт считает сервер: по одной странице истории он был бы неверным. */
+export function fetchHeadToHead(id: string, opponentId: string): Promise<HeadToHeadView> {
+  return apiRequest<HeadToHeadView>(`/players/${id}/head-to-head/${opponentId}`);
 }
