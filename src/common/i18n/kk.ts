@@ -176,6 +176,7 @@ export const kk: Record<MessageKey, string> = {
   'ratings.provisional': 'Уақытша',
   'ratings.empty': 'Ойыншылар табылмады',
 
+  'player.notFound': 'Ойыншы табылмады. Сілтемені тексеріңіз — ол үзілген болуы мүмкін.',
   'player.rating.matches': 'рейтингтік кездесу:',
   'player.chart.highest': 'Ең жоғары',
   'player.chart.lowest': 'Ең төмен',

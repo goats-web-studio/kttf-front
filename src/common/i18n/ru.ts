@@ -174,6 +174,7 @@ export const ru = {
   'ratings.provisional': 'Провизорный',
   'ratings.empty': 'Игроков не найдено',
 
+  'player.notFound': 'Игрок не найден. Проверьте ссылку — она могла оборваться.',
   'player.rating.matches': 'рейтинговых встреч:',
   'player.chart.highest': 'Максимум',
   'player.chart.lowest': 'Минимум',

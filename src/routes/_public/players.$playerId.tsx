@@ -1,6 +1,8 @@
+import { ERROR_CODES, isAppError } from '@kttf/shared/errors';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
+import { z } from 'zod';
 
 import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
@@ -31,17 +33,36 @@ export const Route = createFileRoute('/_public/players/$playerId')({
  * требует ТЗ 9.3, здесь нет: в контракте ТС 7.2 его нет ни одним полем, а
  * посчитать по видимой странице истории — значит показать число, меняющееся
  * от перелистывания. Расхождение записано открытым вопросом ОВ-19.
+ *
+ * **Отказ у страницы один на всех.** Три запроса на неверную ссылку падают
+ * втроём, и три одинаковых сообщения — это одна причина, названная трижды.
+ * Секции ниже карточки рисуются только тогда, когда игрок нашёлся.
  */
 function PlayerPage(): ReactNode {
   const t = useT();
   // Параметр типизирован деревом маршрутов: опечатка в имени не соберётся.
   const { playerId } = Route.useParams();
 
-  const player = useQuery(playerQuery(playerId));
-  const history = useQuery(playerRatingHistoryQuery(playerId));
+  // Обрезанная ссылка — самый частый способ сюда попасть, и по ней сервер
+  // ответит отказом проверки схемы. Спрашивать его об этом незачем: форма
+  // идентификатора известна и здесь.
+  const isKnownId = z.uuid().safeParse(playerId).success;
+
+  const player = useQuery({ ...playerQuery(playerId), enabled: isKnownId });
+  const history = useQuery({ ...playerRatingHistoryQuery(playerId), enabled: isKnownId });
   const clubs = useQuery(clubDirectoryQuery);
 
   const [opponentId, setOpponentId] = useState<string | null>(null);
+
+  if (!isKnownId || isMissingPlayer(player.error)) {
+    return (
+      <section className="mx-auto max-w-3xl px-4 py-10">
+        <p role="alert" className="py-10 text-center text-slate-600">
+          {t('player.notFound')}
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
@@ -78,27 +99,48 @@ function PlayerPage(): ReactNode {
         )}
       </QueryState>
 
-      <QueryState
-        isPending={history.isPending}
-        error={history.error}
-        onRetry={() => void history.refetch()}
-      >
-        {history.data === undefined ? null : <PlayerRating history={history.data} />}
-      </QueryState>
+      {/* Пока игрок не пришёл, ниже рисовать нечего: и ожидание, и отказ
+          назывались бы по разу на каждую секцию. */}
+      {player.data !== undefined && (
+        <>
+          <QueryState
+            isPending={history.isPending}
+            error={history.error}
+            onRetry={() => void history.refetch()}
+          >
+            {history.data === undefined ? null : <PlayerRating history={history.data} />}
+          </QueryState>
 
-      {/* Личный счёт стоит над историей встреч, а не под ней: это ответ на
-          только что заданный вопрос, и внизу страницы его пришлось бы искать. */}
-      {opponentId !== null && (
-        <HeadToHead
-          playerId={playerId}
-          opponentId={opponentId}
-          onClose={() => {
-            setOpponentId(null);
-          }}
-        />
+          {/* Личный счёт стоит над историей встреч, а не под ней: это ответ на
+              только что заданный вопрос, и внизу страницы его пришлось бы искать. */}
+          {opponentId !== null && (
+            <HeadToHead
+              playerId={playerId}
+              opponentId={opponentId}
+              onClose={() => {
+                setOpponentId(null);
+              }}
+            />
+          )}
+
+          <PlayerMatches playerId={playerId} onSelectOpponent={setOpponentId} />
+        </>
       )}
-
-      <PlayerMatches playerId={playerId} onSelectOpponent={setOpponentId} />
     </section>
+  );
+}
+
+/**
+ * Отказ, означающий «такого игрока нет».
+ *
+ * Неверный идентификатор сервер отвергает проверкой схемы, а несуществующий —
+ * «не найдено». Для человека это один случай: ссылка не ведёт к игроку.
+ * Общий текст `VALIDATION_FAILED` здесь не годится — он про заполненные поля,
+ * а на этой странице нет ни одного.
+ */
+function isMissingPlayer(error: unknown): boolean {
+  return (
+    isAppError(error) &&
+    (error.code === ERROR_CODES.NOT_FOUND || error.code === ERROR_CODES.VALIDATION_FAILED)
   );
 }

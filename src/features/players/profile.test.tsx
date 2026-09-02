@@ -32,6 +32,8 @@ const PLAYER_ID = PLAYER_IDS.first;
 
 /** История подменяется на пустую в тесте игрока без турниров. */
 let history = RATING_HISTORY;
+/** Сервер отвечает «не найдено» — игрока с таким идентификатором нет. */
+let missing = false;
 let requested: string[] = [];
 
 function reply(body: unknown): Response {
@@ -42,8 +44,23 @@ function reply(body: unknown): Response {
   } as unknown as Response;
 }
 
+function notFound(): Response {
+  return {
+    ok: false,
+    status: 404,
+    text: () =>
+      Promise.resolve(
+        JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Player not found' } }),
+      ),
+  } as unknown as Response;
+}
+
 function answer(url: string): Response {
   requested.push(url);
+
+  if (missing && url.includes('/players/')) {
+    return notFound();
+  }
 
   if (url.includes('/rating-history')) {
     return reply(history);
@@ -68,8 +85,8 @@ function answer(url: string): Response {
   throw new Error(`Неожидаемый запрос: ${url}`);
 }
 
-function renderProfile(): { readonly container: HTMLElement } {
-  window.history.pushState({}, '', `/players/${PLAYER_ID}`);
+function renderProfile(id: string = PLAYER_ID): { readonly container: HTMLElement } {
+  window.history.pushState({}, '', `/players/${id}`);
 
   // Повторы выключены: иначе отказ, вызванный опечаткой в адресе запроса,
   // превращается в таймаут теста вместо понятной ошибки.
@@ -85,6 +102,7 @@ function renderProfile(): { readonly container: HTMLElement } {
 
 beforeEach(() => {
   history = RATING_HISTORY;
+  missing = false;
   requested = [];
   vi.stubGlobal('fetch', (input: unknown) => Promise.resolve(answer(String(input))));
 });
@@ -109,6 +127,29 @@ describe('карточка игрока', () => {
     renderProfile();
 
     expect((await screen.findByText(new RegExp(CLUB.name))).textContent).toContain(CLUB.name);
+  });
+});
+
+describe('ссылка не ведёт к игроку', () => {
+  it('оборванный идентификатор объясняется один раз и без запросов', async () => {
+    // Так выглядит скопированная наполовину ссылка. Сервер ответил бы отказом
+    // проверки схемы, а его общий текст — про заполненные поля, которых на
+    // этой странице нет ни одного.
+    renderProfile('d07bac4c');
+
+    expect(await screen.findByRole('alert')).toBeDefined();
+    expect(screen.getByText(ru['player.notFound'])).toBeDefined();
+    // Три запроса на заведомо неверную ссылку — это три одинаковых отказа.
+    expect(requested.filter((url) => url.includes('/players/'))).toHaveLength(0);
+  });
+
+  it('несуществующий игрок объясняется тем же сообщением', async () => {
+    missing = true;
+
+    renderProfile();
+
+    expect(await screen.findByText(ru['player.notFound'])).toBeDefined();
+    expect(screen.queryByText(ru['player.matches.title'])).toBeNull();
   });
 });
 
