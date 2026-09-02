@@ -5,8 +5,12 @@ import { useMemo, type ReactNode } from 'react';
 import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
+import { useSessionStore } from '@/features/auth/session-store';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { isClubStaff } from '@/features/clubs/roles';
 import { playerName } from '@/features/players/player-name';
+import DrawPreview from '@/features/tournaments/draw-preview';
+import LifecyclePanel from '@/features/tournaments/lifecycle-panel';
 import ParticipantsPanel from '@/features/tournaments/participants-panel';
 import { registrationsQuery, tournamentResultsQuery } from '@/features/tournaments/queries';
 import RegistrationPanel from '@/features/tournaments/registration-panel';
@@ -37,6 +41,7 @@ function TournamentPage(): ReactNode {
   const t = useT();
   const { tournamentId } = Route.useParams();
 
+  const user = useSessionStore((state) => state.user);
   const results = useQuery(tournamentResultsQuery(tournamentId));
   const registrations = useQuery(registrationsQuery(tournamentId));
   const clubs = useQuery(clubDirectoryQuery);
@@ -81,6 +86,9 @@ function TournamentPage(): ReactNode {
                   tournament={data.tournament}
                   clubName={clubs.data?.get(data.tournament.clubId)?.name ?? null}
                 />
+                {/* Проведение турнира — ТЗ 4.1. Панель показывается только
+                    организатору клуба-хозяина и молчит у всех остальных. */}
+                <LifecyclePanel tournament={data.tournament} names={names} />
                 {/* Запись и состав идут сразу за карточкой: пока турнир не
                     сыгран, это единственное, ради чего его страницу
                     открывают. Результаты ниже до старта пусты. */}
@@ -95,6 +103,16 @@ function TournamentPage(): ReactNode {
                 {/* «Повторить прошлый» — ТЗ 4.2. Стоит у турнира, а не в
                     форме создания: копирует настройки сервер, и брать их
                     неоткуда, кроме как у самого турнира. */}
+                {/* Расстановка до старта видна организатору: после старта
+                    менять её уже нечем, а публичные результаты ниже
+                    показываются только у начатого турнира. */}
+                {isClubStaff(user, data.tournament.clubId) &&
+                  data.tournament.startedAt === null && (
+                    <>
+                      <DrawPreview stages={data.stages} names={names} />
+                      <ResultsBracket stages={data.stages} names={names} />
+                    </>
+                  )}
                 <RepeatTournament tournament={data.tournament} />
                 {/* Результаты — у начатого турнира. До старта места «не
                     определены», а изменения рейтинга нулевые у всех: такие

@@ -1,5 +1,6 @@
 import type {
   CreateTournamentInput,
+  DrawResult,
   DuplicateTournamentInput,
   ListTournamentsQuery,
   Page,
@@ -103,4 +104,61 @@ export async function removeRegistration(
   await apiRequest<undefined>(`/tournaments/${tournamentId}/registrations/${registrationId}`, {
     method: 'DELETE',
   });
+}
+
+/**
+ * Жизненный цикл турнира — ТЗ 4.1, ТС 7.5.
+ *
+ * Каждый переход — отдельный маршрут, а не `PATCH` со статусом: условия сверх
+ * таблицы переходов проверяет сервер (жеребьёвка перед стартом, результаты
+ * всех встреч перед завершением), и статус, присвоенный запросом на правку,
+ * их обошёл бы.
+ *
+ * Право проверяет сервер (ТС 8.3). Интерфейс показывает кнопку только тому,
+ * кто ведёт клуб-хозяин (ADR-014), но правилом это не подменяет.
+ */
+
+export function publishTournament(id: string): Promise<TournamentView> {
+  return apiRequest<TournamentView>(`/tournaments/${id}/publish`, { method: 'POST' });
+}
+
+export function openRegistration(id: string): Promise<TournamentView> {
+  return apiRequest<TournamentView>(`/tournaments/${id}/open-registration`, { method: 'POST' });
+}
+
+export function closeRegistration(id: string): Promise<TournamentView> {
+  return apiRequest<TournamentView>(`/tournaments/${id}/close-registration`, { method: 'POST' });
+}
+
+/**
+ * Жеребьёвка — ТЗ 5.3. Повторная стирает предыдущую целиком.
+ *
+ * Возвращает не только этапы, но и несведённых одноклубников: организатор
+ * обязан увидеть их здесь, а не обнаружить в зале (ADR-011).
+ */
+export function drawTournament(id: string): Promise<DrawResult> {
+  return apiRequest<DrawResult>(`/tournaments/${id}/draw`, { method: 'POST' });
+}
+
+/** Старт: здесь сервер фиксирует рейтинги участников — ТС 5.4. */
+export function startTournament(id: string): Promise<TournamentView> {
+  return apiRequest<TournamentView>(`/tournaments/${id}/start`, { method: 'POST' });
+}
+
+/**
+ * Завершение и обсчёт — ТЗ 4.1.
+ *
+ * Тот же маршрут, что у консоли: обсчёт идёт второй транзакцией, и турнир
+ * остаётся «Завершённым» только если расчёт не удался. Повторный вызов
+ * доводит его до «Обсчитан», поэтому отдельного маршрута обсчёта нет.
+ *
+ * Свой вызов, а не импорт из консоли: страница турнира публичная, и ссылка
+ * на модуль консоли утянула бы её чанки в общедоступную сборку (ADR-004).
+ */
+export function finishTournament(id: string): Promise<TournamentView> {
+  return apiRequest<TournamentView>(`/tournaments/${id}/finish`, { method: 'POST' });
+}
+
+export function cancelTournament(id: string): Promise<TournamentView> {
+  return apiRequest<TournamentView>(`/tournaments/${id}/cancel`, { method: 'POST' });
 }
