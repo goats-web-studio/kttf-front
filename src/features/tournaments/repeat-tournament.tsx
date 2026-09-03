@@ -10,6 +10,7 @@ import { isClubStaff } from '@/features/clubs/roles';
 
 import { duplicateTournament } from './api';
 import { tournamentKeys } from './queries';
+import Button from '@/common/ui/button';
 
 /**
  * «Повторить прошлый турнир» — ТЗ 4.2, обязательный механизм.
@@ -74,14 +75,14 @@ export default function RepeatTournament({
           />
         </label>
 
-        <button
+        <Button
+          variant="primary"
           type="submit"
           // Дата обязательна: копия без неё — тот же турнир в тот же день.
           disabled={startsAt === '' || repeat.isPending}
-          className="rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
         >
           {repeat.isPending ? t('common.loading') : t('tournament.repeat.submit')}
-        </button>
+        </Button>
       </form>
 
       {repeat.error !== null && (

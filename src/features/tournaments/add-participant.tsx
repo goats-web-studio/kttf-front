@@ -10,6 +10,7 @@ import { playersQuery } from '@/features/players/queries';
 import { registerForTournament } from './api';
 import { eligibilityProblems } from './eligibility-problems';
 import { tournamentKeys } from './queries';
+import Button from '@/common/ui/button';
 
 interface AddParticipantProps {
   readonly tournament: TournamentView;
@@ -75,9 +76,9 @@ export default function AddParticipant({
             className="mt-1 w-full rounded border border-line-strong px-3 py-2 sm:w-64"
           />
         </label>
-        <button type="submit" className="rounded bg-red-600 px-4 py-2 text-sm text-white">
+        <Button variant="primary" type="submit">
           {t('participants.find')}
-        </button>
+        </Button>
       </form>
 
       {add.error !== null && (

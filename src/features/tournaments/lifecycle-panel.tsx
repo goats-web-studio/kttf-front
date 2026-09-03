@@ -8,6 +8,8 @@ import { useT, type MessageKey } from '@/common/i18n';
 import { useSessionStore } from '@/features/auth/session-store';
 import { isClubStaff } from '@/features/clubs/roles';
 
+import Button from '@/common/ui/button';
+
 import {
   cancelTournament,
   closeRegistration,
@@ -119,17 +121,17 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {actions.map((action) =>
           action === 'cancel' ? null : (
-            <button
+            <Button
               key={action}
+              variant="primary"
               type="button"
               disabled={run.isPending}
               onClick={() => {
                 run.mutate(action);
               }}
-              className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:bg-ink-400"
             >
               {t(ACTION_LABELS[action])}
-            </button>
+            </Button>
           ),
         )}
 

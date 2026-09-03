@@ -11,6 +11,7 @@ import { playersQuery } from '@/features/players/queries';
 
 import { signUp } from './api';
 import { useSessionStore } from './session-store';
+import Button from '@/common/ui/button';
 
 interface SignUpFormProps {
   readonly onSignedUp: () => void;
@@ -174,13 +175,9 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={register.isPending}
-        className="w-full rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
-      >
+      <Button variant="primary" type="submit" disabled={register.isPending} className="w-full">
         {register.isPending ? t('common.loading') : t('signUp.submit')}
-      </button>
+      </Button>
     </form>
   );
 }

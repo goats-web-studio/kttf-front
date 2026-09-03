@@ -8,6 +8,7 @@ import QueryState from '@/common/ui/query-state';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
+import Button from '@/common/ui/button';
 
 export const Route = createFileRoute('/_public/ratings')({
   component: RatingsPage,
@@ -104,9 +105,9 @@ function RatingsPage(): ReactNode {
         </label>
 
         <div className="flex items-end gap-3 sm:col-span-3">
-          <button type="submit" className="rounded bg-red-600 px-4 py-2 text-white">
+          <Button variant="primary" type="submit">
             {t('filter.apply')}
-          </button>
+          </Button>
           <button
             type="button"
             onClick={() => {

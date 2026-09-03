@@ -10,6 +10,7 @@ import { useT } from '@/common/i18n';
 
 import { signIn } from './api';
 import { useSessionStore } from './session-store';
+import Button from '@/common/ui/button';
 
 interface SignInFormProps {
   readonly onSignedIn: () => void;
@@ -84,13 +85,9 @@ export default function SignInForm({ onSignedIn }: SignInFormProps): ReactNode {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={login.isPending}
-        className="w-full rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
-      >
+      <Button variant="primary" type="submit" disabled={login.isPending} className="w-full">
         {login.isPending ? t('common.loading') : t('login.submit')}
-      </button>
+      </Button>
 
       <p className="text-sm text-ink-700">
         {t('login.noAccount')}{' '}

@@ -13,6 +13,7 @@ import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { updateAccount } from '@/features/auth/api';
 import { useSessionStore } from '@/features/auth/session-store';
+import Button from '@/common/ui/button';
 
 /**
  * Настройки аккаунта — ТЗ 2.1, ADR-035.
@@ -145,13 +146,9 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
         <p className="text-sm text-ok">{t('account.form.saved')}</p>
       )}
 
-      <button
-        type="submit"
-        disabled={save.isPending}
-        className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-60"
-      >
+      <Button variant="primary" type="submit" disabled={save.isPending}>
         {save.isPending ? t('common.loading') : t('account.form.save')}
-      </button>
+      </Button>
     </form>
   );
 }

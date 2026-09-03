@@ -12,6 +12,7 @@ import { playerQuery } from '@/features/players/queries';
 import { registerForTournament, removeRegistration } from './api';
 import { eligibilityProblems, problemKeys } from './eligibility-problems';
 import { tournamentKeys } from './queries';
+import Button from '@/common/ui/button';
 
 interface RegistrationPanelProps {
   readonly tournament: TournamentView;
@@ -286,14 +287,14 @@ function Join({
 
   return (
     <>
-      <button
+      <Button
+        variant="primary"
         type="button"
         disabled={isPending || isChecking || blocked}
         onClick={onJoin}
-        className="rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
       >
         {isPending || isChecking ? t('common.loading') : t('registration.join')}
-      </button>
+      </Button>
 
       {/*
         Причина названа до нажатия, а не после отказа сервера (ADR-029):

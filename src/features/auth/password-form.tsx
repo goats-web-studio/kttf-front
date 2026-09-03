@@ -8,6 +8,7 @@ import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { changePassword } from '@/features/auth/api';
 import { useSessionStore } from '@/features/auth/session-store';
+import Button from '@/common/ui/button';
 
 /**
  * Смена пароля — ТЗ 2.1.
@@ -78,13 +79,9 @@ export default function PasswordForm(): ReactNode {
 
       {change.isSuccess && <p className="text-sm text-ok">{t('account.password.changed')}</p>}
 
-      <button
-        type="submit"
-        disabled={change.isPending}
-        className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-60"
-      >
+      <Button variant="primary" type="submit" disabled={change.isPending}>
         {change.isPending ? t('common.loading') : t('account.password.submit')}
-      </button>
+      </Button>
     </form>
   );
 }

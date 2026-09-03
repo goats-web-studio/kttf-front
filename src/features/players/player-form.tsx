@@ -16,6 +16,7 @@ import { clubDirectoryQuery } from '@/features/clubs/queries';
 import PhotoField from '@/features/players/photo-field';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
+import Button from '@/common/ui/button';
 
 interface PlayerFormProps {
   /** Заполненные поля при правке. Пусто — профиль заводится впервые. */
@@ -300,13 +301,9 @@ export default function PlayerForm({
       )}
 
       <div className="flex items-center gap-4">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
-        >
+        <Button variant="primary" type="submit" disabled={isPending}>
           {isPending ? t('common.loading') : t(submitLabel)}
-        </button>
+        </Button>
         {onCancel !== undefined && (
           <button type="button" onClick={onCancel} className="text-sm text-ink-700 underline">
             {t('player.form.cancel')}

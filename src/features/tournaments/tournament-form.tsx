@@ -16,6 +16,7 @@ import { clubDirectoryQuery } from '@/features/clubs/queries';
 import FormatEditor from './format-editor';
 import { DEFAULT_DRAFT, toFormatConfig, type FormatDraft } from './format-draft';
 import { TOURNAMENT_LEVEL_KEYS } from './labels';
+import Button from '@/common/ui/button';
 
 interface TournamentFormProps {
   /** Клубы, которыми человек управляет. Пустой список сюда не доходит. */
@@ -321,13 +322,9 @@ export default function TournamentForm({
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="mt-6 rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
-      >
+      <Button variant="primary" type="submit" disabled={isPending} className="mt-6">
         {isPending ? t('common.loading') : t('tournament.form.create')}
-      </button>
+      </Button>
     </form>
   );
 }

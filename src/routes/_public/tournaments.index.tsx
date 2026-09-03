@@ -14,6 +14,7 @@ import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { managedClubIds } from '@/features/clubs/roles';
 import { TOURNAMENT_STATUS_KEYS } from '@/features/tournaments/labels';
 import { tournamentsQuery } from '@/features/tournaments/queries';
+import Button from '@/common/ui/button';
 
 export const Route = createFileRoute('/_public/tournaments/')({
   component: TournamentsPage,
@@ -83,10 +84,13 @@ function TournamentsPage(): ReactNode {
         <h1 className="font-display text-display-md font-bold text-ink-900">
           {t('page.tournaments.title')}
         </h1>
+        {/* Ссылка, ведущая себя как кнопка: asChild отдаёт стиль варианта
+            якорю, и переход остаётся переходом — с middle-click и «открыть в
+            новой вкладке», которых у button нет. */}
         {canCreate && (
-          <Link to="/tournaments/new" className="rounded bg-red-600 px-4 py-2 text-sm text-white">
-            {t('tournament.form.create')}
-          </Link>
+          <Button asChild variant="primary" size="sm">
+            <Link to="/tournaments/new">{t('tournament.form.create')}</Link>
+          </Button>
         )}
       </div>
 
@@ -166,9 +170,9 @@ function TournamentsPage(): ReactNode {
         </div>
 
         <div className="flex items-end gap-3 sm:col-span-2">
-          <button type="submit" className="rounded bg-red-600 px-4 py-2 text-white">
+          <Button variant="primary" type="submit">
             {t('filter.apply')}
-          </button>
+          </Button>
           <button
             type="button"
             onClick={() => {
