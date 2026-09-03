@@ -8,6 +8,8 @@
 export const ru = {
   'app.name': 'KTTF',
   'app.tagline': 'Настольный теннис Казахстана',
+  'app.logo': 'KTTF — настольный теннис Казахстана',
+  'footer.instagram': 'Инстаграм',
 
   'nav.home': 'Главная',
   'nav.ratings': 'Рейтинг',

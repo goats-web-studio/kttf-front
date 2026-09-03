@@ -17,7 +17,6 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "make:icons": "node scripts/make-icons.mjs",
     "check:shared": "node scripts/check-shared.mjs",
     "bump:shared": "node scripts/bump-shared.mjs"
   },

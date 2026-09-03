@@ -10,6 +10,8 @@ import type { MessageKey } from './locale';
 export const kk: Record<MessageKey, string> = {
   'app.name': 'KTTF',
   'app.tagline': 'Қазақстан үстел теннисі',
+  'app.logo': 'KTTF — Қазақстан үстел теннисі',
+  'footer.instagram': 'Инстаграм',
 
   'nav.home': 'Басты бет',
   'nav.ratings': 'Рейтинг',
