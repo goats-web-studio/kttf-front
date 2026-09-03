@@ -53,7 +53,7 @@ export default function PasswordForm(): ReactNode {
             {...form.register('currentPassword')}
             type="password"
             autoComplete="current-password"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -65,7 +65,7 @@ export default function PasswordForm(): ReactNode {
             {...form.register('newPassword')}
             type="password"
             autoComplete="new-password"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
       </div>
@@ -76,14 +76,12 @@ export default function PasswordForm(): ReactNode {
         </p>
       )}
 
-      {change.isSuccess && (
-        <p className="text-sm text-green-700">{t('account.password.changed')}</p>
-      )}
+      {change.isSuccess && <p className="text-sm text-ok">{t('account.password.changed')}</p>}
 
       <button
         type="submit"
         disabled={change.isPending}
-        className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-60"
+        className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-60"
       >
         {change.isPending ? t('common.loading') : t('account.password.submit')}
       </button>
@@ -104,7 +102,7 @@ function Field({
 
   return (
     <label className="block text-sm">
-      <span className="text-slate-700">{t(label)}</span>
+      <span className="text-ink-700">{t(label)}</span>
       {children}
       {error !== undefined && (
         <span role="alert" className="mt-1 block text-red-700">

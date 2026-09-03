@@ -28,7 +28,7 @@ export default function StandingsBoard({ groups, names, ratings }: StandingsBoar
 
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-wide text-slate-400 uppercase">
+      <h2 className="text-xl font-semibold tracking-wide text-night-ink-500">
         {t('screen.standings.title')}
       </h2>
 
@@ -38,8 +38,8 @@ export default function StandingsBoard({ groups, names, ratings }: StandingsBoar
             key={`${group.stageId}:${group.groupId ?? 'single'}`}
             className="w-full text-xl tabular-nums"
           >
-            <caption className="pb-1 text-left text-lg text-slate-400">{group.label}</caption>
-            <thead className="text-sm text-slate-500 uppercase">
+            <caption className="pb-1 text-left text-lg text-night-ink-500">{group.label}</caption>
+            <thead className="text-sm text-night-ink-500">
               <tr>
                 <th scope="col" className="text-left">
                   {t('screen.standings.place')}
@@ -60,20 +60,20 @@ export default function StandingsBoard({ groups, names, ratings }: StandingsBoar
             </thead>
             <tbody>
               {group.rows.map((row) => (
-                <tr key={row.participant} className="border-t border-slate-800">
+                <tr key={row.participant} className="border-t border-night-line">
                   {/* Пустое место — равенство, которого судья ещё не развёл (ADR-008). */}
-                  <td className="py-1 text-slate-300">{row.place ?? '—'}</td>
-                  <td className="py-1 text-slate-100">
+                  <td className="py-1 text-night-ink-700">{row.place ?? '—'}</td>
+                  <td className="py-1 text-night-ink-900">
                     {names.get(row.participant) ?? t('screen.match.pending')}
-                    <span className="ml-2 text-sm text-slate-500">
+                    <span className="ml-2 text-sm text-night-ink-500">
                       {ratings.get(row.participant) ?? ''}
                     </span>
                   </td>
                   <td className="py-1 text-right font-semibold">{row.points}</td>
-                  <td className="py-1 text-right text-slate-300">
+                  <td className="py-1 text-right text-night-ink-700">
                     {row.setsWon}:{row.setsLost}
                   </td>
-                  <td className="py-1 text-right text-slate-300">
+                  <td className="py-1 text-right text-night-ink-700">
                     {row.ballsWon}:{row.ballsLost}
                   </td>
                 </tr>

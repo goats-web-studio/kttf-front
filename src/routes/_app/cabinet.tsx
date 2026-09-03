@@ -42,30 +42,26 @@ function CabinetPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">{t('page.cabinet.title')}</h1>
+      <h1 className="text-2xl font-semibold text-ink-900">{t('page.cabinet.title')}</h1>
 
       {/* Охрана оболочки `_app` без сессии сюда не пускает: ветка нужна типу. */}
       {user !== null && (
         <>
-          <h2 className="mt-8 text-lg font-semibold text-slate-900">
-            {t('cabinet.profile.title')}
-          </h2>
+          <h2 className="mt-8 text-lg font-semibold text-ink-900">{t('cabinet.profile.title')}</h2>
           {user.playerId === null ? <NewProfile /> : <Profile playerId={user.playerId} />}
 
-          <h2 className="mt-12 text-lg font-semibold text-slate-900">
-            {t('cabinet.account.title')}
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">{t('cabinet.account.lead')}</p>
+          <h2 className="mt-12 text-lg font-semibold text-ink-900">{t('cabinet.account.title')}</h2>
+          <p className="mt-1 text-sm text-ink-700">{t('cabinet.account.lead')}</p>
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[max-content_1fr]">
-            <dt className="text-slate-500">{t('cabinet.account.phone')}</dt>
-            <dd className="text-slate-900">
+            <dt className="text-ink-500">{t('cabinet.account.phone')}</dt>
+            <dd className="text-ink-900">
               {user.phone}
-              <span className="ml-2 text-xs text-slate-400">{t('cabinet.account.phoneFixed')}</span>
+              <span className="ml-2 text-xs text-ink-400">{t('cabinet.account.phoneFixed')}</span>
             </dd>
           </dl>
           <AccountForm user={user} />
 
-          <h3 className="mt-10 text-sm font-semibold text-slate-900">
+          <h3 className="mt-10 text-sm font-semibold text-ink-900">
             {t('account.password.title')}
           </h3>
           <PasswordForm />
@@ -95,7 +91,7 @@ function NewProfile(): ReactNode {
 
   return (
     <>
-      <p className="mt-2 text-slate-600">{t('cabinet.profile.lead')}</p>
+      <p className="mt-2 text-ink-700">{t('cabinet.profile.lead')}</p>
       <PlayerForm
         submitLabel="cabinet.profile.create"
         isPending={create.isPending}
@@ -171,24 +167,24 @@ function Card({
   const clubs = useQuery(clubDirectoryQuery);
 
   return (
-    <div className="mt-6 rounded border border-slate-200 bg-white p-4">
+    <div className="mt-6 rounded border border-line bg-paper p-4">
       <div className="flex items-start gap-4">
         {player.photoUrl !== null && (
           <img src={player.photoUrl} alt="" className="size-20 rounded-full object-cover" />
         )}
         <div>
-          <p className="text-lg font-medium text-slate-900">{playerName(player)}</p>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="text-lg font-medium text-ink-900">{playerName(player)}</p>
+          <p className="mt-1 text-sm text-ink-700">
             {player.city}
             {player.clubId !== null && ` · ${clubs.data?.get(player.clubId)?.name ?? ''}`}
             {/* Своя карточка показывает дату целиком, если она известна:
                 прячут её от посторонних, а не от себя (ADR-037). */}
             {` · ${player.birthDate === null ? String(player.birthYear) : formatDate(player.birthDate, locale)}`}
             {player.birthYearOnly && (
-              <span className="ml-2 text-xs text-slate-400">{t('cabinet.profile.yearOnly')}</span>
+              <span className="ml-2 text-xs text-ink-400">{t('cabinet.profile.yearOnly')}</span>
             )}
           </p>
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-3 text-sm text-ink-700">
             {t('cabinet.profile.rating')} <span className="tabular-nums">{player.rating}</span>
           </p>
         </div>
@@ -207,13 +203,13 @@ function Card({
       </dl>
 
       <div className="mt-4 flex items-center gap-4 text-sm">
-        <button type="button" onClick={onEdit} className="text-blue-700 underline">
+        <button type="button" onClick={onEdit} className="text-red-600 underline">
           {t('cabinet.profile.edit')}
         </button>
         <Link
           to="/players/$playerId"
           params={{ playerId: player.id }}
-          className="text-blue-700 underline"
+          className="text-red-600 underline"
         >
           {t('cabinet.profile.public')}
         </Link>
@@ -235,8 +231,8 @@ function Row({
 
   return (
     <>
-      <dt className="text-slate-500">{t(label)}</dt>
-      <dd className="text-slate-900">{value}</dd>
+      <dt className="text-ink-500">{t(label)}</dt>
+      <dd className="text-ink-900">{value}</dd>
     </>
   );
 }
@@ -273,13 +269,13 @@ function Roles({ user }: { readonly user: AuthUserView }): ReactNode {
 
   return (
     <section className="mt-10">
-      <h3 className="text-sm font-semibold text-slate-900">{t('cabinet.roles.title')}</h3>
+      <h3 className="text-sm font-semibold text-ink-900">{t('cabinet.roles.title')}</h3>
       {user.clubRoles.length === 0 ? (
-        <p className="mt-1 text-sm text-slate-500">{t('cabinet.roles.empty')}</p>
+        <p className="mt-1 text-sm text-ink-500">{t('cabinet.roles.empty')}</p>
       ) : (
         <ul className="mt-1 space-y-1 text-sm">
           {user.clubRoles.map((role) => (
-            <li key={`${role.clubId}-${role.role}`} className="text-slate-700">
+            <li key={`${role.clubId}-${role.role}`} className="text-ink-700">
               {clubs.data?.get(role.clubId)?.name ?? role.clubId}
               {' · '}
               <RoleName role={role.role} />

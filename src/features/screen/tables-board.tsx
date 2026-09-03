@@ -24,7 +24,7 @@ export default function TablesBoard({ tables, names }: TablesBoardProps): ReactN
 
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-wide text-slate-400 uppercase">
+      <h2 className="text-xl font-semibold tracking-wide text-night-ink-500">
         {t('screen.tables.title')}
       </h2>
       <ul className="mt-3 grid grid-cols-2 gap-3 xl:grid-cols-3">
@@ -33,16 +33,16 @@ export default function TablesBoard({ tables, names }: TablesBoardProps): ReactN
             key={table.number}
             className={`rounded-lg border-2 p-4 ${
               table.status === 'PLAYING'
-                ? 'border-emerald-500 bg-emerald-950'
+                ? 'border-night-ok bg-night-raised'
                 : table.status === 'AWAITING'
-                  ? 'border-amber-600 bg-amber-950'
-                  : 'border-slate-700 bg-slate-900'
+                  ? 'border-night-warn bg-night-raised'
+                  : 'border-night-line bg-night'
             }`}
           >
-            <p className="text-3xl font-bold text-slate-300 tabular-nums">{table.number}</p>
+            <p className="text-3xl font-bold text-night-ink-700 tabular-nums">{table.number}</p>
 
             {table.match === null ? (
-              <p className="mt-2 text-xl text-slate-500">{t('screen.table.free')}</p>
+              <p className="mt-2 text-xl text-night-ink-500">{t('screen.table.free')}</p>
             ) : (
               <TableMatch match={table.match} names={names} />
             )}
@@ -77,7 +77,7 @@ function TableMatch({
         sets={match.setsB}
         won={played && (match.setsB ?? 0) > (match.setsA ?? 0)}
       />
-      {!played && <p className="text-lg text-emerald-300">{t('screen.match.playing')}</p>}
+      {!played && <p className="text-lg text-night-ok">{t('screen.match.playing')}</p>}
     </div>
   );
 }
@@ -97,7 +97,7 @@ function Side({
 
   return (
     <p className="flex items-baseline justify-between gap-4 text-2xl">
-      <span className={won ? 'font-bold text-white' : 'text-slate-200'}>
+      <span className={won ? 'font-bold text-night-red' : 'text-night-ink-500'}>
         {id === null ? t('screen.match.pending') : (names.get(id) ?? t('screen.match.pending'))}
       </span>
       {sets !== null && <span className="font-bold tabular-nums">{sets}</span>}

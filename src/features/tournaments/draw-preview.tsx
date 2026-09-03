@@ -73,8 +73,8 @@ export default function DrawPreview({ tournamentId, stages, names }: DrawPreview
 
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold text-slate-900">{t('draw.title')}</h2>
-      <p className="mt-1 text-sm text-slate-600">{t('draw.swap.hint')}</p>
+      <h2 className="text-lg font-semibold text-ink-900">{t('draw.title')}</h2>
+      <p className="mt-1 text-sm text-ink-700">{t('draw.swap.hint')}</p>
 
       {swap.error !== null && (
         <p role="alert" className="mt-2 text-sm text-red-700">
@@ -84,7 +84,7 @@ export default function DrawPreview({ tournamentId, stages, names }: DrawPreview
 
       {stages.map((stage) => (
         <div key={stage.id} className="mt-3">
-          <h3 className="text-sm font-medium text-slate-700">
+          <h3 className="text-sm font-medium text-ink-700">
             {/* Название этапа задаёт жеребьёвка, и у круговой схемы оно
                 совпадает с названием типа. Повторять его дважды незачем. */}
             {stage.name === t(STAGE_TYPE_KEYS[stage.type])
@@ -92,15 +92,15 @@ export default function DrawPreview({ tournamentId, stages, names }: DrawPreview
               : `${stage.name} · ${t(STAGE_TYPE_KEYS[stage.type])}`}{' '}
             {/* «Встреч: 2», а не «2 встречи»: русское число согласуется
                 с существительным, а системы склонения в словаре нет. */}
-            <span className="font-normal text-slate-500">
+            <span className="font-normal text-ink-500">
               {t('draw.matches')}: <span className="tabular-nums">{stage.matches.length}</span>
             </span>
           </h3>
 
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {placementsOf(stage, t('draw.bracket')).map((placement) => (
-              <li key={placement.key} className="rounded border border-slate-200 p-3 text-sm">
-                <p className="font-medium text-slate-900">{placement.label}</p>
+              <li key={placement.key} className="rounded border border-line p-3 text-sm">
+                <p className="font-medium text-ink-900">{placement.label}</p>
                 {/* Список назван группой: у страницы их много, и без имени
                     состав неотличим для чтеца экрана. */}
                 <ol aria-label={placement.label} className="mt-1">
@@ -116,8 +116,8 @@ export default function DrawPreview({ tournamentId, stages, names }: DrawPreview
                         }}
                         className={
                           selected === id
-                            ? 'rounded bg-blue-700 px-2 py-0.5 text-white'
-                            : 'rounded px-2 py-0.5 text-slate-700 hover:bg-slate-100 disabled:text-slate-400'
+                            ? 'rounded bg-red-600 px-2 py-0.5 text-white'
+                            : 'rounded px-2 py-0.5 text-ink-700 hover:bg-paper-hover disabled:text-ink-400'
                         }
                       >
                         {names.get(id) ?? t('results.match.unknownPlayer')}

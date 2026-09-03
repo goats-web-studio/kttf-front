@@ -44,9 +44,9 @@ export default function ParticipantsPanel({
 
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold text-slate-900">
+      <h2 className="text-lg font-semibold text-ink-900">
         {t('participants.title')}{' '}
-        <span className="text-base font-normal text-slate-500 tabular-nums">
+        <span className="text-base font-normal text-ink-500 tabular-nums">
           {registrations.length}
         </span>
       </h2>
@@ -54,11 +54,11 @@ export default function ParticipantsPanel({
       {isStaff && <AddParticipant tournament={tournament} registrations={registrations} />}
 
       {registrations.length === 0 ? (
-        <p className="mt-3 text-slate-500">{t('participants.empty')}</p>
+        <p className="mt-3 text-ink-500">{t('participants.empty')}</p>
       ) : (
         <table className="mt-3 w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-slate-500">
+            <tr className="border-b border-line text-left text-ink-500">
               <th scope="col" className="py-2 font-normal">
                 {t('participants.seed')}
               </th>
@@ -125,19 +125,19 @@ function Row({
   const error = update.error ?? remove.error;
 
   return (
-    <tr className="border-b border-slate-100 align-top">
-      <td className="py-2 tabular-nums text-slate-500">{registration.seed ?? '—'}</td>
-      <td className="py-2 text-slate-900">
+    <tr className="border-b border-line align-top">
+      <td className="py-2 tabular-nums text-ink-500">{registration.seed ?? '—'}</td>
+      <td className="py-2 text-ink-900">
         <Link
           to="/players/$playerId"
           params={{ playerId: registration.player.id }}
-          className="text-blue-700 underline"
+          className="text-red-600 underline"
         >
           {playerName(registration.player)}
         </Link>
         {!registration.isRated && (
           // Вне зачёта: играет, но результаты не рейтинговые — ТЗ 4.4.
-          <span className="ml-2 text-xs text-slate-500">{t('participants.unrated')}</span>
+          <span className="ml-2 text-xs text-ink-500">{t('participants.unrated')}</span>
         )}
         {error !== null && (
           <span role="alert" className="mt-1 block text-xs text-red-700">
@@ -145,11 +145,11 @@ function Row({
           </span>
         )}
       </td>
-      <td className="py-2 tabular-nums text-slate-600">
+      <td className="py-2 tabular-nums text-ink-700">
         {/* Рейтинг на старте, если турнир начат: он и пошёл в расчёт (ТС 5.4). */}
         {registration.ratingAtStart ?? registration.player.rating}
       </td>
-      <td className="py-2 text-slate-600">{t(REGISTRATION_STATUS_KEYS[registration.status])}</td>
+      <td className="py-2 text-ink-700">{t(REGISTRATION_STATUS_KEYS[registration.status])}</td>
       {isStaff && (
         <td className="py-2">
           <div className="flex flex-wrap gap-3 text-xs">
@@ -159,7 +159,7 @@ function Row({
               onClick={() => {
                 update.mutate({ isRated: !registration.isRated });
               }}
-              className="text-blue-700 underline disabled:text-slate-400"
+              className="text-red-600 underline disabled:text-ink-400"
             >
               {registration.isRated ? t('participants.markUnrated') : t('participants.markRated')}
             </button>
@@ -170,7 +170,7 @@ function Row({
               onClick={() => {
                 update.mutate({ status: isWithdrawn ? 'CONFIRMED' : 'WITHDRAWN' });
               }}
-              className="text-blue-700 underline disabled:text-slate-400"
+              className="text-red-600 underline disabled:text-ink-400"
             >
               {isWithdrawn ? t('participants.restore') : t('participants.withdraw')}
             </button>
@@ -184,13 +184,13 @@ function Row({
                 onClick={() => {
                   remove.mutate();
                 }}
-                className="text-blue-700 underline disabled:text-slate-400"
+                className="text-red-600 underline disabled:text-ink-400"
               >
                 {t('participants.remove')}
               </button>
             )}
 
-            <label className="flex items-center gap-1 text-slate-500">
+            <label className="flex items-center gap-1 text-ink-500">
               {t('participants.seed')}
               <input
                 type="number"
@@ -206,7 +206,7 @@ function Row({
 
                   update.mutate({ seed });
                 }}
-                className="w-14 rounded border border-slate-300 px-1 py-0.5 tabular-nums"
+                className="w-14 rounded border border-line-strong px-1 py-0.5 tabular-nums"
               />
             </label>
           </div>

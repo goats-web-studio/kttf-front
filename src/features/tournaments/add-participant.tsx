@@ -57,7 +57,7 @@ export default function AddParticipant({
   const problems = eligibilityProblems(add.error);
 
   return (
-    <div className="mt-3 rounded border border-slate-200 bg-slate-50 p-3">
+    <div className="mt-3 rounded border border-line bg-paper-sunken p-3">
       <form
         className="flex flex-wrap items-end gap-3"
         onSubmit={(event) => {
@@ -66,16 +66,16 @@ export default function AddParticipant({
         }}
       >
         <label className="block text-sm">
-          <span className="text-slate-700">{t('participants.search')}</span>
+          <span className="text-ink-700">{t('participants.search')}</span>
           <input
             value={draft}
             onChange={(event) => {
               setDraft(event.target.value);
             }}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2 sm:w-64"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2 sm:w-64"
           />
         </label>
-        <button type="submit" className="rounded bg-slate-900 px-4 py-2 text-sm text-white">
+        <button type="submit" className="rounded bg-red-600 px-4 py-2 text-sm text-white">
           {t('participants.find')}
         </button>
       </form>
@@ -95,16 +95,16 @@ export default function AddParticipant({
       )}
 
       {search !== '' && found.data !== undefined && (
-        <ul className="mt-3 divide-y divide-slate-200">
+        <ul className="mt-3 divide-y divide-line">
           {candidates.length === 0 ? (
-            <li className="py-2 text-sm text-slate-500">{t('ratings.empty')}</li>
+            <li className="py-2 text-sm text-ink-500">{t('ratings.empty')}</li>
           ) : (
             candidates.map((player) => (
               <li key={player.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <span className="text-slate-900">
+                <span className="text-ink-900">
                   {playerName(player)}
-                  <span className="ml-2 text-slate-500">{player.city}</span>
-                  <span className="ml-2 tabular-nums text-slate-500">{player.rating}</span>
+                  <span className="ml-2 text-ink-500">{player.city}</span>
+                  <span className="ml-2 tabular-nums text-ink-500">{player.rating}</span>
                 </span>
                 <button
                   type="button"
@@ -112,7 +112,7 @@ export default function AddParticipant({
                   onClick={() => {
                     add.mutate(player.id);
                   }}
-                  className="text-blue-700 underline disabled:text-slate-400"
+                  className="text-red-600 underline disabled:text-ink-400"
                 >
                   {t('participants.add')}
                 </button>

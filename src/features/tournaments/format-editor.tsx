@@ -40,8 +40,8 @@ export default function FormatEditor({
   const hasGroups = draft.type === 'GROUPS_KNOCKOUT' || draft.type === 'GROUPS_FINAL_GROUPS';
 
   return (
-    <fieldset className="mt-8 rounded border border-slate-200 p-4">
-      <legend className="px-1 text-sm font-semibold text-slate-900">
+    <fieldset className="mt-8 rounded border border-line p-4">
+      <legend className="px-1 text-sm font-semibold text-ink-900">
         {t('tournament.form.format')}
       </legend>
 
@@ -53,7 +53,7 @@ export default function FormatEditor({
             onChange={(event) => {
               set('type', event.target.value as FormatType);
             }}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             {FORMAT_KEYS.map(([value, key]) => (
               <option key={value} value={value}>
@@ -82,7 +82,7 @@ export default function FormatEditor({
                 onChange={(event) => {
                   set('sizing', event.target.value === 'size' ? 'size' : 'count');
                 }}
-                className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+                className="mt-1 w-full rounded border border-line-strong px-3 py-2"
               >
                 <option value="count">{t('tournament.form.byGroupCount')}</option>
                 <option value="size">{t('tournament.form.byGroupSize')}</option>
@@ -150,7 +150,7 @@ export default function FormatEditor({
         )}
 
         {(draft.type === 'KNOCKOUT' || draft.type === 'GROUPS_KNOCKOUT') && (
-          <label className="flex items-center gap-2 self-end text-sm text-slate-700">
+          <label className="flex items-center gap-2 self-end text-sm text-ink-700">
             <input
               type="checkbox"
               checked={draft.thirdPlace}
@@ -223,9 +223,9 @@ function Preview({
   rows.push({ key: 'tournament.preview.totalMatches', value: String(preview.totalMatches) });
 
   return (
-    <div className="mt-5 border-t border-slate-100 pt-4">
+    <div className="mt-5 border-t border-line pt-4">
       <label className="block text-sm">
-        <span className="text-slate-700">{t('tournament.preview.participants')}</span>
+        <span className="text-ink-700">{t('tournament.preview.participants')}</span>
         <input
           type="number"
           inputMode="numeric"
@@ -234,15 +234,15 @@ function Preview({
           onChange={(event) => {
             onParticipantsChange(Number(event.target.value));
           }}
-          className="mt-1 w-28 rounded border border-slate-300 px-3 py-2"
+          className="mt-1 w-28 rounded border border-line-strong px-3 py-2"
         />
       </label>
 
       <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
         {rows.map((row) => (
           <div key={row.key} className="contents">
-            <dt className="text-slate-500">{t(row.key)}</dt>
-            <dd className="tabular-nums text-slate-900">{row.value}</dd>
+            <dt className="text-ink-500">{t(row.key)}</dt>
+            <dd className="tabular-nums text-ink-900">{row.value}</dd>
           </div>
         ))}
       </dl>
@@ -251,7 +251,7 @@ function Preview({
         // Ровно та проверка, которой жеребьёвка отвергает конфигурацию.
         // Здесь она предупреждение: настоящее число участников выяснится
         // к жеребьёвке, и запрещать создание по догадке не за что.
-        <p role="alert" className="mt-3 text-sm text-amber-700">
+        <p role="alert" className="mt-3 text-sm text-warn-text">
           {t('tournament.preview.tooFewAdvancing')}
         </p>
       )}
@@ -291,7 +291,7 @@ function RoundsField({
         onChange={(event) => {
           onChange(event.target.value === '2' ? 2 : 1);
         }}
-        className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+        className="mt-1 w-full rounded border border-line-strong px-3 py-2"
       >
         <option value="1">{t('tournament.form.oneRound')}</option>
         <option value="2">{t('tournament.form.twoRounds')}</option>
@@ -320,7 +320,7 @@ function SetsField({
         onChange={(event) => {
           onChange(event.target.value === '2' ? 2 : event.target.value === '4' ? 4 : 3);
         }}
-        className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+        className="mt-1 w-full rounded border border-line-strong px-3 py-2"
       >
         <option value="2">{t('tournament.form.bo3')}</option>
         <option value="3">{t('tournament.form.bo5')}</option>
@@ -352,7 +352,7 @@ function NumberField({
         onChange={(event) => {
           onChange(Number(event.target.value));
         }}
-        className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+        className="mt-1 w-full rounded border border-line-strong px-3 py-2"
       />
     </Field>
   );
@@ -369,7 +369,7 @@ function Field({
 
   return (
     <label className="block text-sm">
-      <span className="text-slate-700">{t(label)}</span>
+      <span className="text-ink-700">{t(label)}</span>
       {children}
     </label>
   );

@@ -26,16 +26,16 @@ export default function ResultsMatches({ stages, names }: ResultsMatchesProps): 
 
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold text-slate-900">{t('results.matches.title')}</h2>
+      <h2 className="text-lg font-semibold text-ink-900">{t('results.matches.title')}</h2>
       {stages.map((stage) => (
         <div key={stage.id} className="mt-6">
-          <h3 className="text-sm font-semibold text-slate-900">
+          <h3 className="text-sm font-semibold text-ink-900">
             {stage.name} · {t(STAGE_TYPE_KEYS[stage.type])}
           </h3>
           {partition(stage).map((part) => (
             <div key={part.label} className="mt-3">
-              {part.label !== '' && <p className="text-xs text-slate-500">{part.label}</p>}
-              <ul className="mt-1 divide-y divide-slate-100">
+              {part.label !== '' && <p className="text-xs text-ink-500">{part.label}</p>}
+              <ul className="mt-1 divide-y divide-line">
                 {part.matches.map((match) => (
                   <Row key={match.id} match={match} names={names} />
                 ))}
@@ -95,12 +95,12 @@ function Row({
 
   return (
     <li className="flex items-baseline justify-between gap-3 py-2 text-sm">
-      <span className="text-slate-900">
+      <span className="text-ink-900">
         <Name id={match.playerAId} names={names} /> — <Name id={match.playerBId} names={names} />
       </span>
       <span className="flex items-baseline gap-3">
-        {note.length > 0 && <span className="text-xs text-slate-500">{note.join(' · ')}</span>}
-        <span className="tabular-nums text-slate-900">
+        {note.length > 0 && <span className="text-xs text-ink-500">{note.join(' · ')}</span>}
+        <span className="tabular-nums text-ink-900">
           {played ? `${String(match.setsA)} : ${String(match.setsB)}` : '—'}
         </span>
       </span>
@@ -118,7 +118,7 @@ function Name({
   const t = useT();
 
   if (id === null) {
-    return <span className="text-slate-400">{t('results.match.pending')}</span>;
+    return <span className="text-ink-400">{t('results.match.pending')}</span>;
   }
 
   return names.get(id) ?? t('results.match.unknownPlayer');

@@ -62,7 +62,7 @@ function TournamentPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <Link to="/tournaments" className="text-sm text-blue-700 underline">
+      <Link to="/tournaments" className="text-sm text-red-600 underline">
         {t('nav.tournaments')}
       </Link>
 
@@ -71,7 +71,7 @@ function TournamentPage(): ReactNode {
             же. Общий текст проверки схемы («проверьте заполненные поля») на
             странице без единого поля человеку ничего не объясняет. */}
         {isMissingResource(results.error) ? (
-          <p role="alert" className="py-10 text-center text-slate-600">
+          <p role="alert" className="py-10 text-center text-ink-700">
             {t('tournament.notFound')}
           </p>
         ) : (

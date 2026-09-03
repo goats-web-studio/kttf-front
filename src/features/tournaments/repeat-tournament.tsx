@@ -51,9 +51,9 @@ export default function RepeatTournament({
   }
 
   return (
-    <section className="mt-8 rounded border border-slate-200 p-4">
-      <h2 className="text-lg font-semibold text-slate-900">{t('tournament.repeat.title')}</h2>
-      <p className="mt-1 text-sm text-slate-600">{t('tournament.repeat.hint')}</p>
+    <section className="mt-8 rounded border border-line p-4">
+      <h2 className="text-lg font-semibold text-ink-900">{t('tournament.repeat.title')}</h2>
+      <p className="mt-1 text-sm text-ink-700">{t('tournament.repeat.hint')}</p>
 
       <form
         className="mt-3 flex flex-wrap items-end gap-3"
@@ -63,14 +63,14 @@ export default function RepeatTournament({
         }}
       >
         <label className="block text-sm">
-          <span className="text-slate-700">{t('tournament.form.startsAt')}</span>
+          <span className="text-ink-700">{t('tournament.form.startsAt')}</span>
           <input
             type="datetime-local"
             value={startsAt}
             onChange={(event) => {
               setStartsAt(event.target.value);
             }}
-            className="mt-1 block rounded border border-slate-300 px-3 py-2"
+            className="mt-1 block rounded border border-line-strong px-3 py-2"
           />
         </label>
 
@@ -78,7 +78,7 @@ export default function RepeatTournament({
           type="submit"
           // Дата обязательна: копия без неё — тот же турнир в тот же день.
           disabled={startsAt === '' || repeat.isPending}
-          className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
+          className="rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
         >
           {repeat.isPending ? t('common.loading') : t('tournament.repeat.submit')}
         </button>

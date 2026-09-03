@@ -19,7 +19,7 @@ export default function MatchLine({ match, names, ratings }: MatchLineProps): Re
     <span className="flex items-baseline justify-between gap-3">
       <span>
         <Side id={match.playerAId} names={names} ratings={ratings} won={won(match, 'A')} />
-        <span className="px-2 text-slate-500">—</span>
+        <span className="px-2 text-night-ink-500">—</span>
         <Side id={match.playerBId} names={names} ratings={ratings} won={won(match, 'B')} />
       </span>
       {played && (
@@ -28,7 +28,7 @@ export default function MatchLine({ match, names, ratings }: MatchLineProps): Re
         </span>
       )}
       {!played && match.status === 'PLAYING' && (
-        <span className="text-xs text-slate-400">{t('console.playing.inProgress')}</span>
+        <span className="text-xs text-night-ink-500">{t('console.playing.inProgress')}</span>
       )}
     </span>
   );
@@ -56,15 +56,15 @@ function Side({
   const t = useT();
 
   if (id === null) {
-    return <span className="text-slate-500">{t('console.match.pending')}</span>;
+    return <span className="text-night-ink-500">{t('console.match.pending')}</span>;
   }
 
   const rating = ratings?.get(id);
 
   return (
-    <span className={isWinner ? 'font-semibold text-white' : 'text-slate-200'}>
+    <span className={isWinner ? 'font-semibold text-night-red' : 'text-night-ink-500'}>
       {names.get(id) ?? t('console.match.unknownPlayer')}
-      {rating !== undefined && <span className="ml-1 text-xs text-slate-400">{rating}</span>}
+      {rating !== undefined && <span className="ml-1 text-xs text-night-ink-500">{rating}</span>}
     </span>
   );
 }

@@ -57,7 +57,7 @@ function PlayerPage(): ReactNode {
   if (!isKnownId || isMissingResource(player.error)) {
     return (
       <section className="mx-auto max-w-3xl px-4 py-10">
-        <p role="alert" className="py-10 text-center text-slate-600">
+        <p role="alert" className="py-10 text-center text-ink-700">
           {t('player.notFound')}
         </p>
       </section>
@@ -73,8 +73,8 @@ function PlayerPage(): ReactNode {
       >
         {player.data === undefined ? null : (
           <header>
-            <h1 className="text-2xl font-semibold text-slate-900">{playerName(player.data)}</h1>
-            <p className="mt-1 text-slate-600">
+            <h1 className="text-2xl font-semibold text-ink-900">{playerName(player.data)}</h1>
+            <p className="mt-1 text-ink-700">
               {player.data.city}
               {player.data.clubId !== null &&
                 ` · ${clubs.data?.get(player.data.clubId)?.name ?? ''}`}
@@ -82,17 +82,17 @@ function PlayerPage(): ReactNode {
             </p>
 
             <p className="mt-4 flex items-baseline gap-3">
-              <span className="text-3xl font-semibold tabular-nums text-slate-900">
+              <span className="text-3xl font-semibold tabular-nums text-ink-900">
                 {player.data.rating}
               </span>
-              <span className="text-sm text-slate-500">
+              <span className="text-sm text-ink-500">
                 {t('player.rating.matches')}{' '}
                 <span className="tabular-nums">{player.data.ratedMatches}</span>
               </span>
               {player.data.isProvisional && (
                 // Провизорный рейтинг двигается быстрее: сыграно меньше
                 // двадцати рейтинговых встреч (ТЗ 7.1).
-                <span className="text-sm text-slate-500">{t('ratings.provisional')}</span>
+                <span className="text-sm text-ink-500">{t('ratings.provisional')}</span>
               )}
             </p>
           </header>

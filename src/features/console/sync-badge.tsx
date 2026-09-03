@@ -33,10 +33,10 @@ export default function SyncBadge({ queue }: SyncBadgeProps): ReactNode {
 
   const tone =
     queue.connection === 'OFFLINE'
-      ? 'border-red-700 bg-red-950 text-red-200'
+      ? 'border-night-red bg-night-raised text-night-red'
       : queue.connection === 'SYNCING'
-        ? 'border-amber-700 bg-amber-950 text-amber-200'
-        : 'border-emerald-800 bg-emerald-950 text-emerald-200';
+        ? 'border-night-warn bg-night-raised text-night-warn'
+        : 'border-night-ok bg-night-raised text-night-ok';
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -52,7 +52,7 @@ export default function SyncBadge({ queue }: SyncBadgeProps): ReactNode {
       <button
         type="button"
         onClick={queue.syncNow}
-        className="rounded border border-slate-700 px-2 py-1 text-sm text-slate-300"
+        className="rounded border border-night-line px-2 py-1 text-sm text-night-ink-700"
       >
         {t('console.sync.now')}
       </button>
@@ -61,7 +61,7 @@ export default function SyncBadge({ queue }: SyncBadgeProps): ReactNode {
         <span
           key={item.seq}
           role="alert"
-          className="flex items-center gap-2 rounded border border-red-700 bg-red-950 px-2 py-1 text-sm text-red-200"
+          className="flex items-center gap-2 rounded border border-night-red bg-night-raised px-2 py-1 text-sm text-night-red"
         >
           {/* Сервер отверг операцию: повторять её бессмысленно, и судья
               решает сам — ввести заново или оставить как есть. */}

@@ -31,18 +31,18 @@ export default function QueueZone({
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-slate-400 uppercase">{t('console.queue.title')}</h2>
+      <h2 className="text-sm font-semibold text-night-ink-500">{t('console.queue.title')}</h2>
 
       {queue.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-500">{t('console.queue.empty')}</p>
+        <p className="mt-2 text-sm text-night-ink-500">{t('console.queue.empty')}</p>
       ) : (
         <ul className="mt-2 space-y-2">
           {queue.map((item, index) => (
             <li
               key={item.match.id}
-              className="rounded border border-slate-700 bg-slate-800 p-3 text-sm"
+              className="rounded border border-night-line bg-night-raised p-3 text-sm"
             >
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-night-ink-500">
                 {/* «Круговая · Круговая» — у круговой схемы единственная
                     группа названа как этап. Повторять незачем. */}
                 {item.stageName}
@@ -56,7 +56,7 @@ export default function QueueZone({
                 {/* Подсказки ТЗ 6.3: судья решает, кого звать, по ним. */}
                 {index === 0 && <span className="text-sky-400">{t('console.hint.waiting')}</span>}
                 {item.lastForBoth && (
-                  <span className="text-slate-400">{t('console.hint.lastForBoth')}</span>
+                  <span className="text-night-ink-500">{t('console.hint.lastForBoth')}</span>
                 )}
               </p>
 
@@ -88,7 +88,7 @@ function Assign({
   const [choosing, setChoosing] = useState(false);
 
   if (suggested === null) {
-    return <p className="mt-2 text-xs text-slate-500">{t('console.queue.noFreeTable')}</p>;
+    return <p className="mt-2 text-xs text-night-ink-500">{t('console.queue.noFreeTable')}</p>;
   }
 
   return (
@@ -98,7 +98,7 @@ function Assign({
         onClick={() => {
           onAssign(suggested);
         }}
-        className="rounded bg-slate-700 px-4 py-2 font-semibold text-white active:bg-slate-600"
+        className="min-h-14 rounded-sm border border-night-line-strong bg-night-raised px-4 font-semibold text-white active:bg-night-line-strong"
       >
         {t('console.queue.assign')} {suggested}
       </button>
@@ -111,7 +111,7 @@ function Assign({
             setChoosing(false);
             onAssign(Number(event.target.value));
           }}
-          className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-white"
+          className="rounded border border-night-line-strong bg-night-raised px-2 py-1 text-white"
         >
           <option value="" disabled>
             {t('console.queue.otherTable')}
@@ -128,7 +128,7 @@ function Assign({
           onClick={() => {
             setChoosing(true);
           }}
-          className="text-xs text-slate-400 underline"
+          className="text-xs text-night-ink-500 underline"
         >
           {t('console.queue.otherTable')}
         </button>

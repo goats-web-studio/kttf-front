@@ -44,11 +44,11 @@ export default function ResultsPlacements({
 
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold text-slate-900">{t('results.places.title')}</h2>
+      <h2 className="text-lg font-semibold text-ink-900">{t('results.places.title')}</h2>
 
       <table className="mt-3 w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-slate-500">
+          <tr className="border-b border-line text-left text-ink-500">
             <th scope="col" className="py-2 font-normal">
               {t('results.places.place')}
             </th>
@@ -65,13 +65,13 @@ export default function ResultsPlacements({
         </thead>
         <tbody>
           {participants.map((participant) => (
-            <tr key={participant.player.id} className="border-b border-slate-100">
-              <td className="py-2 font-medium text-slate-900">
-                {participant.place ?? <span className="text-slate-400">—</span>}
+            <tr key={participant.player.id} className="border-b border-line">
+              <td className="py-2 font-medium text-ink-900">
+                {participant.place ?? <span className="text-ink-400">—</span>}
               </td>
-              <td className="py-2 text-slate-900">{playerName(participant.player)}</td>
-              <td className="py-2 text-slate-500">{participant.seed ?? ''}</td>
-              <td className="py-2 text-slate-500">
+              <td className="py-2 text-ink-900">{playerName(participant.player)}</td>
+              <td className="py-2 text-ink-500">{participant.seed ?? ''}</td>
+              <td className="py-2 text-ink-500">
                 <Notes participant={participant} />
               </td>
             </tr>

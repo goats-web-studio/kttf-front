@@ -37,9 +37,7 @@ export default function StandingsPanel({
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-slate-400 uppercase">
-        {t('console.standings.title')}
-      </h2>
+      <h2 className="text-sm font-semibold text-night-ink-500">{t('console.standings.title')}</h2>
       {groups.map((group) => (
         <GroupTable
           key={`${group.stageId}:${group.groupId ?? 'single'}`}
@@ -87,12 +85,12 @@ function GroupTable({
   const order = group.rows.map((row) => row.participant);
 
   return (
-    <div className="mt-3 overflow-x-auto rounded border border-slate-700 bg-slate-800 p-3">
+    <div className="mt-3 overflow-x-auto rounded border border-night-line bg-night-raised p-3">
       <p className="text-sm font-semibold">{group.label}</p>
 
       <table className="mt-2 w-full text-xs">
         <thead>
-          <tr className="text-left text-slate-400">
+          <tr className="text-left text-night-ink-500">
             <th scope="col" className="py-1 font-normal">
               {t('console.standings.player')}
             </th>
@@ -117,36 +115,36 @@ function GroupTable({
         </thead>
         <tbody>
           {group.rows.map((row, index) => (
-            <tr key={row.participant} className="border-t border-slate-700">
+            <tr key={row.participant} className="border-t border-night-line">
               <th scope="row" className="py-1 text-left font-normal">
-                <span className="text-slate-400">{index + 1}.</span>{' '}
+                <span className="text-night-ink-500">{index + 1}.</span>{' '}
                 {names.get(row.participant) ?? row.participant}{' '}
                 {/* Рейтинг рядом с фамилией — ТЗ 6.6. */}
-                <span className="text-slate-500">{ratings.get(row.participant) ?? ''}</span>
+                <span className="text-night-ink-500">{ratings.get(row.participant) ?? ''}</span>
               </th>
 
               {order.map((opponent, column) => (
                 <td key={column} className="px-1 py-1 text-center tabular-nums">
                   {column === index ? (
-                    <span className="text-slate-600">×</span>
+                    <span className="text-night-ink-400">×</span>
                   ) : (
                     (scoreBetween(matches, row.participant, opponent) ?? (
-                      <span className="text-slate-600">—</span>
+                      <span className="text-night-ink-400">—</span>
                     ))
                   )}
                 </td>
               ))}
 
               <td className="px-1 py-1 text-center font-semibold tabular-nums">{row.points}</td>
-              <td className="px-1 py-1 text-center tabular-nums text-slate-300">
+              <td className="px-1 py-1 text-center tabular-nums text-night-ink-700">
                 {row.setDiff > 0 ? `+${String(row.setDiff)}` : row.setDiff}
               </td>
-              <td className="px-1 py-1 text-center tabular-nums text-slate-300">
+              <td className="px-1 py-1 text-center tabular-nums text-night-ink-700">
                 {row.ballDiff > 0 ? `+${String(row.ballDiff)}` : row.ballDiff}
               </td>
               <td className="px-1 py-1 text-center font-semibold tabular-nums">
                 {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
-                {row.place ?? <span className="text-amber-400">?</span>}
+                {row.place ?? <span className="text-night-warn">?</span>}
               </td>
             </tr>
           ))}

@@ -107,14 +107,14 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
   const hint = HINTS[tournament.status];
 
   return (
-    <section className="mt-8 rounded border border-slate-300 bg-slate-50 p-4">
-      <h2 className="text-lg font-semibold text-slate-900">{t('lifecycle.title')}</h2>
+    <section className="mt-8 rounded border border-line-strong bg-paper-sunken p-4">
+      <h2 className="text-lg font-semibold text-ink-900">{t('lifecycle.title')}</h2>
 
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-1 text-sm text-ink-700">
         {t('lifecycle.status')}: {t(TOURNAMENT_STATUS_KEYS[tournament.status])}
       </p>
 
-      {hint !== undefined && <p className="mt-2 text-sm text-slate-600">{t(hint)}</p>}
+      {hint !== undefined && <p className="mt-2 text-sm text-ink-700">{t(hint)}</p>}
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {actions.map((action) =>
@@ -126,7 +126,7 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
               onClick={() => {
                 run.mutate(action);
               }}
-              className="rounded bg-blue-700 px-4 py-2 text-sm font-medium text-white disabled:bg-slate-400"
+              className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:bg-ink-400"
             >
               {t(ACTION_LABELS[action])}
             </button>
@@ -139,7 +139,7 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
           <Link
             to="/console/$tournamentId"
             params={{ tournamentId: tournament.id }}
-            className="text-sm text-blue-700 underline"
+            className="text-sm text-red-600 underline"
           >
             {t('lifecycle.console')}
           </Link>
@@ -148,14 +148,14 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
         {actions.includes('cancel') &&
           (confirmingCancel ? (
             <span className="flex items-center gap-3 text-sm">
-              <span className="text-slate-700">{t('lifecycle.cancelConfirm')}</span>
+              <span className="text-ink-700">{t('lifecycle.cancelConfirm')}</span>
               <button
                 type="button"
                 disabled={run.isPending}
                 onClick={() => {
                   run.mutate('cancel');
                 }}
-                className="text-red-700 underline disabled:text-slate-400"
+                className="text-red-700 underline disabled:text-ink-400"
               >
                 {t('lifecycle.cancelYes')}
               </button>
@@ -164,7 +164,7 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
                 onClick={() => {
                   setConfirmingCancel(false);
                 }}
-                className="text-slate-600 underline"
+                className="text-ink-700 underline"
               >
                 {t('lifecycle.cancelNo')}
               </button>
@@ -191,12 +191,12 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
       )}
 
       {collisions !== null && collisions.length > 0 && (
-        <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm">
-          <p className="font-medium text-amber-900">{t('draw.collisions')}</p>
-          <p className="mt-1 text-amber-800">{t('draw.collisions.why')}</p>
+        <div className="mt-4 rounded border border-warn bg-paper-sunken p-3 text-sm">
+          <p className="font-medium text-warn-text">{t('draw.collisions')}</p>
+          <p className="mt-1 text-warn-text">{t('draw.collisions.why')}</p>
           {/* Список назван: у страницы много списков, и без имени этот
               неотличим для чтеца экрана. */}
-          <ul aria-label={t('draw.collisions')} className="mt-2 text-amber-900">
+          <ul aria-label={t('draw.collisions')} className="mt-2 text-warn-text">
             {collisions.map((collision) => (
               <li key={`${collision.club}-${collision.group}`}>
                 {collision.group}:{' '}

@@ -21,7 +21,7 @@ export default function TournamentSummary({
 
   return (
     <header>
-      <h1 className="text-2xl font-semibold text-slate-900">{tournament.name}</h1>
+      <h1 className="text-2xl font-semibold text-ink-900">{tournament.name}</h1>
 
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         <Field label={t('tournament.status')}>{t(TOURNAMENT_STATUS_KEYS[tournament.status])}</Field>
@@ -44,8 +44,8 @@ export default function TournamentSummary({
 function Field({ label, children }: { readonly label: string; readonly children: ReactNode }) {
   return (
     <div className="flex gap-2">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="text-slate-900">{children}</dd>
+      <dt className="text-ink-500">{label}</dt>
+      <dd className="text-ink-900">{children}</dd>
     </div>
   );
 }

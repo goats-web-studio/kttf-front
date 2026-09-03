@@ -73,7 +73,7 @@ function ConsoleScreen(): ReactNode {
     <div className="mx-auto w-full max-w-6xl px-4 py-4">
       <header className="flex flex-wrap items-baseline justify-between gap-4">
         <div className="flex items-baseline gap-4">
-          <Link to="/console" className="text-sm text-slate-400 underline">
+          <Link to="/console" className="text-sm text-night-ink-500 underline">
             {t('page.console.title')}
           </Link>
           <h1 className="text-lg font-semibold">{snapshot?.tournament.name ?? ''}</h1>
@@ -135,7 +135,7 @@ function ConsoleScreen(): ReactNode {
             />
 
             {view.done && snapshot.tournament.status === 'RUNNING' && (
-              <section className="rounded border border-slate-700 bg-slate-800 p-3">
+              <section className="rounded border border-night-line bg-night-raised p-3">
                 {/* Завершение — единственное действие консоли, которому нужна
                     сеть: рейтинг считает сервер (ТС 6.2, ADR-022). Пока очередь
                     не ушла, закрывать турнир нечем — сервер не видел половины
@@ -146,15 +146,15 @@ function ConsoleScreen(): ReactNode {
                   onClick={() => {
                     finish.mutate();
                   }}
-                  className="rounded bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50"
+                  className="min-h-14 rounded-sm bg-red-600 px-4 font-semibold text-white disabled:opacity-50"
                 >
                   {t('console.finish')}
                 </button>
                 {queue.queued > 0 && (
-                  <p className="mt-2 text-sm text-amber-300">{t('console.finish.queueFirst')}</p>
+                  <p className="mt-2 text-sm text-night-warn">{t('console.finish.queueFirst')}</p>
                 )}
                 {finish.error !== null && (
-                  <p role="alert" className="mt-2 text-sm text-red-300">
+                  <p role="alert" className="mt-2 text-sm text-night-red">
                     {t(errorMessageKey(finish.error))}
                   </p>
                 )}

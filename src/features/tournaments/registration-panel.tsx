@@ -106,25 +106,25 @@ export default function RegistrationPanel({
   }
 
   return (
-    <section className="mt-8 rounded border border-slate-200 p-4">
-      <h2 className="text-lg font-semibold text-slate-900">{t('registration.title')}</h2>
+    <section className="mt-8 rounded border border-line p-4">
+      <h2 className="text-lg font-semibold text-ink-900">{t('registration.title')}</h2>
 
       <Conditions tournament={tournament} registrations={registrations} />
 
-      <p className="mt-3 text-sm text-slate-600">
+      <p className="mt-3 text-sm text-ink-700">
         {t('registration.deadline')} {formatDateTime(deadline, locale)}
       </p>
 
       <div className="mt-4">
         {mine !== undefined ? (
           <>
-            <p className="text-slate-900">
+            <p className="text-ink-900">
               {mine.status === 'WAITLIST' ? t('registration.waitlisted') : t('registration.joined')}
             </p>
             {isExpired ? (
               // Отмена только до дедлайна — ТЗ 4.3. После него снять участника
               // может организатор, и просить об этом придётся его.
-              <p className="mt-2 text-sm text-slate-500">{t('registration.cancelClosed')}</p>
+              <p className="mt-2 text-sm text-ink-500">{t('registration.cancelClosed')}</p>
             ) : (
               <button
                 type="button"
@@ -132,7 +132,7 @@ export default function RegistrationPanel({
                 onClick={() => {
                   leave.mutate(mine.id);
                 }}
-                className="mt-2 text-sm text-blue-700 underline disabled:text-slate-400"
+                className="mt-2 text-sm text-red-600 underline disabled:text-ink-400"
               >
                 {t('registration.cancel')}
               </button>
@@ -215,15 +215,15 @@ function Conditions({
   }
 
   if (rows.length === 0) {
-    return <p className="mt-2 text-sm text-slate-600">{t('registration.noLimits')}</p>;
+    return <p className="mt-2 text-sm text-ink-700">{t('registration.noLimits')}</p>;
   }
 
   return (
     <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
       {rows.map((row) => (
         <div key={row.label} className="contents">
-          <dt className="text-slate-500">{row.label}</dt>
-          <dd className="tabular-nums text-slate-900">{row.value}</dd>
+          <dt className="text-ink-500">{row.label}</dt>
+          <dd className="tabular-nums text-ink-900">{row.value}</dd>
         </div>
       ))}
     </dl>
@@ -255,7 +255,7 @@ function Join({
   const t = useT();
 
   if (isExpired) {
-    return <p className="text-slate-600">{t('registration.expired')}</p>;
+    return <p className="text-ink-700">{t('registration.expired')}</p>;
   }
 
   if (!isSignedIn) {
@@ -263,7 +263,7 @@ function Join({
       <Link
         to="/login"
         search={{ redirect: `/tournaments/${tournamentId}` }}
-        className="text-blue-700 underline"
+        className="text-red-600 underline"
       >
         {t('registration.signInToJoin')}
       </Link>
@@ -273,9 +273,9 @@ function Join({
   if (!hasProfile) {
     // Записывается игрок, а не аккаунт: без профиля сервер откажет (ТЗ 2.2).
     return (
-      <p className="text-slate-600">
+      <p className="text-ink-700">
         {t('registration.profileRequired')}{' '}
-        <Link to="/cabinet" className="text-blue-700 underline">
+        <Link to="/cabinet" className="text-red-600 underline">
           {t('page.cabinet.title')}
         </Link>
       </p>
@@ -290,7 +290,7 @@ function Join({
         type="button"
         disabled={isPending || isChecking || blocked}
         onClick={onJoin}
-        className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
+        className="rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
       >
         {isPending || isChecking ? t('common.loading') : t('registration.join')}
       </button>

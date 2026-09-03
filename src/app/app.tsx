@@ -63,7 +63,7 @@ function Restoring(): ReactNode {
   const t = useT();
 
   return (
-    <div className="flex h-full items-center justify-center text-slate-500">
+    <div className="flex h-full items-center justify-center text-ink-500">
       {t('common.loading')}
     </div>
   );

@@ -97,7 +97,7 @@ export default function TournamentForm({
         >
           <input
             {...form.register('name')}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -107,7 +107,7 @@ export default function TournamentForm({
         >
           <select
             {...form.register('clubId')}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             {clubIds.map((clubId) => (
               <option key={clubId} value={clubId}>
@@ -124,7 +124,7 @@ export default function TournamentForm({
           <input
             {...form.register('startsAt', moment)}
             type="datetime-local"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -134,7 +134,7 @@ export default function TournamentForm({
           <input
             {...form.register('registrationEndsAt', moment)}
             type="datetime-local"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -147,7 +147,7 @@ export default function TournamentForm({
             type="number"
             inputMode="numeric"
             min={0}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -158,7 +158,7 @@ export default function TournamentForm({
           {/* Коэффициент турнира в формуле рейтинга — ТЗ 7.1. */}
           <select
             {...form.register('level')}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             {tournamentLevelSchema.options.map((level) => (
               <option key={level} value={level}>
@@ -177,7 +177,7 @@ export default function TournamentForm({
             type="number"
             inputMode="numeric"
             min={1}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
       </div>
@@ -194,8 +194,8 @@ export default function TournamentForm({
         onParticipantsChange={setParticipants}
       />
 
-      <fieldset className="mt-8 rounded border border-slate-200 p-4">
-        <legend className="px-1 text-sm font-semibold text-slate-900">
+      <fieldset className="mt-8 rounded border border-line p-4">
+        <legend className="px-1 text-sm font-semibold text-ink-900">
           {t('tournament.form.seeding')}
         </legend>
 
@@ -203,7 +203,7 @@ export default function TournamentForm({
           <Field label="tournament.form.seedingMethod" error={undefined}>
             <select
               {...form.register('seedingConfig.method')}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             >
               <option value="RATING">{t('tournament.seeding.RATING')}</option>
               <option value="RANDOM">{t('tournament.seeding.RANDOM')}</option>
@@ -211,7 +211,7 @@ export default function TournamentForm({
             </select>
           </Field>
 
-          <label className="flex items-center gap-2 self-end text-sm text-slate-700">
+          <label className="flex items-center gap-2 self-end text-sm text-ink-700">
             {/* Разведение не гарантируется: посев старше, несведённые пары
                 возвращаются списком после жеребьёвки (ADR-011). */}
             <input type="checkbox" {...form.register('seedingConfig.separateByClub')} />
@@ -220,8 +220,8 @@ export default function TournamentForm({
         </div>
       </fieldset>
 
-      <fieldset className="mt-8 rounded border border-slate-200 p-4">
-        <legend className="px-1 text-sm font-semibold text-slate-900">
+      <fieldset className="mt-8 rounded border border-line p-4">
+        <legend className="px-1 text-sm font-semibold text-ink-900">
           {t('tournament.form.limits')}
         </legend>
 
@@ -232,14 +232,14 @@ export default function TournamentForm({
               type="number"
               inputMode="numeric"
               min={1}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
 
           <Field label="tournament.form.genderLimit" optional error={undefined}>
             <select
               {...form.register('genderLimit', optionalText)}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             >
               <option value="">{t('filter.any')}</option>
               {genderSchema.options.map((gender) => (
@@ -255,7 +255,7 @@ export default function TournamentForm({
               {...form.register('ratingCapMin', optionalNumber)}
               type="number"
               inputMode="numeric"
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
 
@@ -264,7 +264,7 @@ export default function TournamentForm({
               {...form.register('ratingCapMax', optionalNumber)}
               type="number"
               inputMode="numeric"
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
 
@@ -273,7 +273,7 @@ export default function TournamentForm({
               {...form.register('birthYearFrom', optionalNumber)}
               type="number"
               inputMode="numeric"
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
 
@@ -282,7 +282,7 @@ export default function TournamentForm({
               {...form.register('birthYearTo', optionalNumber)}
               type="number"
               inputMode="numeric"
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
         </div>
@@ -292,7 +292,7 @@ export default function TournamentForm({
             <textarea
               {...form.register('description', optionalText)}
               rows={3}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
 
@@ -300,7 +300,7 @@ export default function TournamentForm({
             <textarea
               {...form.register('prizeInfo', optionalText)}
               rows={2}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
         </div>
@@ -324,7 +324,7 @@ export default function TournamentForm({
       <button
         type="submit"
         disabled={isPending}
-        className="mt-6 rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
+        className="mt-6 rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
       >
         {isPending ? t('common.loading') : t('tournament.form.create')}
       </button>
@@ -347,8 +347,8 @@ function Field({
 
   return (
     <label className="block text-sm">
-      <span className="text-slate-700">{t(label)}</span>
-      {optional && <span className="ml-1 text-xs text-slate-400">{t('player.form.optional')}</span>}
+      <span className="text-ink-700">{t(label)}</span>
+      {optional && <span className="ml-1 text-xs text-ink-400">{t('player.form.optional')}</span>}
       {children}
       {error !== undefined && (
         <span role="alert" className="mt-1 block text-red-700">

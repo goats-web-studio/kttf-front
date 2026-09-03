@@ -91,7 +91,7 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
           <input
             {...form.register('login', optional)}
             autoComplete="username"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -104,14 +104,14 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
             {...form.register('email', optional)}
             type="email"
             autoComplete="email"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
         <Field label="account.form.locale" error={undefined}>
           <select
             {...form.register('locale')}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             {localeSchema.options.map((value) => (
               <option key={value} value={value}>
@@ -129,11 +129,9 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
           <input
             {...form.register('telegramId', optional)}
             inputMode="numeric"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
-          <span className="mt-1 block text-xs text-slate-500">
-            {t('account.form.telegramHint')}
-          </span>
+          <span className="mt-1 block text-xs text-ink-500">{t('account.form.telegramHint')}</span>
         </Field>
       </div>
 
@@ -144,13 +142,13 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
       )}
 
       {save.isSuccess && !form.formState.isDirty && (
-        <p className="text-sm text-green-700">{t('account.form.saved')}</p>
+        <p className="text-sm text-ok">{t('account.form.saved')}</p>
       )}
 
       <button
         type="submit"
         disabled={save.isPending}
-        className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-60"
+        className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-60"
       >
         {save.isPending ? t('common.loading') : t('account.form.save')}
       </button>
@@ -183,8 +181,8 @@ function Field({
 
   return (
     <label className="block text-sm">
-      <span className="text-slate-700">{t(label)}</span>
-      {optional && <span className="ml-1 text-xs text-slate-400">{t('player.form.optional')}</span>}
+      <span className="text-ink-700">{t(label)}</span>
+      {optional && <span className="ml-1 text-xs text-ink-400">{t('player.form.optional')}</span>}
       {children}
       {error !== undefined && (
         <span role="alert" className="mt-1 block text-red-700">

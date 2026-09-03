@@ -18,8 +18,8 @@ export default function PagePlaceholder({ title, children }: PagePlaceholderProp
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
-      <p className="mt-2 text-slate-600">{t('common.soon')}</p>
+      <h1 className="text-2xl font-semibold text-ink-900">{title}</h1>
+      <p className="mt-2 text-ink-700">{t('common.soon')}</p>
       {children}
     </section>
   );

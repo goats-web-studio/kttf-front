@@ -51,8 +51,8 @@ function ScreenPage(): ReactNode {
   // стена продолжает показывать последнее известное.
   if (isMissingResource(error)) {
     return (
-      <div className="flex min-h-full items-center justify-center bg-black px-6 text-center">
-        <p role="alert" className="text-3xl text-slate-400">
+      <div className="flex min-h-full items-center justify-center bg-night px-6 text-center">
+        <p role="alert" className="text-3xl text-night-ink-500">
           {t('screen.notFound')}
         </p>
       </div>
@@ -60,21 +60,21 @@ function ScreenPage(): ReactNode {
   }
 
   return (
-    <div className="min-h-full bg-black px-6 py-5 text-white">
+    <div className="min-h-full bg-night px-6 py-5 text-white">
       <QueryState isPending={isPending} error={error} onRetry={retry}>
         {view === undefined || boards === null ? null : (
           <>
-            <header className="flex items-baseline justify-between gap-6 border-b border-slate-800 pb-3">
+            <header className="flex items-baseline justify-between gap-6 border-b border-night-line pb-3">
               <h1 className="text-4xl font-bold">{view.tournament.name}</h1>
 
-              <p className="text-lg text-slate-400">
+              <p className="text-lg text-night-ink-500">
                 {/* Метка связи важнее времени: на стене висит последнее
                     известное состояние, и зритель обязан знать, что оно
                     перестало обновляться. */}
                 {live ? (
                   formatDateTime(view.updatedAt, locale)
                 ) : (
-                  <span className="text-amber-400">
+                  <span className="text-night-warn">
                     {t('screen.offline')} · {formatDateTime(view.updatedAt, locale)}
                   </span>
                 )}

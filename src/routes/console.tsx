@@ -29,7 +29,7 @@ export const Route = createFileRoute('/console')({
  */
 function ConsoleLayout(): ReactNode {
   return (
-    <div className="flex h-full flex-col bg-slate-900 text-white">
+    <div className="flex h-full flex-col bg-night text-white">
       <Outlet />
     </div>
   );

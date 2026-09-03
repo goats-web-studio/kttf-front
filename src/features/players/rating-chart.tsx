@@ -28,13 +28,13 @@ export default function RatingChart({ scale }: RatingChartProps): ReactNode {
     <figure className="mt-4">
       {/* Подписи стоят у своих линий: обе в одной строке читались бы как
           легенда, и «минимум» оказывался бы сверху над верхней границей. */}
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-ink-500">
         {t('player.chart.highest')} <span className="tabular-nums">{scale.highest}</span>
       </p>
 
       <svg
         viewBox={`0 0 ${String(scale.width)} ${String(scale.height)}`}
-        className="mt-1 w-full text-blue-700"
+        className="mt-1 w-full text-red-600"
         aria-hidden="true"
       >
         {/* Границы размаха: без них глаз не понимает, крутая кривая или ровная. */}
@@ -43,7 +43,7 @@ export default function RatingChart({ scale }: RatingChartProps): ReactNode {
           y1={10}
           x2={scale.width}
           y2={10}
-          className="stroke-slate-200"
+          className="stroke-line"
           strokeDasharray="4 4"
           vectorEffect="non-scaling-stroke"
         />
@@ -52,7 +52,7 @@ export default function RatingChart({ scale }: RatingChartProps): ReactNode {
           y1={scale.height - 10}
           x2={scale.width}
           y2={scale.height - 10}
-          className="stroke-slate-200"
+          className="stroke-line"
           strokeDasharray="4 4"
           vectorEffect="non-scaling-stroke"
         />
@@ -80,11 +80,11 @@ export default function RatingChart({ scale }: RatingChartProps): ReactNode {
         ))}
       </svg>
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-ink-500">
         {t('player.chart.lowest')} <span className="tabular-nums">{scale.lowest}</span>
       </p>
 
-      <figcaption className="mt-1 flex justify-between text-xs text-slate-500">
+      <figcaption className="mt-1 flex justify-between text-xs text-ink-500">
         <span>{formatDate(scale.from, locale)}</span>
         <span>{formatDate(scale.to, locale)}</span>
       </figcaption>

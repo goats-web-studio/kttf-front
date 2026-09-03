@@ -35,7 +35,7 @@ export default function ResultsBracket({ stages, names }: ResultsBracketProps): 
 
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold text-slate-900">{t('results.bracket.title')}</h2>
+      <h2 className="text-lg font-semibold text-ink-900">{t('results.bracket.title')}</h2>
       {bracketed.map((stage) => (
         <StageBracket key={stage.id} stage={stage} names={names} />
       ))}
@@ -55,19 +55,19 @@ function StageBracket({
 
   return (
     <div className="mt-6">
-      <h3 className="text-sm font-semibold text-slate-900">
+      <h3 className="text-sm font-semibold text-ink-900">
         {stage.name} · {t(STAGE_TYPE_KEYS[stage.type])}
       </h3>
 
       <div className="mt-3 flex gap-6 overflow-x-auto pb-2">
         {rounds(stage.matches).map(([round, matches]) => (
           <div key={round} className="min-w-56 shrink-0">
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-500">
               {t('results.bracket.round')} {round}
             </p>
             <ul className="mt-2 space-y-2">
               {matches.map((match) => (
-                <li key={match.id} className="rounded border border-slate-200 p-2 text-sm">
+                <li key={match.id} className="rounded border border-line p-2 text-sm">
                   <Side match={match} side="A" names={names} byId={byId} t={t} />
                   <Side match={match} side="B" names={names} byId={byId} t={t} />
                 </li>
@@ -129,12 +129,12 @@ function Side({
 
   return (
     <p className="flex justify-between gap-2">
-      <span className={won ? 'font-semibold text-slate-900' : 'text-slate-700'}>
+      <span className={won ? 'font-semibold text-ink-900' : 'text-ink-700'}>
         {playerId === null
           ? sourceLabel(source, byId, t)
           : (names.get(playerId) ?? t('results.match.unknownPlayer'))}
       </span>
-      <span className="tabular-nums text-slate-600">{own ?? ''}</span>
+      <span className="tabular-nums text-ink-700">{own ?? ''}</span>
     </p>
   );
 }

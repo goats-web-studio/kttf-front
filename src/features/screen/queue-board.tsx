@@ -24,23 +24,23 @@ export default function QueueBoard({ queue, names }: QueueBoardProps): ReactNode
 
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-wide text-slate-400 uppercase">
+      <h2 className="text-xl font-semibold tracking-wide text-night-ink-500">
         {t('screen.queue.title')}
       </h2>
 
       {queue.length === 0 ? (
-        <p className="mt-3 text-xl text-slate-500">{t('screen.queue.empty')}</p>
+        <p className="mt-3 text-xl text-night-ink-500">{t('screen.queue.empty')}</p>
       ) : (
         <ol className="mt-3 space-y-2">
           {queue.slice(0, SHOWN).map((item) => (
-            <li key={item.match.id} className="rounded border border-slate-700 bg-slate-900 p-3">
-              <p className="text-sm text-slate-400">
+            <li key={item.match.id} className="rounded border border-night-line bg-night p-3">
+              <p className="text-sm text-night-ink-500">
                 {item.stageName}
                 {item.groupLabel === null ? '' : ` · ${item.groupLabel}`}
               </p>
-              <p className="text-2xl text-slate-100">
+              <p className="text-2xl text-night-ink-900">
                 {name(item.match.playerAId, names, t('screen.match.pending'))}
-                <span className="px-3 text-slate-500">—</span>
+                <span className="px-3 text-night-ink-500">—</span>
                 {name(item.match.playerBId, names, t('screen.match.pending'))}
               </p>
             </li>

@@ -24,42 +24,59 @@ export default function ScorePad({ setsToWin, onSubmit }: ScorePadProps): ReactN
   const t = useT();
   const [detailed, setDetailed] = useState(false);
 
+  const quick = quickResults(setsToWin);
+  const wonByA = quick.filter((result) => result.setsA > result.setsB);
+  const wonByB = quick.filter((result) => result.setsB > result.setsA);
+
   return (
     <div className="mt-3">
-      <div className="grid grid-cols-4 gap-2">
-        {quickResults(setsToWin).map((quick) => (
-          <button
-            key={`${String(quick.setsA)}:${String(quick.setsB)}`}
-            type="button"
+      {/* Верхний ряд — победа первого, нижний — второго. Ряды различаются не
+          только цветом: заливка против обводки читается и при дальтонизме, и
+          на выгоревшем экране в зале. Колонок ровно по числу исходов, иначе
+          при встрече до двух сетов ряд разъезжается. */}
+      <div
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${String(setsToWin + 1)}, minmax(0, 1fr))` }}
+      >
+        {wonByA.map((result) => (
+          <ScoreButton
+            key={`${String(result.setsA)}:${String(result.setsB)}`}
+            filled
             onClick={() => {
-              onSubmit({ ...quick, resultType: 'NORMAL' });
+              onSubmit({ ...result, resultType: 'NORMAL' });
             }}
-            className="rounded bg-slate-700 py-3 text-lg font-semibold text-white active:bg-slate-600"
           >
-            {quick.setsA}:{quick.setsB}
-          </button>
+            {result.setsA}:{result.setsB}
+          </ScoreButton>
         ))}
-
-        <button
-          type="button"
-          aria-label={t('console.score.walkoverA')}
+        <ScoreButton
+          filled
+          label={t('console.score.walkoverA')}
           onClick={() => {
             onSubmit({ setsA: setsToWin, setsB: 0, resultType: 'WALKOVER' });
           }}
-          className="rounded bg-amber-700 py-3 text-lg font-semibold text-white active:bg-amber-600"
         >
           W:L
-        </button>
-        <button
-          type="button"
-          aria-label={t('console.score.walkoverB')}
+        </ScoreButton>
+
+        {wonByB.map((result) => (
+          <ScoreButton
+            key={`${String(result.setsA)}:${String(result.setsB)}`}
+            onClick={() => {
+              onSubmit({ ...result, resultType: 'NORMAL' });
+            }}
+          >
+            {result.setsA}:{result.setsB}
+          </ScoreButton>
+        ))}
+        <ScoreButton
+          label={t('console.score.walkoverB')}
           onClick={() => {
             onSubmit({ setsA: 0, setsB: setsToWin, resultType: 'WALKOVER' });
           }}
-          className="rounded bg-amber-700 py-3 text-lg font-semibold text-white active:bg-amber-600"
         >
           L:W
-        </button>
+        </ScoreButton>
       </div>
 
       <button
@@ -67,13 +84,47 @@ export default function ScorePad({ setsToWin, onSubmit }: ScorePadProps): ReactN
         onClick={() => {
           setDetailed(!detailed);
         }}
-        className="mt-3 text-sm text-slate-300 underline"
+        className="mt-3 text-sm text-night-ink-700 underline"
       >
         {t('console.score.bySets')}
       </button>
 
       {detailed && <SetScores setsToWin={setsToWin} onSubmit={onSubmit} />}
     </div>
+  );
+}
+
+interface ScoreButtonProps {
+  readonly children: ReactNode;
+  readonly onClick: () => void;
+  readonly filled?: boolean;
+  readonly label?: string;
+}
+
+/**
+ * Кнопка счёта — самый нажимаемый элемент продукта.
+ *
+ * Высота 64px из дизайн-системы (раздел 4.2 черновика UX): судья стоит,
+ * держит телефон одной рукой и повторяет это действие 50–80 раз за вечер.
+ *
+ * Заливка `--red-600` лежит на карточке `--night-raised` и даёт к ней 2.93:1
+ * — ниже порога 3:1 для нетекстовых элементов. Поэтому граница обязательна:
+ * без неё кнопка размывается о фон, а не выделяется на нём.
+ */
+function ScoreButton({ children, onClick, filled, label }: ScoreButtonProps): ReactNode {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={`min-h-16 tabular-nums rounded-sm border font-display text-display-sm ${
+        filled
+          ? 'border-night-red bg-red-600 text-white active:bg-red-700'
+          : 'border-night-line-strong text-night-ink-900 active:bg-night-line'
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -93,10 +144,10 @@ function SetScores({ setsToWin, onSubmit }: ScorePadProps): ReactNode {
   const wonB = scores.filter(([a, b]) => b > a).length;
 
   return (
-    <div className="mt-3 rounded border border-slate-700 p-3">
+    <div className="mt-3 rounded border border-night-line p-3">
       {scores.map((set, index) => (
         <div key={index} className="mt-2 flex items-center gap-2 first:mt-0">
-          <span className="w-16 text-sm text-slate-400">
+          <span className="w-16 text-sm text-night-ink-500">
             {t('console.score.set')} {index + 1}
           </span>
           {([0, 1] as const).map((side) => (
@@ -119,7 +170,7 @@ function SetScores({ setsToWin, onSubmit }: ScorePadProps): ReactNode {
                   ),
                 );
               }}
-              className="w-16 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-white"
+              className="w-16 rounded border border-night-line-strong bg-night-raised px-2 py-1 text-white"
             />
           ))}
         </div>
@@ -132,7 +183,7 @@ function SetScores({ setsToWin, onSubmit }: ScorePadProps): ReactNode {
           onClick={() => {
             setScores([...scores, [0, 0]]);
           }}
-          className="text-sm text-slate-300 underline disabled:text-slate-600 disabled:no-underline"
+          className="text-sm text-night-ink-700 underline disabled:text-night-ink-400 disabled:no-underline"
         >
           {t('console.score.addSet')}
         </button>
@@ -146,7 +197,7 @@ function SetScores({ setsToWin, onSubmit }: ScorePadProps): ReactNode {
               resultType: 'NORMAL',
             });
           }}
-          className="ml-auto rounded bg-slate-700 px-4 py-2 text-sm text-white"
+          className="ml-auto rounded bg-night-raised px-4 py-2 text-sm text-white"
         >
           {t('console.score.submit')} {wonA}:{wonB}
         </button>

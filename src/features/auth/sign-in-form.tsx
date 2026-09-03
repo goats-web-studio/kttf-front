@@ -50,25 +50,25 @@ export default function SignInForm({ onSignedIn }: SignInFormProps): ReactNode {
         })(event);
       }}
     >
-      <p className="text-slate-600">{t('login.lead')}</p>
+      <p className="text-ink-700">{t('login.lead')}</p>
 
       <label className="block">
-        <span className="text-sm text-slate-700">{t('login.identifier.label')}</span>
+        <span className="text-sm text-ink-700">{t('login.identifier.label')}</span>
         <input
           {...form.register('identifier')}
           autoComplete="username"
           placeholder={t('login.identifier.placeholder')}
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
         />
       </label>
 
       <label className="block">
-        <span className="text-sm text-slate-700">{t('login.password.label')}</span>
+        <span className="text-sm text-ink-700">{t('login.password.label')}</span>
         <input
           {...form.register('password')}
           type="password"
           autoComplete="current-password"
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
         />
       </label>
 
@@ -87,14 +87,14 @@ export default function SignInForm({ onSignedIn }: SignInFormProps): ReactNode {
       <button
         type="submit"
         disabled={login.isPending}
-        className="w-full rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
+        className="w-full rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
       >
         {login.isPending ? t('common.loading') : t('login.submit')}
       </button>
 
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-ink-700">
         {t('login.noAccount')}{' '}
-        <Link to="/sign-up" className="text-blue-700 underline">
+        <Link to="/sign-up" className="text-red-600 underline">
           {t('login.signUp')}
         </Link>
       </p>

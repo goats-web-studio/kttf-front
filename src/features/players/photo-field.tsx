@@ -35,12 +35,12 @@ export default function PhotoField({
   });
 
   return (
-    <fieldset className="border-t border-slate-200 pt-4">
-      <legend className="text-sm font-semibold text-slate-900">{t('player.form.photo')}</legend>
+    <fieldset className="border-t border-line pt-4">
+      <legend className="text-sm font-semibold text-ink-900">{t('player.form.photo')}</legend>
 
       <div className="mt-3 flex items-center gap-4">
         {value === null ? (
-          <div className="grid size-20 place-items-center rounded-full bg-slate-100 text-xs text-slate-400">
+          <div className="grid size-20 place-items-center rounded-full bg-paper-hover text-xs text-ink-400">
             {t('player.form.noPhoto')}
           </div>
         ) : (
@@ -48,7 +48,7 @@ export default function PhotoField({
         )}
 
         <div className="text-sm">
-          <label className="cursor-pointer text-blue-700 underline">
+          <label className="cursor-pointer text-red-600 underline">
             {upload.isPending ? t('common.loading') : t('player.form.photoChoose')}
             <input
               type="file"
@@ -75,7 +75,7 @@ export default function PhotoField({
           {value !== null && (
             <button
               type="button"
-              className="ml-4 text-slate-600 underline"
+              className="ml-4 text-ink-700 underline"
               onClick={() => {
                 setRejection(null);
                 onChange(null);
@@ -85,7 +85,7 @@ export default function PhotoField({
             </button>
           )}
 
-          <p className="mt-1 text-xs text-slate-500">{t('player.form.photoHint')}</p>
+          <p className="mt-1 text-xs text-ink-500">{t('player.form.photoHint')}</p>
 
           {rejection !== null && (
             <p role="alert" className="mt-1 text-red-700">

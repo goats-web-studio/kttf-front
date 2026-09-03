@@ -44,9 +44,9 @@ export default function TiePanel({
   }
 
   return (
-    <section className="rounded border border-amber-700 bg-amber-950 p-3">
-      <h2 className="text-sm font-semibold text-amber-300 uppercase">{t('console.tie.title')}</h2>
-      <p className="mt-1 text-xs text-amber-200">{t('console.tie.lead')}</p>
+    <section className="rounded border border-night-warn bg-night-raised p-3">
+      <h2 className="text-sm font-semibold text-night-warn">{t('console.tie.title')}</h2>
+      <p className="mt-1 text-xs text-night-warn">{t('console.tie.lead')}</p>
 
       {pending.map((group) =>
         group.unresolved.map((tie) => (
@@ -104,12 +104,12 @@ function TieOrder({
   }
 
   return (
-    <div className="mt-3 rounded bg-slate-900 p-2">
-      <p className="text-xs text-slate-400">{label}</p>
+    <div className="mt-3 rounded bg-night p-2">
+      <p className="text-xs text-night-ink-500">{label}</p>
       <ol className="mt-1 space-y-1">
         {order.map((participant, index) => (
           <li key={participant} className="flex items-center gap-2 text-sm">
-            <span className="w-5 text-slate-400">{index + 1}.</span>
+            <span className="w-5 text-night-ink-500">{index + 1}.</span>
             <span className="grow">{names.get(participant) ?? participant}</span>
             <button
               type="button"
@@ -117,7 +117,7 @@ function TieOrder({
               onClick={() => {
                 move(index, -1);
               }}
-              className="rounded bg-slate-700 px-2 py-1"
+              className="rounded bg-night-raised px-2 py-1"
             >
               ↑
             </button>
@@ -127,7 +127,7 @@ function TieOrder({
               onClick={() => {
                 move(index, 1);
               }}
-              className="rounded bg-slate-700 px-2 py-1"
+              className="rounded bg-night-raised px-2 py-1"
             >
               ↓
             </button>
@@ -143,7 +143,7 @@ function TieOrder({
             onDecide({ groupId, orderedIds: [...order] });
           }
         }}
-        className="mt-2 rounded bg-amber-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+        className="mt-2 min-h-14 rounded-sm border border-night-red bg-red-600 px-4 font-semibold text-white disabled:opacity-50"
       >
         {t('console.tie.confirm')}
       </button>

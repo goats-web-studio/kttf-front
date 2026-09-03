@@ -39,7 +39,7 @@ export default function PlayerMatches({
 
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold text-slate-900">{t('player.matches.title')}</h2>
+      <h2 className="text-lg font-semibold text-ink-900">{t('player.matches.title')}</h2>
 
       <QueryState
         isPending={matches.isPending}
@@ -47,7 +47,7 @@ export default function PlayerMatches({
         onRetry={() => void matches.refetch()}
       >
         {matches.data === undefined ? null : matches.data.items.length === 0 ? (
-          <p className="mt-3 text-slate-500">{t('player.matches.empty')}</p>
+          <p className="mt-3 text-ink-500">{t('player.matches.empty')}</p>
         ) : (
           <MatchesTable matches={matches.data.items} onSelectOpponent={onSelectOpponent} />
         )}
@@ -61,11 +61,11 @@ export default function PlayerMatches({
             onClick={() => {
               setPage(page - 1);
             }}
-            className="text-blue-700 underline disabled:text-slate-400 disabled:no-underline"
+            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
           >
             {t('common.prev')}
           </button>
-          <span className="text-slate-600">
+          <span className="text-ink-700">
             {t('common.page')} {page} / {pages}
           </span>
           <button
@@ -74,7 +74,7 @@ export default function PlayerMatches({
             onClick={() => {
               setPage(page + 1);
             }}
-            className="text-blue-700 underline disabled:text-slate-400 disabled:no-underline"
+            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
           >
             {t('common.next')}
           </button>

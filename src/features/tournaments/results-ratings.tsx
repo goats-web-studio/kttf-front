@@ -29,11 +29,11 @@ export default function ResultsRatings({ ratings, names }: ResultsRatingsProps):
 
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold text-slate-900">{t('results.ratings.title')}</h2>
+      <h2 className="text-lg font-semibold text-ink-900">{t('results.ratings.title')}</h2>
 
       <table className="mt-3 w-full text-sm">
         <thead>
-          <tr className="border-b border-slate-200 text-left text-slate-500">
+          <tr className="border-b border-line text-left text-ink-500">
             <th scope="col" className="py-2 font-normal">
               {t('results.ratings.player')}
             </th>
@@ -50,18 +50,18 @@ export default function ResultsRatings({ ratings, names }: ResultsRatingsProps):
         </thead>
         <tbody>
           {ratings.map((rating) => (
-            <tr key={rating.playerId} className="border-b border-slate-100 align-top">
-              <td className="py-2 text-slate-900">
+            <tr key={rating.playerId} className="border-b border-line align-top">
+              <td className="py-2 text-ink-900">
                 {names.get(rating.playerId) ?? rating.playerId}
                 <Events rating={rating} />
               </td>
-              <td className="py-2 tabular-nums text-slate-600">{rating.ratingAtStart ?? '—'}</td>
-              <td className="py-2 tabular-nums font-medium text-slate-900">
+              <td className="py-2 tabular-nums text-ink-700">{rating.ratingAtStart ?? '—'}</td>
+              <td className="py-2 tabular-nums font-medium text-ink-900">
                 {formatDelta(rating.totalDelta)}
               </td>
-              <td className="py-2 tabular-nums text-slate-600">
+              <td className="py-2 tabular-nums text-ink-700">
                 {rating.ratingAfter ?? (
-                  <span className="text-slate-400">{t('results.ratings.pending')}</span>
+                  <span className="text-ink-400">{t('results.ratings.pending')}</span>
                 )}
               </td>
             </tr>
@@ -87,10 +87,10 @@ function Events({ rating }: { readonly rating: ParticipantRatingView }): ReactNo
 
   return (
     <details className="mt-1">
-      <summary className="cursor-pointer text-xs text-slate-500">
+      <summary className="cursor-pointer text-xs text-ink-500">
         {t('results.ratings.events')}
       </summary>
-      <ol className="mt-1 space-y-0.5 text-xs tabular-nums text-slate-500">
+      <ol className="mt-1 space-y-0.5 text-xs tabular-nums text-ink-500">
         {rating.events.map((event, index) => (
           <li key={event.matchId ?? index}>
             {event.ratingBefore} {formatDelta(event.delta)} = {event.ratingAfter}

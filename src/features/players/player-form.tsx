@@ -102,7 +102,7 @@ export default function PlayerForm({
           <input
             {...form.register('lastName')}
             autoComplete="family-name"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -113,7 +113,7 @@ export default function PlayerForm({
           <input
             {...form.register('firstName')}
             autoComplete="given-name"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -121,7 +121,7 @@ export default function PlayerForm({
           <input
             {...form.register('middleName', optional)}
             autoComplete="additional-name"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -152,16 +152,16 @@ export default function PlayerForm({
               },
             })}
             type="date"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
           {/* Профили, заведённые до появления даты, знают только год. Пустое
               поле у такого профиля объясняется, а не выглядит как потеря. */}
           {birthDate === undefined && Number.isInteger(birthYear) && (
-            <span className="mt-1 block text-xs text-slate-500">
+            <span className="mt-1 block text-xs text-ink-500">
               {t('player.form.birthYearOnlyKnown')} {birthYear}
             </span>
           )}
-          <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+          <label className="mt-2 flex items-center gap-2 text-xs text-ink-700">
             <input type="checkbox" {...form.register('birthYearOnly')} />
             {t('player.form.birthYearOnly')}
           </label>
@@ -173,7 +173,7 @@ export default function PlayerForm({
         >
           <select
             {...form.register('gender')}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             <option value="">{t('player.form.choose')}</option>
             {genderSchema.options.map((value) => (
@@ -191,7 +191,7 @@ export default function PlayerForm({
           <input
             {...form.register('city')}
             autoComplete="address-level2"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -201,7 +201,7 @@ export default function PlayerForm({
               клуба, а не в поле профиля (ADR-014). */}
           <select
             {...form.register('clubId', optional)}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             <option value="">{t('player.form.noClub')}</option>
             {[...(clubs.data?.values() ?? [])].map((club) => (
@@ -220,14 +220,14 @@ export default function PlayerForm({
         }}
       />
 
-      <fieldset className="border-t border-slate-200 pt-4">
-        <legend className="text-sm font-semibold text-slate-900">{t('player.form.game')}</legend>
+      <fieldset className="border-t border-line pt-4">
+        <legend className="text-sm font-semibold text-ink-900">{t('player.form.game')}</legend>
 
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <Field label="player.form.playingHand" optional error={undefined}>
             <select
               {...form.register('playingHand', optional)}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             >
               <option value="">{t('player.form.notSet')}</option>
               {playingHandSchema.options.map((value) => (
@@ -241,7 +241,7 @@ export default function PlayerForm({
           <Field label="player.form.grip" optional error={undefined}>
             <select
               {...form.register('grip', optional)}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             >
               <option value="">{t('player.form.notSet')}</option>
               {gripSchema.options.map((value) => (
@@ -257,21 +257,21 @@ export default function PlayerForm({
           <Field label="player.form.blade" optional error={undefined}>
             <input
               {...form.register('blade', optional)}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
 
           <Field label="player.form.rubberForehand" optional error={undefined}>
             <input
               {...form.register('rubberForehand', optional)}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
 
           <Field label="player.form.rubberBackhand" optional error={undefined}>
             <input
               {...form.register('rubberBackhand', optional)}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
         </div>
@@ -289,7 +289,7 @@ export default function PlayerForm({
         <textarea
           {...form.register('bio', optional)}
           rows={3}
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
         />
       </Field>
 
@@ -303,12 +303,12 @@ export default function PlayerForm({
         <button
           type="submit"
           disabled={isPending}
-          className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
+          className="rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
         >
           {isPending ? t('common.loading') : t(submitLabel)}
         </button>
         {onCancel !== undefined && (
-          <button type="button" onClick={onCancel} className="text-sm text-slate-600 underline">
+          <button type="button" onClick={onCancel} className="text-sm text-ink-700 underline">
             {t('player.form.cancel')}
           </button>
         )}
@@ -350,8 +350,8 @@ function CoachField({
   const others = (players.data?.items ?? []).filter((player) => !chosenIds.has(player.id));
 
   return (
-    <fieldset className="border-t border-slate-200 pt-4">
-      <legend className="text-sm font-semibold text-slate-900">{t('player.form.coach')}</legend>
+    <fieldset className="border-t border-line pt-4">
+      <legend className="text-sm font-semibold text-ink-900">{t('player.form.coach')}</legend>
 
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
         <Field label="player.form.coachFromList" optional error={undefined}>
@@ -363,7 +363,7 @@ function CoachField({
                 form.setValue('coachName', undefined);
               },
             })}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             disabled={typedName !== undefined && typedName !== ''}
           >
             <option value="">{t('player.form.notSet')}</option>
@@ -394,7 +394,7 @@ function CoachField({
                 form.setValue('coachPlayerId', undefined);
               },
             })}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             disabled={chosenId !== undefined && chosenId !== ''}
           />
         </Field>
@@ -445,8 +445,8 @@ function Field({
 
   return (
     <label className="block text-sm">
-      <span className="text-slate-700">{t(label)}</span>
-      {optional && <span className="ml-1 text-xs text-slate-400">{t('player.form.optional')}</span>}
+      <span className="text-ink-700">{t(label)}</span>
+      {optional && <span className="ml-1 text-xs text-ink-400">{t('player.form.optional')}</span>}
       {children}
       {error !== undefined && (
         <span role="alert" className="mt-1 block text-red-700">

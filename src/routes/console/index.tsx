@@ -33,7 +33,7 @@ function ConsolePage(): ReactNode {
   return (
     <section className="mx-auto w-full max-w-3xl px-4 py-10">
       <h1 className="text-2xl font-semibold">{t('page.console.title')}</h1>
-      <p className="mt-2 text-sm text-slate-400">{t('console.pick.lead')}</p>
+      <p className="mt-2 text-sm text-night-ink-500">{t('console.pick.lead')}</p>
 
       <div className="mt-6">
         <QueryState
@@ -42,7 +42,7 @@ function ConsolePage(): ReactNode {
           onRetry={() => void running.refetch()}
         >
           {running.data === undefined ? null : running.data.items.length === 0 ? (
-            <p className="text-slate-400">{t('console.pick.empty')}</p>
+            <p className="text-night-ink-500">{t('console.pick.empty')}</p>
           ) : (
             <ul className="space-y-2">
               {running.data.items.map((tournament) => (
@@ -50,10 +50,10 @@ function ConsolePage(): ReactNode {
                   <Link
                     to="/console/$tournamentId"
                     params={{ tournamentId: tournament.id }}
-                    className="block rounded border border-slate-700 bg-slate-800 p-4"
+                    className="block rounded border border-night-line bg-night-raised p-4"
                   >
                     <span className="font-semibold">{tournament.name}</span>
-                    <span className="mt-1 block text-sm text-slate-400">
+                    <span className="mt-1 block text-sm text-night-ink-500">
                       {formatDateTime(tournament.startsAt, locale)}
                     </span>
                   </Link>

@@ -51,7 +51,7 @@ function RatingsPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">{t('page.ratings.title')}</h1>
+      <h1 className="text-2xl font-semibold text-ink-900">{t('page.ratings.title')}</h1>
 
       <form
         className="mt-6 grid gap-3 sm:grid-cols-3"
@@ -62,35 +62,35 @@ function RatingsPage(): ReactNode {
         }}
       >
         <label className="block text-sm">
-          <span className="text-slate-700">{t('ratings.search')}</span>
+          <span className="text-ink-700">{t('ratings.search')}</span>
           <input
             value={draft.search}
             onChange={(event) => {
               setDraft({ ...draft, search: event.target.value });
             }}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </label>
 
         <label className="block text-sm">
-          <span className="text-slate-700">{t('filter.city')}</span>
+          <span className="text-ink-700">{t('filter.city')}</span>
           <input
             value={draft.city}
             onChange={(event) => {
               setDraft({ ...draft, city: event.target.value });
             }}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </label>
 
         <label className="block text-sm">
-          <span className="text-slate-700">{t('filter.club')}</span>
+          <span className="text-ink-700">{t('filter.club')}</span>
           <select
             value={draft.clubId}
             onChange={(event) => {
               setDraft({ ...draft, clubId: event.target.value });
             }}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             <option value="">{t('filter.any')}</option>
             {[...(clubs.data?.values() ?? [])].map((club) => (
@@ -102,7 +102,7 @@ function RatingsPage(): ReactNode {
         </label>
 
         <div className="flex items-end gap-3 sm:col-span-3">
-          <button type="submit" className="rounded bg-slate-900 px-4 py-2 text-white">
+          <button type="submit" className="rounded bg-red-600 px-4 py-2 text-white">
             {t('filter.apply')}
           </button>
           <button
@@ -112,7 +112,7 @@ function RatingsPage(): ReactNode {
               setApplied(EMPTY);
               setPage(1);
             }}
-            className="text-sm text-slate-600 underline"
+            className="text-sm text-ink-700 underline"
           >
             {t('filter.reset')}
           </button>
@@ -126,11 +126,11 @@ function RatingsPage(): ReactNode {
           onRetry={() => void players.refetch()}
         >
           {players.data === undefined ? null : players.data.items.length === 0 ? (
-            <p className="py-10 text-center text-slate-500">{t('ratings.empty')}</p>
+            <p className="py-10 text-center text-ink-500">{t('ratings.empty')}</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-slate-500">
+                <tr className="border-b border-line text-left text-ink-500">
                   <th scope="col" className="py-2 font-normal">
                     {t('ratings.column.rank')}
                   </th>
@@ -150,31 +150,29 @@ function RatingsPage(): ReactNode {
               </thead>
               <tbody>
                 {players.data.items.map((player, index) => (
-                  <tr key={player.id} className="border-b border-slate-100">
-                    <td className="py-2 text-slate-500">
+                  <tr key={player.id} className="border-b border-line">
+                    <td className="py-2 text-ink-500">
                       {(page - 1) * players.data.limit + index + 1}
                     </td>
-                    <td className="py-2 text-slate-900">
+                    <td className="py-2 text-ink-900">
                       <Link
                         to="/players/$playerId"
                         params={{ playerId: player.id }}
-                        className="text-blue-700 underline"
+                        className="text-red-600 underline"
                       >
                         {playerName(player)}
                       </Link>
                       {player.isProvisional && (
                         // Провизорный рейтинг двигается быстрее и означает, что
                         // игрок сыграл меньше 20 рейтинговых встреч (ТЗ 7.1).
-                        <span className="ml-2 text-xs text-slate-500">
+                        <span className="ml-2 text-xs text-ink-500">
                           {t('ratings.provisional')}
                         </span>
                       )}
                     </td>
-                    <td className="py-2 text-slate-600">{player.city}</td>
-                    <td className="py-2 tabular-nums font-medium text-slate-900">
-                      {player.rating}
-                    </td>
-                    <td className="py-2 tabular-nums text-slate-600">{player.ratedMatches}</td>
+                    <td className="py-2 text-ink-700">{player.city}</td>
+                    <td className="py-2 tabular-nums font-medium text-ink-900">{player.rating}</td>
+                    <td className="py-2 tabular-nums text-ink-700">{player.ratedMatches}</td>
                   </tr>
                 ))}
               </tbody>
@@ -191,11 +189,11 @@ function RatingsPage(): ReactNode {
             onClick={() => {
               setPage(page - 1);
             }}
-            className="text-blue-700 underline disabled:text-slate-400 disabled:no-underline"
+            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
           >
             {t('common.prev')}
           </button>
-          <span className="text-slate-600">
+          <span className="text-ink-700">
             {t('common.page')} {page} / {pages}
           </span>
           <button
@@ -204,7 +202,7 @@ function RatingsPage(): ReactNode {
             onClick={() => {
               setPage(page + 1);
             }}
-            className="text-blue-700 underline disabled:text-slate-400 disabled:no-underline"
+            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
           >
             {t('common.next')}
           </button>

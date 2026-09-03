@@ -29,17 +29,17 @@ export default function PlayerRating({ history }: PlayerRatingProps): ReactNode 
 
   return (
     <section className="mt-10">
-      <h2 className="text-lg font-semibold text-slate-900">{t('player.history.title')}</h2>
+      <h2 className="text-lg font-semibold text-ink-900">{t('player.history.title')}</h2>
 
       {scale === null ? (
-        <p className="mt-3 text-slate-500">{t('player.history.empty')}</p>
+        <p className="mt-3 text-ink-500">{t('player.history.empty')}</p>
       ) : (
         <>
           <RatingChart scale={scale} />
 
           <table className="mt-6 w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-slate-500">
+              <tr className="border-b border-line text-left text-ink-500">
                 <th scope="col" className="py-2 font-normal">
                   {t('player.history.date')}
                 </th>
@@ -76,28 +76,26 @@ function Row({ point }: { readonly point: RatingPointView }): ReactNode {
   const locale = useLocale();
 
   return (
-    <tr className="border-b border-slate-100">
-      <td className="py-2 whitespace-nowrap text-slate-600">
-        {formatDate(point.playedAt, locale)}
-      </td>
-      <td className="py-2 text-slate-900">
+    <tr className="border-b border-line">
+      <td className="py-2 whitespace-nowrap text-ink-700">{formatDate(point.playedAt, locale)}</td>
+      <td className="py-2 text-ink-900">
         {point.tournamentId === null ? (
           // Ручная корректировка рейтинга (ТЗ 12) не привязана к турниру, но
           // из кривой её не выкинуть: рейтинг после неё другой.
-          <span className="text-slate-600">{t('player.history.adjustment')}</span>
+          <span className="text-ink-700">{t('player.history.adjustment')}</span>
         ) : (
           <Link
             to="/tournaments/$tournamentId"
             params={{ tournamentId: point.tournamentId }}
-            className="text-blue-700 underline"
+            className="text-red-600 underline"
           >
             {point.tournamentName ?? t('player.history.tournament')}
           </Link>
         )}
       </td>
-      <td className="py-2 tabular-nums text-slate-600">{point.matches}</td>
-      <td className="py-2 tabular-nums font-medium text-slate-900">{formatDelta(point.delta)}</td>
-      <td className="py-2 tabular-nums text-slate-600">{point.ratingAfter}</td>
+      <td className="py-2 tabular-nums text-ink-700">{point.matches}</td>
+      <td className="py-2 tabular-nums font-medium text-ink-900">{formatDelta(point.delta)}</td>
+      <td className="py-2 tabular-nums text-ink-700">{point.ratingAfter}</td>
     </tr>
   );
 }

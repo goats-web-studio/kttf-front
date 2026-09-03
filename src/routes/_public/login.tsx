@@ -20,7 +20,7 @@ function LoginPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-sm px-4 py-12">
-      <h1 className="mb-6 text-2xl font-semibold text-slate-900">{t('page.login.title')}</h1>
+      <h1 className="mb-6 text-2xl font-semibold text-ink-900">{t('page.login.title')}</h1>
       <SignInForm
         onSignedIn={() => {
           void navigate({ href: redirect ?? '/' });

@@ -33,16 +33,14 @@ export default function PlayingZone({
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-slate-400 uppercase">
-        {t('console.playing.title')}
-      </h2>
+      <h2 className="text-sm font-semibold text-night-ink-500">{t('console.playing.title')}</h2>
 
       {matches.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-500">{t('console.playing.empty')}</p>
+        <p className="mt-2 text-sm text-night-ink-500">{t('console.playing.empty')}</p>
       ) : (
         <ul className="mt-2 space-y-2">
           {matches.map((match) => (
-            <li key={match.id} className="rounded border border-slate-700 bg-slate-800 p-3">
+            <li key={match.id} className="rounded border border-night-line bg-night-raised p-3">
               <button
                 type="button"
                 onClick={() => {
@@ -50,7 +48,7 @@ export default function PlayingZone({
                 }}
                 className="w-full text-left"
               >
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-night-ink-500">
                   {t('console.table.number')} {match.tableNumber}
                 </span>
                 <MatchLine match={match} names={names} />
@@ -71,7 +69,7 @@ export default function PlayingZone({
                       setOpenId(null);
                       onCancel(match.id);
                     }}
-                    className="mt-3 text-sm text-slate-400 underline"
+                    className="mt-3 text-sm text-night-ink-500 underline"
                   >
                     {t('console.match.returnToQueue')}
                   </button>

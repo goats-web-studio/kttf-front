@@ -34,7 +34,7 @@ export default function MatchesTable({ matches, onSelectOpponent }: MatchesTable
   return (
     <table className="mt-3 w-full text-sm">
       <thead>
-        <tr className="border-b border-slate-200 text-left text-slate-500">
+        <tr className="border-b border-line text-left text-ink-500">
           <th scope="col" className="py-2 font-normal">
             {t('player.matches.date')}
           </th>
@@ -75,37 +75,35 @@ function Row({
   const locale = useLocale();
 
   return (
-    <tr className="border-b border-slate-100 align-top">
-      <td className="py-2 whitespace-nowrap text-slate-600">
+    <tr className="border-b border-line align-top">
+      <td className="py-2 whitespace-nowrap text-ink-700">
         {match.playedAt === null ? '—' : formatDate(match.playedAt, locale)}
       </td>
       <td className="py-2">
         <Link
           to="/tournaments/$tournamentId"
           params={{ tournamentId: match.tournamentId }}
-          className="text-blue-700 underline"
+          className="text-red-600 underline"
         >
           {match.tournamentName}
         </Link>
-        <span className="block text-xs text-slate-500">{match.stageName}</span>
+        <span className="block text-xs text-ink-500">{match.stageName}</span>
       </td>
-      <td className="py-2 text-slate-900">
+      <td className="py-2 text-ink-900">
         <Opponent match={match} onSelectOpponent={onSelectOpponent} />
       </td>
-      <td className="py-2 tabular-nums whitespace-nowrap text-slate-900">
+      <td className="py-2 tabular-nums whitespace-nowrap text-ink-900">
         {match.setsFor} : {match.setsAgainst}
         {match.resultType !== 'NORMAL' && (
-          <span className="ml-2 text-xs text-slate-500">
-            {t(RESULT_TYPE_KEYS[match.resultType])}
-          </span>
+          <span className="ml-2 text-xs text-ink-500">{t(RESULT_TYPE_KEYS[match.resultType])}</span>
         )}
       </td>
-      <td className="py-2 whitespace-nowrap text-slate-600">
+      <td className="py-2 whitespace-nowrap text-ink-700">
         {match.won ? t('player.matches.won') : t('player.matches.lost')}
       </td>
-      <td className="py-2 tabular-nums whitespace-nowrap font-medium text-slate-900">
+      <td className="py-2 tabular-nums whitespace-nowrap font-medium text-ink-900">
         {match.delta === null ? (
-          <span className="font-normal text-slate-400">{t('player.matches.notRated')}</span>
+          <span className="font-normal text-ink-400">{t('player.matches.notRated')}</span>
         ) : (
           formatDelta(match.delta)
         )}
@@ -130,7 +128,7 @@ function Opponent({
   const t = useT();
 
   if (match.opponent === null) {
-    return <span className="text-slate-400">{t('player.matches.noOpponent')}</span>;
+    return <span className="text-ink-400">{t('player.matches.noOpponent')}</span>;
   }
 
   const name = playerName(match.opponent);
@@ -147,7 +145,7 @@ function Opponent({
       onClick={() => {
         onSelectOpponent(opponentId);
       }}
-      className="text-left text-blue-700 underline"
+      className="text-left text-red-600 underline"
     >
       {name}
     </button>

@@ -80,9 +80,9 @@ function TournamentsPage(): ReactNode {
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-slate-900">{t('page.tournaments.title')}</h1>
+        <h1 className="text-2xl font-semibold text-ink-900">{t('page.tournaments.title')}</h1>
         {canCreate && (
-          <Link to="/tournaments/new" className="rounded bg-slate-900 px-4 py-2 text-sm text-white">
+          <Link to="/tournaments/new" className="rounded bg-red-600 px-4 py-2 text-sm text-white">
             {t('tournament.form.create')}
           </Link>
         )}
@@ -102,7 +102,7 @@ function TournamentsPage(): ReactNode {
             onChange={(event) => {
               setDraft({ ...draft, city: event.target.value });
             }}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           />
         </Field>
 
@@ -112,7 +112,7 @@ function TournamentsPage(): ReactNode {
             onChange={(event) => {
               setDraft({ ...draft, clubId: event.target.value });
             }}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             <option value="">{t('filter.any')}</option>
             {[...(clubs.data?.values() ?? [])].map((club) => (
@@ -129,7 +129,7 @@ function TournamentsPage(): ReactNode {
             onChange={(event) => {
               setDraft({ ...draft, status: event.target.value });
             }}
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             <option value="">{t('filter.any')}</option>
             {FILTERABLE.map((status) => (
@@ -148,7 +148,7 @@ function TournamentsPage(): ReactNode {
               onChange={(event) => {
                 setDraft({ ...draft, from: event.target.value });
               }}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
           <Field label={t('filter.to')}>
@@ -158,13 +158,13 @@ function TournamentsPage(): ReactNode {
               onChange={(event) => {
                 setDraft({ ...draft, to: event.target.value });
               }}
-              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
             />
           </Field>
         </div>
 
         <div className="flex items-end gap-3 sm:col-span-2">
-          <button type="submit" className="rounded bg-slate-900 px-4 py-2 text-white">
+          <button type="submit" className="rounded bg-red-600 px-4 py-2 text-white">
             {t('filter.apply')}
           </button>
           <button
@@ -174,7 +174,7 @@ function TournamentsPage(): ReactNode {
               setApplied(EMPTY);
               setPage(1);
             }}
-            className="text-sm text-slate-600 underline"
+            className="text-sm text-ink-700 underline"
           >
             {t('filter.reset')}
           </button>
@@ -188,19 +188,19 @@ function TournamentsPage(): ReactNode {
           onRetry={() => void tournaments.refetch()}
         >
           {tournaments.data === undefined ? null : tournaments.data.items.length === 0 ? (
-            <p className="py-10 text-center text-slate-500">{t('tournaments.empty')}</p>
+            <p className="py-10 text-center text-ink-500">{t('tournaments.empty')}</p>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-line">
               {tournaments.data.items.map((tournament) => (
                 <li key={tournament.id} className="py-3">
                   <Link
                     to="/tournaments/$tournamentId"
                     params={{ tournamentId: tournament.id }}
-                    className="font-medium text-blue-700 underline"
+                    className="font-medium text-red-600 underline"
                   >
                     {tournament.name}
                   </Link>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-1 text-sm text-ink-700">
                     {formatDateTime(tournament.startsAt, locale)}
                     {' · '}
                     {t(TOURNAMENT_STATUS_KEYS[tournament.status])}
@@ -222,11 +222,11 @@ function TournamentsPage(): ReactNode {
             onClick={() => {
               setPage(page - 1);
             }}
-            className="text-blue-700 underline disabled:text-slate-400 disabled:no-underline"
+            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
           >
             {t('common.prev')}
           </button>
-          <span className="text-slate-600">
+          <span className="text-ink-700">
             {t('common.page')} {page} / {pages}
           </span>
           <button
@@ -235,7 +235,7 @@ function TournamentsPage(): ReactNode {
             onClick={() => {
               setPage(page + 1);
             }}
-            className="text-blue-700 underline disabled:text-slate-400 disabled:no-underline"
+            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
           >
             {t('common.next')}
           </button>
@@ -277,7 +277,7 @@ function Field({
 }): ReactNode {
   return (
     <label className="block text-sm">
-      <span className="text-slate-700">{label}</span>
+      <span className="text-ink-700">{label}</span>
       {children}
     </label>
   );

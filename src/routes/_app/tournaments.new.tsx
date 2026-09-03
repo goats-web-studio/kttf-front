@@ -48,14 +48,14 @@ function NewTournamentPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-slate-900">{t('page.newTournament.title')}</h1>
+      <h1 className="text-2xl font-semibold text-ink-900">{t('page.newTournament.title')}</h1>
 
       {clubIds.length === 0 ? (
         // Клуб-хозяин обязателен (ТЗ 4.2). Показывать форму, которую сервер
         // отвергнет, — ложное обещание.
-        <p className="mt-6 text-slate-600">
+        <p className="mt-6 text-ink-700">
           {t('tournament.form.noClubs')}{' '}
-          <Link to="/tournaments" className="text-blue-700 underline">
+          <Link to="/tournaments" className="text-red-600 underline">
             {t('page.tournaments.title')}
           </Link>
         </p>

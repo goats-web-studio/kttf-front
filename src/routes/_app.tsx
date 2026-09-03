@@ -27,10 +27,10 @@ function AppLayout(): ReactNode {
   const t = useT();
 
   return (
-    <div className="flex min-h-full flex-col bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="flex min-h-full flex-col bg-paper-sunken">
+      <header className="border-b border-line bg-paper">
         <nav className="mx-auto flex max-w-3xl items-center gap-6 px-4 py-4">
-          <Link to="/" className="font-semibold text-slate-900">
+          <Link to="/" className="font-semibold text-ink-900">
             {t('app.name')}
           </Link>
           <button
@@ -38,7 +38,7 @@ function AppLayout(): ReactNode {
             onClick={() => {
               void signOut();
             }}
-            className="ml-auto text-sm text-slate-600 underline"
+            className="ml-auto text-sm text-ink-700 underline"
           >
             {t('login.signOut')}
           </button>

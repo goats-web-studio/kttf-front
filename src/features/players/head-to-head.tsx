@@ -31,8 +31,8 @@ export default function HeadToHead({ playerId, opponentId, onClose }: HeadToHead
   return (
     <section className="mt-10">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-semibold text-slate-900">{t('player.headToHead.title')}</h2>
-        <button type="button" onClick={onClose} className="text-sm text-slate-600 underline">
+        <h2 className="text-lg font-semibold text-ink-900">{t('player.headToHead.title')}</h2>
+        <button type="button" onClick={onClose} className="text-sm text-ink-700 underline">
           {t('player.headToHead.close')}
         </button>
       </div>
@@ -44,22 +44,22 @@ export default function HeadToHead({ playerId, opponentId, onClose }: HeadToHead
       >
         {headToHead.data === undefined ? null : (
           <>
-            <p className="mt-3 text-slate-900">
+            <p className="mt-3 text-ink-900">
               {playerName(headToHead.data.opponent)}
               {' · '}
               <span className="tabular-nums">
                 {headToHead.data.wins} : {headToHead.data.losses}
               </span>{' '}
-              <span className="text-sm text-slate-500">{t('player.headToHead.matches')}</span>
+              <span className="text-sm text-ink-500">{t('player.headToHead.matches')}</span>
               {' · '}
               <span className="tabular-nums">
                 {headToHead.data.setsWon} : {headToHead.data.setsLost}
               </span>{' '}
-              <span className="text-sm text-slate-500">{t('player.headToHead.sets')}</span>
+              <span className="text-sm text-ink-500">{t('player.headToHead.sets')}</span>
             </p>
 
             {headToHead.data.matches.length === 0 ? (
-              <p className="mt-3 text-slate-500">{t('player.headToHead.empty')}</p>
+              <p className="mt-3 text-ink-500">{t('player.headToHead.empty')}</p>
             ) : (
               // Соперник уже выбран: кнопка на его же фамилии вела бы туда,
               // где человек и находится.

@@ -22,24 +22,25 @@ export default function TablesZone({ tables, names }: TablesZoneProps): ReactNod
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-slate-400 uppercase">
-        {t('console.tables.title')}
-      </h2>
+      <h2 className="text-sm font-semibold text-night-ink-500">{t('console.tables.title')}</h2>
       <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
         {tables.map((table) => (
           <li
             key={table.number}
-            className={`rounded border p-2 text-sm ${
+            // Идущий матч маркируется красным — принцип 1.3 дизайн-системы.
+            // Состояние при этом всегда написано словом рядом: цвет здесь
+            // второй носитель смысла, а не единственный (запрет №6).
+            className={`rounded-sm border p-2 text-sm ${
               table.status === 'PLAYING'
-                ? 'border-emerald-700 bg-emerald-950'
+                ? 'border-night-red bg-night-raised'
                 : table.status === 'AWAITING'
-                  ? 'border-amber-700 bg-amber-950'
-                  : 'border-slate-700 bg-slate-800'
+                  ? 'border-night-warn bg-night-raised'
+                  : 'border-night-line bg-night-raised'
             }`}
           >
             <p className="flex items-baseline justify-between">
               <span className="font-semibold">{table.number}</span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-night-ink-500">
                 {table.status === 'PLAYING'
                   ? t('console.table.busy')
                   : table.status === 'AWAITING'

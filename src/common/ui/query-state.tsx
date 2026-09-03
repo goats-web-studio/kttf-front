@@ -30,7 +30,7 @@ export default function QueryState({
   const t = useT();
 
   if (isPending) {
-    return <p className="py-10 text-center text-slate-500">{t('common.loading')}</p>;
+    return <p className="py-10 text-center text-ink-500">{t('common.loading')}</p>;
   }
 
   if (error !== null && error !== undefined) {
@@ -40,7 +40,7 @@ export default function QueryState({
           {t(errorMessageKey(error))}
         </p>
         {onRetry !== undefined && (
-          <button type="button" onClick={onRetry} className="mt-3 text-blue-700 underline">
+          <button type="button" onClick={onRetry} className="mt-3 text-red-600 underline">
             {t('error.unexpected.action')}
           </button>
         )}

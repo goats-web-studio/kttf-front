@@ -22,11 +22,11 @@ export default function ResultsTies({ title, ties, names }: ResultsTiesProps): R
 
   return (
     <div className="mt-4">
-      <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-      <ul className="mt-2 space-y-1 text-sm text-slate-600">
+      <h3 className="text-sm font-semibold text-ink-900">{title}</h3>
+      <ul className="mt-2 space-y-1 text-sm text-ink-700">
         {ties.map((tie) => (
           <li key={tie.participants.join(',')}>
-            <span className="font-medium text-slate-900">{placesLabel(tie.places)}</span>{' '}
+            <span className="font-medium text-ink-900">{placesLabel(tie.places)}</span>{' '}
             {tie.participants.map((id) => names.get(id) ?? id).join(', ')}
           </li>
         ))}

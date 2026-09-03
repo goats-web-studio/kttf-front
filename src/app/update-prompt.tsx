@@ -24,19 +24,19 @@ export default function UpdatePrompt(): ReactNode {
   return (
     <div
       role="status"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md items-center gap-3 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg"
+      className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md items-center gap-3 rounded-lg bg-night px-4 py-3 text-sm text-white shadow-lg"
     >
       <span className="grow">{t('pwa.update.message')}</span>
       <button
         type="button"
-        className="rounded bg-white px-3 py-1 font-medium text-slate-900"
+        className="rounded bg-paper px-3 py-1 font-medium text-ink-900"
         onClick={() => void updateServiceWorker(true)}
       >
         {t('pwa.update.apply')}
       </button>
       <button
         type="button"
-        className="rounded px-2 py-1 text-slate-300"
+        className="rounded px-2 py-1 text-night-ink-700"
         onClick={() => {
           setNeedRefresh(false);
         }}

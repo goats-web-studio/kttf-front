@@ -67,14 +67,14 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
         })(event);
       }}
     >
-      <p className="text-slate-600">{t('signUp.lead')}</p>
+      <p className="text-ink-700">{t('signUp.lead')}</p>
 
       <label className="block">
-        <span className="text-sm text-slate-700">{t('signUp.login.label')}</span>
+        <span className="text-sm text-ink-700">{t('signUp.login.label')}</span>
         <input
           {...form.register('login')}
           autoComplete="username"
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
         />
       </label>
       {form.formState.errors.login !== undefined && (
@@ -84,12 +84,12 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
       )}
 
       <label className="block">
-        <span className="text-sm text-slate-700">{t('signUp.password.label')}</span>
+        <span className="text-sm text-ink-700">{t('signUp.password.label')}</span>
         <input
           {...form.register('password')}
           type="password"
           autoComplete="new-password"
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
         />
       </label>
       {form.formState.errors.password !== undefined && (
@@ -99,14 +99,14 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
       )}
 
       <label className="block">
-        <span className="text-sm text-slate-700">{t('signUp.phone.label')}</span>
+        <span className="text-sm text-ink-700">{t('signUp.phone.label')}</span>
         <input
           {...form.register('phone')}
           type="tel"
           inputMode="tel"
           autoComplete="tel"
           placeholder={t('login.phone.placeholder')}
-          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
         />
       </label>
       {form.formState.errors.phone !== undefined && (
@@ -115,9 +115,9 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
         </p>
       )}
 
-      <fieldset className="rounded border border-slate-200 p-3">
-        <legend className="px-1 text-sm text-slate-700">{t('signUp.player.title')}</legend>
-        <p className="text-sm text-slate-600">{t('signUp.player.lead')}</p>
+      <fieldset className="rounded border border-line p-3">
+        <legend className="px-1 text-sm text-ink-700">{t('signUp.player.title')}</legend>
+        <p className="text-sm text-ink-700">{t('signUp.player.lead')}</p>
 
         {chosen === null ? (
           <>
@@ -127,13 +127,13 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
                 setSearch(event.target.value);
               }}
               placeholder={t('signUp.player.search')}
-              className="mt-2 w-full rounded border border-slate-300 px-3 py-2"
+              className="mt-2 w-full rounded border border-line-strong px-3 py-2"
             />
 
             {found.data !== undefined && (
               <ul aria-label={t('signUp.player.title')} className="mt-2 space-y-1 text-sm">
                 {found.data.items.length === 0 ? (
-                  <li className="text-slate-500">{t('signUp.player.empty')}</li>
+                  <li className="text-ink-500">{t('signUp.player.empty')}</li>
                 ) : (
                   found.data.items.map((player) => (
                     <li key={player.id}>
@@ -142,7 +142,7 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
                         onClick={() => {
                           setChosen(player);
                         }}
-                        className="rounded px-2 py-1 text-blue-700 underline"
+                        className="rounded px-2 py-1 text-red-600 underline"
                       >
                         {playerName(player)} · {player.city} · {player.rating}
                       </button>
@@ -154,13 +154,13 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
           </>
         ) : (
           <p className="mt-2 text-sm">
-            <span className="font-medium text-slate-900">{playerName(chosen)}</span>{' '}
+            <span className="font-medium text-ink-900">{playerName(chosen)}</span>{' '}
             <button
               type="button"
               onClick={() => {
                 setChosen(null);
               }}
-              className="text-blue-700 underline"
+              className="text-red-600 underline"
             >
               {t('signUp.player.reset')}
             </button>
@@ -177,7 +177,7 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
       <button
         type="submit"
         disabled={register.isPending}
-        className="w-full rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
+        className="w-full rounded bg-red-600 px-4 py-2 text-white disabled:opacity-60"
       >
         {register.isPending ? t('common.loading') : t('signUp.submit')}
       </button>
