@@ -91,6 +91,9 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 async function perform<T>(path: string, options: RequestOptions, mayRetry: boolean): Promise<T> {
   const { method = 'GET', body, signal, headers, anonymous = false } = options;
   const token = anonymous ? null : (auth?.accessToken() ?? null);
+  // Файл уходит формой, а не JSON. Заголовок при этом задаёт браузер: в
+  // multipart он несёт границу частей, и своя строка ломает разбор на сервере.
+  const isForm = body instanceof FormData;
 
   let response: Response;
 
@@ -99,11 +102,11 @@ async function perform<T>(path: string, options: RequestOptions, mayRetry: boole
       method,
       headers: {
         Accept: 'application/json',
-        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(body === undefined || isForm ? {} : { 'Content-Type': 'application/json' }),
         ...(token === null ? {} : { Authorization: `Bearer ${token}` }),
         ...headers,
       },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined ? {} : { body: isForm ? body : JSON.stringify(body) }),
       ...(signal === undefined ? {} : { signal }),
     });
   } catch (cause) {

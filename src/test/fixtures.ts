@@ -558,6 +558,7 @@ export const USER_WITHOUT_PROFILE: AuthUserView = {
   login: null,
   email: null,
   locale: 'ru',
+  telegramId: null,
   createdAt: '2026-09-01T00:00:00.000Z',
   playerId: null,
   clubRoles: [],

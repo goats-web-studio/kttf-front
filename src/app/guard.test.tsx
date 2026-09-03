@@ -7,7 +7,6 @@ import { USER_WITH_PROFILE } from '@/test/fixtures';
 
 import App from './app';
 
-
 /**
  * Охрана маршрутов при **прямом открытии по ссылке**.
  *

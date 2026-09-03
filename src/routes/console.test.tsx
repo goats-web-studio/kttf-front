@@ -24,6 +24,7 @@ const SIGNED_IN: AuthUserView = {
   login: null,
   email: null,
   locale: 'ru',
+  telegramId: null,
   createdAt: '2026-08-30T00:00:00.000Z',
   playerId: null,
   clubRoles: [],

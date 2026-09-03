@@ -113,7 +113,9 @@ beforeAll(async () => {
   const serviceWorker = readFileSync(resolve(OUT_DIR, 'sw.js'), 'utf8');
   // Записи манифеста в `sw.js`: `{url:"assets/...",revision:...}`. Кавычки
   // вокруг ключа зависят от минификации, поэтому допускаются оба вида.
-  precached = [...serviceWorker.matchAll(/"?url"?\s*:\s*"([^"]+)"/g)].map((match) => match[1] ?? '');
+  precached = [...serviceWorker.matchAll(/"?url"?\s*:\s*"([^"]+)"/g)].map(
+    (match) => match[1] ?? '',
+  );
   emitted = walk(OUT_DIR);
 }, 180_000);
 

@@ -5,10 +5,12 @@ import type {
   Page,
   PlayerMatchesQuery,
   PlayerMatchView,
+  PlayerProfileView,
   PlayerView,
   RatingHistoryQuery,
   RatingHistoryView,
   UpdatePlayerInput,
+  UploadedFile,
 } from '@kttf/shared/types';
 
 import { apiRequest, queryString } from '@/common/api';
@@ -25,8 +27,9 @@ export function listPlayers(query: ListPlayersQuery): Promise<Page<PlayerView>> 
   return apiRequest<Page<PlayerView>>(`/players${queryString(query)}`);
 }
 
-export function fetchPlayer(id: string): Promise<PlayerView> {
-  return apiRequest<PlayerView>(`/players/${id}`);
+/** Страница игрока — полный профиль вместе с анкетой ТЗ 2.2. */
+export function fetchPlayer(id: string): Promise<PlayerProfileView> {
+  return apiRequest<PlayerProfileView>(`/players/${id}`);
 }
 
 /**
@@ -36,12 +39,27 @@ export function fetchPlayer(id: string): Promise<PlayerView> {
  * профиля у вошедшего (ADR-014). Отсюда он вызывается только в первом:
  * человек заводит профиль себе, ТЗ 2.2.
  */
-export function createPlayer(input: CreatePlayerInput): Promise<PlayerView> {
-  return apiRequest<PlayerView>('/players', { method: 'POST', body: input });
+export function createPlayer(input: CreatePlayerInput): Promise<PlayerProfileView> {
+  return apiRequest<PlayerProfileView>('/players', { method: 'POST', body: input });
 }
 
-export function updatePlayer(id: string, input: UpdatePlayerInput): Promise<PlayerView> {
-  return apiRequest<PlayerView>(`/players/${id}`, { method: 'PATCH', body: input });
+export function updatePlayer(id: string, input: UpdatePlayerInput): Promise<PlayerProfileView> {
+  return apiRequest<PlayerProfileView>(`/players/${id}`, { method: 'PATCH', body: input });
+}
+
+/**
+ * Загрузка фото — ТС 7.8, ADR-036.
+ *
+ * Файл уходит формой и возвращается путём, который кладётся в `photoUrl`
+ * профиля отдельным сохранением. Загрузка и сохранение профиля разделены
+ * намеренно: человек видит выбранное фото до того, как нажал «сохранить».
+ */
+export function uploadPlayerPhoto(file: File): Promise<UploadedFile> {
+  const form = new FormData();
+
+  form.append('file', file);
+
+  return apiRequest<UploadedFile>('/files/player-photo', { method: 'POST', body: form });
 }
 
 /**

@@ -47,6 +47,10 @@ function answer(url: string, init: RequestInit | undefined): Response {
     body: typeof raw === 'string' ? JSON.parse(raw) : undefined,
   });
 
+  if (url.includes('/auth/change-password')) {
+    return reply({ accessToken: 'new-access', refreshToken: 'new-refresh' });
+  }
+
   if (url.includes('/auth/me')) {
     return reply(me);
   }
@@ -212,5 +216,97 @@ describe('свой профиль', () => {
     renderCabinet(USER_WITH_PROFILE);
 
     expect(await screen.findByText(new RegExp(ru['club.role.OWNER']))).toBeDefined();
+  });
+});
+
+/**
+ * Настройки аккаунта — ТЗ 2.1, ADR-035.
+ *
+ * Отдельный раздел и отдельный маршрут: аккаунт и профиль игрока — разные
+ * сущности, и правятся они порознь.
+ */
+describe('настройки аккаунта', () => {
+  it('логин и почта уходят на /auth/me, а не в профиль игрока', async () => {
+    renderCabinet(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['account.form.login']), {
+      target: { value: 'znewk' },
+    });
+    fireEvent.change(screen.getByLabelText(new RegExp(ru['account.form.email'])), {
+      target: { value: 'zane@example.kz' },
+    });
+    submit(ru['account.form.save']);
+
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+
+    const [request] = requests('PATCH');
+
+    expect(request?.url).toContain('/auth/me');
+    expect(request?.body).toMatchObject({ login: 'znewk', email: 'zane@example.kz' });
+  });
+
+  it('стёртая почта уходит как null, иначе убрать её было бы нечем', async () => {
+    me = { ...USER_WITH_PROFILE, email: 'zane@example.kz' };
+    renderCabinet(me);
+
+    fireEvent.change(await screen.findByLabelText(new RegExp(ru['account.form.email'])), {
+      target: { value: '' },
+    });
+    submit(ru['account.form.save']);
+
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+
+    expect((requests('PATCH')[0]?.body as { email: unknown }).email).toBeNull();
+  });
+
+  it('телефон в форму не выведен: он меняется через поддержку', async () => {
+    renderCabinet(USER_WITH_PROFILE);
+
+    await screen.findByLabelText(ru['account.form.login']);
+
+    expect(screen.queryByLabelText(ru['cabinet.account.phone'])).toBeNull();
+    expect(screen.getByText(USER_WITH_PROFILE.phone)).toBeDefined();
+  });
+});
+
+describe('смена пароля', () => {
+  it('уходит отдельным маршрутом и заменяет токены', async () => {
+    renderCabinet(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['account.password.current']), {
+      target: { value: 'staryj-parol' },
+    });
+    fireEvent.change(screen.getByLabelText(ru['account.password.next']), {
+      target: { value: 'novyj-parol' },
+    });
+    submit(ru['account.password.submit']);
+
+    await waitFor(() => {
+      expect(requests('POST')).toHaveLength(1);
+    });
+
+    expect(requests('POST')[0]?.url).toContain('/auth/change-password');
+    // Сервер обрывает остальные сессии: без замены токенов вкладка, из
+    // которой меняли пароль, умерла бы вместе с ними.
+    expect(useSessionStore.getState().accessToken).toBe('new-access');
+  });
+
+  it('короткий новый пароль на сервер не уходит', async () => {
+    renderCabinet(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['account.password.current']), {
+      target: { value: 'staryj-parol' },
+    });
+    fireEvent.change(screen.getByLabelText(ru['account.password.next']), {
+      target: { value: 'korot' },
+    });
+    submit(ru['account.password.submit']);
+
+    expect(await screen.findByText(ru['error.form.password'])).toBeDefined();
+    expect(requests('POST')).toHaveLength(0);
   });
 });

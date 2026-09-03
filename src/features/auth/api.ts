@@ -1,9 +1,11 @@
 import type {
   AuthSession,
   AuthUserView,
+  ChangePasswordInput,
   LoginInput,
   SignUpInput,
   TokenPair,
+  UpdateAccountInput,
 } from '@kttf/shared/types';
 
 import { apiRequest } from '@/common/api';
@@ -49,4 +51,24 @@ export async function endSession(refreshToken: string): Promise<void> {
 
 export function fetchMe(): Promise<AuthUserView> {
   return apiRequest<AuthUserView>('/auth/me');
+}
+
+/**
+ * Настройки аккаунта — ТЗ 2.1, ADR-035.
+ *
+ * Логин, почта, язык и Telegram. Спортивная анкета правится через профиль
+ * игрока: это разные сущности, а не два раздела одного экрана.
+ */
+export function updateAccount(input: UpdateAccountInput): Promise<AuthUserView> {
+  return apiRequest<AuthUserView>('/auth/me', { method: 'PATCH', body: input });
+}
+
+/**
+ * Смена пароля.
+ *
+ * Отдаёт новую пару токенов: остальные сессии обрываются, и без замены
+ * вкладка, из которой пароль сменили, умерла бы вместе с ними.
+ */
+export function changePassword(input: ChangePasswordInput): Promise<TokenPair> {
+  return apiRequest<TokenPair>('/auth/change-password', { method: 'POST', body: input });
 }

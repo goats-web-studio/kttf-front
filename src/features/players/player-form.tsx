@@ -1,12 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createPlayerSchema, genderSchema, type CreatePlayerInput } from '@kttf/shared/types';
+import {
+  createPlayerSchema,
+  genderSchema,
+  gripSchema,
+  playingHandSchema,
+  type CreatePlayerInput,
+} from '@kttf/shared/types';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import PhotoField from '@/features/players/photo-field';
+import { playerName } from '@/features/players/player-name';
+import { playersQuery } from '@/features/players/queries';
 
 interface PlayerFormProps {
   /** Заполненные поля при правке. Пусто — профиль заводится впервые. */
@@ -19,7 +28,7 @@ interface PlayerFormProps {
 }
 
 /**
- * Профиль игрока — ТЗ 2.2.
+ * Профиль игрока — ТЗ 2.2 целиком.
  *
  * Одна форма и на заведение, и на правку: состав полей у них один, а
  * `updatePlayerSchema` — это `partial` от того же набора, полностью
@@ -29,8 +38,8 @@ interface PlayerFormProps {
  * **Отчество не обязательно** — бриф, запрет №6. Пустая строка обращается в
  * «поле не задано», иначе схема отвергнет её как слишком короткую.
  *
- * Фото, игровой руки, хвата и инвентаря из ТЗ 2.2 здесь нет: первого нет
- * маршрута загрузки, остальных — колонок в схеме (ОВ-12).
+ * Настроек аккаунта здесь нет: логин, почта, язык и пароль — другая
+ * сущность и другой маршрут (ADR-035).
  */
 export default function PlayerForm({
   defaultValues,
@@ -51,6 +60,12 @@ export default function PlayerForm({
       middleName: '',
       city: '',
       clubId: '',
+      blade: '',
+      rubberForehand: '',
+      rubberBackhand: '',
+      bio: '',
+      coachName: '',
+      coachPlayerId: '',
       ...defaultValues,
     },
   });
@@ -60,9 +75,16 @@ export default function PlayerForm({
   /** Необязательное поле: пустое поле — это «не задано», а не пустая строка. */
   const optional = { setValueAs: (value: string) => (value === '' ? undefined : value) };
 
+  // useWatch, а не form.watch: подписка на поле, а не перерисовка формы
+  // целиком на каждое нажатие клавиши в любом из двадцати полей.
+  const control = form.control;
+  const photoUrl = useWatch({ control, name: 'photoUrl' });
+  const coachPlayerId = useWatch({ control, name: 'coachPlayerId' });
+  const coachName = useWatch({ control, name: 'coachName' });
+
   return (
     <form
-      className="mt-6 space-y-4"
+      className="mt-6 space-y-6"
       onSubmit={(event) => {
         void form.handleSubmit(onSubmit)(event);
       }}
@@ -106,6 +128,31 @@ export default function PlayerForm({
             {...form.register('birthYear', { valueAsNumber: true })}
             type="number"
             inputMode="numeric"
+            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+          />
+        </Field>
+
+        {/* Дата рождения необязательна, а год — обязателен: по году считаются
+            возрастные категории и допуск на турнир. Год подставляется из
+            выбранной даты сам, иначе человек заполнял бы одно и то же дважды
+            и получал отказ за расхождение. */}
+        <Field
+          label="player.form.birthDate"
+          optional
+          error={errors.birthDate === undefined ? undefined : 'error.form.birthDate'}
+        >
+          <input
+            {...form.register('birthDate', {
+              ...optional,
+              onChange: (event: { target: { value: string } }) => {
+                const year = Number(event.target.value.slice(0, 4));
+
+                if (Number.isInteger(year) && year > 1900) {
+                  form.setValue('birthYear', year, { shouldValidate: true });
+                }
+              },
+            })}
+            type="date"
             className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
           />
         </Field>
@@ -156,6 +203,86 @@ export default function PlayerForm({
         </Field>
       </div>
 
+      <PhotoField
+        value={photoUrl ?? null}
+        onChange={(url) => {
+          form.setValue('photoUrl', url ?? undefined, { shouldValidate: true });
+        }}
+      />
+
+      <fieldset className="border-t border-slate-200 pt-4">
+        <legend className="text-sm font-semibold text-slate-900">{t('player.form.game')}</legend>
+
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Field label="player.form.playingHand" optional error={undefined}>
+            <select
+              {...form.register('playingHand', optional)}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            >
+              <option value="">{t('player.form.notSet')}</option>
+              {playingHandSchema.options.map((value) => (
+                <option key={value} value={value}>
+                  {t(HAND_KEYS[value])}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="player.form.grip" optional error={undefined}>
+            <select
+              {...form.register('grip', optional)}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            >
+              <option value="">{t('player.form.notSet')}</option>
+              {gripSchema.options.map((value) => (
+                <option key={value} value={value}>
+                  {t(GRIP_KEYS[value])}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          {/* Инвентарь — свободная строка, а не справочник моделей: свой
+              справочник нужно наполнять и чистить, это отдельный продукт. */}
+          <Field label="player.form.blade" optional error={undefined}>
+            <input
+              {...form.register('blade', optional)}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            />
+          </Field>
+
+          <Field label="player.form.rubberForehand" optional error={undefined}>
+            <input
+              {...form.register('rubberForehand', optional)}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            />
+          </Field>
+
+          <Field label="player.form.rubberBackhand" optional error={undefined}>
+            <input
+              {...form.register('rubberBackhand', optional)}
+              className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            />
+          </Field>
+        </div>
+      </fieldset>
+
+      <CoachField
+        form={form}
+        optional={optional}
+        chosenId={coachPlayerId}
+        typedName={coachName}
+        error={errors.coachName === undefined ? undefined : 'error.form.coach'}
+      />
+
+      <Field label="player.form.bio" optional error={undefined}>
+        <textarea
+          {...form.register('bio', optional)}
+          rows={3}
+          className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+        />
+      </Field>
+
       {error !== null && error !== undefined && (
         <p role="alert" className="text-sm text-red-700">
           {t(errorMessageKey(error))}
@@ -181,14 +308,110 @@ export default function PlayerForm({
 }
 
 /**
+ * Тренер: выбор из списка либо имя вручную.
+ *
+ * Разом заполненные, они спорят друг с другом — схема такое отвергает, —
+ * поэтому выбор гасит поле и наоборот. Список делится надвое: сверху те,
+ * кого уже называли тренером, ниже остальные игроки. Роли тренера в
+ * продукте ещё нет, и «тренеры» — это те, на кого сослались.
+ *
+ * Список ограничен полусотней в каждой группе. Когда база вырастет, здесь
+ * появится поиск: выпадающий список на всю страну не открывают.
+ */
+function CoachField({
+  form,
+  optional,
+  chosenId,
+  typedName,
+  error,
+}: {
+  readonly form: ReturnType<typeof useForm<CreatePlayerInput>>;
+  readonly optional: { setValueAs: (value: string) => string | undefined };
+  readonly chosenId: string | undefined;
+  readonly typedName: string | undefined;
+  readonly error: MessageKey | undefined;
+}): ReactNode {
+  const t = useT();
+  const coaches = useQuery(playersQuery({ page: 1, limit: 50, coachesOnly: true }));
+  const players = useQuery(playersQuery({ page: 1, limit: 50 }));
+
+  const coachItems = coaches.data?.items ?? [];
+  const chosenIds = new Set(coachItems.map((coach) => coach.id));
+  const others = (players.data?.items ?? []).filter((player) => !chosenIds.has(player.id));
+
+  return (
+    <fieldset className="border-t border-slate-200 pt-4">
+      <legend className="text-sm font-semibold text-slate-900">{t('player.form.coach')}</legend>
+
+      <div className="mt-3 grid gap-4 sm:grid-cols-2">
+        <Field label="player.form.coachFromList" optional error={undefined}>
+          <select
+            {...form.register('coachPlayerId', {
+              ...optional,
+              onChange: () => {
+                // Выбранный тренер и вписанный руками спорят друг с другом.
+                form.setValue('coachName', undefined);
+              },
+            })}
+            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            disabled={typedName !== undefined && typedName !== ''}
+          >
+            <option value="">{t('player.form.notSet')}</option>
+            {coachItems.length > 0 && (
+              <optgroup label={t('player.form.coachGroup')}>
+                {coachItems.map((coach) => (
+                  <option key={coach.id} value={coach.id}>
+                    {playerName(coach)}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            <optgroup label={t('player.form.playersGroup')}>
+              {others.map((player) => (
+                <option key={player.id} value={player.id}>
+                  {playerName(player)}
+                </option>
+              ))}
+            </optgroup>
+          </select>
+        </Field>
+
+        <Field label="player.form.coachName" optional error={error}>
+          <input
+            {...form.register('coachName', {
+              ...optional,
+              onChange: () => {
+                form.setValue('coachPlayerId', undefined);
+              },
+            })}
+            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
+            disabled={chosenId !== undefined && chosenId !== ''}
+          />
+        </Field>
+      </div>
+    </fieldset>
+  );
+}
+
+/**
  * Пол — в текст интерфейса.
  *
  * Тип выведен из контракта: новое значение в общем коде ломает сборку здесь,
  * а не выходит к человеку английской строкой из базы.
  */
-const GENDER_KEYS: Readonly<Record<CreatePlayerInput['gender'], MessageKey>> = {
+const GENDER_KEYS: Readonly<Record<NonNullable<CreatePlayerInput['gender']>, MessageKey>> = {
   MALE: 'player.gender.MALE',
   FEMALE: 'player.gender.FEMALE',
+};
+
+const HAND_KEYS: Readonly<Record<'RIGHT' | 'LEFT', MessageKey>> = {
+  RIGHT: 'player.hand.RIGHT',
+  LEFT: 'player.hand.LEFT',
+};
+
+const GRIP_KEYS: Readonly<Record<'SHAKEHAND' | 'PENHOLD', MessageKey>> = {
+  SHAKEHAND: 'player.grip.SHAKEHAND',
+  PENHOLD: 'player.grip.PENHOLD',
 };
 
 /**

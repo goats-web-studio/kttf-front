@@ -36,7 +36,9 @@ function match(id: string, status: MatchView['status'], groupId: string | null):
 }
 
 function stages(matches: readonly MatchView[]): StageView[] {
-  return [{ id: STAGE_ID, order: 1, type: 'GROUPS', name: 'Группы', groups: [], matches: [...matches] }];
+  return [
+    { id: STAGE_ID, order: 1, type: 'GROUPS', name: 'Группы', groups: [], matches: [...matches] },
+  ];
 }
 
 const group = { stageId: STAGE_ID, groupId: GROUP_ID } as GroupStandingsView;

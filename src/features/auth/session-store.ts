@@ -18,6 +18,8 @@ interface SessionState {
   readonly signedIn: (session: AuthSession) => void;
   readonly tokensRefreshed: (accessToken: string, refreshToken: string) => void;
   readonly userLoaded: (user: AuthUserView, accessToken: string) => void;
+  /** Аккаунт изменил сам человек — настройки ТЗ 2.1, ADR-035. */
+  readonly userChanged: (user: AuthUserView) => void;
   readonly signedOut: () => void;
   readonly restoreFinished: () => void;
 }
@@ -39,6 +41,11 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   userLoaded: (user, accessToken) => {
     set({ user, accessToken, isRestoring: false });
+  },
+
+  userChanged: (user) => {
+    // Токены не трогаются: сменились настройки, а не сессия.
+    set({ user });
   },
 
   signedOut: () => {
