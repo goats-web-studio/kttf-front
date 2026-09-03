@@ -1,9 +1,197 @@
 @import 'tailwindcss';
 
+/* Дизайн-система KTTF — docs/07-design-system.md, раздел 3.
+ *
+ * Токены объявляются здесь один раз и только здесь. Второго места с цветами
+ * в проекте нет: палитра, разошедшаяся по компонентам, перестаёт быть
+ * системой в тот день, когда меняется бренд.
+ *
+ * Значения контраста в комментариях измерены по формуле WCAG 2.2 и
+ * перепроверяемы. Правите цвет — пересчитайте и поправьте число рядом. */
+
+:root {
+  /* Бумага и чернила */
+  --paper: #ffffff; /* карточки, поверхности */
+  --paper-sunken: #f6f6f4; /* фон страницы */
+  --paper-hover: #f1f1ee;
+  --line: #e3e3df; /* волосяная линейка, разделитель */
+  --line-strong: #c9c9c3; /* граница поля ввода */
+
+  --ink-900: #121212; /* основной текст — 18.73:1 на бумаге */
+  --ink-700: #3d3d3b; /* вторичный текст — 10.89:1 */
+  --ink-500: #6b6b67; /* подписи, метки — 5.35:1 */
+  --ink-400: #8e8e89; /* НЕ текст: плейсхолдер, проигравший — 3.29:1 */
+  --ink-300: #b6b6b1; /* только disabled — 2.04:1 */
+
+  /* Красный. Бренд — 500, действие — 600, деструктив — 700 */
+  --red-50: #fff2f0; /* фон ошибки, подсветка строки */
+  --red-100: #ffdfdb;
+  --red-200: #ffbdb6; /* граница выделенного */
+  --red-400: #ee5346; /* hover на тёмном */
+  --red-500: #e0342c; /* 4.47:1 — НЕ обычный текст, только от 24px и декор */
+  --red-600: #c4231c; /* 5.83:1 — текст, ссылки, заливка кнопки */
+  --red-700: #9e1912; /* 8.07:1 — pressed, деструктив, текст ошибки */
+  --red-900: #5e0d09;
+
+  /* Служебные. Только там, где красный занят смыслом «действие» */
+  --ok: #197a4b; /* 5.35:1 — годен для текста */
+  --warn: #a66a00; /* 4.48:1 — НЕ текст: точка, иконка, граница */
+  --warn-text: #8f5b00; /* 5.73:1 — текст предупреждения */
+
+  /* Тёмная тема: консоль судьи и экран зала.
+   * Отдельный набор, а не инверсия светлого: --red-600 на --night даёт
+   * 3.24:1 и как текст не читается. Числа ниже — контраст к --night-raised,
+   * то есть к худшей из двух поверхностей. Цель в консоли — 7:1. */
+  --night: #111111;
+  --night-raised: #1c1c1c;
+  --night-line: #2e2e2e; /* декоративный разделитель, не носитель смысла */
+  --night-line-strong: #676762; /* граница контрола — 3.00:1 */
+
+  --night-ink-900: #f5f5f3; /* 15.61:1 */
+  --night-ink-700: #c7c7c2; /* 10.04:1 */
+  --night-ink-500: #a8a8a3; /* 7.14:1 — нижняя граница для текста */
+  --night-ink-400: #7a7a76; /* 3.95:1 — НЕ текст */
+
+  --night-red: #ff8a7e; /* 7.46:1 — акцент, счёт, фокус */
+  --night-ok: #3fbf7f; /* 7.28:1 */
+  --night-warn: #e0a63a; /* 7.86:1 */
+
+  /* Движение */
+  --dur-fast: 120ms; /* hover, focus, чекбокс */
+  --dur-base: 180ms; /* дропдаун, вкладка, аккордеон */
+  --dur-slow: 260ms; /* модалка, лист снизу */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Слои. Индикатор офлайна выше всего: он должен быть виден всегда */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-overlay: 30;
+  --z-modal: 40;
+  --z-toast: 50;
+  --z-offline-bar: 60;
+}
+
+/* Палитра Tailwind заменяется целиком, а не дополняется.
+ * `--color-*: initial` гасит slate, blue и прочие умолчания: пока они живы,
+ * `text-slate-500` продолжает работать, и система расходится молча. */
+@theme inline {
+  --color-*: initial;
+
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-paper: var(--paper);
+  --color-paper-sunken: var(--paper-sunken);
+  --color-paper-hover: var(--paper-hover);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink-900: var(--ink-900);
+  --color-ink-700: var(--ink-700);
+  --color-ink-500: var(--ink-500);
+  --color-ink-400: var(--ink-400);
+  --color-ink-300: var(--ink-300);
+
+  --color-red-50: var(--red-50);
+  --color-red-100: var(--red-100);
+  --color-red-200: var(--red-200);
+  --color-red-400: var(--red-400);
+  --color-red-500: var(--red-500);
+  --color-red-600: var(--red-600);
+  --color-red-700: var(--red-700);
+  --color-red-900: var(--red-900);
+
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-warn-text: var(--warn-text);
+
+  --color-night: var(--night);
+  --color-night-raised: var(--night-raised);
+  --color-night-line: var(--night-line);
+  --color-night-line-strong: var(--night-line-strong);
+  --color-night-ink-900: var(--night-ink-900);
+  --color-night-ink-700: var(--night-ink-700);
+  --color-night-ink-500: var(--night-ink-500);
+  --color-night-ink-400: var(--night-ink-400);
+  --color-night-red: var(--night-red);
+  --color-night-ok: var(--night-ok);
+  --color-night-warn: var(--night-warn);
+
+  /* Набор. Oswald — дисплей, Inter — интерфейс, роли не пересекаются.
+   * Файлов гарнитур в проекте пока нет: подключать их придётся своими,
+   * а не ссылкой на CDN — иначе в зале без сети интерфейс поедет. */
+  --font-display: 'Oswald', system-ui, sans-serif;
+  --font-ui: 'Inter', system-ui, sans-serif;
+
+  /* Шкала компактная: таблицы плотные, а рейтинг читают столбиком */
+  --text-2xs: 11px;
+  --text-2xs--line-height: 16px;
+  --text-xs: 12px;
+  --text-xs--line-height: 18px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 15px;
+  --text-base--line-height: 24px;
+  --text-lg: 17px;
+  --text-lg--line-height: 26px;
+
+  --text-display-sm: 22px;
+  --text-display-sm--line-height: 26px;
+  --text-display-md: 30px;
+  --text-display-md--line-height: 32px;
+  --text-display-lg: 44px;
+  --text-display-lg--line-height: 44px;
+  --text-display-xl: 64px;
+  --text-display-xl--line-height: 60px;
+
+  /* Радиусы разные для разных ролей: единый на всё выглядит шаблоном */
+  --radius-xs: 2px; /* бейдж, чип, ячейка сетки */
+  --radius-sm: 4px; /* поле ввода, кнопка, вкладка */
+  --radius-md: 8px; /* карточка, поповер, дропдаун */
+  --radius-lg: 14px; /* модалка, лист снизу */
+  --radius-full: 999px; /* аватар, счётчик, переключатель */
+
+  /* Теней ровно две: иерархию держат линейки, а не тени */
+  --shadow-pop: 0 4px 16px rgb(18 18 18 / 0.1), 0 1px 3px rgb(18 18 18 / 0.06);
+  --shadow-modal: 0 24px 60px rgb(18 18 18 / 0.2);
+
+  --ease-brand: var(--ease);
+}
+
 /* Оболочка занимает высоту экрана целиком: консоль судьи работает во весь
    экран планшета, и прокрутка страницы под ней недопустима. */
 html,
 body,
 #root {
   height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  color: var(--ink-900);
+  background: var(--paper-sunken);
+}
+
+/* Обводка фокуса видима на всех интерактивных элементах. В тёмной теме
+ * --red-600 на чёрном даёт 3.24:1, поэтому там свой цвет. */
+:focus-visible {
+  outline: 2px solid var(--red-600);
+  outline-offset: 2px;
+}
+
+.on-night :focus-visible,
+.on-night:focus-visible {
+  outline-color: var(--night-red);
+}
+
+/* Анимируется только то, что отвечает на действие человека. Кто просил
+ * покоя — получает покой. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
