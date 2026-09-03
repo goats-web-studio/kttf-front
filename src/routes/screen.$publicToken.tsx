@@ -65,7 +65,7 @@ function ScreenPage(): ReactNode {
         {view === undefined || boards === null ? null : (
           <>
             <header className="flex items-baseline justify-between gap-6 border-b border-night-line pb-3">
-              <h1 className="text-4xl font-bold">{view.tournament.name}</h1>
+              <h1 className="font-display text-display-lg font-bold">{view.tournament.name}</h1>
 
               <p className="text-lg text-night-ink-500">
                 {/* Метка связи важнее времени: на стене висит последнее

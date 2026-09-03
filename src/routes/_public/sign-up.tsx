@@ -20,7 +20,9 @@ function SignUpPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-sm px-4 py-12">
-      <h1 className="mb-6 text-2xl font-semibold text-ink-900">{t('page.signUp.title')}</h1>
+      <h1 className="mb-6 font-display text-display-md font-bold text-ink-900">
+        {t('page.signUp.title')}
+      </h1>
       <SignUpForm
         onSignedUp={() => {
           // После регистрации человек попадает в кабинет: там он дозаполняет

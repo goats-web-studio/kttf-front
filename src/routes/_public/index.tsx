@@ -12,7 +12,9 @@ function HomePage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="text-3xl font-semibold text-ink-900">{t('page.home.title')}</h1>
+      <h1 className="font-display text-display-md font-bold text-ink-900">
+        {t('page.home.title')}
+      </h1>
       <p className="mt-3 text-ink-700">{t('page.home.lead')}</p>
     </section>
   );

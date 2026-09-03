@@ -32,7 +32,9 @@ function NotFound(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-16 text-center">
-      <h1 className="text-2xl font-semibold text-ink-900">{t('error.notFound.title')}</h1>
+      <h1 className="font-display text-display-md font-bold text-ink-900">
+        {t('error.notFound.title')}
+      </h1>
       <Link to="/" className="mt-4 inline-block text-red-600 underline">
         {t('error.notFound.action')}
       </Link>
@@ -45,7 +47,9 @@ function UnexpectedError({ reset }: ErrorComponentProps): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-16 text-center">
-      <h1 className="text-2xl font-semibold text-ink-900">{t('error.unexpected.title')}</h1>
+      <h1 className="font-display text-display-md font-bold text-ink-900">
+        {t('error.unexpected.title')}
+      </h1>
       <button type="button" onClick={reset} className="mt-4 text-red-600 underline">
         {t('error.unexpected.action')}
       </button>

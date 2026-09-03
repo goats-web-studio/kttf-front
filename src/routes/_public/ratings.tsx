@@ -51,7 +51,9 @@ function RatingsPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-ink-900">{t('page.ratings.title')}</h1>
+      <h1 className="font-display text-display-md font-bold text-ink-900">
+        {t('page.ratings.title')}
+      </h1>
 
       <form
         className="mt-6 grid gap-3 sm:grid-cols-3"

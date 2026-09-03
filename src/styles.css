@@ -1,5 +1,84 @@
 @import 'tailwindcss';
 
+/* Гарнитуры — docs/07-design-system.md, раздел 3.5.
+ *
+ * Файлы свои, из npm, а не ссылка на Google Fonts: судья открывает консоль
+ * в зале без сети, и набор, ждущий чужой сервер, там просто не приедет.
+ *
+ * Подключены ровно три подмножества из семи. Латиница, кириллица и
+ * **кириллица-расширенная** — последняя обязательна: казахские Ә Ғ Қ Ң Ө Ү
+ * лежат именно в ней (U+0460-052F), а не в основной кириллице. Без неё
+ * казахский текст поедет на запасной системный набор посреди слова.
+ * Греческий, вьетнамский и latin-ext не подключены — это ещё 125 КБ,
+ * которые никто в этом продукте не прочитает.
+ *
+ * Диапазоны скопированы из fontsource как есть: их правка означает, что
+ * браузер скачает файл ради символа, которого в нём нет. */
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/inter/files/inter-cyrillic-ext-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 700;
+  src: url('@fontsource-variable/oswald/files/oswald-latin-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 700;
+  src: url('@fontsource-variable/oswald/files/oswald-cyrillic-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Oswald';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 700;
+  src: url('@fontsource-variable/oswald/files/oswald-cyrillic-ext-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
 /* Дизайн-система KTTF — docs/07-design-system.md, раздел 3.
  *
  * Токены объявляются здесь один раз и только здесь. Второго места с цветами
@@ -119,8 +198,9 @@
   --color-night-warn: var(--night-warn);
 
   /* Набор. Oswald — дисплей, Inter — интерфейс, роли не пересекаются.
-   * Файлов гарнитур в проекте пока нет: подключать их придётся своими,
-   * а не ссылкой на CDN — иначе в зале без сети интерфейс поедет. */
+   * Файлы подключены выше, свои. Системный запасной оставлен на случай,
+   * когда woff2 ещё не приехал: текст показывается сразу (font-display:
+   * swap), а не ждёт набор — принцип 1.4. */
   --font-display: 'Oswald', system-ui, sans-serif;
   --font-ui: 'Inter', system-ui, sans-serif;
 

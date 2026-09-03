@@ -48,7 +48,9 @@ function NewTournamentPage(): ReactNode {
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-ink-900">{t('page.newTournament.title')}</h1>
+      <h1 className="font-display text-display-md font-bold text-ink-900">
+        {t('page.newTournament.title')}
+      </h1>
 
       {clubIds.length === 0 ? (
         // Клуб-хозяин обязателен (ТЗ 4.2). Показывать форму, которую сервер

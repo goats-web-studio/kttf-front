@@ -73,7 +73,9 @@ function PlayerPage(): ReactNode {
       >
         {player.data === undefined ? null : (
           <header>
-            <h1 className="text-2xl font-semibold text-ink-900">{playerName(player.data)}</h1>
+            <h1 className="font-display text-display-md font-bold text-ink-900">
+              {playerName(player.data)}
+            </h1>
             <p className="mt-1 text-ink-700">
               {player.data.city}
               {player.data.clubId !== null &&
@@ -82,7 +84,9 @@ function PlayerPage(): ReactNode {
             </p>
 
             <p className="mt-4 flex items-baseline gap-3">
-              <span className="text-3xl font-semibold tabular-nums text-ink-900">
+              {/* Рейтинг — главное число профиля, дисплейный набор 44px
+                  (07-design-system.md, 3.5). Ради него страницу и открывают. */}
+              <span className="font-display text-display-lg font-bold tabular-nums text-ink-900">
                 {player.data.rating}
               </span>
               <span className="text-sm text-ink-500">

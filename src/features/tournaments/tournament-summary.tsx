@@ -21,7 +21,7 @@ export default function TournamentSummary({
 
   return (
     <header>
-      <h1 className="text-2xl font-semibold text-ink-900">{tournament.name}</h1>
+      <h1 className="font-display text-display-md font-bold text-ink-900">{tournament.name}</h1>
 
       <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         <Field label={t('tournament.status')}>{t(TOURNAMENT_STATUS_KEYS[tournament.status])}</Field>
