@@ -3,6 +3,7 @@ import type {
   ClubView,
   HeadToHeadView,
   PlayerMatchView,
+  PlayerProfileView,
   PlayerView,
   RatingHistoryView,
   RegistrationView,
@@ -603,3 +604,23 @@ export const REGISTRATIONS: RegistrationView[] = [
     player: PLAYERS.third,
   },
 ];
+
+/**
+ * Полный профиль игрока — ТЗ 2.2, ADR-035.
+ *
+ * Отдельно от краткого вида: `GET /players/:id` возвращает анкету, а списки
+ * и снимок консоли — нет. Экран правки читает именно этот ответ.
+ */
+export const PLAYER_PROFILE: PlayerProfileView = {
+  ...PLAYERS.first,
+  birthDate: '2000-04-12',
+  birthYearOnly: true,
+  playingHand: 'RIGHT',
+  grip: 'SHAKEHAND',
+  blade: null,
+  rubberForehand: null,
+  rubberBackhand: null,
+  bio: null,
+  coachPlayerId: null,
+  coachName: null,
+};

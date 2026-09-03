@@ -17,6 +17,7 @@ export function toFormValues(player: PlayerProfileView): Partial<CreatePlayerInp
     ...(player.middleName === null ? {} : { middleName: player.middleName }),
     birthYear: player.birthYear,
     ...(player.birthDate === null ? {} : { birthDate: player.birthDate }),
+    birthYearOnly: player.birthYearOnly,
     // Пол в ответе — строка, а не перечень (ТС 7.2). Незнакомое значение не
     // подставляется молча: человек выберет сам.
     ...(player.gender === 'MALE' || player.gender === 'FEMALE' ? { gender: player.gender } : {}),
@@ -54,6 +55,9 @@ export function toPlayerPatch(values: CreatePlayerInput): UpdatePlayerInput {
     middleName: values.middleName ?? null,
     birthYear: values.birthYear,
     birthDate: values.birthDate ?? null,
+    // Галочка приватности — не «поле анкеты»: снятая означает false,
+    // а не «стереть», поэтому null здесь неуместен.
+    birthYearOnly: values.birthYearOnly ?? true,
     gender: values.gender,
     city: values.city,
     clubId: values.clubId ?? null,

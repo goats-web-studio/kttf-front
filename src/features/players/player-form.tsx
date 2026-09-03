@@ -66,6 +66,9 @@ export default function PlayerForm({
       bio: '',
       coachName: '',
       coachPlayerId: '',
+      // Умолчание совпадает со схемой: до появления даты профиль показывал
+      // только год, и галочка ничего не меняет в том, что о человеке видно.
+      birthYearOnly: true,
       ...defaultValues,
     },
   });
@@ -79,6 +82,8 @@ export default function PlayerForm({
   // целиком на каждое нажатие клавиши в любом из двадцати полей.
   const control = form.control;
   const photoUrl = useWatch({ control, name: 'photoUrl' });
+  const birthDate = useWatch({ control, name: 'birthDate' });
+  const birthYear = useWatch({ control, name: 'birthYear' });
   const coachPlayerId = useWatch({ control, name: 'coachPlayerId' });
   const coachName = useWatch({ control, name: 'coachName' });
 
@@ -120,26 +125,18 @@ export default function PlayerForm({
           />
         </Field>
 
-        <Field
-          label="player.form.birthYear"
-          error={errors.birthYear === undefined ? undefined : 'error.form.birthYear'}
-        >
-          <input
-            {...form.register('birthYear', { valueAsNumber: true })}
-            type="number"
-            inputMode="numeric"
-            className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
-          />
-        </Field>
-
-        {/* Дата рождения необязательна, а год — обязателен: по году считаются
-            возрастные категории и допуск на турнир. Год подставляется из
-            выбранной даты сам, иначе человек заполнял бы одно и то же дважды
-            и получал отказ за расхождение. */}
+        {/* Поле одно — дата. Год из него выводится и в форме не показывается:
+            спрашивать дважды об одном и том же, да ещё и отказывать за
+            расхождение, — работа, переложенная на человека. Год при этом
+            остаётся обязательным в контракте: по нему считаются возрастные
+            категории и допуск на турнир. */}
         <Field
           label="player.form.birthDate"
-          optional
-          error={errors.birthDate === undefined ? undefined : 'error.form.birthDate'}
+          error={
+            errors.birthDate === undefined && errors.birthYear === undefined
+              ? undefined
+              : 'error.form.birthDate'
+          }
         >
           <input
             {...form.register('birthDate', {
@@ -147,14 +144,27 @@ export default function PlayerForm({
               onChange: (event: { target: { value: string } }) => {
                 const year = Number(event.target.value.slice(0, 4));
 
-                if (Number.isInteger(year) && year > 1900) {
-                  form.setValue('birthYear', year, { shouldValidate: true });
-                }
+                form.setValue(
+                  'birthYear',
+                  Number.isInteger(year) && year > 1900 ? year : (undefined as unknown as number),
+                  { shouldValidate: true },
+                );
               },
             })}
             type="date"
             className="mt-1 w-full rounded border border-slate-300 px-3 py-2"
           />
+          {/* Профили, заведённые до появления даты, знают только год. Пустое
+              поле у такого профиля объясняется, а не выглядит как потеря. */}
+          {birthDate === undefined && Number.isInteger(birthYear) && (
+            <span className="mt-1 block text-xs text-slate-500">
+              {t('player.form.birthYearOnlyKnown')} {birthYear}
+            </span>
+          )}
+          <label className="mt-2 flex items-center gap-2 text-xs text-slate-600">
+            <input type="checkbox" {...form.register('birthYearOnly')} />
+            {t('player.form.birthYearOnly')}
+          </label>
         </Field>
 
         <Field

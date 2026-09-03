@@ -63,6 +63,7 @@ export const kk: Record<MessageKey, string> = {
   'cabinet.profile.edit': 'Өзгерту',
   'cabinet.profile.public': 'Жария профиль',
   'cabinet.profile.rating': 'Рейтинг:',
+  'cabinet.profile.yearOnly': 'бөгделерге тек жылы көрінеді',
   'cabinet.account.title': 'Аккаунт',
   'cabinet.account.phone': 'Телефон',
   'cabinet.account.email': 'Пошта',
@@ -458,6 +459,8 @@ export const kk: Record<MessageKey, string> = {
 
   // Ойыншы сауалнамасы — ТТ 2.2, ADR-035.
   'player.form.birthDate': 'Туған күні',
+  'player.form.birthYearOnly': 'Бөгделерге тек жылын көрсету',
+  'player.form.birthYearOnlyKnown': 'Қазір тек жылы белгілі:',
   'player.form.notSet': 'көрсетілмеген',
   'player.form.game': 'Ойын',
   'player.form.playingHand': 'Ойнайтын қолы',
@@ -484,7 +487,7 @@ export const kk: Record<MessageKey, string> = {
   'player.form.photoType': 'Бұл формат қабылданбайды: JPEG, PNG немесе WebP керек',
   'player.form.photoSize': 'Файл 5 МБ-тан үлкен',
 
-  'error.form.birthDate': 'Туған күні туған жылымен сәйкес келуі керек',
+  'error.form.birthDate': 'Туған күнін көрсетіңіз',
   'error.form.coach': 'Жаттықтырушы тізімнен таңдалады не қолмен жазылады',
   'error.form.email': 'Пошта дұрыс жазылмаған',
   'error.form.telegram': 'Telegram ID — сан, оны @userinfobot береді',

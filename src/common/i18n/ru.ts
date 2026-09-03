@@ -61,6 +61,7 @@ export const ru = {
   'cabinet.profile.edit': 'Изменить',
   'cabinet.profile.public': 'Публичный профиль',
   'cabinet.profile.rating': 'Рейтинг:',
+  'cabinet.profile.yearOnly': 'посторонним виден только год',
   'cabinet.account.title': 'Аккаунт',
   'cabinet.account.phone': 'Телефон',
   'cabinet.account.email': 'Почта',
@@ -457,6 +458,8 @@ export const ru = {
 
   // Анкета игрока — ТЗ 2.2, ADR-035.
   'player.form.birthDate': 'Дата рождения',
+  'player.form.birthYearOnly': 'Показывать посторонним только год',
+  'player.form.birthYearOnlyKnown': 'Сейчас известен только год:',
   'player.form.notSet': 'не указано',
   'player.form.game': 'Игра',
   'player.form.playingHand': 'Игровая рука',
@@ -483,7 +486,7 @@ export const ru = {
   'player.form.photoType': 'Такой формат не принимается: нужен JPEG, PNG или WebP',
   'player.form.photoSize': 'Файл больше 5 МБ',
 
-  'error.form.birthDate': 'Дата рождения должна совпадать с годом',
+  'error.form.birthDate': 'Укажите дату рождения',
   'error.form.coach': 'Тренер выбирается из списка либо вписывается вручную',
   'error.form.email': 'Почта записана неверно',
   'error.form.telegram': 'Telegram ID — это число, его выдаёт бот @userinfobot',

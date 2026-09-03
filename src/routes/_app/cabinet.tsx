@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 
-import { useT, type MessageKey } from '@/common/i18n';
+import { formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import AccountForm from '@/features/auth/account-form';
 import PasswordForm from '@/features/auth/password-form';
@@ -167,6 +167,7 @@ function Card({
   readonly onEdit: () => void;
 }): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const clubs = useQuery(clubDirectoryQuery);
 
   return (
@@ -180,7 +181,12 @@ function Card({
           <p className="mt-1 text-sm text-slate-600">
             {player.city}
             {player.clubId !== null && ` · ${clubs.data?.get(player.clubId)?.name ?? ''}`}
-            {` · ${String(player.birthYear)}`}
+            {/* Своя карточка показывает дату целиком, если она известна:
+                прячут её от посторонних, а не от себя (ADR-037). */}
+            {` · ${player.birthDate === null ? String(player.birthYear) : formatDate(player.birthDate, locale)}`}
+            {player.birthYearOnly && (
+              <span className="ml-2 text-xs text-slate-400">{t('cabinet.profile.yearOnly')}</span>
+            )}
           </p>
           <p className="mt-3 text-sm text-slate-600">
             {t('cabinet.profile.rating')} <span className="tabular-nums">{player.rating}</span>

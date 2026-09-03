@@ -8,7 +8,14 @@ import { createAppRouter } from '@/app/router';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
 import { playerName } from '@/features/players/player-name';
-import { CLUB, pageOf, PLAYERS, USER_WITH_PROFILE, USER_WITHOUT_PROFILE } from '@/test/fixtures';
+import {
+  CLUB,
+  pageOf,
+  PLAYER_PROFILE,
+  PLAYERS,
+  USER_WITH_PROFILE,
+  USER_WITHOUT_PROFILE,
+} from '@/test/fixtures';
 
 /**
  * Кабинет: заведение профиля после регистрации — ТЗ 2.2.
@@ -60,8 +67,8 @@ function answer(url: string, init: RequestInit | undefined): Response {
   }
 
   if (url.includes('/players')) {
-    // И создание, и правка, и чтение отвечают профилем — контракт ТС 7.2.
-    return reply(PLAYERS.first);
+    // И создание, и правка, и чтение отвечают полным профилем — ТС 7.2.
+    return reply(PLAYER_PROFILE);
   }
 
   throw new Error(`Неожидаемый запрос: ${url}`);
@@ -89,8 +96,9 @@ function fillRequired(): void {
   fireEvent.change(screen.getByLabelText(ru['player.form.firstName']), {
     target: { value: 'Асан' },
   });
-  fireEvent.change(screen.getByLabelText(ru['player.form.birthYear']), {
-    target: { value: '2000' },
+  // Год выводится из даты: отдельного поля года в форме нет (ADR-037).
+  fireEvent.change(screen.getByLabelText(new RegExp(ru['player.form.birthDate'])), {
+    target: { value: '2000-04-12' },
   });
   fireEvent.change(screen.getByLabelText(ru['player.form.gender']), {
     target: { value: 'MALE' },
@@ -146,8 +154,10 @@ describe('профиль при регистрации', () => {
     expect(request?.body).toEqual({
       lastName: 'Ержанов',
       firstName: 'Асан',
-      // Числом, а не строкой из поля ввода: схема ждёт `number`.
+      // Числом, а не строкой из поля ввода: схема ждёт число.
       birthYear: 2000,
+      birthDate: '2000-04-12',
+      birthYearOnly: true,
       gender: 'MALE',
       city: 'Алматы',
     });
@@ -308,5 +318,61 @@ describe('смена пароля', () => {
 
     expect(await screen.findByText(ru['error.form.password'])).toBeDefined();
     expect(requests('POST')).toHaveLength(0);
+  });
+});
+
+/**
+ * Дата рождения — ADR-037.
+ *
+ * Поле одно: год выводится из даты. Спрашивать дважды об одном и том же,
+ * да ещё и отказывать за расхождение, — работа, переложенная на человека.
+ */
+describe('дата рождения', () => {
+  it('отдельного поля года в форме нет', async () => {
+    renderCabinet(USER_WITHOUT_PROFILE);
+
+    await screen.findByText(ru['cabinet.profile.lead']);
+
+    expect(screen.queryByLabelText(ru['player.form.birthYear'])).toBeNull();
+    expect(screen.getByLabelText(new RegExp(ru['player.form.birthDate']))).toBeDefined();
+  });
+
+  it('год уходит на сервер выведенным из даты', async () => {
+    renderCabinet(USER_WITHOUT_PROFILE);
+
+    await screen.findByText(ru['cabinet.profile.lead']);
+    fillRequired();
+    submit(ru['cabinet.profile.create']);
+
+    await waitFor(() => {
+      expect(requests('POST')).toHaveLength(1);
+    });
+
+    expect(requests('POST')[0]?.body).toMatchObject({ birthYear: 2000, birthDate: '2000-04-12' });
+  });
+
+  it('без даты профиль не отправляется', async () => {
+    renderCabinet(USER_WITHOUT_PROFILE);
+
+    await screen.findByText(ru['cabinet.profile.lead']);
+    submit(ru['cabinet.profile.create']);
+
+    expect(await screen.findByText(ru['error.form.birthDate'])).toBeDefined();
+    expect(requests('POST')).toHaveLength(0);
+  });
+
+  it('галочка приватности уходит вместе с профилем', async () => {
+    renderCabinet(USER_WITH_PROFILE);
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['cabinet.profile.edit'] }));
+    fireEvent.click(await screen.findByLabelText(ru['player.form.birthYearOnly']));
+    submit(ru['cabinet.profile.save']);
+
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+
+    // Профиль приходит с включённой галочкой, нажатие её снимает.
+    expect((requests('PATCH')[0]?.body as { birthYearOnly: unknown }).birthYearOnly).toBe(false);
   });
 });

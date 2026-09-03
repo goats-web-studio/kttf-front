@@ -34,6 +34,7 @@ const profile: PlayerProfileView = {
   bio: 'hate tensor, love sticky',
   coachPlayerId: null,
   coachName: 'Сериков Тимур',
+  birthYearOnly: true,
 };
 
 const filled: CreatePlayerInput = {
