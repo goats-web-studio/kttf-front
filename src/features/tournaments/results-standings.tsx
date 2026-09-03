@@ -56,7 +56,7 @@ function GroupTable({
       <table className="mt-2 w-full min-w-lg text-sm">
         <thead>
           <tr className="border-b border-line text-left text-ink-500">
-            <th scope="col" className="py-2 text-right font-normal">
+            <th scope="col" className="py-2 pr-4 text-right font-normal">
               {t('standings.place')}
             </th>
             <th scope="col" className="py-2 font-normal">
@@ -85,7 +85,7 @@ function GroupTable({
         <tbody>
           {group.rows.map((row) => (
             <tr key={row.participant} className="border-b border-line">
-              <td className="py-2 text-right font-medium tabular-nums text-ink-900">
+              <td className="py-2 pr-4 text-right font-medium tabular-nums text-ink-900">
                 {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
                 {row.place ?? <span className="text-ink-400">—</span>}
               </td>

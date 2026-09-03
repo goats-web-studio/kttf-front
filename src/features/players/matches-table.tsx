@@ -44,7 +44,7 @@ export default function MatchesTable({ matches, onSelectOpponent }: MatchesTable
           <th scope="col" className="py-2 font-normal">
             {t('player.matches.opponent')}
           </th>
-          <th scope="col" className="py-2 text-right font-normal">
+          <th scope="col" className="py-2 pr-4 text-right font-normal">
             {t('player.matches.score')}
           </th>
           <th scope="col" className="py-2 font-normal">
@@ -92,7 +92,7 @@ function Row({
       <td className="py-2 text-ink-900">
         <Opponent match={match} onSelectOpponent={onSelectOpponent} />
       </td>
-      <td className="py-2 text-right tabular-nums whitespace-nowrap text-ink-900">
+      <td className="py-2 pr-4 text-right tabular-nums whitespace-nowrap text-ink-900">
         {match.setsFor} : {match.setsAgainst}
         {match.resultType !== 'NORMAL' && (
           <span className="ml-2 text-xs text-ink-500">{t(RESULT_TYPE_KEYS[match.resultType])}</span>

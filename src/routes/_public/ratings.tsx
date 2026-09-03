@@ -134,7 +134,7 @@ function RatingsPage(): ReactNode {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-line text-left text-ink-500">
-                  <th scope="col" className="py-2 text-right font-normal">
+                  <th scope="col" className="py-2 pr-4 text-right font-normal">
                     {t('ratings.column.rank')}
                   </th>
                   <th scope="col" className="py-2 font-normal">
@@ -154,7 +154,7 @@ function RatingsPage(): ReactNode {
               <tbody>
                 {players.data.items.map((player, index) => (
                   <tr key={player.id} className="border-b border-line">
-                    <td className="py-2 text-right tabular-nums text-ink-500">
+                    <td className="py-2 pr-4 text-right tabular-nums text-ink-500">
                       {(page - 1) * players.data.limit + index + 1}
                     </td>
                     <td className="py-2 text-ink-900">

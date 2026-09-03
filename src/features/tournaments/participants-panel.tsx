@@ -59,13 +59,13 @@ export default function ParticipantsPanel({
         <table className="mt-3 w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-ink-500">
-              <th scope="col" className="py-2 text-right font-normal">
+              <th scope="col" className="py-2 pr-4 text-right font-normal">
                 {t('participants.seed')}
               </th>
               <th scope="col" className="py-2 font-normal">
                 {t('participants.player')}
               </th>
-              <th scope="col" className="py-2 text-right font-normal">
+              <th scope="col" className="py-2 pr-4 text-right font-normal">
                 {t('participants.rating')}
               </th>
               <th scope="col" className="py-2 font-normal">
@@ -126,7 +126,7 @@ function Row({
 
   return (
     <tr className="border-b border-line align-top">
-      <td className="py-2 text-right tabular-nums text-ink-500">{registration.seed ?? '—'}</td>
+      <td className="py-2 pr-4 text-right tabular-nums text-ink-500">{registration.seed ?? '—'}</td>
       <td className="py-2 text-ink-900">
         <Link
           to="/players/$playerId"
@@ -145,7 +145,7 @@ function Row({
           </span>
         )}
       </td>
-      <td className="py-2 text-right tabular-nums text-ink-700">
+      <td className="py-2 pr-4 text-right tabular-nums text-ink-700">
         {/* Рейтинг на старте, если турнир начат: он и пошёл в расчёт (ТС 5.4). */}
         {registration.ratingAtStart ?? registration.player.rating}
       </td>

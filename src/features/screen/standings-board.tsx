@@ -41,7 +41,7 @@ export default function StandingsBoard({ groups, names, ratings }: StandingsBoar
             <caption className="pb-1 text-left text-lg text-night-ink-500">{group.label}</caption>
             <thead className="text-sm text-night-ink-500">
               <tr>
-                <th scope="col" className="text-left">
+                <th scope="col" className="pr-4 text-right">
                   {t('screen.standings.place')}
                 </th>
                 <th scope="col" className="text-left">
@@ -62,7 +62,7 @@ export default function StandingsBoard({ groups, names, ratings }: StandingsBoar
               {group.rows.map((row) => (
                 <tr key={row.participant} className="border-t border-night-line">
                   {/* Пустое место — равенство, которого судья ещё не развёл (ADR-008). */}
-                  <td className="py-1 text-night-ink-700">{row.place ?? '—'}</td>
+                  <td className="py-1 pr-4 text-right text-night-ink-700">{row.place ?? '—'}</td>
                   <td className="py-1 text-night-ink-900">
                     {names.get(row.participant) ?? t('screen.match.pending')}
                     <span className="ml-2 text-sm text-night-ink-500">
