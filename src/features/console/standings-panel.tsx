@@ -99,16 +99,16 @@ function GroupTable({
                 {index + 1}
               </th>
             ))}
-            <th scope="col" className="px-1 py-1 text-center font-normal">
+            <th scope="col" className="px-1 py-1 text-right font-normal">
               {t('console.standings.points')}
             </th>
-            <th scope="col" className="px-1 py-1 text-center font-normal">
+            <th scope="col" className="px-1 py-1 text-right font-normal">
               {t('console.standings.sets')}
             </th>
-            <th scope="col" className="px-1 py-1 text-center font-normal">
+            <th scope="col" className="px-1 py-1 text-right font-normal">
               {t('console.standings.balls')}
             </th>
-            <th scope="col" className="px-1 py-1 text-center font-normal">
+            <th scope="col" className="px-1 py-1 text-right font-normal">
               {t('console.standings.place')}
             </th>
           </tr>
@@ -135,14 +135,14 @@ function GroupTable({
                 </td>
               ))}
 
-              <td className="px-1 py-1 text-center font-semibold tabular-nums">{row.points}</td>
-              <td className="px-1 py-1 text-center tabular-nums text-night-ink-700">
+              <td className="px-1 py-1 text-right font-semibold tabular-nums">{row.points}</td>
+              <td className="px-1 py-1 text-right tabular-nums text-night-ink-700">
                 {row.setDiff > 0 ? `+${String(row.setDiff)}` : row.setDiff}
               </td>
-              <td className="px-1 py-1 text-center tabular-nums text-night-ink-700">
+              <td className="px-1 py-1 text-right tabular-nums text-night-ink-700">
                 {row.ballDiff > 0 ? `+${String(row.ballDiff)}` : row.ballDiff}
               </td>
-              <td className="px-1 py-1 text-center font-semibold tabular-nums">
+              <td className="px-1 py-1 text-right font-semibold tabular-nums">
                 {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
                 {row.place ?? <span className="text-night-warn">?</span>}
               </td>

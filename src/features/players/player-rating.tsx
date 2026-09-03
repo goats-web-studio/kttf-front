@@ -46,13 +46,13 @@ export default function PlayerRating({ history }: PlayerRatingProps): ReactNode 
                 <th scope="col" className="py-2 font-normal">
                   {t('player.history.tournament')}
                 </th>
-                <th scope="col" className="py-2 font-normal">
+                <th scope="col" className="py-2 text-right font-normal">
                   {t('player.history.matches')}
                 </th>
-                <th scope="col" className="py-2 font-normal">
+                <th scope="col" className="py-2 text-right font-normal">
                   {t('player.history.delta')}
                 </th>
-                <th scope="col" className="py-2 font-normal">
+                <th scope="col" className="py-2 text-right font-normal">
                   {t('player.history.after')}
                 </th>
               </tr>
@@ -93,9 +93,11 @@ function Row({ point }: { readonly point: RatingPointView }): ReactNode {
           </Link>
         )}
       </td>
-      <td className="py-2 tabular-nums text-ink-700">{point.matches}</td>
-      <td className="py-2 tabular-nums font-medium text-ink-900">{formatDelta(point.delta)}</td>
-      <td className="py-2 tabular-nums text-ink-700">{point.ratingAfter}</td>
+      <td className="py-2 text-right tabular-nums text-ink-700">{point.matches}</td>
+      <td className="py-2 text-right font-medium tabular-nums text-ink-900">
+        {formatDelta(point.delta)}
+      </td>
+      <td className="py-2 text-right tabular-nums text-ink-700">{point.ratingAfter}</td>
     </tr>
   );
 }

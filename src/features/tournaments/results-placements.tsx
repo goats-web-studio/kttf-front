@@ -49,13 +49,13 @@ export default function ResultsPlacements({
       <table className="mt-3 w-full text-sm">
         <thead>
           <tr className="border-b border-line text-left text-ink-500">
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('results.places.place')}
             </th>
             <th scope="col" className="py-2 font-normal">
               {t('results.places.player')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('results.places.seed')}
             </th>
             <th scope="col" className="py-2 font-normal">
@@ -66,11 +66,13 @@ export default function ResultsPlacements({
         <tbody>
           {participants.map((participant) => (
             <tr key={participant.player.id} className="border-b border-line">
-              <td className="py-2 font-medium text-ink-900">
+              <td className="py-2 text-right font-medium tabular-nums text-ink-900">
                 {participant.place ?? <span className="text-ink-400">—</span>}
               </td>
               <td className="py-2 text-ink-900">{playerName(participant.player)}</td>
-              <td className="py-2 text-ink-500">{participant.seed ?? ''}</td>
+              <td className="py-2 text-right tabular-nums text-ink-500">
+                {participant.seed ?? ''}
+              </td>
               <td className="py-2 text-ink-500">
                 <Notes participant={participant} />
               </td>

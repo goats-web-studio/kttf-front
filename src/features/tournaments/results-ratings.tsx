@@ -37,13 +37,13 @@ export default function ResultsRatings({ ratings, names }: ResultsRatingsProps):
             <th scope="col" className="py-2 font-normal">
               {t('results.ratings.player')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('results.ratings.before')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('results.ratings.delta')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('results.ratings.after')}
             </th>
           </tr>
@@ -55,11 +55,13 @@ export default function ResultsRatings({ ratings, names }: ResultsRatingsProps):
                 {names.get(rating.playerId) ?? rating.playerId}
                 <Events rating={rating} />
               </td>
-              <td className="py-2 tabular-nums text-ink-700">{rating.ratingAtStart ?? '—'}</td>
-              <td className="py-2 tabular-nums font-medium text-ink-900">
+              <td className="py-2 text-right tabular-nums text-ink-700">
+                {rating.ratingAtStart ?? '—'}
+              </td>
+              <td className="py-2 text-right font-medium tabular-nums text-ink-900">
                 {formatDelta(rating.totalDelta)}
               </td>
-              <td className="py-2 tabular-nums text-ink-700">
+              <td className="py-2 text-right tabular-nums text-ink-700">
                 {rating.ratingAfter ?? (
                   <span className="text-ink-400">{t('results.ratings.pending')}</span>
                 )}

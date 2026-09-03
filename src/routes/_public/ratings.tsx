@@ -133,7 +133,7 @@ function RatingsPage(): ReactNode {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-line text-left text-ink-500">
-                  <th scope="col" className="py-2 font-normal">
+                  <th scope="col" className="py-2 text-right font-normal">
                     {t('ratings.column.rank')}
                   </th>
                   <th scope="col" className="py-2 font-normal">
@@ -142,10 +142,10 @@ function RatingsPage(): ReactNode {
                   <th scope="col" className="py-2 font-normal">
                     {t('ratings.column.city')}
                   </th>
-                  <th scope="col" className="py-2 font-normal">
+                  <th scope="col" className="py-2 text-right font-normal">
                     {t('ratings.column.rating')}
                   </th>
-                  <th scope="col" className="py-2 font-normal">
+                  <th scope="col" className="py-2 text-right font-normal">
                     {t('ratings.column.matches')}
                   </th>
                 </tr>
@@ -153,7 +153,7 @@ function RatingsPage(): ReactNode {
               <tbody>
                 {players.data.items.map((player, index) => (
                   <tr key={player.id} className="border-b border-line">
-                    <td className="py-2 text-ink-500">
+                    <td className="py-2 text-right tabular-nums text-ink-500">
                       {(page - 1) * players.data.limit + index + 1}
                     </td>
                     <td className="py-2 text-ink-900">
@@ -173,8 +173,12 @@ function RatingsPage(): ReactNode {
                       )}
                     </td>
                     <td className="py-2 text-ink-700">{player.city}</td>
-                    <td className="py-2 tabular-nums font-medium text-ink-900">{player.rating}</td>
-                    <td className="py-2 tabular-nums text-ink-700">{player.ratedMatches}</td>
+                    <td className="py-2 text-right font-medium tabular-nums text-ink-900">
+                      {player.rating}
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-ink-700">
+                      {player.ratedMatches}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -56,28 +56,28 @@ function GroupTable({
       <table className="mt-2 w-full min-w-lg text-sm">
         <thead>
           <tr className="border-b border-line text-left text-ink-500">
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('standings.place')}
             </th>
             <th scope="col" className="py-2 font-normal">
               {t('standings.player')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('standings.played')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('standings.wins')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('standings.losses')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('standings.points')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('standings.sets')}
             </th>
-            <th scope="col" className="py-2 font-normal">
+            <th scope="col" className="py-2 text-right font-normal">
               {t('standings.balls')}
             </th>
           </tr>
@@ -85,19 +85,21 @@ function GroupTable({
         <tbody>
           {group.rows.map((row) => (
             <tr key={row.participant} className="border-b border-line">
-              <td className="py-2 font-medium text-ink-900">
+              <td className="py-2 text-right font-medium tabular-nums text-ink-900">
                 {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
                 {row.place ?? <span className="text-ink-400">—</span>}
               </td>
               <td className="py-2 text-ink-900">{names.get(row.participant) ?? row.participant}</td>
-              <td className="py-2 text-ink-700">{row.played}</td>
-              <td className="py-2 text-ink-700">{row.wins}</td>
-              <td className="py-2 text-ink-700">{row.losses}</td>
-              <td className="py-2 font-medium text-ink-900">{row.points}</td>
-              <td className="py-2 text-ink-700">
+              <td className="py-2 text-right tabular-nums text-ink-700">{row.played}</td>
+              <td className="py-2 text-right tabular-nums text-ink-700">{row.wins}</td>
+              <td className="py-2 text-right tabular-nums text-ink-700">{row.losses}</td>
+              <td className="py-2 text-right font-medium tabular-nums text-ink-900">
+                {row.points}
+              </td>
+              <td className="py-2 text-right tabular-nums text-ink-700">
                 {row.setsWon} : {row.setsLost} <Diff value={row.setDiff} />
               </td>
-              <td className="py-2 text-ink-700">
+              <td className="py-2 text-right tabular-nums text-ink-700">
                 {row.ballsWon} : {row.ballsLost} <Diff value={row.ballDiff} />
               </td>
             </tr>

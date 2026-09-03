@@ -44,13 +44,13 @@ export default function MatchesTable({ matches, onSelectOpponent }: MatchesTable
           <th scope="col" className="py-2 font-normal">
             {t('player.matches.opponent')}
           </th>
-          <th scope="col" className="py-2 font-normal">
+          <th scope="col" className="py-2 text-right font-normal">
             {t('player.matches.score')}
           </th>
           <th scope="col" className="py-2 font-normal">
             {t('player.matches.outcome')}
           </th>
-          <th scope="col" className="py-2 font-normal">
+          <th scope="col" className="py-2 text-right font-normal">
             {t('player.matches.delta')}
           </th>
         </tr>
@@ -92,7 +92,7 @@ function Row({
       <td className="py-2 text-ink-900">
         <Opponent match={match} onSelectOpponent={onSelectOpponent} />
       </td>
-      <td className="py-2 tabular-nums whitespace-nowrap text-ink-900">
+      <td className="py-2 text-right tabular-nums whitespace-nowrap text-ink-900">
         {match.setsFor} : {match.setsAgainst}
         {match.resultType !== 'NORMAL' && (
           <span className="ml-2 text-xs text-ink-500">{t(RESULT_TYPE_KEYS[match.resultType])}</span>
@@ -101,7 +101,7 @@ function Row({
       <td className="py-2 whitespace-nowrap text-ink-700">
         {match.won ? t('player.matches.won') : t('player.matches.lost')}
       </td>
-      <td className="py-2 tabular-nums whitespace-nowrap font-medium text-ink-900">
+      <td className="py-2 text-right font-medium tabular-nums whitespace-nowrap text-ink-900">
         {match.delta === null ? (
           <span className="font-normal text-ink-400">{t('player.matches.notRated')}</span>
         ) : (
