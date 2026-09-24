@@ -197,6 +197,16 @@ function build(tokens: Tokens, locale: Locale): Theme {
             root: { minHeight: 40, paddingInline: 16 },
             sizeSmall: { minHeight: 32, paddingInline: 12, fontSize: 13 },
             sizeLarge: { minHeight: 48, paddingInline: 20 },
+            // Залитая кнопка — главное действие, и она всегда фирменного цвета:
+            // нейтральное умолчание иначе красило бы её в чёрный.
+            contained: ({ ownerState }) =>
+              ownerState.color === 'secondary'
+                ? {
+                    backgroundColor: tokens.primary,
+                    color: onPrimary,
+                    '&:hover': { backgroundColor: tokens.primaryDark },
+                  }
+                : {},
             outlined: ({ ownerState }) =>
               ownerState.color === 'secondary'
                 ? { borderColor: tokens.lineStrong, backgroundColor: tokens.paper }
