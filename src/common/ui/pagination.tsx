@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { formatCount, useLocale, useT } from '@/common/i18n';
+import { fill, formatCount, useLocale, useT } from '@/common/i18n';
 
 import Button from './button';
 
@@ -31,7 +31,7 @@ export default function Pagination({ page, pages, onPage }: PaginationProps): Re
       className="mt-6 flex items-center justify-between gap-4"
     >
       <Button
-        size="sm"
+        className="h-11 sm:h-8 sm:px-3 sm:text-sm"
         disabled={page <= 1}
         onClick={() => {
           onPage(page - 1);
@@ -40,10 +40,13 @@ export default function Pagination({ page, pages, onPage }: PaginationProps): Re
         {t('common.prev')}
       </Button>
       <span className="text-sm tabular-nums text-ink-700" aria-current="page">
-        {t('common.page')} {formatCount(page, locale)} {t('common.of')} {formatCount(pages, locale)}
+        {fill(t('common.pageOf'), {
+          page: formatCount(page, locale),
+          pages: formatCount(pages, locale),
+        })}
       </span>
       <Button
-        size="sm"
+        className="h-11 sm:h-8 sm:px-3 sm:text-sm"
         disabled={page >= pages}
         onClick={() => {
           onPage(page + 1);

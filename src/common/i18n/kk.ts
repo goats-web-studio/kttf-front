@@ -96,7 +96,7 @@ export const kk: Record<MessageKey, string> = {
   'common.page': 'Бет',
   'common.prev': 'Артқа',
   'common.next': 'Алға',
-  'common.of': '/',
+  'common.pageOf': '{pages} беттің {page}-беті',
   'common.pagination': 'Беттер',
 
   'filter.city': 'Қала',
@@ -108,6 +108,10 @@ export const kk: Record<MessageKey, string> = {
   'filter.found': 'Табылды',
   'filter.remove': 'Сүзгіні алып тастау',
   'filter.resetAll': 'Барлығын тазалау',
+  'filter.chip': '{label}: {value}',
+  'filter.chipQuoted': '«{value}»',
+  'filter.more': 'Қосымша сүзгілер',
+  'filter.less': 'Сүзгілерді жасыру',
 
   'tournament.status': 'Күйі',
   'tournament.status.DRAFT': 'Жоба',
@@ -130,6 +134,7 @@ export const kk: Record<MessageKey, string> = {
   'tournaments.emptyState.title': 'Әзірге турнирлер жоқ',
   'tournaments.emptyState.text':
     'Мұнда бүкіл елдегі клубтардың турнирлері күнімен, жарнасымен және тіркелуімен шығады.',
+  'tournaments.emptyState.action': 'Рейтингті көру',
   'tournaments.notFound.title': 'Бұл шарттар бойынша турнир жоқ',
   'tournaments.notFound.text':
     'Көрші қаланы қарап көріңіз немесе сүзгілердің бір бөлігін алып тастаңыз.',

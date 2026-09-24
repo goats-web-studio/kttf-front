@@ -94,7 +94,7 @@ export const ru = {
   'common.page': 'Страница',
   'common.prev': 'Назад',
   'common.next': 'Вперёд',
-  'common.of': 'из',
+  'common.pageOf': 'Страница {page} из {pages}',
   'common.pagination': 'Страницы',
 
   'filter.city': 'Город',
@@ -106,6 +106,10 @@ export const ru = {
   'filter.found': 'Найдено',
   'filter.remove': 'Убрать фильтр',
   'filter.resetAll': 'Сбросить все',
+  'filter.chip': '{label}: {value}',
+  'filter.chipQuoted': '«{value}»',
+  'filter.more': 'Ещё фильтры',
+  'filter.less': 'Скрыть фильтры',
 
   'tournament.status': 'Состояние',
   'tournament.status.DRAFT': 'Черновик',
@@ -128,6 +132,7 @@ export const ru = {
   'tournaments.emptyState.title': 'Турниров пока нет',
   'tournaments.emptyState.text':
     'Здесь появятся турниры клубов со всей страны — с датой, взносом и записью.',
+  'tournaments.emptyState.action': 'Смотреть рейтинг',
   'tournaments.notFound.title': 'По этим условиям турниров нет',
   'tournaments.notFound.text': 'Попробуйте соседний город или снимите часть фильтров.',
   'tournament.notFound': 'Турнир не найден. Проверьте ссылку — она могла оборваться.',

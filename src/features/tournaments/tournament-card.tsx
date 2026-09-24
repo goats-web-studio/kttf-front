@@ -21,8 +21,8 @@ interface TournamentCardProps {
  * нет»: название, клуб с городом, состояние, уровень и взнос.
  *
  * Ссылка — название, а не вся карточка: карточка-ссылка зачитывается
- * скринридером целиком одной строкой, и её нельзя выделить, чтобы
- * скопировать адрес зала. Площадь нажатия расширена на карточку псевдоэлементом.
+ * скринридером целиком одной строкой. Площадь нажатия расширена на карточку
+ * псевдоэлементом — на телефоне попасть пальцем в название не нужно.
  */
 export default function TournamentCard({ tournament, club }: TournamentCardProps): ReactNode {
   const t = useT();
@@ -39,6 +39,9 @@ export default function TournamentCard({ tournament, club }: TournamentCardProps
           {date.day}
         </span>
         <span className="text-xs text-ink-500">{date.month}</span>
+        {date.year !== undefined && (
+          <span className="text-xs tabular-nums text-ink-500">{date.year}</span>
+        )}
         <span className="mt-1 text-xs tabular-nums text-ink-500">{date.time}</span>
       </time>
 

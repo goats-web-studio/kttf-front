@@ -10,11 +10,13 @@ import { cn } from './cn';
  * приходит ни байта. Своё выпадающее меню заводится, когда в нём понадобится
  * поиск (Combobox), — не раньше.
  *
- * Высота 40px — размер `md` кнопки: поле и кнопка в одном ряду стоят вровень.
+ * Высота 44px на телефоне — нижняя граница зоны нажатия (раздел 9), от 640px
+ * — 40px, размер `md` кнопки: поле и кнопка в одном ряду стоят вровень.
+ * Плейсхолдер `--ink-500`, а не `--ink-400`: у того 3.29:1, это не текст.
  */
 const control =
-  'h-10 w-full rounded-sm border border-line-strong bg-paper px-3 text-base text-ink-900 ' +
-  'transition-colors duration-(--dur-fast) placeholder:text-ink-400 ' +
+  'h-11 w-full rounded-sm border border-line-strong bg-paper px-3 text-base text-ink-900 sm:h-10 ' +
+  'transition-colors duration-(--dur-fast) placeholder:text-ink-500 ' +
   'hover:border-ink-500 disabled:bg-paper-hover disabled:text-ink-500';
 
 export function Input({ className, ...props }: ComponentProps<'input'>): ReactNode {

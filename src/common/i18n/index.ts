@@ -6,6 +6,9 @@ export {
   formatDateTime,
   formatDelta,
   formatMoney,
+  endOfDay,
+  fill,
+  startOfDay,
 } from './format';
 export { DEFAULT_LOCALE, detectLocale, LOCALES, type Locale, type MessageKey } from './locale';
 export { default as I18nProvider } from './provider';

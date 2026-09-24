@@ -82,7 +82,7 @@ export default function QueryState({
 
     return (
       <EmptyState
-        role="alert"
+        tone="error"
         title={t(errorMessageKey(error))}
         action={
           onRetry === undefined ? undefined : (

@@ -12,7 +12,10 @@ import { cn } from './cn';
  * правилом `prefers-reduced-motion` в `styles.css`.
  */
 export function Skeleton({ className }: { readonly className?: string }): ReactNode {
-  return <div aria-hidden className={cn('animate-pulse rounded-xs bg-paper-hover', className)} />;
+  // `span`, а не `div`: заготовка встаёт и внутрь строки текста, где блок недопустим.
+  return (
+    <span aria-hidden className={cn('block animate-pulse rounded-xs bg-paper-hover', className)} />
+  );
 }
 
 /** Строки списка или таблицы. Пять — по разделу 7. */

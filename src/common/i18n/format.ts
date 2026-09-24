@@ -31,6 +31,9 @@ export function formatMoney(amount: number, locale: Locale): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'KZT',
+    // Знак ₸, а не код KZT (docs/07-design-system.md, 10.2): без этого
+    // Chromium пишет «3 000 KZT».
+    currencyDisplay: 'narrowSymbol',
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -61,16 +64,54 @@ export function formatCount(count: number, locale: Locale): string {
  *
  * День, месяц и время набираются разным кеглем, поэтому приходят раздельно.
  * Месяц короткий и берётся у `Intl`: «сент.» и «қыр.» пишутся по-разному.
+ * Год — только если не текущий (docs/07-design-system.md, 10.2).
  */
 export function formatDateParts(
   iso: string,
   locale: Locale,
-): { readonly day: string; readonly month: string; readonly time: string } {
+  now: Date = new Date(),
+): {
+  readonly day: string;
+  readonly month: string;
+  readonly year: string | undefined;
+  readonly time: string;
+} {
   const date = new Date(iso);
 
   return {
     day: new Intl.DateTimeFormat(locale, { day: 'numeric' }).format(date),
     month: new Intl.DateTimeFormat(locale, { month: 'short' }).format(date),
+    year:
+      date.getFullYear() === now.getFullYear()
+        ? undefined
+        : new Intl.DateTimeFormat(locale, { year: 'numeric' }).format(date),
     time: new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(date),
   };
+}
+
+/**
+ * День из поля даты (`2026-09-01`) — в момент начала этих суток по часам
+ * человека.
+ *
+ * `new Date('2026-09-01')` читается как полночь по UTC, а в Казахстане это
+ * пять утра: турнир в три часа ночи выпал бы из выборки своего дня.
+ */
+export function startOfDay(day: string): Date {
+  return new Date(`${day}T00:00:00`);
+}
+
+/** Последний миг тех же суток по часам человека. */
+export function endOfDay(day: string): Date {
+  return new Date(`${day}T23:59:59.999`);
+}
+
+/**
+ * Подстановка в строку словаря: `fill(t('common.pageOf'), { page, pages })`.
+ *
+ * Фраза с числом внутри собирается целиком в словаре, а не склейкой кусков
+ * в компоненте: в казахском порядок слов другой, и «Страница 2 из 7»,
+ * склеенная по-русски, по-казахски не читается.
+ */
+export function fill(template: string, values: Readonly<Record<string, string>>): string {
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match);
 }

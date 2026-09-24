@@ -6,10 +6,10 @@ import {
 } from '@kttf/shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
-import { formatDate, useLocale, useT } from '@/common/i18n';
+import { endOfDay, fill, formatDate, startOfDay, useLocale, useT } from '@/common/i18n';
 import { orUndefined, searchDay, searchId, searchPage, searchText } from '@/common/search';
 import Button from '@/common/ui/button';
 import EmptyState from '@/common/ui/empty-state';
@@ -111,7 +111,7 @@ function TournamentsPage(): ReactNode {
   if (search.city !== undefined) {
     active.push({
       key: 'city',
-      label: `${t('filter.city')}: ${search.city}`,
+      label: fill(t('filter.chip'), { label: t('filter.city'), value: search.city }),
       onRemove: () => {
         filter({ city: undefined });
       },
@@ -120,7 +120,10 @@ function TournamentsPage(): ReactNode {
   if (search.club !== undefined) {
     active.push({
       key: 'club',
-      label: `${t('filter.club')}: ${clubs.data?.get(search.club)?.name ?? '…'}`,
+      label: fill(t('filter.chip'), {
+        label: t('filter.club'),
+        value: clubs.data?.get(search.club)?.name ?? t('common.loading'),
+      }),
       onRemove: () => {
         filter({ club: undefined });
       },
@@ -138,7 +141,10 @@ function TournamentsPage(): ReactNode {
   if (search.from !== undefined) {
     active.push({
       key: 'from',
-      label: `${t('filter.from')}: ${formatDate(search.from, locale)}`,
+      label: fill(t('filter.chip'), {
+        label: t('filter.from'),
+        value: formatDate(startOfDay(search.from).toISOString(), locale),
+      }),
       onRemove: () => {
         filter({ from: undefined });
       },
@@ -147,12 +153,23 @@ function TournamentsPage(): ReactNode {
   if (search.to !== undefined) {
     active.push({
       key: 'to',
-      label: `${t('filter.to')}: ${formatDate(search.to, locale)}`,
+      label: fill(t('filter.chip'), {
+        label: t('filter.to'),
+        value: formatDate(startOfDay(search.to).toISOString(), locale),
+      }),
       onRemove: () => {
         filter({ to: undefined });
       },
     });
   }
+
+  // На телефоне пять полей подряд занимают экран до списка; первый ряд — город
+  // и состояние, самые частые условия, остальное раскрывается (раздел 6.2).
+  // Поле с заданным значением скрытым не бывает: иначе фильтр действует, а
+  // человек его не видит.
+  const [more, setMore] = useState(false);
+  const extraSet = [search.club, search.from, search.to].filter((v) => v !== undefined).length;
+  const extra = more || extraSet > 0 ? '' : 'hidden sm:block';
 
   const reset = (): void => {
     void navigate({ search: {} });
@@ -164,7 +181,7 @@ function TournamentsPage(): ReactNode {
       : Math.max(1, Math.ceil(tournaments.data.total / tournaments.data.limit));
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10 sm:py-12">
+    <section className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="font-display text-display-md font-bold text-ink-900">
           {t('page.tournaments.title')}
@@ -179,15 +196,12 @@ function TournamentsPage(): ReactNode {
         )}
       </div>
 
-      <div
-        role="search"
-        className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_2fr_2fr_1.5fr_1.5fr]"
-      >
-        <Field label={t('filter.city')}>
+      <div role="search" className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-6">
+        <Field label={t('filter.city')} className="col-span-2 sm:col-span-3">
           <SearchInput value={search.city} onCommit={commitCity} autoComplete="address-level2" />
         </Field>
 
-        <Field label={t('filter.club')}>
+        <Field label={t('filter.club')} className={`col-span-2 sm:order-last ${extra}`}>
           <Select
             value={search.club ?? ''}
             onChange={(event) => {
@@ -203,7 +217,7 @@ function TournamentsPage(): ReactNode {
           </Select>
         </Field>
 
-        <Field label={t('filter.status')}>
+        <Field label={t('filter.status')} className="col-span-2 sm:col-span-3">
           <Select
             value={search.status ?? ''}
             onChange={(event) => {
@@ -220,7 +234,7 @@ function TournamentsPage(): ReactNode {
           </Select>
         </Field>
 
-        <Field label={t('filter.from')}>
+        <Field label={t('filter.from')} className={`sm:col-span-2 ${extra}`}>
           <Input
             type="date"
             value={search.from ?? ''}
@@ -231,7 +245,7 @@ function TournamentsPage(): ReactNode {
           />
         </Field>
 
-        <Field label={t('filter.to')}>
+        <Field label={t('filter.to')} className={`sm:col-span-2 ${extra}`}>
           <Input
             type="date"
             value={search.to ?? ''}
@@ -241,9 +255,26 @@ function TournamentsPage(): ReactNode {
             }}
           />
         </Field>
+
+        {extraSet === 0 && (
+          <Button
+            variant="ghost"
+            aria-expanded={more}
+            className="col-span-2 h-11 justify-start px-0 sm:hidden"
+            onClick={() => {
+              setMore(!more);
+            }}
+          >
+            {more ? t('filter.less') : t('filter.more')}
+          </Button>
+        )}
       </div>
 
-      <FilterSummary total={tournaments.data?.total} filters={active} onReset={reset} />
+      <FilterSummary
+        total={tournaments.isError ? null : tournaments.data?.total}
+        filters={active}
+        onReset={reset}
+      />
 
       <div className="mt-4">
         <QueryState
@@ -273,6 +304,11 @@ function TournamentsPage(): ReactNode {
             <EmptyState
               title={t('tournaments.emptyState.title')}
               text={t('tournaments.emptyState.text')}
+              action={
+                <Button asChild>
+                  <Link to="/ratings">{t('tournaments.emptyState.action')}</Link>
+                </Button>
+              }
             />
           )}
         </QueryState>
@@ -294,9 +330,10 @@ function TournamentsPage(): ReactNode {
 /**
  * Фильтры адреса — в запрос ТС 7.5.
  *
- * Границы дат раздвигаются до краёв суток: человек выбирает день, а контракт
- * принимает момент времени. Без этого турнир, начинающийся в полдень, не
- * попал бы в выборку «по сегодня».
+ * Границы дат раздвигаются до краёв суток по часам человека: он выбирает
+ * день, а контракт принимает момент времени. Без этого турнир, начинающийся
+ * в полдень, не попал бы в выборку «по сегодня», а границы по UTC сдвинули
+ * бы казахстанские сутки на пять часов.
  */
 function toQuery(search: Search, page: number): ListTournamentsQuery {
   return {
@@ -305,7 +342,7 @@ function toQuery(search: Search, page: number): ListTournamentsQuery {
     ...(search.city === undefined ? {} : { city: search.city }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
     ...(search.status === undefined ? {} : { status: search.status }),
-    ...(search.from === undefined ? {} : { from: `${search.from}T00:00:00.000Z` }),
-    ...(search.to === undefined ? {} : { to: `${search.to}T23:59:59.999Z` }),
+    ...(search.from === undefined ? {} : { from: startOfDay(search.from).toISOString() }),
+    ...(search.to === undefined ? {} : { to: endOfDay(search.to).toISOString() }),
   };
 }

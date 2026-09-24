@@ -19,7 +19,7 @@ import { cn } from './cn';
  */
 const button = cva(
   'inline-flex items-center justify-center gap-2 rounded-sm font-medium ' +
-    'transition-colors disabled:pointer-events-none disabled:opacity-60',
+    'transition-colors duration-(--dur-fast) disabled:pointer-events-none disabled:opacity-60',
   {
     variants: {
       variant: {

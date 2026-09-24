@@ -4,7 +4,7 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { useCallback, type ReactNode } from 'react';
 import { z } from 'zod';
 
-import { formatCount, useLocale, useT } from '@/common/i18n';
+import { fill, formatCount, useLocale, useT } from '@/common/i18n';
 import { orUndefined, searchId, searchPage, searchText } from '@/common/search';
 import Button from '@/common/ui/button';
 import { cn } from '@/common/ui/cn';
@@ -86,7 +86,7 @@ function RatingsPage(): ReactNode {
   if (search.search !== undefined) {
     active.push({
       key: 'search',
-      label: `«${search.search}»`,
+      label: fill(t('filter.chipQuoted'), { value: search.search }),
       onRemove: () => {
         filter({ search: undefined });
       },
@@ -95,7 +95,7 @@ function RatingsPage(): ReactNode {
   if (search.city !== undefined) {
     active.push({
       key: 'city',
-      label: `${t('filter.city')}: ${search.city}`,
+      label: fill(t('filter.chip'), { label: t('filter.city'), value: search.city }),
       onRemove: () => {
         filter({ city: undefined });
       },
@@ -104,7 +104,10 @@ function RatingsPage(): ReactNode {
   if (search.club !== undefined) {
     active.push({
       key: 'club',
-      label: `${t('filter.club')}: ${clubs.data?.get(search.club)?.name ?? '…'}`,
+      label: fill(t('filter.chip'), {
+        label: t('filter.club'),
+        value: clubs.data?.get(search.club)?.name ?? t('common.loading'),
+      }),
       onRemove: () => {
         filter({ club: undefined });
       },
@@ -121,7 +124,7 @@ function RatingsPage(): ReactNode {
       : Math.max(1, Math.ceil(players.data.total / players.data.limit));
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-10 sm:py-12">
+    <section className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
       <h1 className="font-display text-display-md font-bold text-ink-900">
         {t('page.ratings.title')}
       </h1>
@@ -152,7 +155,11 @@ function RatingsPage(): ReactNode {
         </Field>
       </div>
 
-      <FilterSummary total={players.data?.total} filters={active} onReset={reset} />
+      <FilterSummary
+        total={players.isError ? null : players.data?.total}
+        filters={active}
+        onReset={reset}
+      />
 
       <div className="mt-4">
         <QueryState
@@ -165,7 +172,7 @@ function RatingsPage(): ReactNode {
             // До 640px таблица сжимается до трёх колонок, а город уходит
             // подписью под фамилию (docs/08-ux-draft.md, 3.3): место и
             // рейтинг остаются крупными, горизонтальной прокрутки нет.
-            <table className="w-full border-b border-line text-base">
+            <table className="w-full border-separate border-spacing-0 text-base">
               <thead>
                 <tr className="text-left text-sm text-ink-500">
                   <Th className="w-12 text-right">{t('ratings.column.rank')}</Th>
@@ -175,20 +182,17 @@ function RatingsPage(): ReactNode {
                   <Th className="hidden text-right sm:table-cell">{t('ratings.column.matches')}</Th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
+              <tbody>
                 {players.data.items.map((player, index) => (
-                  <tr
-                    key={player.id}
-                    className="h-14 transition-colors duration-(--dur-fast) hover:bg-paper-hover sm:h-11"
-                  >
+                  <tr key={player.id} className="h-14 sm:h-11 [&>td]:border-b [&>td]:border-line">
                     <td className="pr-4 text-right tabular-nums text-ink-500">
                       {formatCount((page - 1) * players.data.limit + index + 1, locale)}
                     </td>
-                    <td className="py-2 pr-4">
+                    <td className="pr-4">
                       <Link
                         to="/players/$playerId"
                         params={{ playerId: player.id }}
-                        className="font-medium text-ink-900 hover:text-red-600 hover:underline"
+                        className="inline-block py-2.5 font-medium text-ink-900 hover:text-red-600 hover:underline"
                       >
                         {playerName(player)}
                       </Link>
@@ -199,14 +203,16 @@ function RatingsPage(): ReactNode {
                           {t('ratings.provisional')}
                         </span>
                       )}
-                      <span className="block text-sm text-ink-500 sm:hidden">{player.city}</span>
+                      <span className="-mt-2 block pb-2 text-sm text-ink-500 sm:hidden">
+                        {player.city}
+                      </span>
                     </td>
                     <td className="hidden pr-4 text-ink-700 sm:table-cell">{player.city}</td>
                     <td className="pr-4 text-right font-display text-lg font-semibold tabular-nums text-ink-900 sm:font-ui sm:text-base sm:font-medium">
                       {player.rating}
                     </td>
                     <td className="hidden pr-2 text-right tabular-nums text-ink-700 sm:table-cell">
-                      {player.ratedMatches}
+                      {formatCount(player.ratedMatches, locale)}
                     </td>
                   </tr>
                 ))}
@@ -260,7 +266,7 @@ function Th({
     <th
       scope="col"
       className={cn(
-        'sticky top-0 z-(--z-sticky) border-b border-line bg-paper-sunken py-2 pr-4 font-normal',
+        'sticky top-0 z-(--z-sticky) border-b border-line bg-paper py-2 pr-4 font-normal',
         className,
       )}
     >
