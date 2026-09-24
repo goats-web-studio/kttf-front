@@ -43,8 +43,22 @@ interface Sent {
 }
 
 let sent: Sent[] = [];
-/** Турнир с открытой регистрацией: в фикстуре он уже обсчитан. */
-let tournament: TournamentView = { ...TOURNAMENT, status: 'REG_OPEN' };
+/**
+ * Турнир с открытой записью — дата отсчитывается от сегодня.
+ *
+ * Дата фикстуры `TOURNAMENT` постоянная и однажды прошла: панель честно
+ * сочла запись закрытой, и половина случаев упала от течения времени, а не
+ * от ошибки в коде.
+ */
+function openTournament(): TournamentView {
+  return {
+    ...TOURNAMENT,
+    status: 'REG_OPEN',
+    startsAt: new Date(Date.now() + 30 * 24 * 60 * 60_000).toISOString(),
+  };
+}
+
+let tournament: TournamentView = openTournament();
 let registrations: readonly RegistrationView[] = [];
 /** Профиль вошедшего: по нему считается допуск до нажатия. */
 let profile: PlayerView = PLAYERS.first;
@@ -125,7 +139,7 @@ function renderTournament(user: AuthUserView | null): void {
 
 beforeEach(() => {
   sent = [];
-  tournament = { ...TOURNAMENT, status: 'REG_OPEN' };
+  tournament = openTournament();
   registrations = [];
   profile = PLAYERS.first;
   refusal = null;
