@@ -228,7 +228,14 @@ function build(tokens: Tokens, locale: Locale): Theme {
         },
         MuiTableCell: {
           styleOverrides: {
-            root: { borderColor: tokens.line, fontSize: 15 },
+            // На телефоне по 8px с боков, а не 16: иначе пять колонок на 360px
+            // вылезают за экран, и страница едет вбок.
+            root: {
+              borderColor: tokens.line,
+              fontSize: 15,
+              paddingInline: 8,
+              '@media (min-width: 640px)': { paddingInline: 16 },
+            },
             head: { color: tokens.ink500, fontSize: 13, fontWeight: 400 },
           },
         },

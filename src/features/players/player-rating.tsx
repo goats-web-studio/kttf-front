@@ -50,7 +50,7 @@ export default function PlayerRating({ history }: PlayerRatingProps): ReactNode 
           <Table stickyHeader size="small" sx={{ mt: 3 }}>
             <TableHead>
               <TableRow>
-                <TableCell>{t('player.history.date')}</TableCell>
+                <TableCell sx={WIDE}>{t('player.history.date')}</TableCell>
                 <TableCell>{t('player.history.tournament')}</TableCell>
                 <TableCell align="right" sx={WIDE}>
                   {t('player.history.matches')}
@@ -73,7 +73,7 @@ export default function PlayerRating({ history }: PlayerRatingProps): ReactNode 
   );
 }
 
-/** Колонка, которой на телефоне нет: число встреч вторично к дельте. */
+/** Колонки, которых на телефоне нет: число встреч вторично к дельте, дата уходит под турнир. */
 const WIDE = { display: { xs: 'none', sm: 'table-cell' } } as const;
 
 /** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
@@ -85,7 +85,7 @@ function Row({ point }: { readonly point: RatingPointView }): ReactNode {
 
   return (
     <TableRow>
-      <TableCell sx={{ ...NUM, color: 'text.secondary' }}>
+      <TableCell sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
         {formatDate(point.playedAt, locale)}
       </TableCell>
       <TableCell>
@@ -100,6 +100,11 @@ function Row({ point }: { readonly point: RatingPointView }): ReactNode {
             {point.tournamentName ?? t('player.history.tournament')}
           </Link>
         )}
+        {/* На телефоне дата — подписью под турниром, а не колонкой: длинная
+            «2 сентября 2026 г.» выдавливала таблицу за экран. */}
+        <Typography variant="body2" color="text.secondary" sx={{ display: { sm: 'none' }, ...NUM }}>
+          {formatDate(point.playedAt, locale)}
+        </Typography>
       </TableCell>
       <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
         {point.matches}
