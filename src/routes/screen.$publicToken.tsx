@@ -61,7 +61,7 @@ function ScreenPage(): ReactNode {
 
   return (
     <div className="min-h-full bg-night px-6 py-5 text-white">
-      <QueryState isPending={isPending} error={error} onRetry={retry}>
+      <QueryState isPending={isPending} error={error} onRetry={retry} surface="night">
         {view === undefined || boards === null ? null : (
           <>
             <header className="flex items-baseline justify-between gap-6 border-b border-night-line pb-3">

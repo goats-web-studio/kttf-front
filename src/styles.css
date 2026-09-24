@@ -299,6 +299,8 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* Без этого бесконечная пульсация скелетона мигала бы каждый кадр. */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

@@ -50,3 +50,27 @@ export function formatDelta(delta: string): string {
 
   return `+${delta}`;
 }
+
+/** Число записей: «1 248», с разрядами по языку интерфейса. */
+export function formatCount(count: number, locale: Locale): string {
+  return new Intl.NumberFormat(locale).format(count);
+}
+
+/**
+ * Дата по частям — для даты-плашки в карточке турнира.
+ *
+ * День, месяц и время набираются разным кеглем, поэтому приходят раздельно.
+ * Месяц короткий и берётся у `Intl`: «сент.» и «қыр.» пишутся по-разному.
+ */
+export function formatDateParts(
+  iso: string,
+  locale: Locale,
+): { readonly day: string; readonly month: string; readonly time: string } {
+  const date = new Date(iso);
+
+  return {
+    day: new Intl.DateTimeFormat(locale, { day: 'numeric' }).format(date),
+    month: new Intl.DateTimeFormat(locale, { month: 'short' }).format(date),
+    time: new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(date),
+  };
+}
