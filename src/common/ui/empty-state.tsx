@@ -1,6 +1,8 @@
+import Alert from '@mui/material/Alert';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
-
-import { cn } from './cn';
 
 interface EmptyStateProps {
   readonly title: string;
@@ -9,44 +11,53 @@ interface EmptyStateProps {
   readonly action?: ReactNode;
   /** Ошибка отличается композицией, а не только текстом (раздел 3.4). */
   readonly tone?: 'neutral' | 'error';
-  readonly className?: string;
 }
 
 /**
  * Пустое место на экране — docs/07-design-system.md, раздел 7.
  *
- * Одна форма на три состояния: «пусто», «ничего не найдено» и «ошибка».
- * Первые два различаются текстом и действием, а не видом: человеку важно,
- * что произошло и что делать. Ошибка выделена композицией раздела 3.4 —
- * фон `--red-50`, левая линейка `--red-700`: красный в системе занят
- * брендом, и одним цветом текста ошибку от акцента не отличить.
- *
- * Не «Нет данных», а объяснение и действие. Иконки нет, пока в проекте нет
- * набора иконок (раздел 2.2): случайный символ здесь хуже пустоты.
+ * Одна форма на «пусто» и «ничего не найдено»: различаются они текстом и
+ * действием, а не видом. Ошибка — `Alert` с линейкой слева (тема, раздел
+ * 3.4): красный в системе занят брендом, и одним цветом текста ошибку от
+ * акцента не отличить.
  */
 export default function EmptyState({
   title,
   text,
   action,
   tone = 'neutral',
-  className,
 }: EmptyStateProps): ReactNode {
-  const error = tone === 'error';
+  if (tone === 'error') {
+    return (
+      <Alert severity="error" icon={false} action={action} sx={{ alignItems: 'center', py: 2 }}>
+        <Typography sx={{ fontWeight: 500 }}>{title}</Typography>
+        {text !== undefined && <Typography color="text.secondary">{text}</Typography>}
+      </Alert>
+    );
+  }
 
   return (
-    <div
-      role={error ? 'alert' : undefined}
-      className={cn(
-        'px-6 py-12 text-center',
-        error
-          ? 'rounded-sm border-l-3 border-red-700 bg-red-50'
-          : 'rounded-md border border-dashed border-line-strong',
-        className,
-      )}
+    <Paper
+      variant="outlined"
+      sx={{
+        px: 3,
+        py: 6,
+        textAlign: 'center',
+        borderStyle: 'dashed',
+        borderColor: 'var(--line-strong)',
+      }}
     >
-      <p className={cn('font-medium', error ? 'text-red-700' : 'text-ink-900')}>{title}</p>
-      {text !== undefined && <p className="mx-auto mt-2 max-w-md text-ink-700">{text}</p>}
-      {action !== undefined && <div className="mt-6 flex justify-center gap-3">{action}</div>}
-    </div>
+      <Typography sx={{ fontWeight: 500 }}>{title}</Typography>
+      {text !== undefined && (
+        <Typography color="text.secondary" sx={{ mt: 1, mx: 'auto', maxWidth: 448 }}>
+          {text}
+        </Typography>
+      )}
+      {action !== undefined && (
+        <Stack direction="row" spacing={1.5} sx={{ mt: 3, justifyContent: 'center' }}>
+          {action}
+        </Stack>
+      )}
+    </Paper>
   );
 }

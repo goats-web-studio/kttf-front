@@ -1,7 +1,14 @@
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Link from '@mui/material/Link';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { createFileRoute, Outlet, useMatchRoute } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import ThemeRoot from '@/common/ui/theme';
 import { useSessionStore } from '@/features/auth/session-store';
 
 export const Route = createFileRoute('/_public')({
@@ -19,50 +26,85 @@ function PublicLayout(): ReactNode {
   const user = useSessionStore((state) => state.user);
 
   return (
-    <div className="flex min-h-full flex-col bg-paper">
-      <header className="border-b border-line">
-        <nav className="mx-auto flex max-w-3xl items-center gap-6 px-4 py-4">
-          {/* Знак, а не набранное слово: у логотипа свои пропорции и наклон
-              9°, повторить их шрифтом нельзя. Высота 20px — та же оптическая
-              величина, что у соседних ссылок. */}
-          <Link to="/" className="shrink-0">
-            <img src="/logo-wordmark.png" alt={t('app.logo')} className="h-5 w-auto" />
-          </Link>
-          <Link to="/ratings" className="text-ink-700">
-            {t('nav.ratings')}
-          </Link>
-          <Link to="/tournaments" className="text-ink-700">
-            {t('nav.tournaments')}
-          </Link>
-          {user === null ? (
-            <Link to="/login" className="ml-auto text-ink-700">
-              {t('page.login.title')}
-            </Link>
-          ) : (
-            <Link to="/cabinet" className="ml-auto text-ink-700">
-              {t('page.cabinet.title')}
-            </Link>
-          )}
-        </nav>
-      </header>
-      <main className="grow">
-        <Outlet />
-      </main>
-      <footer className="border-t border-line px-4 py-6 text-center text-sm text-ink-500">
-        <p>{t('app.tagline')}</p>
-        {/* Инстаграм — единственный внешний канал федерации: турниры
-            объявляются там, и игрок ищет их сначала в нём. */}
-        <p className="mt-2">
-          <a
+    <ThemeRoot>
+      <Box
+        sx={{
+          display: 'flex',
+          minHeight: '100%',
+          flexDirection: 'column',
+          bgcolor: 'background.paper',
+        }}
+      >
+        <Box component="header" sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Container maxWidth="md" component="nav">
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minHeight: 56 }}>
+              {/* Знак, а не набранное слово: у логотипа свои пропорции и
+                  наклон 9°, повторить их шрифтом нельзя. */}
+              <Link href="/" sx={{ display: 'flex', mr: 2, flexShrink: 0 }}>
+                <img
+                  src="/logo-wordmark.png"
+                  alt={t('app.logo')}
+                  style={{ height: 20, width: 'auto' }}
+                />
+              </Link>
+              <NavButton to="/ratings">{t('nav.ratings')}</NavButton>
+              <NavButton to="/tournaments">{t('nav.tournaments')}</NavButton>
+              <Box sx={{ flexGrow: 1 }} />
+              {user === null ? (
+                <NavButton to="/login">{t('page.login.title')}</NavButton>
+              ) : (
+                <NavButton to="/cabinet">{t('page.cabinet.title')}</NavButton>
+              )}
+            </Stack>
+          </Container>
+        </Box>
+        <Box component="main" sx={{ flexGrow: 1 }}>
+          <Outlet />
+        </Box>
+        <Box
+          component="footer"
+          sx={{ borderTop: 1, borderColor: 'divider', px: 2, py: 3, textAlign: 'center' }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            {t('app.tagline')}
+          </Typography>
+          {/* Инстаграм — единственный внешний канал федерации: турниры
+              объявляются там, и игрок ищет их сначала в нём. */}
+          <Link
             href="https://www.instagram.com/kttf.kz"
             target="_blank"
             rel="noreferrer"
-            className="text-red-600 underline"
+            variant="body2"
+            sx={{ display: 'inline-block', mt: 1 }}
           >
             {t('footer.instagram')}
-          </a>
-        </p>
-      </footer>
-    </div>
+          </Link>
+        </Box>
+      </Box>
+    </ThemeRoot>
+  );
+}
+
+/** Пункт шапки. Текущий раздел отмечен и цветом, и `aria-current`. */
+function NavButton({
+  to,
+  children,
+}: {
+  readonly to: string;
+  readonly children: ReactNode;
+}): ReactNode {
+  const matchRoute = useMatchRoute();
+  const active = matchRoute({ to, fuzzy: true }) !== false;
+
+  return (
+    <Button
+      variant="text"
+      color={active ? 'primary' : 'secondary'}
+      href={to}
+      aria-current={active ? 'page' : undefined}
+      sx={{ minHeight: 44, fontWeight: active ? 600 : 500 }}
+    >
+      {children}
+    </Button>
   );
 }

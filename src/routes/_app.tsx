@@ -1,7 +1,13 @@
-import { createFileRoute, Link, Outlet, redirect } from '@tanstack/react-router';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Link from '@mui/material/Link';
+import Stack from '@mui/material/Stack';
+import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import ThemeRoot from '@/common/ui/theme';
 import { signOut } from '@/features/auth/session';
 
 export const Route = createFileRoute('/_app')({
@@ -27,26 +33,44 @@ function AppLayout(): ReactNode {
   const t = useT();
 
   return (
-    <div className="flex min-h-full flex-col bg-paper-sunken">
-      <header className="border-b border-line bg-paper">
-        <nav className="mx-auto flex max-w-3xl items-center gap-6 px-4 py-4">
-          <Link to="/" className="font-semibold text-ink-900">
-            {t('app.name')}
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              void signOut();
-            }}
-            className="ml-auto text-sm text-ink-700 underline"
-          >
-            {t('login.signOut')}
-          </button>
-        </nav>
-      </header>
-      <main className="grow">
-        <Outlet />
-      </main>
-    </div>
+    <ThemeRoot>
+      <Box
+        sx={{
+          display: 'flex',
+          minHeight: '100%',
+          flexDirection: 'column',
+          bgcolor: 'var(--paper-sunken)',
+        }}
+      >
+        <Box
+          component="header"
+          sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
+        >
+          <Container maxWidth="md" component="nav">
+            <Stack direction="row" sx={{ alignItems: 'center', minHeight: 56 }}>
+              <Link href="/" sx={{ display: 'flex', flexShrink: 0 }}>
+                <img
+                  src="/logo-wordmark.png"
+                  alt={t('app.logo')}
+                  style={{ height: 20, width: 'auto' }}
+                />
+              </Link>
+              <Box sx={{ flexGrow: 1 }} />
+              <Button
+                variant="text"
+                onClick={() => {
+                  void signOut();
+                }}
+              >
+                {t('login.signOut')}
+              </Button>
+            </Stack>
+          </Container>
+        </Box>
+        <Box component="main" sx={{ flexGrow: 1 }}>
+          <Outlet />
+        </Box>
+      </Box>
+    </ThemeRoot>
   );
 }

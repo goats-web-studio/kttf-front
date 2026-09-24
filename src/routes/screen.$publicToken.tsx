@@ -10,9 +10,10 @@ import QueueBoard from '@/features/screen/queue-board';
 import StandingsBoard from '@/features/screen/standings-board';
 import TablesBoard from '@/features/screen/tables-board';
 import { useScreen } from '@/features/screen/use-screen';
+import ThemeRoot from '@/common/ui/theme';
 
 export const Route = createFileRoute('/screen/$publicToken')({
-  component: ScreenPage,
+  component: ScreenRoute,
 });
 
 /**
@@ -26,6 +27,15 @@ export const Route = createFileRoute('/screen/$publicToken')({
  * одинаковый порядок вызова пар. Функции чистые и ничего за собой в чанк
  * экрана не тянут.
  */
+/** Экран зала — в ночной теме, как и консоль (раздел 3.3). */
+function ScreenRoute(): ReactNode {
+  return (
+    <ThemeRoot theme="night">
+      <ScreenPage />
+    </ThemeRoot>
+  );
+}
+
 function ScreenPage(): ReactNode {
   const t = useT();
   const locale = useLocale();
@@ -61,7 +71,7 @@ function ScreenPage(): ReactNode {
 
   return (
     <div className="min-h-full bg-night px-6 py-5 text-white">
-      <QueryState isPending={isPending} error={error} onRetry={retry} surface="night">
+      <QueryState isPending={isPending} error={error} onRetry={retry}>
         {view === undefined || boards === null ? null : (
           <>
             <header className="flex items-baseline justify-between gap-6 border-b border-night-line pb-3">

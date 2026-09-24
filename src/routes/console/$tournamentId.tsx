@@ -86,7 +86,6 @@ function ConsoleScreen(): ReactNode {
         isPending={state.isPending}
         error={state.error}
         onRetry={() => void state.refetch()}
-        surface="night"
       >
         {snapshot === undefined || view === null ? null : (
           <div className="mt-4 space-y-6">

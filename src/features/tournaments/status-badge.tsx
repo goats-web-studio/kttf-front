@@ -1,8 +1,9 @@
 import type { TournamentStatus } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
-import { cn } from '@/common/ui/cn';
 
 import { TOURNAMENT_STATUS_KEYS } from './labels';
 
@@ -15,14 +16,14 @@ import { TOURNAMENT_STATUS_KEYS } from './labels';
  * Остальные приглушены — прошедший турнир не должен спорить с ближайшим.
  */
 const DOT: Readonly<Record<TournamentStatus, string>> = {
-  DRAFT: 'bg-warn',
-  PUBLISHED: 'bg-ink-400',
-  REG_OPEN: 'bg-ok',
-  REG_CLOSED: 'bg-ink-400',
-  RUNNING: 'bg-red-600',
-  FINISHED: 'bg-ink-300',
-  RATED: 'bg-ink-300',
-  CANCELLED: 'bg-ink-300',
+  DRAFT: 'var(--warn)',
+  PUBLISHED: 'var(--ink-400)',
+  REG_OPEN: 'var(--ok)',
+  REG_CLOSED: 'var(--ink-400)',
+  RUNNING: 'var(--red-600)',
+  FINISHED: 'var(--ink-300)',
+  RATED: 'var(--ink-300)',
+  CANCELLED: 'var(--ink-300)',
 };
 
 const MUTED: ReadonlySet<TournamentStatus> = new Set(['FINISHED', 'RATED', 'CANCELLED']);
@@ -30,16 +31,33 @@ const MUTED: ReadonlySet<TournamentStatus> = new Set(['FINISHED', 'RATED', 'CANC
 /** Состояние турнира — docs/07-design-system.md, 5.2, `TournamentStatusBadge`. */
 export default function StatusBadge({ status }: { readonly status: TournamentStatus }): ReactNode {
   const t = useT();
+  const muted = MUTED.has(status);
 
   return (
-    <span
-      className={cn(
-        'inline-flex h-6 items-center gap-1.5 rounded-xs border border-line px-2 text-xs',
-        MUTED.has(status) ? 'text-ink-500' : 'font-medium text-ink-900',
-      )}
-    >
-      <span aria-hidden className={cn('h-1.5 w-1.5 rounded-full', DOT[status])} />
-      {t(TOURNAMENT_STATUS_KEYS[status])}
-    </span>
+    <Chip
+      size="small"
+      variant="outlined"
+      label={t(TOURNAMENT_STATUS_KEYS[status])}
+      icon={
+        <Box
+          component="span"
+          aria-hidden
+          sx={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            bgcolor: DOT[status],
+            ml: '8px !important',
+          }}
+        />
+      }
+      sx={{
+        height: 24,
+        fontSize: 12,
+        borderColor: 'divider',
+        color: muted ? 'text.disabled' : 'text.primary',
+        fontWeight: muted ? 400 : 500,
+      }}
+    />
   );
 }

@@ -175,14 +175,19 @@ describe('фильтры в адресе', () => {
     renderAt('/tournaments');
 
     await screen.findByRole('link', { name: TOURNAMENT.name });
-    fireEvent.change(screen.getByLabelText(ru['filter.status']), {
-      target: { value: 'REG_OPEN' },
-    });
+    // Список MUI открывается нажатием, а не сменой значения родного select.
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['filter.status'] }));
+    fireEvent.click(await screen.findByRole('option', { name: ru['tournament.status.REG_OPEN'] }));
 
     await waitFor(() => {
       expect(window.location.search).toContain('status=REG_OPEN');
     });
-    expect(screen.getByText(ru['tournament.status.REG_OPEN'], { selector: 'span' })).toBeDefined();
+    // Чип активного фильтра — отдельно от выбранного значения в поле.
+    expect(
+      screen.getAllByText(ru['tournament.status.REG_OPEN']).some((node) =>
+        node.closest('.MuiChip-root'),
+      ),
+    ).toBe(true);
   });
 
   it('пустой ответ по фильтру предлагает снять фильтры, а не «нет данных»', async () => {

@@ -40,7 +40,6 @@ function ConsolePage(): ReactNode {
           isPending={running.isPending}
           error={running.error}
           onRetry={() => void running.refetch()}
-          surface="night"
         >
           {running.data === undefined ? null : running.data.items.length === 0 ? (
             <p className="text-night-ink-500">{t('console.pick.empty')}</p>

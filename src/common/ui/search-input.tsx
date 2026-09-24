@@ -1,11 +1,10 @@
-import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
-
-import { Input } from './field';
+import TextField, { type TextFieldProps } from '@mui/material/TextField';
+import { useEffect, useState, type ReactNode } from 'react';
 
 /** Пауза после последней буквы, после которой фильтр применяется. */
 const SETTLE_MS = 400;
 
-type SearchInputProps = Omit<ComponentProps<'input'>, 'value' | 'onChange'> & {
+type SearchInputProps = Omit<TextFieldProps, 'value' | 'onChange'> & {
   /** Применённое значение — то, что сейчас в адресе. */
   readonly value: string | undefined;
   /** Вызывается, когда человек перестал печатать или нажал Enter. */
@@ -50,7 +49,7 @@ export default function SearchInput({ value, onCommit, ...props }: SearchInputPr
   }, [draft, applied, onCommit]);
 
   return (
-    <Input
+    <TextField
       type="search"
       value={draft}
       onChange={(event) => {

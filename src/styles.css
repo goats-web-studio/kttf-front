@@ -1,3 +1,7 @@
+/* Порядок слоёв: база Tailwind ниже MUI, утилиты выше (ADR-041). Объявление
+ * слоёв обязано стоять до @import. */
+@layer theme, base, mui, components, utilities;
+
 @import 'tailwindcss';
 
 /* Гарнитуры — docs/07-design-system.md, раздел 3.5.

@@ -4,16 +4,23 @@ import {
   type ListTournamentsQuery,
   type TournamentStatus,
 } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
+import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { endOfDay, fill, formatDate, startOfDay, useLocale, useT } from '@/common/i18n';
 import { orUndefined, searchDay, searchId, searchPage, searchText } from '@/common/search';
-import Button from '@/common/ui/button';
 import EmptyState from '@/common/ui/empty-state';
-import { Field, Input, Select } from '@/common/ui/field';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import Pagination from '@/common/ui/pagination';
 import QueryState from '@/common/ui/query-state';
@@ -169,7 +176,7 @@ function TournamentsPage(): ReactNode {
   // человек его не видит.
   const [more, setMore] = useState(false);
   const extraSet = [search.club, search.from, search.to].filter((v) => v !== undefined).length;
-  const extra = more || extraSet > 0 ? '' : 'hidden sm:block';
+  const extra = more || extraSet > 0 ? {} : { display: { xs: 'none', sm: 'block' } };
 
   const reset = (): void => {
     void navigate({ search: {} });
@@ -181,94 +188,126 @@ function TournamentsPage(): ReactNode {
       : Math.max(1, Math.ceil(tournaments.data.total / tournaments.data.limit));
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="font-display text-display-md font-bold text-ink-900">
-          {t('page.tournaments.title')}
-        </h1>
-        {/* Ссылка, ведущая себя как кнопка: asChild отдаёт стиль варианта
-            якорю, и переход остаётся переходом — с middle-click и «открыть в
-            новой вкладке», которых у button нет. */}
+    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Stack
+        direction="row"
+        useFlexGap
+        spacing={2}
+        sx={{ flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}
+      >
+        <Typography variant="h1">{t('page.tournaments.title')}</Typography>
+        {/* Кнопка с href — ссылка роутера: переход остаётся переходом, со
+            средней кнопкой мыши и «открыть в новой вкладке». */}
         {canCreate && (
-          <Button asChild variant="primary">
-            <Link to="/tournaments/new">{t('tournament.form.create')}</Link>
+          <Button variant="contained" href="/tournaments/new">
+            {t('tournament.form.create')}
           </Button>
         )}
-      </div>
+      </Stack>
 
-      <div role="search" className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-6">
-        <Field label={t('filter.city')} className="col-span-2 sm:col-span-3">
-          <SearchInput value={search.city} onCommit={commitCity} autoComplete="address-level2" />
-        </Field>
+      <Box
+        role="search"
+        sx={{
+          mt: 3,
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(6, 1fr)' },
+        }}
+      >
+        <Box sx={{ gridColumn: { xs: 'span 2', sm: 'span 3' } }}>
+          <SearchInput
+            label={t('filter.city')}
+            value={search.city}
+            onCommit={commitCity}
+            autoComplete="address-level2"
+          />
+        </Box>
 
-        <Field label={t('filter.club')} className={`col-span-2 sm:order-last ${extra}`}>
-          <Select
-            value={search.club ?? ''}
-            onChange={(event) => {
-              filter({ club: orUndefined(event.target.value) });
-            }}
-          >
-            <option value="">{t('filter.any')}</option>
-            {[...(clubs.data?.values() ?? [])].map((club) => (
-              <option key={club.id} value={club.id}>
-                {club.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
-
-        <Field label={t('filter.status')} className="col-span-2 sm:col-span-3">
-          <Select
+        <Box sx={{ gridColumn: { xs: 'span 2', sm: 'span 3' } }}>
+          <TextField
+            select
+            label={t('filter.status')}
             value={search.status ?? ''}
             onChange={(event) => {
               const value = event.target.value;
               filter({ status: FILTERABLE.find((status) => status === value) });
             }}
           >
-            <option value="">{t('filter.any')}</option>
+            <MenuItem value="">{t('filter.any')}</MenuItem>
             {FILTERABLE.map((status) => (
-              <option key={status} value={status}>
+              <MenuItem key={status} value={status}>
                 {t(TOURNAMENT_STATUS_KEYS[status])}
-              </option>
+              </MenuItem>
             ))}
-          </Select>
-        </Field>
+          </TextField>
+        </Box>
 
-        <Field label={t('filter.from')} className={`sm:col-span-2 ${extra}`}>
-          <Input
-            type="date"
-            value={search.from ?? ''}
-            max={search.to}
-            onChange={(event) => {
-              filter({ from: orUndefined(event.target.value) });
+        <Box sx={{ gridColumn: { sm: 'span 2' }, ...extra }}>
+          <DatePicker
+            label={t('filter.from')}
+            value={search.from === undefined ? null : dayjs(search.from)}
+            {...(search.to === undefined ? {} : { maxDate: dayjs(search.to) })}
+            onChange={(value) => {
+              filter({ from: toDay(value) });
+            }}
+            slotProps={{
+              textField: { size: 'small', fullWidth: true },
+              field: { clearable: true },
             }}
           />
-        </Field>
+        </Box>
 
-        <Field label={t('filter.to')} className={`sm:col-span-2 ${extra}`}>
-          <Input
-            type="date"
-            value={search.to ?? ''}
-            min={search.from}
-            onChange={(event) => {
-              filter({ to: orUndefined(event.target.value) });
+        <Box sx={{ gridColumn: { sm: 'span 2' }, ...extra }}>
+          <DatePicker
+            label={t('filter.to')}
+            value={search.to === undefined ? null : dayjs(search.to)}
+            {...(search.from === undefined ? {} : { minDate: dayjs(search.from) })}
+            onChange={(value) => {
+              filter({ to: toDay(value) });
+            }}
+            slotProps={{
+              textField: { size: 'small', fullWidth: true },
+              field: { clearable: true },
             }}
           />
-        </Field>
+        </Box>
+
+        <Box sx={{ gridColumn: 'span 2', ...extra }}>
+          <TextField
+            select
+            label={t('filter.club')}
+            value={search.club ?? ''}
+            onChange={(event) => {
+              filter({ club: orUndefined(event.target.value) });
+            }}
+          >
+            <MenuItem value="">{t('filter.any')}</MenuItem>
+            {[...(clubs.data?.values() ?? [])].map((club) => (
+              <MenuItem key={club.id} value={club.id}>
+                {club.name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
 
         {extraSet === 0 && (
           <Button
-            variant="ghost"
+            variant="text"
             aria-expanded={more}
-            className="col-span-2 h-11 justify-start px-0 sm:hidden"
             onClick={() => {
               setMore(!more);
+            }}
+            sx={{
+              gridColumn: 'span 2',
+              justifySelf: 'start',
+              minHeight: 44,
+              display: { sm: 'none' },
             }}
           >
             {more ? t('filter.less') : t('filter.more')}
           </Button>
         )}
-      </div>
+      </Box>
 
       <FilterSummary
         total={tournaments.isError ? null : tournaments.data?.total}
@@ -276,7 +315,7 @@ function TournamentsPage(): ReactNode {
         onReset={reset}
       />
 
-      <div className="mt-4">
+      <Box sx={{ mt: 2 }}>
         <QueryState
           isPending={tournaments.isPending}
           error={tournaments.error}
@@ -284,16 +323,23 @@ function TournamentsPage(): ReactNode {
           loading={<RowsSkeleton />}
         >
           {tournaments.data === undefined ? null : tournaments.data.items.length > 0 ? (
-            <ul className="divide-y divide-line border-y border-line">
+            <Box
+              component="ul"
+              sx={{ listStyle: 'none', m: 0, p: 0, borderTop: 1, borderColor: 'divider' }}
+            >
               {tournaments.data.items.map((tournament) => (
-                <li key={tournament.id}>
+                <Box
+                  component="li"
+                  key={tournament.id}
+                  sx={{ borderBottom: 1, borderColor: 'divider' }}
+                >
                   <TournamentCard
                     tournament={tournament}
                     club={clubs.data?.get(tournament.clubId)}
                   />
-                </li>
+                </Box>
               ))}
-            </ul>
+            </Box>
           ) : active.length > 0 ? (
             <EmptyState
               title={t('tournaments.notFound.title')}
@@ -304,15 +350,11 @@ function TournamentsPage(): ReactNode {
             <EmptyState
               title={t('tournaments.emptyState.title')}
               text={t('tournaments.emptyState.text')}
-              action={
-                <Button asChild>
-                  <Link to="/ratings">{t('tournaments.emptyState.action')}</Link>
-                </Button>
-              }
+              action={<Button href="/ratings">{t('tournaments.emptyState.action')}</Button>}
             />
           )}
         </QueryState>
-      </div>
+      </Box>
 
       <Pagination
         page={page}
@@ -323,8 +365,13 @@ function TournamentsPage(): ReactNode {
           });
         }}
       />
-    </section>
+    </Container>
   );
+}
+
+/** Выбранный день — в поле адреса; пустое или недописанное — снятый фильтр. */
+function toDay(value: Dayjs | null): string | undefined {
+  return value?.isValid() === true ? value.format('YYYY-MM-DD') : undefined;
 }
 
 /**

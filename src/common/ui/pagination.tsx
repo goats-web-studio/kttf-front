@@ -1,8 +1,8 @@
+import MuiPagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
 import type { ReactNode } from 'react';
 
-import { fill, formatCount, useLocale, useT } from '@/common/i18n';
-
-import Button from './button';
+import { useT } from '@/common/i18n';
 
 interface PaginationProps {
   readonly page: number;
@@ -15,45 +15,37 @@ interface PaginationProps {
  *
  * Не бесконечный скролл (запрет №9): игрок возвращается на своё место в
  * рейтинге и делится ссылкой на него, поэтому номер страницы — часть адреса,
- * а общее число страниц видно всегда.
+ * а общее число страниц видно всегда. Кнопки 44px — зона нажатия (раздел 9).
  */
 export default function Pagination({ page, pages, onPage }: PaginationProps): ReactNode {
   const t = useT();
-  const locale = useLocale();
 
   if (pages <= 1) {
     return null;
   }
 
   return (
-    <nav
-      aria-label={t('common.pagination')}
-      className="mt-6 flex items-center justify-between gap-4"
-    >
-      <Button
-        className="h-11 sm:h-8 sm:px-3 sm:text-sm"
-        disabled={page <= 1}
-        onClick={() => {
-          onPage(page - 1);
+    <Stack sx={{ mt: 3, alignItems: 'center' }}>
+      <MuiPagination
+        page={page}
+        count={pages}
+        shape="rounded"
+        variant="outlined"
+        siblingCount={0}
+        aria-label={t('common.pagination')}
+        onChange={(_, next) => {
+          onPage(next);
         }}
-      >
-        {t('common.prev')}
-      </Button>
-      <span className="text-sm tabular-nums text-ink-700" aria-current="page">
-        {fill(t('common.pageOf'), {
-          page: formatCount(page, locale),
-          pages: formatCount(pages, locale),
-        })}
-      </span>
-      <Button
-        className="h-11 sm:h-8 sm:px-3 sm:text-sm"
-        disabled={page >= pages}
-        onClick={() => {
-          onPage(page + 1);
-        }}
-      >
-        {t('common.next')}
-      </Button>
-    </nav>
+        // Подписи кнопок — через словарь, а не английские умолчания MUI.
+        getItemAriaLabel={(type, item) =>
+          type === 'page'
+            ? `${t('common.page')} ${String(item)}`
+            : type === 'previous'
+              ? t('common.prev')
+              : t('common.next')
+        }
+        sx={{ '& .MuiPaginationItem-root': { minWidth: 44, height: 44 } }}
+      />
+    </Stack>
   );
 }

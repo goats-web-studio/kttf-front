@@ -1,9 +1,11 @@
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Skeleton from '@mui/material/Skeleton';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { fill, formatCount, useLocale, useT } from '@/common/i18n';
-
-import Button from './button';
-import { Skeleton } from './skeleton';
+import { formatCount, useLocale, useT } from '@/common/i18n';
 
 export interface ActiveFilter {
   readonly key: string;
@@ -27,52 +29,51 @@ interface FilterSummaryProps {
  *
  * Число найденного видно всегда, активные фильтры — чипами с крестиком,
  * рядом «Сбросить все». Чип снимает одно условие, не трогая остальные:
- * человек, сузивший рейтинг до города и клуба, часто хочет убрать только
- * клуб.
+ * крестиком или клавишей Delete, когда чип в фокусе.
  */
 export default function FilterSummary({ total, filters, onReset }: FilterSummaryProps): ReactNode {
   const t = useT();
   const locale = useLocale();
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+    <Stack
+      direction="row"
+      useFlexGap
+      spacing={1}
+      sx={{ mt: 2, flexWrap: 'wrap', alignItems: 'center' }}
+    >
       {total !== null && (
-        <p className="mr-2 text-ink-700" aria-live="polite">
+        <Typography variant="body2" color="text.secondary" aria-live="polite" sx={{ mr: 1 }}>
           {t('filter.found')}{' '}
-          <span className="font-medium tabular-nums text-ink-900">
+          <Typography
+            component="span"
+            variant="body2"
+            color="text.primary"
+            sx={{ fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}
+          >
             {total === undefined ? (
-              <Skeleton className="inline-block h-3 w-8 align-middle" />
+              <Skeleton component="span" width={32} sx={{ display: 'inline-block' }} />
             ) : (
               formatCount(total, locale)
             )}
-          </span>
-        </p>
+          </Typography>
+        </Typography>
       )}
 
       {filters.map((filter) => (
-        <span
+        <Chip
           key={filter.key}
-          className="inline-flex h-8 items-center gap-1 rounded-xs border border-line-strong bg-paper pl-3 text-ink-900"
-        >
-          {filter.label}
-          <button
-            type="button"
-            aria-label={fill(t('filter.chip'), { label: t('filter.remove'), value: filter.label })}
-            onClick={filter.onRemove}
-            // Крестик 32px, зона нажатия 44px (раздел 9) — псевдоэлементом,
-            // чтобы чип не раздувался по высоте.
-            className="relative grid h-8 w-8 place-items-center rounded-xs text-ink-500 after:absolute after:-inset-1.5 hover:bg-paper-hover hover:text-ink-900"
-          >
-            <span aria-hidden>×</span>
-          </button>
-        </span>
+          label={filter.label}
+          variant="outlined"
+          onDelete={filter.onRemove}
+        />
       ))}
 
       {filters.length > 0 && (
-        <Button variant="ghost" className="h-11 sm:h-8 sm:px-3 sm:text-sm" onClick={onReset}>
+        <Button variant="text" size="small" onClick={onReset}>
           {t('filter.resetAll')}
         </Button>
       )}
-    </div>
+    </Stack>
   );
 }

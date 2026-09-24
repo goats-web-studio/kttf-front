@@ -1,15 +1,25 @@
 import { DEFAULT_PAGE_SIZE, type ListPlayersQuery } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Container from '@mui/material/Container';
+import Link from '@mui/material/Link';
+import MenuItem from '@mui/material/MenuItem';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { fill, formatCount, useLocale, useT } from '@/common/i18n';
 import { orUndefined, searchId, searchPage, searchText } from '@/common/search';
-import Button from '@/common/ui/button';
-import { cn } from '@/common/ui/cn';
 import EmptyState from '@/common/ui/empty-state';
-import { Field, Select } from '@/common/ui/field';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import Pagination from '@/common/ui/pagination';
 import QueryState from '@/common/ui/query-state';
@@ -32,6 +42,9 @@ export const Route = createFileRoute('/_public/ratings')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: RatingsPage,
 });
+
+/** Колонки, которых на телефоне нет: город уходит подписью под фамилию. */
+const WIDE = { display: { xs: 'none', sm: 'table-cell' } } as const;
 
 /**
  * Рейтинг по стране — ТЗ 9.1.
@@ -124,36 +137,46 @@ function RatingsPage(): ReactNode {
       : Math.max(1, Math.ceil(players.data.total / players.data.limit));
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10 sm:py-12">
-      <h1 className="font-display text-display-md font-bold text-ink-900">
-        {t('page.ratings.title')}
-      </h1>
+    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Typography variant="h1">{t('page.ratings.title')}</Typography>
 
-      <div role="search" className="mt-6 grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
-        <Field label={t('ratings.search')}>
-          <SearchInput value={search.search} onCommit={commitSearch} autoComplete="off" />
-        </Field>
-
-        <Field label={t('filter.city')}>
-          <SearchInput value={search.city} onCommit={commitCity} autoComplete="address-level2" />
-        </Field>
-
-        <Field label={t('filter.club')}>
-          <Select
-            value={search.club ?? ''}
-            onChange={(event) => {
-              filter({ club: orUndefined(event.target.value) });
-            }}
-          >
-            <option value="">{t('filter.any')}</option>
-            {[...(clubs.data?.values() ?? [])].map((club) => (
-              <option key={club.id} value={club.id}>
-                {club.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
-      </div>
+      <Box
+        role="search"
+        sx={{
+          mt: 3,
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr', sm: '2fr 1fr 1fr' },
+        }}
+      >
+        <SearchInput
+          label={t('ratings.search')}
+          value={search.search}
+          onCommit={commitSearch}
+          autoComplete="off"
+        />
+        <SearchInput
+          label={t('filter.city')}
+          value={search.city}
+          onCommit={commitCity}
+          autoComplete="address-level2"
+        />
+        <TextField
+          select
+          label={t('filter.club')}
+          value={search.club ?? ''}
+          onChange={(event) => {
+            filter({ club: orUndefined(event.target.value) });
+          }}
+        >
+          <MenuItem value="">{t('filter.any')}</MenuItem>
+          {[...(clubs.data?.values() ?? [])].map((club) => (
+            <MenuItem key={club.id} value={club.id}>
+              {club.name}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Box>
 
       <FilterSummary
         total={players.isError ? null : players.data?.total}
@@ -161,7 +184,7 @@ function RatingsPage(): ReactNode {
         onReset={reset}
       />
 
-      <div className="mt-4">
+      <Box sx={{ mt: 2 }}>
         <QueryState
           isPending={players.isPending}
           error={players.error}
@@ -172,52 +195,71 @@ function RatingsPage(): ReactNode {
             // До 640px таблица сжимается до трёх колонок, а город уходит
             // подписью под фамилию (docs/08-ux-draft.md, 3.3): место и
             // рейтинг остаются крупными, горизонтальной прокрутки нет.
-            <table className="w-full border-separate border-spacing-0 text-base">
-              <thead>
-                <tr className="text-left text-sm text-ink-500">
-                  <Th className="w-12 text-right">{t('ratings.column.rank')}</Th>
-                  <Th>{t('ratings.column.player')}</Th>
-                  <Th className="hidden sm:table-cell">{t('ratings.column.city')}</Th>
-                  <Th className="text-right">{t('ratings.column.rating')}</Th>
-                  <Th className="hidden text-right sm:table-cell">{t('ratings.column.matches')}</Th>
-                </tr>
-              </thead>
-              <tbody>
+            // Шапка липкая (раздел 6.1).
+            <Table stickyHeader size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="right" sx={{ width: 48 }}>
+                    {t('ratings.column.rank')}
+                  </TableCell>
+                  <TableCell>{t('ratings.column.player')}</TableCell>
+                  <TableCell sx={WIDE}>{t('ratings.column.city')}</TableCell>
+                  <TableCell align="right">{t('ratings.column.rating')}</TableCell>
+                  <TableCell align="right" sx={WIDE}>
+                    {t('ratings.column.matches')}
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {players.data.items.map((player, index) => (
-                  <tr key={player.id} className="h-14 sm:h-11 [&>td]:border-b [&>td]:border-line">
-                    <td className="pr-4 text-right tabular-nums text-ink-500">
+                  <TableRow key={player.id} hover sx={{ height: { xs: 64, sm: 48 } }}>
+                    <TableCell align="right" sx={{ color: 'text.secondary', ...NUM }}>
                       {formatCount((page - 1) * players.data.limit + index + 1, locale)}
-                    </td>
-                    <td className="pr-4">
+                    </TableCell>
+                    <TableCell>
                       <Link
-                        to="/players/$playerId"
-                        params={{ playerId: player.id }}
-                        className="inline-block py-2.5 font-medium text-ink-900 hover:text-red-600 hover:underline"
+                        href={`/players/${player.id}`}
+                        color="text.primary"
+                        sx={{ fontWeight: 500, display: 'inline-block', py: 1 }}
                       >
                         {playerName(player)}
                       </Link>
                       {player.isProvisional && (
                         // Провизорный рейтинг двигается быстрее и означает, что
                         // игрок сыграл меньше 20 рейтинговых встреч (ТЗ 7.1).
-                        <span className="ml-2 whitespace-nowrap rounded-xs border border-line px-1.5 text-2xs text-ink-500">
-                          {t('ratings.provisional')}
-                        </span>
+                        <Chip
+                          label={t('ratings.provisional')}
+                          size="small"
+                          variant="outlined"
+                          sx={{ ml: 1, height: 20, fontSize: 11, color: 'text.secondary' }}
+                        />
                       )}
-                      <span className="-mt-2 block pb-2 text-sm text-ink-500 sm:hidden">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ display: { sm: 'none' }, mt: -0.5 }}
+                      >
                         {player.city}
-                      </span>
-                    </td>
-                    <td className="hidden pr-4 text-ink-700 sm:table-cell">{player.city}</td>
-                    <td className="pr-4 text-right font-display text-lg font-semibold tabular-nums text-ink-900 sm:font-ui sm:text-base sm:font-medium">
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>{player.city}</TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{
+                        ...NUM,
+                        fontWeight: 600,
+                        fontSize: { xs: 17, sm: 15 },
+                      }}
+                    >
                       {player.rating}
-                    </td>
-                    <td className="hidden pr-2 text-right tabular-nums text-ink-700 sm:table-cell">
+                    </TableCell>
+                    <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                       {formatCount(player.ratedMatches, locale)}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           ) : active.length > 0 ? (
             <EmptyState
               title={t('ratings.notFound.title')}
@@ -228,15 +270,11 @@ function RatingsPage(): ReactNode {
             <EmptyState
               title={t('ratings.emptyState.title')}
               text={t('ratings.emptyState.text')}
-              action={
-                <Button asChild>
-                  <Link to="/tournaments">{t('ratings.emptyState.action')}</Link>
-                </Button>
-              }
+              action={<Button href="/tournaments">{t('ratings.emptyState.action')}</Button>}
             />
           )}
         </QueryState>
-      </div>
+      </Box>
 
       <Pagination
         page={page}
@@ -247,33 +285,12 @@ function RatingsPage(): ReactNode {
           });
         }}
       />
-    </section>
+    </Container>
   );
 }
 
-/**
- * Ячейка шапки. Шапка липкая (docs/07-design-system.md, 6.1): на сотой
- * строке рейтинга видно, какая колонка — рейтинг, а какая — число встреч.
- */
-function Th({
-  className,
-  children,
-}: {
-  readonly className?: string;
-  readonly children: ReactNode;
-}): ReactNode {
-  return (
-    <th
-      scope="col"
-      className={cn(
-        'sticky top-0 z-(--z-sticky) border-b border-line bg-paper py-2 pr-4 font-normal',
-        className,
-      )}
-    >
-      {children}
-    </th>
-  );
-}
+/** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
+const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
 
 function toQuery(search: Search, page: number): ListPlayersQuery {
   return {

@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
+import ThemeRoot from '@/common/ui/theme';
+
 export const Route = createFileRoute('/console')({
   /**
    * Консоль требует входа: каждое её действие уходит с токеном, а без него
@@ -29,8 +31,10 @@ export const Route = createFileRoute('/console')({
  */
 function ConsoleLayout(): ReactNode {
   return (
-    <div className="flex h-full flex-col bg-night text-white">
-      <Outlet />
-    </div>
+    <ThemeRoot theme="night">
+      <div className="on-night flex h-full flex-col bg-night text-night-ink-900">
+        <Outlet />
+      </div>
+    </ThemeRoot>
   );
 }
