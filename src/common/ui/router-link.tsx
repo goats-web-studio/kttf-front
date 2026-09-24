@@ -4,8 +4,9 @@ import { forwardRef, type AnchorHTMLAttributes } from 'react';
 /**
  * Якорь для MUI, ведущий через роутер.
  *
- * MUI отдаёт компоненту `href`, роутер ждёт `to`. Внешние адреса и `mailto:`
- * остаются обычной ссылкой: роутер их не знает.
+ * MUI отдаёт компоненту `href`, роутер ждёт `to` и `search` раздельно:
+ * строка запроса разбирается в объект, иначе `?status=REG_OPEN` ушла бы в
+ * путь. Внешние адреса и `mailto:` остаются обычной ссылкой.
  */
 const Anchor = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnchorElement>>(
   function Anchor(props, ref) {
@@ -23,7 +24,17 @@ const RouterLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnchor
 
     // Атрибуты якоря роутер пропускает к <a> как есть; разница только в
     // строгости необязательных полей, поэтому приведение, а не перечисление.
-    return <TanStackAnchor ref={ref} to={href} {...(props as object)} />;
+    const [path = '/', query] = href.split('?', 2);
+    const search = query === undefined ? undefined : Object.fromEntries(new URLSearchParams(query));
+
+    return (
+      <TanStackAnchor
+        ref={ref}
+        to={path}
+        {...(search === undefined ? {} : { search })}
+        {...(props as object)}
+      />
+    );
   },
 );
 

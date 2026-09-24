@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { playerName } from '@/features/players/player-name';
 import { CLUB, pageOf, PLAYERS, RESULTS, TOURNAMENT, TOURNAMENT_ID } from '@/test/fixtures';
@@ -209,5 +210,36 @@ describe('фильтры в адресе', () => {
       expect(window.location.search).toBe('');
     });
     expect(await screen.findByText(ru['ratings.emptyState.title'])).toBeDefined();
+  });
+});
+
+describe('главная', () => {
+  it('в ленте — итоги турнира с победителем из результатов', async () => {
+    renderAt('/');
+
+    const title = await screen.findByText(
+      fill(ru['home.news.result.title'], { name: TOURNAMENT.name }),
+    );
+    // Победитель приходит отдельным запросом результатов, а не из списка.
+    expect(
+      await screen.findByText(
+        new RegExp(fill(ru['home.news.result.winner'], { name: playerName(PLAYERS.first) })),
+      ),
+    ).toBeDefined();
+    expect(title.closest('a')?.getAttribute('href')).toBe(`/tournaments/${TOURNAMENT_ID}`);
+  });
+
+  it('поиск на первом экране ведёт в рейтинг с запросом', async () => {
+    renderAt('/');
+
+    fireEvent.change(await screen.findByRole('searchbox', { name: ru['ratings.search'] }), {
+      target: { value: 'Иванов' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: ru['home.hero.find'] }));
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/ratings');
+    });
+    expect(decodeURIComponent(window.location.search)).toContain('Иванов');
   });
 });
