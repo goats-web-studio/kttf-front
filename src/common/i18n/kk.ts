@@ -96,6 +96,8 @@ export const kk: Record<MessageKey, string> = {
   'common.page': 'Бет',
   'common.prev': 'Артқа',
   'common.next': 'Алға',
+  'common.of': '/',
+  'common.pagination': 'Беттер',
 
   'filter.city': 'Қала',
   'filter.club': 'Клуб',
@@ -103,8 +105,9 @@ export const kk: Record<MessageKey, string> = {
   'filter.from': 'Басталу күні',
   'filter.to': 'Аяқталу күні',
   'filter.any': 'Кез келген',
-  'filter.apply': 'Көрсету',
-  'filter.reset': 'Тазалау',
+  'filter.found': 'Табылды',
+  'filter.remove': 'Сүзгіні алып тастау',
+  'filter.resetAll': 'Барлығын тазалау',
 
   'tournament.status': 'Күйі',
   'tournament.status.DRAFT': 'Жоба',
@@ -124,7 +127,12 @@ export const kk: Record<MessageKey, string> = {
   'tournament.participants': 'Қатысушылар',
   'tournament.entryFee': 'Жарна',
   'tournament.entryFee.free': 'Тегін',
-  'tournaments.empty': 'Турнирлер табылмады',
+  'tournaments.emptyState.title': 'Әзірге турнирлер жоқ',
+  'tournaments.emptyState.text':
+    'Мұнда бүкіл елдегі клубтардың турнирлері күнімен, жарнасымен және тіркелуімен шығады.',
+  'tournaments.notFound.title': 'Бұл шарттар бойынша турнир жоқ',
+  'tournaments.notFound.text':
+    'Көрші қаланы қарап көріңіз немесе сүзгілердің бір бөлігін алып тастаңыз.',
   'tournament.notFound': 'Турнир табылмады. Сілтемені тексеріңіз — ол үзілген болуы мүмкін.',
 
   'registration.title': 'Турнирге тіркелу',
@@ -261,6 +269,12 @@ export const kk: Record<MessageKey, string> = {
   'ratings.column.matches': 'Кездесу',
   'ratings.provisional': 'Уақытша',
   'ratings.empty': 'Ойыншылар табылмады',
+  'ratings.emptyState.title': 'Рейтинг әзірге бос',
+  'ratings.emptyState.text': 'Ойыншылар алғашқы рейтингтік турнирден кейін осында шығады.',
+  'ratings.emptyState.action': 'Турнир табу',
+  'ratings.notFound.title': 'Ешкім табылмады',
+  'ratings.notFound.text':
+    'Тегінің жазылуын тексеріңіз немесе сүзгілердің бір бөлігін алып тастаңыз.',
 
   'player.notFound': 'Ойыншы табылмады. Сілтемені тексеріңіз — ол үзілген болуы мүмкін.',
   'player.rating.matches': 'рейтингтік кездесу:',

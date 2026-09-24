@@ -1,26 +1,37 @@
 import { DEFAULT_PAGE_SIZE, type ListPlayersQuery } from '@kttf/shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
+import { z } from 'zod';
 
-import { useT } from '@/common/i18n';
+import { formatCount, useLocale, useT } from '@/common/i18n';
+import { orUndefined, searchId, searchPage, searchText } from '@/common/search';
+import Button from '@/common/ui/button';
+import { cn } from '@/common/ui/cn';
+import EmptyState from '@/common/ui/empty-state';
+import { Field, Select } from '@/common/ui/field';
+import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
+import Pagination from '@/common/ui/pagination';
 import QueryState from '@/common/ui/query-state';
+import SearchInput from '@/common/ui/search-input';
+import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
-import Button from '@/common/ui/button';
 
-export const Route = createFileRoute('/_public/ratings')({
-  component: RatingsPage,
+const searchSchema = z.object({
+  search: searchText,
+  city: searchText,
+  club: searchId,
+  page: searchPage,
 });
 
-interface Filters {
-  readonly search: string;
-  readonly city: string;
-  readonly clubId: string;
-}
+type Search = z.infer<typeof searchSchema>;
 
-const EMPTY: Filters = { search: '', city: '', clubId: '' };
+export const Route = createFileRoute('/_public/ratings')({
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
+  component: RatingsPage,
+});
 
 /**
  * Рейтинг по стране — ТЗ 9.1.
@@ -33,17 +44,76 @@ const EMPTY: Filters = { search: '', city: '', clubId: '' };
  * История изменений рейтинга (ТЗ 9.1) живёт в профиле игрока, куда ведёт
  * фамилия в таблице: кривая одного игрока в списке на сотню строк не
  * помещается, а показывать её здесь всем сразу нечем.
+ *
+ * Фильтры и страница — в адресе (docs/07-design-system.md, 6.2 и 6.3):
+ * игрок делится ссылкой на свою строку рейтинга города.
  */
 function RatingsPage(): ReactNode {
   const t = useT();
+  const locale = useLocale();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
 
-  const [draft, setDraft] = useState<Filters>(EMPTY);
-  const [applied, setApplied] = useState<Filters>(EMPTY);
-  const [page, setPage] = useState(1);
-
-  const query = useMemo<ListPlayersQuery>(() => toQuery(applied, page), [applied, page]);
-  const players = useQuery(playersQuery(query));
+  const page = search.page ?? 1;
+  const players = useQuery(playersQuery(toQuery(search, page)));
   const clubs = useQuery(clubDirectoryQuery);
+
+  // Смена фильтра возвращает на первую страницу; текст правится на месте,
+  // чтобы «Назад» не проходил по буквам.
+  const filter = useCallback(
+    (patch: Partial<Search>, replace = false) => {
+      void navigate({
+        search: (previous) => ({ ...previous, ...patch, page: undefined }),
+        replace,
+      });
+    },
+    [navigate],
+  );
+  const commitSearch = useCallback(
+    (value: string) => {
+      filter({ search: orUndefined(value) }, true);
+    },
+    [filter],
+  );
+  const commitCity = useCallback(
+    (value: string) => {
+      filter({ city: orUndefined(value) }, true);
+    },
+    [filter],
+  );
+
+  const active: ActiveFilter[] = [];
+  if (search.search !== undefined) {
+    active.push({
+      key: 'search',
+      label: `«${search.search}»`,
+      onRemove: () => {
+        filter({ search: undefined });
+      },
+    });
+  }
+  if (search.city !== undefined) {
+    active.push({
+      key: 'city',
+      label: `${t('filter.city')}: ${search.city}`,
+      onRemove: () => {
+        filter({ city: undefined });
+      },
+    });
+  }
+  if (search.club !== undefined) {
+    active.push({
+      key: 'club',
+      label: `${t('filter.club')}: ${clubs.data?.get(search.club)?.name ?? '…'}`,
+      onRemove: () => {
+        filter({ club: undefined });
+      },
+    });
+  }
+
+  const reset = (): void => {
+    void navigate({ search: {} });
+  };
 
   const pages =
     players.data === undefined
@@ -51,49 +121,26 @@ function RatingsPage(): ReactNode {
       : Math.max(1, Math.ceil(players.data.total / players.data.limit));
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
+    <section className="mx-auto max-w-5xl px-4 py-10 sm:py-12">
       <h1 className="font-display text-display-md font-bold text-ink-900">
         {t('page.ratings.title')}
       </h1>
 
-      <form
-        className="mt-6 grid gap-3 sm:grid-cols-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          setApplied(draft);
-          setPage(1);
-        }}
-      >
-        <label className="block text-sm">
-          <span className="text-ink-700">{t('ratings.search')}</span>
-          <input
-            value={draft.search}
-            onChange={(event) => {
-              setDraft({ ...draft, search: event.target.value });
-            }}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </label>
+      <div role="search" className="mt-6 grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
+        <Field label={t('ratings.search')}>
+          <SearchInput value={search.search} onCommit={commitSearch} autoComplete="off" />
+        </Field>
 
-        <label className="block text-sm">
-          <span className="text-ink-700">{t('filter.city')}</span>
-          <input
-            value={draft.city}
-            onChange={(event) => {
-              setDraft({ ...draft, city: event.target.value });
-            }}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </label>
+        <Field label={t('filter.city')}>
+          <SearchInput value={search.city} onCommit={commitCity} autoComplete="address-level2" />
+        </Field>
 
-        <label className="block text-sm">
-          <span className="text-ink-700">{t('filter.club')}</span>
-          <select
-            value={draft.clubId}
+        <Field label={t('filter.club')}>
+          <Select
+            value={search.club ?? ''}
             onChange={(event) => {
-              setDraft({ ...draft, clubId: event.target.value });
+              filter({ club: orUndefined(event.target.value) });
             }}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
           >
             <option value="">{t('filter.any')}</option>
             {[...(clubs.data?.values() ?? [])].map((club) => (
@@ -101,130 +148,133 @@ function RatingsPage(): ReactNode {
                 {club.name}
               </option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
+      </div>
 
-        <div className="flex items-end gap-3 sm:col-span-3">
-          <Button variant="primary" type="submit">
-            {t('filter.apply')}
-          </Button>
-          <button
-            type="button"
-            onClick={() => {
-              setDraft(EMPTY);
-              setApplied(EMPTY);
-              setPage(1);
-            }}
-            className="text-sm text-ink-700 underline"
-          >
-            {t('filter.reset')}
-          </button>
-        </div>
-      </form>
+      <FilterSummary total={players.data?.total} filters={active} onReset={reset} />
 
-      <div className="mt-8">
+      <div className="mt-4">
         <QueryState
           isPending={players.isPending}
           error={players.error}
           onRetry={() => void players.refetch()}
+          loading={<RowsSkeleton />}
         >
-          {players.data === undefined ? null : players.data.items.length === 0 ? (
-            <p className="py-10 text-center text-ink-500">{t('ratings.empty')}</p>
-          ) : (
-            <table className="w-full text-sm">
+          {players.data === undefined ? null : players.data.items.length > 0 ? (
+            // До 640px таблица сжимается до трёх колонок, а город уходит
+            // подписью под фамилию (docs/08-ux-draft.md, 3.3): место и
+            // рейтинг остаются крупными, горизонтальной прокрутки нет.
+            <table className="w-full border-b border-line text-base">
               <thead>
-                <tr className="border-b border-line text-left text-ink-500">
-                  <th scope="col" className="py-2 pr-4 text-right font-normal">
-                    {t('ratings.column.rank')}
-                  </th>
-                  <th scope="col" className="py-2 font-normal">
-                    {t('ratings.column.player')}
-                  </th>
-                  <th scope="col" className="py-2 font-normal">
-                    {t('ratings.column.city')}
-                  </th>
-                  <th scope="col" className="py-2 text-right font-normal">
-                    {t('ratings.column.rating')}
-                  </th>
-                  <th scope="col" className="py-2 text-right font-normal">
-                    {t('ratings.column.matches')}
-                  </th>
+                <tr className="text-left text-sm text-ink-500">
+                  <Th className="w-12 text-right">{t('ratings.column.rank')}</Th>
+                  <Th>{t('ratings.column.player')}</Th>
+                  <Th className="hidden sm:table-cell">{t('ratings.column.city')}</Th>
+                  <Th className="text-right">{t('ratings.column.rating')}</Th>
+                  <Th className="hidden text-right sm:table-cell">{t('ratings.column.matches')}</Th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-line">
                 {players.data.items.map((player, index) => (
-                  <tr key={player.id} className="border-b border-line">
-                    <td className="py-2 pr-4 text-right tabular-nums text-ink-500">
-                      {(page - 1) * players.data.limit + index + 1}
+                  <tr
+                    key={player.id}
+                    className="h-14 transition-colors duration-(--dur-fast) hover:bg-paper-hover sm:h-11"
+                  >
+                    <td className="pr-4 text-right tabular-nums text-ink-500">
+                      {formatCount((page - 1) * players.data.limit + index + 1, locale)}
                     </td>
-                    <td className="py-2 text-ink-900">
+                    <td className="py-2 pr-4">
                       <Link
                         to="/players/$playerId"
                         params={{ playerId: player.id }}
-                        className="text-red-600 underline"
+                        className="font-medium text-ink-900 hover:text-red-600 hover:underline"
                       >
                         {playerName(player)}
                       </Link>
                       {player.isProvisional && (
                         // Провизорный рейтинг двигается быстрее и означает, что
                         // игрок сыграл меньше 20 рейтинговых встреч (ТЗ 7.1).
-                        <span className="ml-2 text-xs text-ink-500">
+                        <span className="ml-2 whitespace-nowrap rounded-xs border border-line px-1.5 text-2xs text-ink-500">
                           {t('ratings.provisional')}
                         </span>
                       )}
+                      <span className="block text-sm text-ink-500 sm:hidden">{player.city}</span>
                     </td>
-                    <td className="py-2 text-ink-700">{player.city}</td>
-                    <td className="py-2 text-right font-medium tabular-nums text-ink-900">
+                    <td className="hidden pr-4 text-ink-700 sm:table-cell">{player.city}</td>
+                    <td className="pr-4 text-right font-display text-lg font-semibold tabular-nums text-ink-900 sm:font-ui sm:text-base sm:font-medium">
                       {player.rating}
                     </td>
-                    <td className="py-2 text-right tabular-nums text-ink-700">
+                    <td className="hidden pr-2 text-right tabular-nums text-ink-700 sm:table-cell">
                       {player.ratedMatches}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          ) : active.length > 0 ? (
+            <EmptyState
+              title={t('ratings.notFound.title')}
+              text={t('ratings.notFound.text')}
+              action={<Button onClick={reset}>{t('filter.resetAll')}</Button>}
+            />
+          ) : (
+            <EmptyState
+              title={t('ratings.emptyState.title')}
+              text={t('ratings.emptyState.text')}
+              action={
+                <Button asChild>
+                  <Link to="/tournaments">{t('ratings.emptyState.action')}</Link>
+                </Button>
+              }
+            />
           )}
         </QueryState>
       </div>
 
-      {pages > 1 && (
-        <nav className="mt-6 flex items-center justify-center gap-4 text-sm">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => {
-              setPage(page - 1);
-            }}
-            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
-          >
-            {t('common.prev')}
-          </button>
-          <span className="text-ink-700">
-            {t('common.page')} {page} / {pages}
-          </span>
-          <button
-            type="button"
-            disabled={page >= pages}
-            onClick={() => {
-              setPage(page + 1);
-            }}
-            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
-          >
-            {t('common.next')}
-          </button>
-        </nav>
-      )}
+      <Pagination
+        page={page}
+        pages={pages}
+        onPage={(next) => {
+          void navigate({
+            search: (previous) => ({ ...previous, page: next === 1 ? undefined : next }),
+          });
+        }}
+      />
     </section>
   );
 }
 
-function toQuery(filters: Filters, page: number): ListPlayersQuery {
+/**
+ * Ячейка шапки. Шапка липкая (docs/07-design-system.md, 6.1): на сотой
+ * строке рейтинга видно, какая колонка — рейтинг, а какая — число встреч.
+ */
+function Th({
+  className,
+  children,
+}: {
+  readonly className?: string;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <th
+      scope="col"
+      className={cn(
+        'sticky top-0 z-(--z-sticky) border-b border-line bg-paper-sunken py-2 pr-4 font-normal',
+        className,
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+function toQuery(search: Search, page: number): ListPlayersQuery {
   return {
     page,
     limit: DEFAULT_PAGE_SIZE,
-    ...(filters.search === '' ? {} : { search: filters.search }),
-    ...(filters.city === '' ? {} : { city: filters.city }),
-    ...(filters.clubId === '' ? {} : { clubId: filters.clubId }),
+    ...(search.search === undefined ? {} : { search: search.search }),
+    ...(search.city === undefined ? {} : { city: search.city }),
+    ...(search.club === undefined ? {} : { clubId: search.club }),
   };
 }

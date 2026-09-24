@@ -94,6 +94,8 @@ export const ru = {
   'common.page': 'Страница',
   'common.prev': 'Назад',
   'common.next': 'Вперёд',
+  'common.of': 'из',
+  'common.pagination': 'Страницы',
 
   'filter.city': 'Город',
   'filter.club': 'Клуб',
@@ -101,8 +103,9 @@ export const ru = {
   'filter.from': 'С даты',
   'filter.to': 'По дату',
   'filter.any': 'Любое',
-  'filter.apply': 'Показать',
-  'filter.reset': 'Сбросить',
+  'filter.found': 'Найдено',
+  'filter.remove': 'Убрать фильтр',
+  'filter.resetAll': 'Сбросить все',
 
   'tournament.status': 'Состояние',
   'tournament.status.DRAFT': 'Черновик',
@@ -122,7 +125,11 @@ export const ru = {
   'tournament.participants': 'Участников',
   'tournament.entryFee': 'Взнос',
   'tournament.entryFee.free': 'Бесплатно',
-  'tournaments.empty': 'Турниров не найдено',
+  'tournaments.emptyState.title': 'Турниров пока нет',
+  'tournaments.emptyState.text':
+    'Здесь появятся турниры клубов со всей страны — с датой, взносом и записью.',
+  'tournaments.notFound.title': 'По этим условиям турниров нет',
+  'tournaments.notFound.text': 'Попробуйте соседний город или снимите часть фильтров.',
   'tournament.notFound': 'Турнир не найден. Проверьте ссылку — она могла оборваться.',
 
   'registration.title': 'Запись на турнир',
@@ -258,6 +265,11 @@ export const ru = {
   'ratings.column.matches': 'Встреч',
   'ratings.provisional': 'Провизорный',
   'ratings.empty': 'Игроков не найдено',
+  'ratings.emptyState.title': 'Рейтинг пока пуст',
+  'ratings.emptyState.text': 'Игроки появятся здесь после первого рейтингового турнира.',
+  'ratings.emptyState.action': 'Найти турнир',
+  'ratings.notFound.title': 'Никого не нашли',
+  'ratings.notFound.text': 'Проверьте написание фамилии или снимите часть фильтров.',
 
   'player.notFound': 'Игрок не найден. Проверьте ссылку — она могла оборваться.',
   'player.rating.matches': 'рейтинговых встреч:',

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
@@ -66,8 +66,15 @@ function renderAt(path: string): void {
   );
 }
 
+/** Адреса запросов к API за тест — проверка, что фильтр из ссылки дошёл до сервера. */
+let requests: string[] = [];
+
 beforeEach(() => {
-  vi.stubGlobal('fetch', (input: unknown) => Promise.resolve(answer(String(input))));
+  requests = [];
+  vi.stubGlobal('fetch', (input: unknown) => {
+    requests.push(decodeURIComponent(String(input)));
+    return Promise.resolve(answer(String(input)));
+  });
 });
 
 afterEach(() => {
@@ -133,5 +140,69 @@ describe('неверная ссылка на турнир', () => {
 
     // Ссылку на результаты пересылают в чат клуба, и обрывается она там же.
     expect(await screen.findByText(ru['tournament.notFound'])).toBeDefined();
+  });
+});
+
+/**
+ * Фильтры в адресе — docs/07-design-system.md, 6.2.
+ *
+ * Ссылку на рейтинг города пересылают в WhatsApp: открытая заново, она
+ * обязана показать тот же список, а кривая — не ронять страницу.
+ */
+describe('фильтры в адресе', () => {
+  it('ссылка с городом открывает рейтинг этого города', async () => {
+    renderAt('/ratings?city=Алматы');
+
+    await screen.findAllByRole('row');
+
+    expect(requests.some((url) => url.includes('/players') && url.includes('city=Алматы'))).toBe(
+      true,
+    );
+    expect(screen.getByText(`${ru['filter.city']}: Алматы`)).toBeDefined();
+  });
+
+  it('кривая ссылка отбрасывает фильтр, а не показывает ошибку', async () => {
+    renderAt('/ratings?club=abc&page=zero');
+
+    await screen.findAllByRole('row');
+
+    const players = requests.find((url) => url.includes('/players'));
+    expect(players).not.toContain('clubId');
+    expect(players).toContain('page=1');
+  });
+
+  it('выбор состояния в календаре попадает в адрес', async () => {
+    renderAt('/tournaments');
+
+    await screen.findByRole('link', { name: TOURNAMENT.name });
+    fireEvent.change(screen.getByLabelText(ru['filter.status']), {
+      target: { value: 'REG_OPEN' },
+    });
+
+    await waitFor(() => {
+      expect(window.location.search).toContain('status=REG_OPEN');
+    });
+    expect(screen.getByText(ru['tournament.status.REG_OPEN'], { selector: 'span' })).toBeDefined();
+  });
+
+  it('пустой ответ по фильтру предлагает снять фильтры, а не «нет данных»', async () => {
+    vi.stubGlobal('fetch', (input: unknown) => {
+      const url = String(input);
+      return Promise.resolve(url.includes('/players') ? reply(pageOf([])) : answer(url));
+    });
+
+    renderAt('/ratings?search=Нетакого');
+
+    expect(await screen.findByText(ru['ratings.notFound.title'])).toBeDefined();
+    const [resetAll] = screen.getAllByRole('button', { name: ru['filter.resetAll'] });
+    if (resetAll === undefined) {
+      throw new Error('Нет кнопки «Сбросить все»');
+    }
+    fireEvent.click(resetAll);
+
+    await waitFor(() => {
+      expect(window.location.search).toBe('');
+    });
+    expect(await screen.findByText(ru['ratings.emptyState.title'])).toBeDefined();
   });
 });
