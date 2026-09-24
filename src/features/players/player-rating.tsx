@@ -1,8 +1,16 @@
 import type { RatingHistoryView, RatingPointView } from '@kttf/shared/types';
-import { Link } from '@tanstack/react-router';
+import Box from '@mui/material/Box';
+import Link from '@mui/material/Link';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { formatDate, formatDelta, useLocale, useT } from '@/common/i18n';
+import EmptyState from '@/common/ui/empty-state';
 
 import RatingChart from './rating-chart';
 import { buildRatingScale } from './rating-scale';
@@ -28,76 +36,80 @@ export default function PlayerRating({ history }: PlayerRatingProps): ReactNode 
   const scale = buildRatingScale(history.points);
 
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-ink-900">{t('player.history.title')}</h2>
+    <Box component="section" sx={{ mt: 5 }}>
+      <Typography variant="h2">{t('player.history.title')}</Typography>
 
       {scale === null ? (
-        <p className="mt-3 text-ink-500">{t('player.history.empty')}</p>
+        <Box sx={{ mt: 2 }}>
+          <EmptyState title={t('player.history.empty')} />
+        </Box>
       ) : (
         <>
           <RatingChart scale={scale} />
 
-          <table className="mt-6 w-full text-sm">
-            <thead>
-              <tr className="border-b border-line text-left text-ink-500">
-                <th scope="col" className="py-2 font-normal">
-                  {t('player.history.date')}
-                </th>
-                <th scope="col" className="py-2 font-normal">
-                  {t('player.history.tournament')}
-                </th>
-                <th scope="col" className="py-2 text-right font-normal">
+          <Table stickyHeader size="small" sx={{ mt: 3 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>{t('player.history.date')}</TableCell>
+                <TableCell>{t('player.history.tournament')}</TableCell>
+                <TableCell align="right" sx={WIDE}>
                   {t('player.history.matches')}
-                </th>
-                <th scope="col" className="py-2 text-right font-normal">
-                  {t('player.history.delta')}
-                </th>
-                <th scope="col" className="py-2 text-right font-normal">
-                  {t('player.history.after')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </TableCell>
+                <TableCell align="right">{t('player.history.delta')}</TableCell>
+                <TableCell align="right">{t('player.history.after')}</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {/* Кривая идёт слева направо, список — от свежего к старому:
                   человек открывает историю ради последнего турнира. */}
               {[...history.points].reverse().map((point, index) => (
                 <Row key={point.tournamentId ?? `adjustment-${String(index)}`} point={point} />
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </>
       )}
-    </section>
+    </Box>
   );
 }
+
+/** Колонка, которой на телефоне нет: число встреч вторично к дельте. */
+const WIDE = { display: { xs: 'none', sm: 'table-cell' } } as const;
+
+/** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
+const NUM = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' } as const;
 
 function Row({ point }: { readonly point: RatingPointView }): ReactNode {
   const t = useT();
   const locale = useLocale();
 
   return (
-    <tr className="border-b border-line">
-      <td className="py-2 whitespace-nowrap text-ink-700">{formatDate(point.playedAt, locale)}</td>
-      <td className="py-2 text-ink-900">
+    <TableRow>
+      <TableCell sx={{ ...NUM, color: 'text.secondary' }}>
+        {formatDate(point.playedAt, locale)}
+      </TableCell>
+      <TableCell>
         {point.tournamentId === null ? (
           // Ручная корректировка рейтинга (ТЗ 12) не привязана к турниру, но
           // из кривой её не выкинуть: рейтинг после неё другой.
-          <span className="text-ink-700">{t('player.history.adjustment')}</span>
+          <Typography component="span" color="text.secondary">
+            {t('player.history.adjustment')}
+          </Typography>
         ) : (
-          <Link
-            to="/tournaments/$tournamentId"
-            params={{ tournamentId: point.tournamentId }}
-            className="text-red-600 underline"
-          >
+          <Link href={`/tournaments/${point.tournamentId}`}>
             {point.tournamentName ?? t('player.history.tournament')}
           </Link>
         )}
-      </td>
-      <td className="py-2 text-right tabular-nums text-ink-700">{point.matches}</td>
-      <td className="py-2 text-right font-medium tabular-nums text-ink-900">
+      </TableCell>
+      <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
+        {point.matches}
+      </TableCell>
+      <TableCell align="right" sx={{ ...NUM, fontWeight: 500 }}>
         {formatDelta(point.delta)}
-      </td>
-      <td className="py-2 text-right tabular-nums text-ink-700">{point.ratingAfter}</td>
-    </tr>
+      </TableCell>
+      <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
+        {point.ratingAfter}
+      </TableCell>
+    </TableRow>
   );
 }

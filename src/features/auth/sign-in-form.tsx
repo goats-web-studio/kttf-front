@@ -1,7 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useMutation } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -10,7 +15,6 @@ import { useT } from '@/common/i18n';
 
 import { signIn } from './api';
 import { useSessionStore } from './session-store';
-import Button from '@/common/ui/button';
 
 interface SignInFormProps {
   readonly onSignedIn: () => void;
@@ -42,59 +46,63 @@ export default function SignInForm({ onSignedIn }: SignInFormProps): ReactNode {
     },
   });
 
+  const { errors } = form.formState;
+  const { ref: identifierRef, ...identifier } = form.register('identifier');
+  const { ref: passwordRef, ...password } = form.register('password');
+
   return (
-    <form
-      className="space-y-4"
+    <Stack
+      component="form"
+      spacing={2}
+      noValidate
       onSubmit={(event) => {
         void form.handleSubmit((values) => {
           login.mutate(values);
         })(event);
       }}
     >
-      <p className="text-ink-700">{t('login.lead')}</p>
+      <Typography color="text.secondary">{t('login.lead')}</Typography>
 
-      <label className="block">
-        <span className="text-sm text-ink-700">{t('login.identifier.label')}</span>
-        <input
-          {...form.register('identifier')}
-          autoComplete="username"
-          placeholder={t('login.identifier.placeholder')}
-          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-        />
-      </label>
+      <TextField
+        {...identifier}
+        inputRef={identifierRef}
+        label={t('login.identifier.label')}
+        placeholder={t('login.identifier.placeholder')}
+        autoComplete="username"
+        size="medium"
+        error={errors.identifier !== undefined}
+      />
 
-      <label className="block">
-        <span className="text-sm text-ink-700">{t('login.password.label')}</span>
-        <input
-          {...form.register('password')}
-          type="password"
-          autoComplete="current-password"
-          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-        />
-      </label>
+      <TextField
+        {...password}
+        inputRef={passwordRef}
+        label={t('login.password.label')}
+        type="password"
+        autoComplete="current-password"
+        size="medium"
+        error={errors.password !== undefined}
+      />
 
-      {(form.formState.errors.identifier !== undefined ||
-        form.formState.errors.password !== undefined) && (
-        <p role="alert" className="text-sm text-red-700">
-          {t('error.form.credentials')}
-        </p>
+      {/* Одно сообщение на оба поля: какое из них не так, форма не выдаёт. */}
+      {(errors.identifier !== undefined || errors.password !== undefined) && (
+        <Alert severity="error">{t('error.form.credentials')}</Alert>
       )}
-      {login.error !== null && (
-        <p role="alert" className="text-sm text-red-700">
-          {t(errorMessageKey(login.error))}
-        </p>
-      )}
+      {login.error !== null && <Alert severity="error">{t(errorMessageKey(login.error))}</Alert>}
 
-      <Button variant="primary" type="submit" disabled={login.isPending} className="w-full">
-        {login.isPending ? t('common.loading') : t('login.submit')}
+      <Button
+        variant="contained"
+        type="submit"
+        size="large"
+        fullWidth
+        loading={login.isPending}
+        loadingPosition="start"
+      >
+        {t('login.submit')}
       </Button>
 
-      <p className="text-sm text-ink-700">
-        {t('login.noAccount')}{' '}
-        <Link to="/sign-up" className="text-red-600 underline">
-          {t('login.signUp')}
-        </Link>
-      </p>
-    </form>
+      <Typography variant="body2" color="text.secondary">
+        {t('login.noAccount')} <Link href="/sign-up">{t('login.signUp')}</Link>
+      </Typography>
+    </Stack>
   );
 }

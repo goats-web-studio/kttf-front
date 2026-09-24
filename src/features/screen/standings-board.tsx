@@ -1,4 +1,11 @@
 import type { GroupStandingsView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -28,60 +35,89 @@ export default function StandingsBoard({ groups, names, ratings }: StandingsBoar
 
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-wide text-night-ink-500">
+      <Typography
+        variant="h2"
+        color="text.secondary"
+        sx={{ fontFamily: 'inherit', fontSize: 22, lineHeight: '28px', fontWeight: 600 }}
+      >
         {t('screen.standings.title')}
-      </h2>
+      </Typography>
 
-      <div className="mt-3 grid gap-4 xl:grid-cols-2">
+      <Box
+        sx={{
+          mt: 1.5,
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))' },
+        }}
+      >
         {groups.map((group) => (
-          <table
-            key={`${group.stageId}:${group.groupId ?? 'single'}`}
-            className="w-full text-xl tabular-nums"
-          >
-            <caption className="pb-1 text-left text-lg text-night-ink-500">{group.label}</caption>
-            <thead className="text-sm text-night-ink-500">
-              <tr>
-                <th scope="col" className="pr-4 text-right">
+          <Table key={`${group.stageId}:${group.groupId ?? 'single'}`} sx={TABLE}>
+            <caption>{group.label}</caption>
+            <TableHead>
+              <TableRow>
+                <TableCell scope="col" align="right" sx={{ pr: 2 }}>
                   {t('screen.standings.place')}
-                </th>
-                <th scope="col" className="text-left">
-                  {t('screen.standings.player')}
-                </th>
-                <th scope="col" className="text-right">
+                </TableCell>
+                <TableCell scope="col">{t('screen.standings.player')}</TableCell>
+                <TableCell scope="col" align="right">
                   {t('screen.standings.points')}
-                </th>
-                <th scope="col" className="text-right">
+                </TableCell>
+                <TableCell scope="col" align="right">
                   {t('screen.standings.sets')}
-                </th>
-                <th scope="col" className="text-right">
+                </TableCell>
+                <TableCell scope="col" align="right">
                   {t('screen.standings.balls')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {group.rows.map((row) => (
-                <tr key={row.participant} className="border-t border-night-line">
+                <TableRow key={row.participant}>
                   {/* Пустое место — равенство, которого судья ещё не развёл (ADR-008). */}
-                  <td className="py-1 pr-4 text-right text-night-ink-700">{row.place ?? '—'}</td>
-                  <td className="py-1 text-night-ink-900">
+                  <TableCell align="right" sx={{ pr: 2, color: 'text.secondary' }}>
+                    {row.place ?? '—'}
+                  </TableCell>
+                  <TableCell>
                     {names.get(row.participant) ?? t('screen.match.pending')}
-                    <span className="ml-2 text-sm text-night-ink-500">
+                    <Box
+                      component="span"
+                      sx={{ ml: 1, fontSize: 15, lineHeight: '24px', color: 'text.secondary' }}
+                    >
                       {ratings.get(row.participant) ?? ''}
-                    </span>
-                  </td>
-                  <td className="py-1 text-right font-semibold">{row.points}</td>
-                  <td className="py-1 text-right text-night-ink-700">
+                    </Box>
+                  </TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    {row.points}
+                  </TableCell>
+                  <TableCell align="right" sx={{ color: 'text.secondary' }}>
                     {row.setsWon}:{row.setsLost}
-                  </td>
-                  <td className="py-1 text-right text-night-ink-700">
+                  </TableCell>
+                  <TableCell align="right" sx={{ color: 'text.secondary' }}>
                     {row.ballsWon}:{row.ballsLost}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         ))}
-      </div>
+      </Box>
     </section>
   );
 }
+
+/** Таблица на стене: крупный кегль, цифры столбиком, подпись группы сверху. */
+const TABLE = {
+  fontVariantNumeric: 'tabular-nums',
+  '& caption': {
+    captionSide: 'top',
+    p: 0,
+    pb: 0.5,
+    textAlign: 'left',
+    fontSize: 17,
+    lineHeight: '26px',
+    color: 'text.secondary',
+  },
+  '& .MuiTableCell-root': { px: 1, py: 0.5, fontSize: 22, lineHeight: '28px' },
+  '& .MuiTableCell-head': { fontSize: 13, lineHeight: '20px', color: 'text.secondary' },
+} as const;

@@ -1,3 +1,5 @@
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { z } from 'zod';
@@ -19,15 +21,15 @@ function LoginPage(): ReactNode {
   const { redirect } = Route.useSearch();
 
   return (
-    <section className="mx-auto max-w-sm px-4 py-12">
-      <h1 className="mb-6 font-display text-display-md font-bold text-ink-900">
+    <Container maxWidth="xs" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Typography variant="h1" sx={{ mb: 3 }}>
         {t('page.login.title')}
-      </h1>
+      </Typography>
       <SignInForm
         onSignedIn={() => {
           void navigate({ href: redirect ?? '/' });
         }}
       />
-    </section>
+    </Container>
   );
 }

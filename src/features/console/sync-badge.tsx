@@ -1,4 +1,8 @@
 import { isErrorCode } from '@kttf/shared/errors';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import type { ReactNode } from 'react';
 
 import { ERROR_MESSAGE_KEYS } from '@/common/api';
@@ -31,53 +35,63 @@ export default function SyncBadge({ queue }: SyncBadgeProps): ReactNode {
         ? t('console.sync.syncing')
         : t('console.sync.synced');
 
+  // Цвет — второй носитель: состояние всегда написано словом (запрет №6).
   const tone =
     queue.connection === 'OFFLINE'
-      ? 'border-night-red bg-night-raised text-night-red'
+      ? 'error'
       : queue.connection === 'SYNCING'
-        ? 'border-night-warn bg-night-raised text-night-warn'
-        : 'border-night-ok bg-night-raised text-night-ok';
+        ? 'warning'
+        : 'success';
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className={`rounded border px-2 py-1 text-sm ${tone}`} role="status">
-        {label}
-        {queue.queued > 0 && (
-          <span className="ml-2 tabular-nums">
-            {t('console.sync.queued')} {queue.queued}
-          </span>
-        )}
-      </span>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+      <Chip
+        role="status"
+        variant="outlined"
+        color={tone}
+        label={
+          <>
+            {label}
+            {queue.queued > 0 && (
+              <Box component="span" sx={{ ml: 1, fontVariantNumeric: 'tabular-nums' }}>
+                {t('console.sync.queued')} {queue.queued}
+              </Box>
+            )}
+          </>
+        }
+        sx={{ height: 'auto', minHeight: 40, fontSize: 13, '& .MuiChip-label': { py: 1 } }}
+      />
 
-      <button
-        type="button"
-        onClick={queue.syncNow}
-        className="rounded border border-night-line px-2 py-1 text-sm text-night-ink-700"
-      >
+      <Button size="large" onClick={queue.syncNow} sx={{ minHeight: 56 }}>
         {t('console.sync.now')}
-      </button>
+      </Button>
 
       {queue.rejected.map((item) => (
-        <span
+        <Alert
           key={item.seq}
+          severity="error"
           role="alert"
-          className="flex items-center gap-2 rounded border border-night-red bg-night-raised px-2 py-1 text-sm text-night-red"
+          action={
+            <Button
+              variant="text"
+              color="error"
+              size="large"
+              onClick={() => {
+                queue.dismiss(item.seq);
+              }}
+              sx={{ minHeight: 56 }}
+            >
+              {t('console.failure.dismiss')}
+            </Button>
+          }
+          sx={{ alignItems: 'center', py: 0 }}
         >
           {/* Сервер отверг операцию: повторять её бессмысленно, и судья
               решает сам — ввести заново или оставить как есть. */}
           {t('console.sync.rejected')} {t(reasonKey(item.rejectedReason))}
-          <button
-            type="button"
-            onClick={() => {
-              queue.dismiss(item.seq);
-            }}
-            className="text-xs underline"
-          >
-            {t('console.failure.dismiss')}
-          </button>
-        </span>
+        </Alert>
       ))}
-    </div>
+    </Box>
   );
 }
 

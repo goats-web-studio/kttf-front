@@ -1,14 +1,29 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { changePasswordSchema, type ChangePasswordInput } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import { useMutation } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
-import { useT, type MessageKey } from '@/common/i18n';
+import { useT } from '@/common/i18n';
 import { changePassword } from '@/features/auth/api';
 import { useSessionStore } from '@/features/auth/session-store';
-import Button from '@/common/ui/button';
+
+/** Два поля в ряд с 640px, на телефоне — столбиком. */
+const GRID = {
+  display: 'grid',
+  gap: 2,
+  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+  alignItems: 'start',
+} as const;
+
+/** Поле на телефоне не ниже 44px — зона нажатия (раздел 9). */
+const TOUCH = { '& .MuiInputBase-root': { minHeight: { xs: 44, sm: 40 } } } as const;
 
 /**
  * Смена пароля — ТЗ 2.1.
@@ -38,74 +53,60 @@ export default function PasswordForm(): ReactNode {
   });
 
   const { errors } = form.formState;
+  const { ref: currentRef, ...current } = form.register('currentPassword');
+  const { ref: nextRef, ...next } = form.register('newPassword');
 
   return (
-    <form
-      className="mt-4 space-y-4"
+    <Stack
+      component="form"
+      spacing={2}
+      noValidate
+      sx={{ mt: 2, alignItems: 'flex-start' }}
       onSubmit={(event) => {
         void form.handleSubmit((values) => {
           change.mutate(values);
         })(event);
       }}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="account.password.current" error={undefined}>
-          <input
-            {...form.register('currentPassword')}
-            type="password"
-            autoComplete="current-password"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </Field>
+      <Box sx={{ ...GRID, width: '100%' }}>
+        <TextField
+          {...current}
+          inputRef={currentRef}
+          label={t('account.password.current')}
+          type="password"
+          autoComplete="current-password"
+          sx={TOUCH}
+        />
 
-        <Field
-          label="account.password.next"
-          error={errors.newPassword === undefined ? undefined : 'error.form.password'}
-        >
-          <input
-            {...form.register('newPassword')}
-            type="password"
-            autoComplete="new-password"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </Field>
-      </div>
+        <TextField
+          {...next}
+          inputRef={nextRef}
+          label={t('account.password.next')}
+          type="password"
+          autoComplete="new-password"
+          sx={TOUCH}
+          error={errors.newPassword !== undefined}
+          helperText={errors.newPassword === undefined ? undefined : t('error.form.password')}
+          slotProps={{ formHelperText: { role: 'alert' } }}
+        />
+      </Box>
 
       {change.error !== null && (
-        <p role="alert" className="text-sm text-red-700">
+        <Alert severity="error" sx={{ width: '100%' }}>
           {t(errorMessageKey(change.error))}
-        </p>
+        </Alert>
       )}
 
-      {change.isSuccess && <p className="text-sm text-ok">{t('account.password.changed')}</p>}
+      {change.isSuccess && (
+        <Alert severity="success" role="status" sx={{ width: '100%' }}>
+          {t('account.password.changed')}
+        </Alert>
+      )}
 
-      <Button variant="primary" type="submit" disabled={change.isPending}>
-        {change.isPending ? t('common.loading') : t('account.password.submit')}
+      {/* Не `contained`: главная кнопка на экране кабинета одна (запрет №2). */}
+      <Button type="submit" loading={change.isPending} loadingPosition="start">
+        {t('account.password.submit')}
       </Button>
-    </form>
-  );
-}
-
-function Field({
-  label,
-  error,
-  children,
-}: {
-  readonly label: MessageKey;
-  readonly error: MessageKey | undefined;
-  readonly children: ReactNode;
-}): ReactNode {
-  const t = useT();
-
-  return (
-    <label className="block text-sm">
-      <span className="text-ink-700">{t(label)}</span>
-      {children}
-      {error !== undefined && (
-        <span role="alert" className="mt-1 block text-red-700">
-          {t(error)}
-        </span>
-      )}
-    </label>
+    </Stack>
   );
 }

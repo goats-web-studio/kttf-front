@@ -1,4 +1,6 @@
 import type { MatchView, StageView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -25,26 +27,30 @@ export default function ResultsMatches({ stages, names }: ResultsMatchesProps): 
   }
 
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-ink-900">{t('results.matches.title')}</h2>
+    <Box component="section" sx={{ mt: 6 }}>
+      <Typography variant="h2">{t('results.matches.title')}</Typography>
       {stages.map((stage) => (
-        <div key={stage.id} className="mt-6">
-          <h3 className="text-sm font-semibold text-ink-900">
+        <Box key={stage.id} sx={{ mt: 3 }}>
+          <Typography variant="h3">
             {stage.name} · {t(STAGE_TYPE_KEYS[stage.type])}
-          </h3>
+          </Typography>
           {partition(stage).map((part) => (
-            <div key={part.label} className="mt-3">
-              {part.label !== '' && <p className="text-xs text-ink-500">{part.label}</p>}
-              <ul className="mt-1 divide-y divide-line">
+            <Box key={part.label} sx={{ mt: 1.5 }}>
+              {part.label !== '' && (
+                <Typography variant="caption" color="text.secondary" component="p">
+                  {part.label}
+                </Typography>
+              )}
+              <Box component="ul" sx={{ listStyle: 'none', m: 0, mt: 0.5, p: 0 }}>
                 {part.matches.map((match) => (
                   <Row key={match.id} match={match} names={names} />
                 ))}
-              </ul>
-            </div>
+              </Box>
+            </Box>
           ))}
-        </div>
+        </Box>
       ))}
-    </section>
+    </Box>
   );
 }
 
@@ -94,17 +100,37 @@ function Row({
   ].filter((value) => value !== null);
 
   return (
-    <li className="flex items-baseline justify-between gap-3 py-2 text-sm">
-      <span className="text-ink-900">
+    <Box
+      component="li"
+      sx={{
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: 1.5,
+        py: 1,
+        typography: 'body2',
+        borderBottom: 1,
+        borderColor: 'divider',
+        '&:last-of-type': { borderBottom: 0 },
+      }}
+    >
+      <span>
         <Name id={match.playerAId} names={names} /> — <Name id={match.playerBId} names={names} />
       </span>
-      <span className="flex items-baseline gap-3">
-        {note.length > 0 && <span className="text-xs text-ink-500">{note.join(' · ')}</span>}
-        <span className="tabular-nums text-ink-900">
+      <Box component="span" sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
+        {note.length > 0 && (
+          <Typography component="span" variant="caption" color="text.secondary">
+            {note.join(' · ')}
+          </Typography>
+        )}
+        <Box
+          component="span"
+          sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, whiteSpace: 'nowrap' }}
+        >
           {played ? `${String(match.setsA)} : ${String(match.setsB)}` : '—'}
-        </span>
-      </span>
-    </li>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
@@ -118,7 +144,11 @@ function Name({
   const t = useT();
 
   if (id === null) {
-    return <span className="text-ink-400">{t('results.match.pending')}</span>;
+    return (
+      <Box component="span" sx={{ color: 'text.secondary' }}>
+        {t('results.match.pending')}
+      </Box>
+    );
   }
 
   return names.get(id) ?? t('results.match.unknownPlayer');

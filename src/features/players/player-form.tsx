@@ -6,9 +6,24 @@ import {
   playingHandSchema,
   type CreatePlayerInput,
 } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
+import ListSubheader from '@mui/material/ListSubheader';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import TextField, { type TextFieldProps } from '@mui/material/TextField';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Typography from '@mui/material/Typography';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import dayjs from 'dayjs';
+import { useId, type ReactNode } from 'react';
+import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
@@ -16,7 +31,6 @@ import { clubDirectoryQuery } from '@/features/clubs/queries';
 import PhotoField from '@/features/players/photo-field';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
-import Button from '@/common/ui/button';
 
 interface PlayerFormProps {
   /** Заполненные поля при правке. Пусто — профиль заводится впервые. */
@@ -55,18 +69,13 @@ export default function PlayerForm({
 
   const form = useForm({
     resolver: zodResolver(createPlayerSchema),
+    // Необязательных полей в умолчаниях нет: не заданное поле — это
+    // `undefined`, а не пустая строка, которую схема отвергла бы как
+    // слишком короткую.
     defaultValues: {
       lastName: '',
       firstName: '',
-      middleName: '',
       city: '',
-      clubId: '',
-      blade: '',
-      rubberForehand: '',
-      rubberBackhand: '',
-      bio: '',
-      coachName: '',
-      coachPlayerId: '',
       // Умолчание совпадает со схемой: до появления даты профиль показывал
       // только год, и галочка ничего не меняет в том, что о человеке видно.
       birthYearOnly: true,
@@ -75,9 +84,6 @@ export default function PlayerForm({
   });
 
   const { errors } = form.formState;
-
-  /** Необязательное поле: пустое поле — это «не задано», а не пустая строка. */
-  const optional = { setValueAs: (value: string) => (value === '' ? undefined : value) };
 
   // useWatch, а не form.watch: подписка на поле, а не перерисовка формы
   // целиком на каждое нажатие клавиши в любом из двадцати полей.
@@ -88,131 +94,155 @@ export default function PlayerForm({
   const coachPlayerId = useWatch({ control, name: 'coachPlayerId' });
   const coachName = useWatch({ control, name: 'coachName' });
 
+  const birthFailed = errors.birthDate !== undefined || errors.birthYear !== undefined;
+
   return (
-    <form
-      className="mt-6 space-y-6"
+    <Stack
+      component="form"
+      noValidate
+      spacing={3}
+      sx={{ mt: 3 }}
       onSubmit={(event) => {
         void form.handleSubmit(onSubmit)(event);
       }}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
+      <Box sx={GRID}>
+        <TextInput
+          control={control}
+          name="lastName"
           label="player.form.lastName"
           error={errors.lastName === undefined ? undefined : 'error.form.name'}
-        >
-          <input
-            {...form.register('lastName')}
-            autoComplete="family-name"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </Field>
+          autoComplete="family-name"
+        />
 
-        <Field
+        <TextInput
+          control={control}
+          name="firstName"
           label="player.form.firstName"
           error={errors.firstName === undefined ? undefined : 'error.form.name'}
-        >
-          <input
-            {...form.register('firstName')}
-            autoComplete="given-name"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </Field>
+          autoComplete="given-name"
+        />
 
-        <Field label="player.form.middleName" optional error={undefined}>
-          <input
-            {...form.register('middleName', optional)}
-            autoComplete="additional-name"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </Field>
+        <TextInput
+          control={control}
+          name="middleName"
+          label="player.form.middleName"
+          optional
+          autoComplete="additional-name"
+        />
 
         {/* Поле одно — дата. Год из него выводится и в форме не показывается:
             спрашивать дважды об одном и том же, да ещё и отказывать за
             расхождение, — работа, переложенная на человека. Год при этом
             остаётся обязательным в контракте: по нему считаются возрастные
             категории и допуск на турнир. */}
-        <Field
-          label="player.form.birthDate"
-          error={
-            errors.birthDate === undefined && errors.birthYear === undefined
-              ? undefined
-              : 'error.form.birthDate'
-          }
-        >
-          <input
-            {...form.register('birthDate', {
-              ...optional,
-              onChange: (event: { target: { value: string } }) => {
-                const year = Number(event.target.value.slice(0, 4));
+        <Box>
+          <Controller
+            control={control}
+            name="birthDate"
+            render={({ field }) => (
+              <DatePicker
+                label={t('player.form.birthDate')}
+                value={field.value === undefined ? null : dayjs(field.value)}
+                disableFuture
+                onChange={(value) => {
+                  // Дата в контракте — строка `ГГГГ-ММ-ДД`; недописанная
+                  // дата — это «не задано», а не полдаты.
+                  const valid = value !== null && value.isValid() && value.year() > 1900;
 
-                form.setValue(
-                  'birthYear',
-                  Number.isInteger(year) && year > 1900 ? year : (undefined as unknown as number),
-                  { shouldValidate: true },
-                );
-              },
-            })}
-            type="date"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
+                  field.onChange(valid ? value.format('YYYY-MM-DD') : undefined);
+                  form.setValue(
+                    'birthYear',
+                    valid ? value.year() : (undefined as unknown as number),
+                    { shouldValidate: true },
+                  );
+                }}
+                inputRef={field.ref}
+                slotProps={{
+                  textField: {
+                    name: field.name,
+                    onBlur: field.onBlur,
+                    error: birthFailed,
+                    ...(birthFailed
+                      ? {
+                          helperText: t('error.form.birthDate'),
+                          slotProps: { formHelperText: { role: 'alert' } },
+                        }
+                      : {}),
+                  },
+                }}
+              />
+            )}
           />
           {/* Профили, заведённые до появления даты, знают только год. Пустое
               поле у такого профиля объясняется, а не выглядит как потеря. */}
           {birthDate === undefined && Number.isInteger(birthYear) && (
-            <span className="mt-1 block text-xs text-ink-500">
+            <FormHelperText>
               {t('player.form.birthYearOnlyKnown')} {birthYear}
-            </span>
+            </FormHelperText>
           )}
-          <label className="mt-2 flex items-center gap-2 text-xs text-ink-700">
-            <input type="checkbox" {...form.register('birthYearOnly')} />
-            {t('player.form.birthYearOnly')}
-          </label>
-        </Field>
+          <Controller
+            control={control}
+            name="birthYearOnly"
+            render={({ field }) => (
+              <FormControlLabel
+                sx={{ mt: 0.5, minHeight: 44 }}
+                control={
+                  <Checkbox
+                    size="small"
+                    name={field.name}
+                    checked={field.value ?? false}
+                    onChange={(event) => {
+                      field.onChange(event.target.checked);
+                    }}
+                    onBlur={field.onBlur}
+                  />
+                }
+                label={
+                  <Typography variant="body2" color="text.secondary">
+                    {t('player.form.birthYearOnly')}
+                  </Typography>
+                }
+              />
+            )}
+          />
+        </Box>
 
-        <Field
+        <TextInput
+          control={control}
+          name="gender"
           label="player.form.gender"
           error={errors.gender === undefined ? undefined : 'error.form.gender'}
+          select
         >
-          <select
-            {...form.register('gender')}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          >
-            <option value="">{t('player.form.choose')}</option>
-            {genderSchema.options.map((value) => (
-              <option key={value} value={value}>
-                {t(GENDER_KEYS[value])}
-              </option>
-            ))}
-          </select>
-        </Field>
+          <MenuItem value="">{t('player.form.choose')}</MenuItem>
+          {genderSchema.options.map((value) => (
+            <MenuItem key={value} value={value}>
+              {t(GENDER_KEYS[value])}
+            </MenuItem>
+          ))}
+        </TextInput>
 
-        <Field
+        <TextInput
+          control={control}
+          name="city"
           label="player.form.city"
           error={errors.city === undefined ? undefined : 'error.form.city'}
-        >
-          <input
-            {...form.register('city')}
-            autoComplete="address-level2"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </Field>
+          autoComplete="address-level2"
+        />
 
-        <Field label="player.form.club" optional error={undefined}>
-          {/* Клуб при саморегистрации сервер не проверяет: игрок объявляет
-              принадлежность сам, и прав она не даёт — права живут в составе
-              клуба, а не в поле профиля (ADR-014). */}
-          <select
-            {...form.register('clubId', optional)}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          >
-            <option value="">{t('player.form.noClub')}</option>
-            {[...(clubs.data?.values() ?? [])].map((club) => (
-              <option key={club.id} value={club.id}>
-                {club.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+        {/* Клуб при саморегистрации сервер не проверяет: игрок объявляет
+            принадлежность сам, и прав она не даёт — права живут в составе
+            клуба, а не в поле профиля (ADR-014). */}
+        <TextInput control={control} name="clubId" label="player.form.club" optional select>
+          <MenuItem value="">{t('player.form.noClub')}</MenuItem>
+          {[...(clubs.data?.values() ?? [])].map((club) => (
+            <MenuItem key={club.id} value={club.id}>
+              {club.name}
+            </MenuItem>
+          ))}
+        </TextInput>
+      </Box>
 
       <PhotoField
         value={photoUrl ?? null}
@@ -221,98 +251,106 @@ export default function PlayerForm({
         }}
       />
 
-      <fieldset className="border-t border-line pt-4">
-        <legend className="text-sm font-semibold text-ink-900">{t('player.form.game')}</legend>
+      <Section legend="player.form.game">
+        <Box sx={GRID}>
+          <Choice
+            control={control}
+            name="playingHand"
+            label="player.form.playingHand"
+            options={playingHandSchema.options.map((value) => ({
+              value,
+              label: HAND_KEYS[value],
+            }))}
+          />
 
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <Field label="player.form.playingHand" optional error={undefined}>
-            <select
-              {...form.register('playingHand', optional)}
-              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-            >
-              <option value="">{t('player.form.notSet')}</option>
-              {playingHandSchema.options.map((value) => (
-                <option key={value} value={value}>
-                  {t(HAND_KEYS[value])}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="player.form.grip" optional error={undefined}>
-            <select
-              {...form.register('grip', optional)}
-              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-            >
-              <option value="">{t('player.form.notSet')}</option>
-              {gripSchema.options.map((value) => (
-                <option key={value} value={value}>
-                  {t(GRIP_KEYS[value])}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <Choice
+            control={control}
+            name="grip"
+            label="player.form.grip"
+            options={gripSchema.options.map((value) => ({ value, label: GRIP_KEYS[value] }))}
+          />
 
           {/* Инвентарь — свободная строка, а не справочник моделей: свой
               справочник нужно наполнять и чистить, это отдельный продукт. */}
-          <Field label="player.form.blade" optional error={undefined}>
-            <input
-              {...form.register('blade', optional)}
-              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-            />
-          </Field>
+          <TextInput control={control} name="blade" label="player.form.blade" optional />
 
-          <Field label="player.form.rubberForehand" optional error={undefined}>
-            <input
-              {...form.register('rubberForehand', optional)}
-              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-            />
-          </Field>
+          <TextInput
+            control={control}
+            name="rubberForehand"
+            label="player.form.rubberForehand"
+            optional
+          />
 
-          <Field label="player.form.rubberBackhand" optional error={undefined}>
-            <input
-              {...form.register('rubberBackhand', optional)}
-              className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-            />
-          </Field>
-        </div>
-      </fieldset>
+          <TextInput
+            control={control}
+            name="rubberBackhand"
+            label="player.form.rubberBackhand"
+            optional
+          />
+        </Box>
+      </Section>
 
       <CoachField
         form={form}
-        optional={optional}
         chosenId={coachPlayerId}
         typedName={coachName}
         error={errors.coachName === undefined ? undefined : 'error.form.coach'}
       />
 
-      <Field label="player.form.bio" optional error={undefined}>
-        <textarea
-          {...form.register('bio', optional)}
-          rows={3}
-          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-        />
-      </Field>
+      <TextInput
+        control={control}
+        name="bio"
+        label="player.form.bio"
+        optional
+        multiline
+        minRows={3}
+      />
 
       {error !== null && error !== undefined && (
-        <p role="alert" className="text-sm text-red-700">
-          {t(errorMessageKey(error))}
-        </p>
+        <Alert severity="error">{t(errorMessageKey(error))}</Alert>
       )}
 
-      <div className="flex items-center gap-4">
-        <Button variant="primary" type="submit" disabled={isPending}>
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+        <Button variant="contained" type="submit" disabled={isPending} sx={TOUCH}>
           {isPending ? t('common.loading') : t(submitLabel)}
         </Button>
         {onCancel !== undefined && (
-          <button type="button" onClick={onCancel} className="text-sm text-ink-700 underline">
+          <Button variant="text" onClick={onCancel} sx={TOUCH}>
             {t('player.form.cancel')}
-          </button>
+          </Button>
         )}
-      </div>
-    </form>
+      </Stack>
+    </Stack>
   );
 }
+
+/** Две колонки полей от планшета, одна на телефоне. */
+const GRID = {
+  display: 'grid',
+  gap: 2,
+  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+  alignItems: 'start',
+} as const;
+
+/** Зона нажатия на телефоне — не меньше 44px (docs/07-design-system.md, 9). */
+const TOUCH = { minHeight: { xs: 44, sm: 40 } } as const;
+
+type PlayerFormApi = ReturnType<typeof useForm<CreatePlayerInput>>;
+
+/** Поля профиля, значение которых — строка. */
+type TextName =
+  | 'lastName'
+  | 'firstName'
+  | 'middleName'
+  | 'gender'
+  | 'city'
+  | 'clubId'
+  | 'blade'
+  | 'rubberForehand'
+  | 'rubberBackhand'
+  | 'bio'
+  | 'coachPlayerId'
+  | 'coachName';
 
 /**
  * Тренер: выбор из списка либо имя вручную.
@@ -327,13 +365,11 @@ export default function PlayerForm({
  */
 function CoachField({
   form,
-  optional,
   chosenId,
   typedName,
   error,
 }: {
-  readonly form: ReturnType<typeof useForm<CreatePlayerInput>>;
-  readonly optional: { setValueAs: (value: string) => string | undefined };
+  readonly form: PlayerFormApi;
   readonly chosenId: string | undefined;
   readonly typedName: string | undefined;
   readonly error: MessageKey | undefined;
@@ -346,57 +382,143 @@ function CoachField({
   const chosenIds = new Set(coachItems.map((coach) => coach.id));
   const others = (players.data?.items ?? []).filter((player) => !chosenIds.has(player.id));
 
+  // Группы — плоским списком: меню MUI ждёт пункты и подзаголовки прямыми
+  // детьми, пункт внутри фрагмента не выбирается.
+  const options: ReactNode[] = [
+    <MenuItem key="none" value="">
+      {t('player.form.notSet')}
+    </MenuItem>,
+  ];
+
+  if (coachItems.length > 0) {
+    options.push(
+      <ListSubheader key="coaches">{t('player.form.coachGroup')}</ListSubheader>,
+      ...coachItems.map((coach) => (
+        <MenuItem key={coach.id} value={coach.id}>
+          {playerName(coach)}
+        </MenuItem>
+      )),
+    );
+  }
+
+  options.push(
+    <ListSubheader key="players">{t('player.form.playersGroup')}</ListSubheader>,
+    ...others.map((player) => (
+      <MenuItem key={player.id} value={player.id}>
+        {playerName(player)}
+      </MenuItem>
+    )),
+  );
+
   return (
-    <fieldset className="border-t border-line pt-4">
-      <legend className="text-sm font-semibold text-ink-900">{t('player.form.coach')}</legend>
+    <Section legend="player.form.coach">
+      <Box sx={GRID}>
+        <TextInput
+          control={form.control}
+          name="coachPlayerId"
+          label="player.form.coachFromList"
+          optional
+          select
+          disabled={typedName !== undefined && typedName !== ''}
+          onValue={() => {
+            // Выбранный тренер и вписанный руками спорят друг с другом.
+            form.setValue('coachName', undefined);
+          }}
+        >
+          {options}
+        </TextInput>
 
-      <div className="mt-3 grid gap-4 sm:grid-cols-2">
-        <Field label="player.form.coachFromList" optional error={undefined}>
-          <select
-            {...form.register('coachPlayerId', {
-              ...optional,
-              onChange: () => {
-                // Выбранный тренер и вписанный руками спорят друг с другом.
-                form.setValue('coachName', undefined);
-              },
-            })}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-            disabled={typedName !== undefined && typedName !== ''}
+        <TextInput
+          control={form.control}
+          name="coachName"
+          label="player.form.coachName"
+          optional
+          error={error}
+          disabled={chosenId !== undefined && chosenId !== ''}
+          onValue={() => {
+            form.setValue('coachPlayerId', undefined);
+          }}
+        />
+      </Box>
+    </Section>
+  );
+}
+
+/** Группа полей с подписью над линейкой. */
+function Section({
+  legend,
+  children,
+}: {
+  readonly legend: MessageKey;
+  readonly children: ReactNode;
+}): ReactNode {
+  const t = useT();
+
+  return (
+    <Box
+      component="fieldset"
+      sx={{ m: 0, p: 0, pt: 2, border: 0, borderTop: 1, borderColor: 'divider', minWidth: 0 }}
+    >
+      <Typography component="legend" variant="h4" sx={{ p: 0, mb: 1.5 }}>
+        {t(legend)}
+      </Typography>
+      {children}
+    </Box>
+  );
+}
+
+/**
+ * Выбор из двух-трёх значений — кнопками, а не выпадающим списком: варианты
+ * видны сразу и выбираются одним нажатием. Повторное нажатие на выбранное
+ * снимает выбор — поле необязательное.
+ */
+function Choice({
+  control,
+  name,
+  label,
+  options,
+}: {
+  readonly control: Control<CreatePlayerInput>;
+  readonly name: 'playingHand' | 'grip';
+  readonly label: MessageKey;
+  readonly options: readonly { readonly value: string; readonly label: MessageKey }[];
+}): ReactNode {
+  const t = useT();
+  const labelId = useId();
+
+  return (
+    <Box>
+      <Typography id={labelId} variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        <FieldLabel label={label} optional />
+      </Typography>
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => (
+          <ToggleButtonGroup
+            exclusive
+            fullWidth
+            size="small"
+            aria-labelledby={labelId}
+            value={field.value ?? null}
+            onChange={(_, value: string | null) => {
+              field.onChange(value ?? undefined);
+            }}
           >
-            <option value="">{t('player.form.notSet')}</option>
-            {coachItems.length > 0 && (
-              <optgroup label={t('player.form.coachGroup')}>
-                {coachItems.map((coach) => (
-                  <option key={coach.id} value={coach.id}>
-                    {playerName(coach)}
-                  </option>
-                ))}
-              </optgroup>
-            )}
-            <optgroup label={t('player.form.playersGroup')}>
-              {others.map((player) => (
-                <option key={player.id} value={player.id}>
-                  {playerName(player)}
-                </option>
-              ))}
-            </optgroup>
-          </select>
-        </Field>
-
-        <Field label="player.form.coachName" optional error={error}>
-          <input
-            {...form.register('coachName', {
-              ...optional,
-              onChange: () => {
-                form.setValue('coachPlayerId', undefined);
-              },
-            })}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-            disabled={chosenId !== undefined && chosenId !== ''}
-          />
-        </Field>
-      </div>
-    </fieldset>
+            {options.map((option) => (
+              <ToggleButton
+                key={option.value}
+                value={option.value}
+                onBlur={field.onBlur}
+                sx={{ minHeight: { xs: 44, sm: 40 } }}
+              >
+                {t(option.label)}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+        )}
+      />
+    </Box>
   );
 }
 
@@ -421,35 +543,83 @@ const GRIP_KEYS: Readonly<Record<'SHAKEHAND' | 'PENHOLD', MessageKey>> = {
   PENHOLD: 'player.grip.PENHOLD',
 };
 
+/** Подпись поля: необязательное помечено словом рядом с названием. */
+function FieldLabel({
+  label,
+  optional,
+}: {
+  readonly label: MessageKey;
+  readonly optional: boolean;
+}): ReactNode {
+  const t = useT();
+
+  return (
+    <>
+      {t(label)}
+      {optional && (
+        <Box component="span" sx={{ ml: 0.5, fontSize: 12, color: 'text.secondary' }}>
+          {t('player.form.optional')}
+        </Box>
+      )}
+    </>
+  );
+}
+
 /**
  * Подпись, поле и текст отказа.
  *
  * Сообщение берётся из словаря, а не из схемы: тексты внутри схем общие с
  * сервером и не локализуются — бриф 3.4.
+ *
+ * Необязательное поле и выбор из списка: пустое значение — это «не задано»,
+ * а не пустая строка.
  */
-function Field({
+function TextInput({
+  control,
+  name,
   label,
   optional = false,
   error,
-  children,
+  onValue,
+  ...rest
 }: {
+  readonly control: Control<CreatePlayerInput>;
+  readonly name: TextName;
   readonly label: MessageKey;
   readonly optional?: boolean;
-  readonly error: MessageKey | undefined;
-  readonly children: ReactNode;
-}): ReactNode {
+  readonly error?: MessageKey | undefined;
+  /** Вызывается после смены значения: поля тренера гасят друг друга. */
+  readonly onValue?: () => void;
+} & Omit<
+  TextFieldProps,
+  'name' | 'label' | 'error' | 'value' | 'onChange' | 'onBlur' | 'inputRef' | 'helperText'
+>): ReactNode {
   const t = useT();
 
   return (
-    <label className="block text-sm">
-      <span className="text-ink-700">{t(label)}</span>
-      {optional && <span className="ml-1 text-xs text-ink-400">{t('player.form.optional')}</span>}
-      {children}
-      {error !== undefined && (
-        <span role="alert" className="mt-1 block text-red-700">
-          {t(error)}
-        </span>
+    <Controller
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <TextField
+          {...rest}
+          name={field.name}
+          value={field.value ?? ''}
+          onChange={(event) => {
+            const value = event.target.value;
+
+            field.onChange(value === '' && (optional || rest.select === true) ? undefined : value);
+            onValue?.();
+          }}
+          onBlur={field.onBlur}
+          inputRef={field.ref}
+          label={<FieldLabel label={label} optional={optional} />}
+          error={error !== undefined}
+          {...(error === undefined
+            ? {}
+            : { helperText: t(error), slotProps: { formHelperText: { role: 'alert' } } })}
+        />
       )}
-    </label>
+    />
   );
 }

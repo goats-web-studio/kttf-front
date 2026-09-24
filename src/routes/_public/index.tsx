@@ -1,3 +1,5 @@
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
@@ -11,11 +13,11 @@ function HomePage(): ReactNode {
   const t = useT();
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="font-display text-display-md font-bold text-ink-900">
-        {t('page.home.title')}
-      </h1>
-      <p className="mt-3 text-ink-700">{t('page.home.lead')}</p>
-    </section>
+    <Container maxWidth="md" component="section" sx={{ py: { xs: 8, sm: 12 } }}>
+      <Typography variant="h1">{t('page.home.title')}</Typography>
+      <Typography color="text.secondary" sx={{ mt: 1.5 }}>
+        {t('page.home.lead')}
+      </Typography>
+    </Container>
   );
 }

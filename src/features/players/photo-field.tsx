@@ -1,6 +1,12 @@
 import { PHOTO_CONTENT_TYPES, rejectPhoto, type PhotoRejection } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useMutation } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useState, type ChangeEvent, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
@@ -35,74 +41,109 @@ export default function PhotoField({
   });
 
   return (
-    <fieldset className="border-t border-line pt-4">
-      <legend className="text-sm font-semibold text-ink-900">{t('player.form.photo')}</legend>
+    <Box
+      component="fieldset"
+      sx={{ m: 0, p: 0, pt: 2, border: 0, borderTop: 1, borderColor: 'divider', minWidth: 0 }}
+    >
+      <Typography component="legend" variant="h4" sx={{ p: 0, mb: 1.5 }}>
+        {t('player.form.photo')}
+      </Typography>
 
-      <div className="mt-3 flex items-center gap-4">
-        {value === null ? (
-          <div className="grid size-20 place-items-center rounded-full bg-paper-hover text-xs text-ink-400">
-            {t('player.form.noPhoto')}
-          </div>
-        ) : (
-          <img src={value} alt="" className="size-20 rounded-full object-cover" />
-        )}
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+        {/* Без фото — подпись словами внутри круга, а не пустое место. */}
+        <Avatar
+          {...(value === null ? {} : { src: value })}
+          alt=""
+          sx={{
+            width: 80,
+            height: 80,
+            fontSize: 12,
+            textAlign: 'center',
+            bgcolor: 'action.hover',
+            color: 'text.secondary',
+          }}
+        >
+          {t('player.form.noPhoto')}
+        </Avatar>
 
-        <div className="text-sm">
-          <label className="cursor-pointer text-red-600 underline">
-            {upload.isPending ? t('common.loading') : t('player.form.photoChoose')}
-            <input
-              type="file"
-              className="sr-only"
-              accept={PHOTO_CONTENT_TYPES.join(',')}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-
-                // Сброс значения: выбор того же файла второй раз иначе не
-                // считается изменением и события не даёт.
-                event.target.value = '';
-
-                if (file === undefined) return;
-
-                const problem = rejectPhoto({ type: file.type, size: file.size });
-
-                setRejection(problem);
-
-                if (problem === null) upload.mutate(file);
-              }}
-            />
-          </label>
-
-          {value !== null && (
-            <button
-              type="button"
-              className="ml-4 text-ink-700 underline"
-              onClick={() => {
-                setRejection(null);
-                onChange(null);
-              }}
+        <Box sx={{ minWidth: 0 }}>
+          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+            <Button
+              component="label"
+              size="small"
+              loading={upload.isPending}
+              sx={{ minHeight: { xs: 44, sm: 32 } }}
             >
-              {t('player.form.photoRemove')}
-            </button>
-          )}
+              {t('player.form.photoChoose')}
+              <Box
+                component="input"
+                type="file"
+                accept={PHOTO_CONTENT_TYPES.join(',')}
+                sx={VISUALLY_HIDDEN}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  const file = event.target.files?.[0];
 
-          <p className="mt-1 text-xs text-ink-500">{t('player.form.photoHint')}</p>
+                  // Сброс значения: выбор того же файла второй раз иначе не
+                  // считается изменением и события не даёт.
+                  event.target.value = '';
+
+                  if (file === undefined) return;
+
+                  const problem = rejectPhoto({ type: file.type, size: file.size });
+
+                  setRejection(problem);
+
+                  if (problem === null) upload.mutate(file);
+                }}
+              />
+            </Button>
+
+            {value !== null && (
+              <Button
+                variant="text"
+                size="small"
+                sx={{ minHeight: { xs: 44, sm: 32 } }}
+                onClick={() => {
+                  setRejection(null);
+                  onChange(null);
+                }}
+              >
+                {t('player.form.photoRemove')}
+              </Button>
+            )}
+          </Stack>
+
+          <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 0.5 }}>
+            {t('player.form.photoHint')}
+          </Typography>
 
           {rejection !== null && (
-            <p role="alert" className="mt-1 text-red-700">
+            <Alert severity="error" sx={{ mt: 1 }}>
               {t(REJECTION_KEYS[rejection])}
-            </p>
+            </Alert>
           )}
 
           {upload.error !== null && (
-            <p role="alert" className="mt-1 text-red-700">
+            <Alert severity="error" sx={{ mt: 1 }}>
               {t(errorMessageKey(upload.error))}
-            </p>
+            </Alert>
           )}
-        </div>
-      </div>
-    </fieldset>
+        </Box>
+      </Stack>
+    </Box>
   );
 }
+
+/** Поле файла прячется от глаз, но не от клавиатуры и чтения с экрана. */
+const VISUALLY_HIDDEN = {
+  position: 'absolute',
+  width: '1px',
+  height: '1px',
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  whiteSpace: 'nowrap',
+} as const;
 
 /** Причина отказа — в текст. Тип из общего кода: новая причина ломает сборку. */
 const REJECTION_KEYS: Readonly<Record<NonNullable<PhotoRejection>, MessageKey>> = {

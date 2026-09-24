@@ -1,13 +1,16 @@
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 import {
   createRootRouteWithContext,
   type ErrorComponentProps,
-  Link,
   Outlet,
 } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import type { RouterContext } from '@/app/router-context';
 import { useT } from '@/common/i18n';
+import ThemeRoot from '@/common/ui/theme';
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootLayout,
@@ -27,18 +30,25 @@ function RootLayout(): ReactNode {
   return <Outlet />;
 }
 
+/** Страница-исключение: по центру, с одним действием. */
+const EXCEPTION = { py: { xs: 8, sm: 12 }, textAlign: 'center' } as const;
+
+/**
+ * «Не найдено» и «ошибка» стоят в корне, вне оболочек разделов, и тему
+ * берут сами: иначе MUI отрисовал бы их своей синей темой по умолчанию.
+ */
 function NotFound(): ReactNode {
   const t = useT();
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-16 text-center">
-      <h1 className="font-display text-display-md font-bold text-ink-900">
-        {t('error.notFound.title')}
-      </h1>
-      <Link to="/" className="mt-4 inline-block text-red-600 underline">
-        {t('error.notFound.action')}
-      </Link>
-    </section>
+    <ThemeRoot>
+      <Container maxWidth="md" component="section" sx={EXCEPTION}>
+        <Typography variant="h1">{t('error.notFound.title')}</Typography>
+        <Button variant="contained" href="/" sx={{ mt: 3 }}>
+          {t('error.notFound.action')}
+        </Button>
+      </Container>
+    </ThemeRoot>
   );
 }
 
@@ -46,13 +56,13 @@ function UnexpectedError({ reset }: ErrorComponentProps): ReactNode {
   const t = useT();
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-16 text-center">
-      <h1 className="font-display text-display-md font-bold text-ink-900">
-        {t('error.unexpected.title')}
-      </h1>
-      <button type="button" onClick={reset} className="mt-4 text-red-600 underline">
-        {t('error.unexpected.action')}
-      </button>
-    </section>
+    <ThemeRoot>
+      <Container maxWidth="md" component="section" sx={EXCEPTION}>
+        <Typography variant="h1">{t('error.unexpected.title')}</Typography>
+        <Button variant="contained" onClick={reset} sx={{ mt: 3 }}>
+          {t('error.unexpected.action')}
+        </Button>
+      </Container>
+    </ThemeRoot>
   );
 }

@@ -1,3 +1,5 @@
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -17,10 +19,12 @@ export default function PagePlaceholder({ title, children }: PagePlaceholderProp
   const t = useT();
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="font-display text-display-md font-bold text-ink-900">{title}</h1>
-      <p className="mt-2 text-ink-700">{t('common.soon')}</p>
+    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Typography variant="h1">{title}</Typography>
+      <Typography color="text.secondary" sx={{ mt: 1 }}>
+        {t('common.soon')}
+      </Typography>
       {children}
-    </section>
+    </Container>
   );
 }

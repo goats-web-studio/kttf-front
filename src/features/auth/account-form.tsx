@@ -5,15 +5,34 @@ import {
   type AuthUserView,
   type UpdateAccountInput,
 } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import { useMutation } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { updateAccount } from '@/features/auth/api';
 import { useSessionStore } from '@/features/auth/session-store';
-import Button from '@/common/ui/button';
+
+/** Два поля в ряд с 640px, на телефоне — столбиком. */
+const GRID = {
+  display: 'grid',
+  gap: 2,
+  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+  alignItems: 'start',
+} as const;
+
+/** Поле на телефоне не ниже 44px — зона нажатия (раздел 9). */
+const TOUCH = { '& .MuiInputBase-root': { minHeight: { xs: 44, sm: 40 } } } as const;
+
+/** Ошибка поля объявляется сразу, как и до перехода на MUI (раздел 9). */
+const ANNOUNCED = { formHelperText: { role: 'alert' } } as const;
 
 /**
  * Настройки аккаунта — ТЗ 2.1, ADR-035.
@@ -64,10 +83,16 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
   const optional = { setValueAs: (value: string) => (value === '' ? undefined : value) };
 
   const { errors } = form.formState;
+  const { ref: loginRef, ...login } = form.register('login', optional);
+  const { ref: emailRef, ...email } = form.register('email', optional);
+  const { ref: telegramRef, ...telegram } = form.register('telegramId', optional);
 
   return (
-    <form
-      className="mt-4 space-y-4"
+    <Stack
+      component="form"
+      spacing={2}
+      noValidate
+      sx={{ mt: 2, alignItems: 'flex-start' }}
       onSubmit={(event) => {
         void form.handleSubmit((values) => {
           // Пустое поле — «стереть», а не «не трогать»: форма отдаёт
@@ -84,72 +109,87 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
         })(event);
       }}
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="account.form.login"
-          error={errors.login === undefined ? undefined : 'error.form.login'}
-        >
-          <input
-            {...form.register('login', optional)}
-            autoComplete="username"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </Field>
+      <Box sx={{ ...GRID, width: '100%' }}>
+        <TextField
+          {...login}
+          inputRef={loginRef}
+          label={t('account.form.login')}
+          autoComplete="username"
+          sx={TOUCH}
+          error={errors.login !== undefined}
+          helperText={errors.login === undefined ? undefined : t('error.form.login')}
+          slotProps={ANNOUNCED}
+        />
 
-        <Field
-          label="account.form.email"
-          optional
-          error={errors.email === undefined ? undefined : 'error.form.email'}
-        >
-          <input
-            {...form.register('email', optional)}
-            type="email"
-            autoComplete="email"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-        </Field>
+        <TextField
+          {...email}
+          inputRef={emailRef}
+          label={<Optional label="account.form.email" />}
+          type="email"
+          autoComplete="email"
+          sx={TOUCH}
+          error={errors.email !== undefined}
+          helperText={errors.email === undefined ? undefined : t('error.form.email')}
+          slotProps={ANNOUNCED}
+        />
 
-        <Field label="account.form.locale" error={undefined}>
-          <select
-            {...form.register('locale')}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          >
-            {localeSchema.options.map((value) => (
-              <option key={value} value={value}>
-                {t(LOCALE_KEYS[value])}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <Controller
+          control={form.control}
+          name="locale"
+          render={({ field: { ref, value, ...field } }) => (
+            <TextField
+              {...field}
+              inputRef={ref}
+              value={value ?? ''}
+              select
+              label={t('account.form.locale')}
+              sx={TOUCH}
+            >
+              {localeSchema.options.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {t(LOCALE_KEYS[option])}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        />
 
-        <Field
-          label="account.form.telegram"
-          optional
-          error={errors.telegramId === undefined ? undefined : 'error.form.telegram'}
-        >
-          <input
-            {...form.register('telegramId', optional)}
-            inputMode="numeric"
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          />
-          <span className="mt-1 block text-xs text-ink-500">{t('account.form.telegramHint')}</span>
-        </Field>
-      </div>
+        <TextField
+          {...telegram}
+          inputRef={telegramRef}
+          label={<Optional label="account.form.telegram" />}
+          sx={TOUCH}
+          error={errors.telegramId !== undefined}
+          helperText={
+            errors.telegramId === undefined
+              ? t('account.form.telegramHint')
+              : t('error.form.telegram')
+          }
+          slotProps={{
+            htmlInput: { inputMode: 'numeric' },
+            ...(errors.telegramId === undefined ? {} : ANNOUNCED),
+          }}
+        />
+      </Box>
 
       {save.error !== null && (
-        <p role="alert" className="text-sm text-red-700">
+        <Alert severity="error" sx={{ width: '100%' }}>
           {t(errorMessageKey(save.error))}
-        </p>
+        </Alert>
       )}
 
       {save.isSuccess && !form.formState.isDirty && (
-        <p className="text-sm text-ok">{t('account.form.saved')}</p>
+        <Alert severity="success" role="status" sx={{ width: '100%' }}>
+          {t('account.form.saved')}
+        </Alert>
       )}
 
-      <Button variant="primary" type="submit" disabled={save.isPending}>
-        {save.isPending ? t('common.loading') : t('account.form.save')}
+      {/* Не `contained`: главное действие кабинета — профиль игрока, а
+          главная кнопка на экране одна (запрет №2). */}
+      <Button type="submit" loading={save.isPending} loadingPosition="start">
+        {t('account.form.save')}
       </Button>
-    </form>
+    </Stack>
   );
 }
 
@@ -163,29 +203,16 @@ const LOCALE_KEYS: Readonly<Record<'RU' | 'KK' | 'EN', MessageKey>> = {
   EN: 'account.locale.EN',
 };
 
-function Field({
-  label,
-  optional = false,
-  error,
-  children,
-}: {
-  readonly label: MessageKey;
-  readonly optional?: boolean;
-  readonly error: MessageKey | undefined;
-  readonly children: ReactNode;
-}): ReactNode {
+/** Подпись необязательного поля: пометка мельче и тише самой подписи. */
+function Optional({ label }: { readonly label: MessageKey }): ReactNode {
   const t = useT();
 
   return (
-    <label className="block text-sm">
-      <span className="text-ink-700">{t(label)}</span>
-      {optional && <span className="ml-1 text-xs text-ink-400">{t('player.form.optional')}</span>}
-      {children}
-      {error !== undefined && (
-        <span role="alert" className="mt-1 block text-red-700">
-          {t(error)}
-        </span>
-      )}
-    </label>
+    <>
+      {t(label)}{' '}
+      <Box component="span" sx={{ typography: 'caption', color: 'text.secondary' }}>
+        {t('player.form.optional')}
+      </Box>
+    </>
   );
 }

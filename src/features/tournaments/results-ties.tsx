@@ -1,4 +1,6 @@
 import type { TieGroupView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 interface ResultsTiesProps {
@@ -21,17 +23,25 @@ export default function ResultsTies({ title, ties, names }: ResultsTiesProps): R
   }
 
   return (
-    <div className="mt-4">
-      <h3 className="text-sm font-semibold text-ink-900">{title}</h3>
-      <ul className="mt-2 space-y-1 text-sm text-ink-700">
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="h3">{title}</Typography>
+      <Box
+        component="ul"
+        sx={{ listStyle: 'none', m: 0, mt: 1, p: 0, typography: 'body2', color: 'text.secondary' }}
+      >
         {ties.map((tie) => (
-          <li key={tie.participants.join(',')}>
-            <span className="font-medium text-ink-900">{placesLabel(tie.places)}</span>{' '}
+          <Box component="li" key={tie.participants.join(',')} sx={{ py: 0.25 }}>
+            <Box
+              component="span"
+              sx={{ fontWeight: 500, color: 'text.primary', fontVariantNumeric: 'tabular-nums' }}
+            >
+              {placesLabel(tie.places)}
+            </Box>{' '}
             {tie.participants.map((id) => names.get(id) ?? id).join(', ')}
-          </li>
+          </Box>
         ))}
-      </ul>
-    </div>
+      </Box>
+    </Box>
   );
 }
 

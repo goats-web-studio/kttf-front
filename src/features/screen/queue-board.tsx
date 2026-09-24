@@ -1,3 +1,7 @@
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -24,32 +28,49 @@ export default function QueueBoard({ queue, names }: QueueBoardProps): ReactNode
 
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-wide text-night-ink-500">
+      <Typography variant="h2" color="text.secondary" sx={BOARD_TITLE}>
         {t('screen.queue.title')}
-      </h2>
+      </Typography>
 
       {queue.length === 0 ? (
-        <p className="mt-3 text-xl text-night-ink-500">{t('screen.queue.empty')}</p>
+        <Typography color="text.secondary" sx={{ mt: 1.5, fontSize: 22, lineHeight: '28px' }}>
+          {t('screen.queue.empty')}
+        </Typography>
       ) : (
-        <ol className="mt-3 space-y-2">
+        <Stack component="ol" spacing={1} sx={{ mt: 1.5, p: 0, listStyle: 'none' }}>
           {queue.slice(0, SHOWN).map((item) => (
-            <li key={item.match.id} className="rounded border border-night-line bg-night p-3">
-              <p className="text-sm text-night-ink-500">
+            <Paper
+              key={item.match.id}
+              component="li"
+              variant="outlined"
+              sx={{ p: 1.5, bgcolor: 'background.default' }}
+            >
+              <Typography variant="body2" color="text.secondary">
                 {item.stageName}
                 {item.groupLabel === null ? '' : ` · ${item.groupLabel}`}
-              </p>
-              <p className="text-2xl text-night-ink-900">
+              </Typography>
+              <Typography sx={{ fontSize: 24, lineHeight: '32px' }}>
                 {name(item.match.playerAId, names, t('screen.match.pending'))}
-                <span className="px-3 text-night-ink-500">—</span>
+                <Box component="span" sx={{ px: 1.5, color: 'text.secondary' }}>
+                  —
+                </Box>
                 {name(item.match.playerBId, names, t('screen.match.pending'))}
-              </p>
-            </li>
+              </Typography>
+            </Paper>
           ))}
-        </ol>
+        </Stack>
       )}
     </section>
   );
 }
+
+/** Заголовок доски: читается с десяти метров, но не спорит с данными. */
+const BOARD_TITLE = {
+  fontFamily: 'inherit',
+  fontSize: 22,
+  lineHeight: '28px',
+  fontWeight: 600,
+} as const;
 
 function name(id: string | null, names: ReadonlyMap<string, string>, fallback: string): string {
   return id === null ? fallback : (names.get(id) ?? fallback);

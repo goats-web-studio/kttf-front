@@ -1,5 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signUpSchema, type PlayerView } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
@@ -11,11 +21,13 @@ import { playersQuery } from '@/features/players/queries';
 
 import { signUp } from './api';
 import { useSessionStore } from './session-store';
-import Button from '@/common/ui/button';
 
 interface SignUpFormProps {
   readonly onSignedUp: () => void;
 }
+
+/** Ошибка поля объявляется сразу, как и до перехода на MUI (раздел 9). */
+const ANNOUNCED = { formHelperText: { role: 'alert' } } as const;
 
 /**
  * Регистрация — ТЗ 2.1, ADR-034.
@@ -56,9 +68,16 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
     },
   });
 
+  const { errors } = form.formState;
+  const { ref: loginRef, ...login } = form.register('login');
+  const { ref: passwordRef, ...password } = form.register('password');
+  const { ref: phoneRef, ...phone } = form.register('phone');
+
   return (
-    <form
-      className="space-y-4"
+    <Stack
+      component="form"
+      spacing={2}
+      noValidate
       onSubmit={(event) => {
         void form.handleSubmit((values) => {
           register.mutate({
@@ -68,116 +87,122 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
         })(event);
       }}
     >
-      <p className="text-ink-700">{t('signUp.lead')}</p>
+      <Typography color="text.secondary">{t('signUp.lead')}</Typography>
 
-      <label className="block">
-        <span className="text-sm text-ink-700">{t('signUp.login.label')}</span>
-        <input
-          {...form.register('login')}
-          autoComplete="username"
-          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-        />
-      </label>
-      {form.formState.errors.login !== undefined && (
-        <p role="alert" className="text-sm text-red-700">
-          {t('error.form.login')}
-        </p>
-      )}
+      <TextField
+        {...login}
+        inputRef={loginRef}
+        label={t('signUp.login.label')}
+        autoComplete="username"
+        size="medium"
+        error={errors.login !== undefined}
+        helperText={errors.login === undefined ? undefined : t('error.form.login')}
+        slotProps={ANNOUNCED}
+      />
 
-      <label className="block">
-        <span className="text-sm text-ink-700">{t('signUp.password.label')}</span>
-        <input
-          {...form.register('password')}
-          type="password"
-          autoComplete="new-password"
-          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-        />
-      </label>
-      {form.formState.errors.password !== undefined && (
-        <p role="alert" className="text-sm text-red-700">
-          {t('error.form.password')}
-        </p>
-      )}
+      <TextField
+        {...password}
+        inputRef={passwordRef}
+        label={t('signUp.password.label')}
+        type="password"
+        autoComplete="new-password"
+        size="medium"
+        error={errors.password !== undefined}
+        helperText={errors.password === undefined ? undefined : t('error.form.password')}
+        slotProps={ANNOUNCED}
+      />
 
-      <label className="block">
-        <span className="text-sm text-ink-700">{t('signUp.phone.label')}</span>
-        <input
-          {...form.register('phone')}
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder={t('login.phone.placeholder')}
-          className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-        />
-      </label>
-      {form.formState.errors.phone !== undefined && (
-        <p role="alert" className="text-sm text-red-700">
-          {t('error.form.phone')}
-        </p>
-      )}
+      <TextField
+        {...phone}
+        inputRef={phoneRef}
+        label={t('signUp.phone.label')}
+        type="tel"
+        autoComplete="tel"
+        placeholder={t('login.phone.placeholder')}
+        size="medium"
+        error={errors.phone !== undefined}
+        helperText={errors.phone === undefined ? undefined : t('error.form.phone')}
+        slotProps={{ ...ANNOUNCED, htmlInput: { inputMode: 'tel' } }}
+      />
 
-      <fieldset className="rounded border border-line p-3">
-        <legend className="px-1 text-sm text-ink-700">{t('signUp.player.title')}</legend>
-        <p className="text-sm text-ink-700">{t('signUp.player.lead')}</p>
+      <Paper component="fieldset" variant="outlined" sx={{ m: 0, px: 2, pt: 1, pb: 2 }}>
+        <Typography component="legend" variant="body2" color="text.secondary" sx={{ px: 0.5 }}>
+          {t('signUp.player.title')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {t('signUp.player.lead')}
+        </Typography>
 
         {chosen === null ? (
           <>
-            <input
+            <TextField
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
               }}
+              type="search"
               placeholder={t('signUp.player.search')}
-              className="mt-2 w-full rounded border border-line-strong px-3 py-2"
+              sx={{ mt: 1.5 }}
+              slotProps={{ htmlInput: { 'aria-label': t('signUp.player.search') } }}
             />
 
             {found.data !== undefined && (
-              <ul aria-label={t('signUp.player.title')} className="mt-2 space-y-1 text-sm">
+              <List dense aria-label={t('signUp.player.title')} sx={{ mt: 1, py: 0 }}>
                 {found.data.items.length === 0 ? (
-                  <li className="text-ink-500">{t('signUp.player.empty')}</li>
+                  <ListItem sx={{ px: 0 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('signUp.player.empty')}
+                    </Typography>
+                  </ListItem>
                 ) : (
                   found.data.items.map((player) => (
-                    <li key={player.id}>
-                      <button
-                        type="button"
+                    <ListItem key={player.id} disablePadding>
+                      <ListItemButton
                         onClick={() => {
                           setChosen(player);
                         }}
-                        className="rounded px-2 py-1 text-red-600 underline"
+                        sx={{ minHeight: 44, borderRadius: 1 }}
                       >
-                        {playerName(player)} · {player.city} · {player.rating}
-                      </button>
-                    </li>
+                        <ListItemText
+                          primary={playerName(player)}
+                          secondary={`${player.city} · ${player.rating}`}
+                        />
+                      </ListItemButton>
+                    </ListItem>
                   ))
                 )}
-              </ul>
+              </List>
             )}
           </>
         ) : (
-          <p className="mt-2 text-sm">
-            <span className="font-medium text-ink-900">{playerName(chosen)}</span>{' '}
-            <button
-              type="button"
+          <Stack direction="row" spacing={1} sx={{ mt: 1.5, alignItems: 'center' }}>
+            <Typography sx={{ fontWeight: 500, flexGrow: 1 }}>{playerName(chosen)}</Typography>
+            <Button
+              variant="text"
               onClick={() => {
                 setChosen(null);
               }}
-              className="text-red-600 underline"
             >
               {t('signUp.player.reset')}
-            </button>
-          </p>
+            </Button>
+          </Stack>
         )}
-      </fieldset>
+      </Paper>
 
       {register.error !== null && (
-        <p role="alert" className="text-sm text-red-700">
-          {t(errorMessageKey(register.error))}
-        </p>
+        <Alert severity="error">{t(errorMessageKey(register.error))}</Alert>
       )}
 
-      <Button variant="primary" type="submit" disabled={register.isPending} className="w-full">
-        {register.isPending ? t('common.loading') : t('signUp.submit')}
+      <Button
+        variant="contained"
+        type="submit"
+        size="large"
+        fullWidth
+        loading={register.isPending}
+        loadingPosition="start"
+      >
+        {t('signUp.submit')}
       </Button>
-    </form>
+    </Stack>
   );
 }

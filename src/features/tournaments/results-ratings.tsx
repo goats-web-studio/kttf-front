@@ -1,7 +1,20 @@
 import type { ParticipantRatingView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { formatDelta, useT } from '@/common/i18n';
+
+/** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
+const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
+
+/** «До» и «после» на телефоне не помещаются: главное — изменение. */
+const WIDE = { display: { xs: 'none', sm: 'table-cell' } } as const;
 
 interface ResultsRatingsProps {
   readonly ratings: readonly ParticipantRatingView[];
@@ -28,49 +41,47 @@ export default function ResultsRatings({ ratings, names }: ResultsRatingsProps):
   }
 
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-ink-900">{t('results.ratings.title')}</h2>
+    <Box component="section" sx={{ mt: 6 }}>
+      <Typography variant="h2">{t('results.ratings.title')}</Typography>
 
-      <table className="mt-3 w-full text-sm">
-        <thead>
-          <tr className="border-b border-line text-left text-ink-500">
-            <th scope="col" className="py-2 font-normal">
-              {t('results.ratings.player')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
+      <Table size="small" stickyHeader={ratings.length > 20} sx={{ mt: 2 }}>
+        <TableHead>
+          <TableRow>
+            <TableCell>{t('results.ratings.player')}</TableCell>
+            <TableCell align="right" sx={WIDE}>
               {t('results.ratings.before')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
-              {t('results.ratings.delta')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
+            </TableCell>
+            <TableCell align="right">{t('results.ratings.delta')}</TableCell>
+            <TableCell align="right" sx={WIDE}>
               {t('results.ratings.after')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {ratings.map((rating) => (
-            <tr key={rating.playerId} className="border-b border-line align-top">
-              <td className="py-2 text-ink-900">
+            <TableRow key={rating.playerId} sx={{ verticalAlign: 'top' }}>
+              <TableCell sx={{ fontWeight: 500 }}>
                 {names.get(rating.playerId) ?? rating.playerId}
                 <Events rating={rating} />
-              </td>
-              <td className="py-2 text-right tabular-nums text-ink-700">
+              </TableCell>
+              <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                 {rating.ratingAtStart ?? '—'}
-              </td>
-              <td className="py-2 text-right font-medium tabular-nums text-ink-900">
+              </TableCell>
+              <TableCell align="right" sx={{ ...NUM, fontWeight: 600 }}>
                 {formatDelta(rating.totalDelta)}
-              </td>
-              <td className="py-2 text-right tabular-nums text-ink-700">
+              </TableCell>
+              <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                 {rating.ratingAfter ?? (
-                  <span className="text-ink-400">{t('results.ratings.pending')}</span>
+                  <Box component="span" sx={{ color: 'text.disabled' }}>
+                    {t('results.ratings.pending')}
+                  </Box>
                 )}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </section>
+        </TableBody>
+      </Table>
+    </Box>
   );
 }
 
@@ -88,17 +99,30 @@ function Events({ rating }: { readonly rating: ParticipantRatingView }): ReactNo
   }
 
   return (
-    <details className="mt-1">
-      <summary className="cursor-pointer text-xs text-ink-500">
+    // Родное раскрытие: работает с клавиатуры и у чтеца экрана без
+    // единой строки кода, а в строке таблицы ему не нужно ничего больше.
+    <Box component="details" sx={{ mt: 0.5, fontWeight: 400 }}>
+      <Box
+        component="summary"
+        sx={{
+          cursor: 'pointer',
+          typography: 'caption',
+          color: 'text.secondary',
+          py: { xs: 1, sm: 0.5 },
+        }}
+      >
         {t('results.ratings.events')}
-      </summary>
-      <ol className="mt-1 space-y-0.5 text-xs tabular-nums text-ink-500">
+      </Box>
+      <Box
+        component="ol"
+        sx={{ m: 0, mt: 0.5, pl: 2.5, typography: 'caption', color: 'text.secondary', ...NUM }}
+      >
         {rating.events.map((event, index) => (
           <li key={event.matchId ?? index}>
             {event.ratingBefore} {formatDelta(event.delta)} = {event.ratingAfter}
           </li>
         ))}
-      </ol>
-    </details>
+      </Box>
+    </Box>
   );
 }

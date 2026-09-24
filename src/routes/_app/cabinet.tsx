@@ -1,6 +1,14 @@
 import type { AuthUserView, CreatePlayerInput, PlayerProfileView } from '@kttf/shared/types';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Container from '@mui/material/Container';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 
 import { formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
@@ -20,6 +28,19 @@ import { playerKeys, playerQuery } from '@/features/players/queries';
 export const Route = createFileRoute('/_app/cabinet')({
   component: CabinetPage,
 });
+
+/** Список «подпись — значение»: столбиком на телефоне, в две колонки с 640px. */
+const PAIRS = {
+  display: 'grid',
+  columnGap: 2,
+  rowGap: 0.5,
+  gridTemplateColumns: { xs: '1fr', sm: 'max-content 1fr' },
+  m: 0,
+  '& dd': { m: 0 },
+} as const;
+
+/** Кнопка на телефоне не ниже 44px — зона нажатия (раздел 9). */
+const TOUCH = { minHeight: { xs: 44, sm: 40 } } as const;
 
 /**
  * Кабинет — ТЗ 2.1 и 2.2.
@@ -41,37 +62,45 @@ function CabinetPage(): ReactNode {
   const user = useSessionStore((state) => state.user);
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="font-display text-display-md font-bold text-ink-900">
-        {t('page.cabinet.title')}
-      </h1>
+    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Typography variant="h1">{t('page.cabinet.title')}</Typography>
 
       {/* Охрана оболочки `_app` без сессии сюда не пускает: ветка нужна типу. */}
       {user !== null && (
         <>
-          <h2 className="mt-8 text-lg font-semibold text-ink-900">{t('cabinet.profile.title')}</h2>
+          <Typography variant="h2" sx={{ mt: 5 }}>
+            {t('cabinet.profile.title')}
+          </Typography>
           {user.playerId === null ? <NewProfile /> : <Profile playerId={user.playerId} />}
 
-          <h2 className="mt-12 text-lg font-semibold text-ink-900">{t('cabinet.account.title')}</h2>
-          <p className="mt-1 text-sm text-ink-700">{t('cabinet.account.lead')}</p>
-          <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-[max-content_1fr]">
-            <dt className="text-ink-500">{t('cabinet.account.phone')}</dt>
-            <dd className="text-ink-900">
+          <Typography variant="h2" sx={{ mt: 6 }}>
+            {t('cabinet.account.title')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            {t('cabinet.account.lead')}
+          </Typography>
+          <Box component="dl" sx={{ ...PAIRS, mt: 2 }}>
+            <Typography component="dt" variant="body2" color="text.secondary">
+              {t('cabinet.account.phone')}
+            </Typography>
+            <Typography component="dd" variant="body2">
               {user.phone}
-              <span className="ml-2 text-xs text-ink-400">{t('cabinet.account.phoneFixed')}</span>
-            </dd>
-          </dl>
+              <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                {t('cabinet.account.phoneFixed')}
+              </Typography>
+            </Typography>
+          </Box>
           <AccountForm user={user} />
 
-          <h3 className="mt-10 text-sm font-semibold text-ink-900">
+          <Typography variant="h3" sx={{ mt: 5 }}>
             {t('account.password.title')}
-          </h3>
+          </Typography>
           <PasswordForm />
 
           <Roles user={user} />
         </>
       )}
-    </section>
+    </Container>
   );
 }
 
@@ -93,7 +122,9 @@ function NewProfile(): ReactNode {
 
   return (
     <>
-      <p className="mt-2 text-ink-700">{t('cabinet.profile.lead')}</p>
+      <Typography color="text.secondary" sx={{ mt: 1 }}>
+        {t('cabinet.profile.lead')}
+      </Typography>
       <PlayerForm
         submitLabel="cabinet.profile.create"
         isPending={create.isPending}
@@ -146,7 +177,7 @@ function Profile({ playerId }: { readonly playerId: string }): ReactNode {
           }}
         />
       ) : (
-        <Card
+        <ProfileCard
           player={player.data}
           onEdit={() => {
             setEditing(true);
@@ -157,7 +188,7 @@ function Profile({ playerId }: { readonly playerId: string }): ReactNode {
   );
 }
 
-function Card({
+function ProfileCard({
   player,
   onEdit,
 }: {
@@ -169,54 +200,62 @@ function Card({
   const clubs = useQuery(clubDirectoryQuery);
 
   return (
-    <div className="mt-6 rounded border border-line bg-paper p-4">
-      <div className="flex items-start gap-4">
-        {player.photoUrl !== null && (
-          <img src={player.photoUrl} alt="" className="size-20 rounded-full object-cover" />
-        )}
-        <div>
-          <p className="text-lg font-medium text-ink-900">{playerName(player)}</p>
-          <p className="mt-1 text-sm text-ink-700">
-            {player.city}
-            {player.clubId !== null && ` · ${clubs.data?.get(player.clubId)?.name ?? ''}`}
-            {/* Своя карточка показывает дату целиком, если она известна:
-                прячут её от посторонних, а не от себя (ADR-037). */}
-            {` · ${player.birthDate === null ? String(player.birthYear) : formatDate(player.birthDate, locale)}`}
-            {player.birthYearOnly && (
-              <span className="ml-2 text-xs text-ink-400">{t('cabinet.profile.yearOnly')}</span>
-            )}
-          </p>
-          <p className="mt-3 text-sm text-ink-700">
-            {t('cabinet.profile.rating')} <span className="tabular-nums">{player.rating}</span>
-          </p>
-        </div>
-      </div>
+    <Card sx={{ mt: 3 }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+          {player.photoUrl !== null && (
+            <Avatar src={player.photoUrl} alt="" sx={{ width: 80, height: 80 }} />
+          )}
+          <Box>
+            <Typography variant="subtitle1" component="p">
+              {playerName(player)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {player.city}
+              {player.clubId !== null && ` · ${clubs.data?.get(player.clubId)?.name ?? ''}`}
+              {/* Своя карточка показывает дату целиком, если она известна:
+                  прячут её от посторонних, а не от себя (ADR-037). */}
+              {` · ${player.birthDate === null ? String(player.birthYear) : formatDate(player.birthDate, locale)}`}
+              {player.birthYearOnly && (
+                <Typography component="span" variant="caption" sx={{ ml: 1 }}>
+                  {t('cabinet.profile.yearOnly')}
+                </Typography>
+              )}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+              {t('cabinet.profile.rating')}{' '}
+              <Box
+                component="span"
+                sx={{ color: 'text.primary', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+              >
+                {player.rating}
+              </Box>
+            </Typography>
+          </Box>
+        </Stack>
 
-      {/* Анкета показывается только заполненной: пустые строки «не указано»
-          на десять полей — это шум, а не сведения. */}
-      <dl className="mt-4 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
-        <Row label="player.form.playingHand" value={handLabel(player.playingHand, t)} />
-        <Row label="player.form.grip" value={gripLabel(player.grip, t)} />
-        <Row label="player.form.blade" value={player.blade} />
-        <Row label="player.form.rubberForehand" value={player.rubberForehand} />
-        <Row label="player.form.rubberBackhand" value={player.rubberBackhand} />
-        <Row label="player.form.coach" value={player.coachName} />
-        <Row label="player.form.bio" value={player.bio} />
-      </dl>
+        {/* Анкета показывается только заполненной: пустые строки «не указано»
+            на десять полей — это шум, а не сведения. */}
+        <Box component="dl" sx={{ ...PAIRS, mt: 2 }}>
+          <Row label="player.form.playingHand" value={handLabel(player.playingHand, t)} />
+          <Row label="player.form.grip" value={gripLabel(player.grip, t)} />
+          <Row label="player.form.blade" value={player.blade} />
+          <Row label="player.form.rubberForehand" value={player.rubberForehand} />
+          <Row label="player.form.rubberBackhand" value={player.rubberBackhand} />
+          <Row label="player.form.coach" value={player.coachName} />
+          <Row label="player.form.bio" value={player.bio} />
+        </Box>
 
-      <div className="mt-4 flex items-center gap-4 text-sm">
-        <button type="button" onClick={onEdit} className="text-red-600 underline">
-          {t('cabinet.profile.edit')}
-        </button>
-        <Link
-          to="/players/$playerId"
-          params={{ playerId: player.id }}
-          className="text-red-600 underline"
-        >
-          {t('cabinet.profile.public')}
-        </Link>
-      </div>
-    </div>
+        <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap' }}>
+          <Button onClick={onEdit} sx={TOUCH}>
+            {t('cabinet.profile.edit')}
+          </Button>
+          <Button variant="text" href={`/players/${player.id}`} sx={TOUCH}>
+            {t('cabinet.profile.public')}
+          </Button>
+        </Stack>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -233,8 +272,12 @@ function Row({
 
   return (
     <>
-      <dt className="text-ink-500">{t(label)}</dt>
-      <dd className="text-ink-900">{value}</dd>
+      <Typography component="dt" variant="body2" color="text.secondary">
+        {t(label)}
+      </Typography>
+      <Typography component="dd" variant="body2">
+        {value}
+      </Typography>
     </>
   );
 }
@@ -270,22 +313,29 @@ function Roles({ user }: { readonly user: AuthUserView }): ReactNode {
   const clubs = useQuery(clubDirectoryQuery);
 
   return (
-    <section className="mt-10">
-      <h3 className="text-sm font-semibold text-ink-900">{t('cabinet.roles.title')}</h3>
+    <Box component="section" sx={{ mt: 5 }}>
+      <Typography variant="h3">{t('cabinet.roles.title')}</Typography>
       {user.clubRoles.length === 0 ? (
-        <p className="mt-1 text-sm text-ink-500">{t('cabinet.roles.empty')}</p>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          {t('cabinet.roles.empty')}
+        </Typography>
       ) : (
-        <ul className="mt-1 space-y-1 text-sm">
+        <Stack component="ul" spacing={0.5} sx={{ mt: 0.5, mb: 0, p: 0, listStyle: 'none' }}>
           {user.clubRoles.map((role) => (
-            <li key={`${role.clubId}-${role.role}`} className="text-ink-700">
+            <Typography
+              key={`${role.clubId}-${role.role}`}
+              component="li"
+              variant="body2"
+              color="text.secondary"
+            >
               {clubs.data?.get(role.clubId)?.name ?? role.clubId}
               {' · '}
               <RoleName role={role.role} />
-            </li>
+            </Typography>
           ))}
-        </ul>
+        </Stack>
       )}
-    </section>
+    </Box>
   );
 }
 

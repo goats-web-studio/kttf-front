@@ -1,3 +1,9 @@
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import Container from '@mui/material/Container';
+import Skeleton from '@mui/material/Skeleton';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
@@ -6,6 +12,7 @@ import { z } from 'zod';
 import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
+import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import HeadToHead from '@/features/players/head-to-head';
 import PlayerMatches from '@/features/players/player-matches';
@@ -56,49 +63,64 @@ function PlayerPage(): ReactNode {
 
   if (!isKnownId || isMissingResource(player.error)) {
     return (
-      <section className="mx-auto max-w-3xl px-4 py-10">
-        <p role="alert" className="py-10 text-center text-ink-700">
+      <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+        <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
           {t('player.notFound')}
-        </p>
-      </section>
+        </Typography>
+      </Container>
     );
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
+    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <QueryState
         isPending={player.isPending}
         error={player.error}
         onRetry={() => void player.refetch()}
+        loading={<HeaderSkeleton />}
       >
         {player.data === undefined ? null : (
           <header>
-            <h1 className="font-display text-display-md font-bold text-ink-900">
-              {playerName(player.data)}
-            </h1>
-            <p className="mt-1 text-ink-700">
+            <Typography variant="h1">{playerName(player.data)}</Typography>
+            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
               {player.data.city}
               {player.data.clubId !== null &&
                 ` · ${clubs.data?.get(player.data.clubId)?.name ?? ''}`}
               {` · ${String(player.data.birthYear)}`}
-            </p>
+            </Typography>
 
-            <p className="mt-4 flex items-baseline gap-3">
+            <Stack
+              direction="row"
+              spacing={1.5}
+              useFlexGap
+              sx={{ mt: 2, alignItems: 'baseline', flexWrap: 'wrap' }}
+            >
               {/* Рейтинг — главное число профиля, дисплейный набор 44px
                   (07-design-system.md, 3.5). Ради него страницу и открывают. */}
-              <span className="font-display text-display-lg font-bold tabular-nums text-ink-900">
+              <Typography
+                variant="h1"
+                component="p"
+                sx={{ fontSize: 44, lineHeight: '44px', fontVariantNumeric: 'tabular-nums' }}
+              >
                 {player.data.rating}
-              </span>
-              <span className="text-sm text-ink-500">
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
                 {t('player.rating.matches')}{' '}
-                <span className="tabular-nums">{player.data.ratedMatches}</span>
-              </span>
+                <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {player.data.ratedMatches}
+                </Box>
+              </Typography>
               {player.data.isProvisional && (
                 // Провизорный рейтинг двигается быстрее: сыграно меньше
                 // двадцати рейтинговых встреч (ТЗ 7.1).
-                <span className="text-sm text-ink-500">{t('ratings.provisional')}</span>
+                <Chip
+                  label={t('ratings.provisional')}
+                  size="small"
+                  variant="outlined"
+                  sx={{ color: 'text.secondary' }}
+                />
               )}
-            </p>
+            </Stack>
           </header>
         )}
       </QueryState>
@@ -111,6 +133,7 @@ function PlayerPage(): ReactNode {
             isPending={history.isPending}
             error={history.error}
             onRetry={() => void history.refetch()}
+            loading={<RowsSkeleton />}
           >
             {history.data === undefined ? null : <PlayerRating history={history.data} />}
           </QueryState>
@@ -130,6 +153,19 @@ function PlayerPage(): ReactNode {
           <PlayerMatches playerId={playerId} onSelectOpponent={setOpponentId} />
         </>
       )}
-    </section>
+    </Container>
+  );
+}
+
+/** Шапка профиля на время загрузки: имя, строка о человеке, рейтинг. */
+function HeaderSkeleton(): ReactNode {
+  const t = useT();
+
+  return (
+    <Box role="status" aria-label={t('common.loading')}>
+      <Skeleton variant="text" width="60%" sx={{ fontSize: 30 }} />
+      <Skeleton variant="text" width="40%" />
+      <Skeleton variant="rounded" width={120} height={44} sx={{ mt: 2 }} />
+    </Box>
   );
 }

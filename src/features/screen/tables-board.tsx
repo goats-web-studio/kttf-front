@@ -1,4 +1,7 @@
 import type { MatchView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -24,34 +27,75 @@ export default function TablesBoard({ tables, names }: TablesBoardProps): ReactN
 
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-wide text-night-ink-500">
+      <Typography variant="h2" color="text.secondary" sx={BOARD_TITLE}>
         {t('screen.tables.title')}
-      </h2>
-      <ul className="mt-3 grid grid-cols-2 gap-3 xl:grid-cols-3">
+      </Typography>
+      <Box
+        component="ul"
+        sx={{
+          mt: 1.5,
+          p: 0,
+          listStyle: 'none',
+          display: 'grid',
+          gap: 1.5,
+          gridTemplateColumns: {
+            xs: 'repeat(2, minmax(0, 1fr))',
+            xl: 'repeat(3, minmax(0, 1fr))',
+          },
+        }}
+      >
         {tables.map((table) => (
-          <li
+          <Paper
             key={table.number}
-            className={`rounded-lg border-2 p-4 ${
-              table.status === 'PLAYING'
-                ? 'border-night-ok bg-night-raised'
+            component="li"
+            variant="outlined"
+            sx={{
+              p: 2,
+              borderWidth: 2,
+              borderRadius: 2,
+              ...(table.status === 'PLAYING'
+                ? { borderColor: 'success.main' }
                 : table.status === 'AWAITING'
-                  ? 'border-night-warn bg-night-raised'
-                  : 'border-night-line bg-night'
-            }`}
+                  ? { borderColor: 'warning.main' }
+                  : { borderColor: 'divider', bgcolor: 'background.default' }),
+            }}
           >
-            <p className="text-3xl font-bold text-night-ink-700 tabular-nums">{table.number}</p>
+            <Typography
+              sx={{
+                fontFamily: DISPLAY,
+                fontSize: 30,
+                lineHeight: '32px',
+                fontWeight: 700,
+                color: 'text.secondary',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {table.number}
+            </Typography>
 
             {table.match === null ? (
-              <p className="mt-2 text-xl text-night-ink-500">{t('screen.table.free')}</p>
+              <Typography color="text.secondary" sx={{ mt: 1, fontSize: 22, lineHeight: '28px' }}>
+                {t('screen.table.free')}
+              </Typography>
             ) : (
               <TableMatch match={table.match} names={names} />
             )}
-          </li>
+          </Paper>
         ))}
-      </ul>
+      </Box>
     </section>
   );
 }
+
+const DISPLAY = "'Oswald', system-ui, sans-serif";
+
+/** Заголовок доски: читается с десяти метров, но не спорит с данными. */
+const BOARD_TITLE = {
+  fontFamily: 'inherit',
+  fontSize: 22,
+  lineHeight: '28px',
+  fontWeight: 600,
+} as const;
 
 function TableMatch({
   match,
@@ -64,7 +108,7 @@ function TableMatch({
   const played = match.setsA !== null && match.setsB !== null;
 
   return (
-    <div className="mt-2 space-y-1">
+    <Box sx={{ mt: 1, display: 'grid', gap: 0.5 }}>
       <Side
         id={match.playerAId}
         names={names}
@@ -77,8 +121,12 @@ function TableMatch({
         sets={match.setsB}
         won={played && (match.setsB ?? 0) > (match.setsA ?? 0)}
       />
-      {!played && <p className="text-lg text-night-ok">{t('screen.match.playing')}</p>}
-    </div>
+      {!played && (
+        <Typography color="success.main" sx={{ fontSize: 17, lineHeight: '26px' }}>
+          {t('screen.match.playing')}
+        </Typography>
+      )}
+    </Box>
   );
 }
 
@@ -95,12 +143,38 @@ function Side({
 }): ReactNode {
   const t = useT();
 
+  // Победитель — цвет, насыщенность и линейка слева: цвет не единственный
+  // носитель смысла (запрет №6).
   return (
-    <p className="flex items-baseline justify-between gap-4 text-2xl">
-      <span className={won ? 'font-bold text-night-red' : 'text-night-ink-500'}>
+    <Box
+      component="p"
+      sx={{
+        m: 0,
+        pl: 1,
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: 2,
+        fontSize: 24,
+        lineHeight: '32px',
+        borderLeft: '3px solid',
+        borderColor: won ? 'primary.main' : 'transparent',
+      }}
+    >
+      <Box
+        component="span"
+        sx={won ? { fontWeight: 700, color: 'primary.main' } : { color: 'text.secondary' }}
+      >
         {id === null ? t('screen.match.pending') : (names.get(id) ?? t('screen.match.pending'))}
-      </span>
-      {sets !== null && <span className="font-bold tabular-nums">{sets}</span>}
-    </p>
+      </Box>
+      {sets !== null && (
+        <Box
+          component="span"
+          sx={{ fontFamily: DISPLAY, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}
+        >
+          {sets}
+        </Box>
+      )}
+    </Box>
   );
 }

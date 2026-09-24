@@ -1,4 +1,11 @@
 import type { RegistrationStatus, ResultParticipantView, TieGroupView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -21,6 +28,12 @@ interface ResultsPlacementsProps {
  * добавляют к строке с местом, а колонка, заполненная у всех, перестаёт
  * привлекать внимание там, где это нужно.
  */
+/** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
+const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
+
+/** Посев на телефоне не помещается: место и игрок важнее. */
+const WIDE = { display: { xs: 'none', sm: 'table-cell' } } as const;
+
 const NOTABLE: ReadonlySet<RegistrationStatus> = new Set<RegistrationStatus>([
   'WITHDRAWN',
   'NO_SHOW',
@@ -43,47 +56,47 @@ export default function ResultsPlacements({
   const t = useT();
 
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-ink-900">{t('results.places.title')}</h2>
+    <Box component="section" sx={{ mt: 6 }}>
+      <Typography variant="h2">{t('results.places.title')}</Typography>
 
-      <table className="mt-3 w-full text-sm">
-        <thead>
-          <tr className="border-b border-line text-left text-ink-500">
-            <th scope="col" className="py-2 pr-4 text-right font-normal">
+      <Table size="small" stickyHeader={participants.length > 20} sx={{ mt: 2 }}>
+        <TableHead>
+          <TableRow>
+            <TableCell align="right" sx={{ width: 48 }}>
               {t('results.places.place')}
-            </th>
-            <th scope="col" className="py-2 font-normal">
-              {t('results.places.player')}
-            </th>
-            <th scope="col" className="py-2 pr-4 text-right font-normal">
+            </TableCell>
+            <TableCell>{t('results.places.player')}</TableCell>
+            <TableCell align="right" sx={WIDE}>
               {t('results.places.seed')}
-            </th>
-            <th scope="col" className="py-2 font-normal">
-              {t('results.places.note')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableCell>
+            <TableCell>{t('results.places.note')}</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {participants.map((participant) => (
-            <tr key={participant.player.id} className="border-b border-line">
-              <td className="py-2 pr-4 text-right font-medium tabular-nums text-ink-900">
-                {participant.place ?? <span className="text-ink-400">—</span>}
-              </td>
-              <td className="py-2 text-ink-900">{playerName(participant.player)}</td>
-              <td className="py-2 pr-4 text-right tabular-nums text-ink-500">
+            <TableRow key={participant.player.id}>
+              <TableCell align="right" sx={{ fontWeight: 600, ...NUM }}>
+                {participant.place ?? (
+                  <Box component="span" sx={{ color: 'text.disabled' }}>
+                    —
+                  </Box>
+                )}
+              </TableCell>
+              <TableCell sx={{ fontWeight: 500 }}>{playerName(participant.player)}</TableCell>
+              <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                 {participant.seed ?? ''}
-              </td>
-              <td className="py-2 text-ink-500">
+              </TableCell>
+              <TableCell sx={{ color: 'text.secondary' }}>
                 <Notes participant={participant} />
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
       <ResultsTies title={t('results.shared.title')} ties={shared} names={names} />
       <ResultsTies title={t('results.unresolved.title')} ties={unresolved} names={names} />
-    </section>
+    </Box>
   );
 }
 

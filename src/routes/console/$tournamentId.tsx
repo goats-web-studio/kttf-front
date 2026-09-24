@@ -1,5 +1,12 @@
 import type { MatchView } from '@kttf/shared/types';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
@@ -70,17 +77,28 @@ function ConsoleScreen(): ReactNode {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-4">
-      <header className="flex flex-wrap items-baseline justify-between gap-4">
-        <div className="flex items-baseline gap-4">
-          <Link to="/console" className="text-sm text-night-ink-500 underline">
+    <Box sx={{ mx: 'auto', width: '100%', maxWidth: 1152, px: 2, py: 2 }}>
+      <Box
+        component="header"
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 2,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+          <Link href="/console" variant="body2" color="text.secondary" underline="always">
             {t('page.console.title')}
           </Link>
-          <h1 className="text-lg font-semibold">{snapshot?.tournament.name ?? ''}</h1>
-        </div>
+          <Typography variant="h1" sx={{ fontSize: 22, lineHeight: '26px' }}>
+            {snapshot?.tournament.name ?? ''}
+          </Typography>
+        </Box>
 
         <SyncBadge queue={queue} />
-      </header>
+      </Box>
 
       <QueryState
         isPending={state.isPending}
@@ -88,10 +106,16 @@ function ConsoleScreen(): ReactNode {
         onRetry={() => void state.refetch()}
       >
         {snapshot === undefined || view === null ? null : (
-          <div className="mt-4 space-y-6">
+          <Stack spacing={3} sx={{ mt: 2 }}>
             <TablesZone tables={view.tables} names={view.names} />
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 3,
+                gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+              }}
+            >
               <PlayingZone
                 matches={view.playing}
                 names={view.names}
@@ -115,7 +139,7 @@ function ConsoleScreen(): ReactNode {
                   assign(matchId, tableNumber);
                 }}
               />
-            </div>
+            </Box>
 
             <TiePanel
               groups={snapshot.standings.groups}
@@ -135,34 +159,37 @@ function ConsoleScreen(): ReactNode {
             />
 
             {view.done && snapshot.tournament.status === 'RUNNING' && (
-              <section className="rounded border border-night-line bg-night-raised p-3">
+              <Paper component="section" variant="outlined" sx={{ p: 1.5 }}>
                 {/* Завершение — единственное действие консоли, которому нужна
                     сеть: рейтинг считает сервер (ТС 6.2, ADR-022). Пока очередь
                     не ушла, закрывать турнир нечем — сервер не видел половины
                     результатов. */}
-                <button
-                  type="button"
+                <Button
+                  variant="contained"
+                  size="large"
                   disabled={finish.isPending || queue.queued > 0 || queue.connection === 'OFFLINE'}
                   onClick={() => {
                     finish.mutate();
                   }}
-                  className="min-h-14 rounded-sm bg-red-600 px-4 font-semibold text-white disabled:opacity-50"
+                  sx={{ minHeight: 56, fontWeight: 600 }}
                 >
                   {t('console.finish')}
-                </button>
+                </Button>
                 {queue.queued > 0 && (
-                  <p className="mt-2 text-sm text-night-warn">{t('console.finish.queueFirst')}</p>
+                  <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+                    {t('console.finish.queueFirst')}
+                  </Typography>
                 )}
                 {finish.error !== null && (
-                  <p role="alert" className="mt-2 text-sm text-night-red">
+                  <Alert severity="error" sx={{ mt: 1 }}>
                     {t(errorMessageKey(finish.error))}
-                  </p>
+                  </Alert>
                 )}
-              </section>
+              </Paper>
             )}
-          </div>
+          </Stack>
         )}
       </QueryState>
-    </div>
+    </Box>
   );
 }

@@ -1,10 +1,15 @@
+import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, type ReactNode } from 'react';
 
 import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
+import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { isClubStaff } from '@/features/clubs/roles';
@@ -61,24 +66,25 @@ function TournamentPage(): ReactNode {
   const data = results.data;
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
-      <Link to="/tournaments" className="text-sm text-red-600 underline">
+    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Link href="/tournaments" variant="body2" sx={{ display: 'inline-block', py: 1.5 }}>
         {t('nav.tournaments')}
       </Link>
 
-      <div className="mt-4">
+      <Box sx={{ mt: 1 }}>
         {/* Ссылку на результаты пересылают в чат клуба, и обрывается она там
             же. Общий текст проверки схемы («проверьте заполненные поля») на
             странице без единого поля человеку ничего не объясняет. */}
         {isMissingResource(results.error) ? (
-          <p role="alert" className="py-10 text-center text-ink-700">
+          <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
             {t('tournament.notFound')}
-          </p>
+          </Typography>
         ) : (
           <QueryState
             isPending={results.isPending}
             error={results.error}
             onRetry={() => void results.refetch()}
+            loading={<RowsSkeleton />}
           >
             {data === undefined ? null : (
               <>
@@ -135,7 +141,7 @@ function TournamentPage(): ReactNode {
             )}
           </QueryState>
         )}
-      </div>
-    </section>
+      </Box>
+    </Container>
   );
 }

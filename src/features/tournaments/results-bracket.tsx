@@ -1,4 +1,7 @@
 import type { BracketSourceView, MatchView, StageView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT, type MessageKey } from '@/common/i18n';
@@ -34,12 +37,12 @@ export default function ResultsBracket({ stages, names }: ResultsBracketProps): 
   }
 
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-ink-900">{t('results.bracket.title')}</h2>
+    <Box component="section" sx={{ mt: 6 }}>
+      <Typography variant="h2">{t('results.bracket.title')}</Typography>
       {bracketed.map((stage) => (
         <StageBracket key={stage.id} stage={stage} names={names} />
       ))}
-    </section>
+    </Box>
   );
 }
 
@@ -54,29 +57,43 @@ function StageBracket({
   const byId = new Map(stage.matches.map((match) => [match.id, match]));
 
   return (
-    <div className="mt-6">
-      <h3 className="text-sm font-semibold text-ink-900">
+    <Box sx={{ mt: 3 }}>
+      <Typography variant="h3">
         {stage.name} · {t(STAGE_TYPE_KEYS[stage.type])}
-      </h3>
+      </Typography>
 
-      <div className="mt-3 flex gap-6 overflow-x-auto pb-2">
+      {/* На телефоне круги листаются свайпом вбок, каждый прилипает к краю
+          (раздел 5.2, BracketView): сетка целиком шире экрана. */}
+      <Box
+        sx={{
+          mt: 1.5,
+          pb: 1,
+          display: 'flex',
+          gap: 3,
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+        }}
+      >
         {rounds(stage.matches).map(([round, matches]) => (
-          <div key={round} className="min-w-56 shrink-0">
-            <p className="text-xs text-ink-500">
+          <Box key={round} sx={{ minWidth: 224, flexShrink: 0, scrollSnapAlign: 'start' }}>
+            <Typography variant="caption" color="text.secondary" component="p">
               {t('results.bracket.round')} {round}
-            </p>
-            <ul className="mt-2 space-y-2">
+            </Typography>
+            <Box
+              component="ul"
+              sx={{ listStyle: 'none', m: 0, mt: 1, p: 0, display: 'grid', gap: 1 }}
+            >
               {matches.map((match) => (
-                <li key={match.id} className="rounded border border-line p-2 text-sm">
+                <Paper key={match.id} component="li" variant="outlined" sx={{ py: 0.5 }}>
                   <Side match={match} side="A" names={names} byId={byId} t={t} />
                   <Side match={match} side="B" names={names} byId={byId} t={t} />
-                </li>
+                </Paper>
               ))}
-            </ul>
-          </div>
+            </Box>
+          </Box>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 
@@ -128,14 +145,40 @@ function Side({
   const won = own !== null && other !== null && own > other;
 
   return (
-    <p className="flex justify-between gap-2">
-      <span className={won ? 'font-semibold text-ink-900' : 'text-ink-700'}>
+    // Победитель — насыщенность, цвет счёта и линейка слева сразу: цвет не
+    // единственный носитель (раздел 3.4, запрет №6).
+    <Box
+      component="p"
+      sx={{
+        m: 0,
+        px: 1,
+        py: 0.5,
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 1,
+        typography: 'body2',
+        borderLeft: 2,
+        borderColor: won ? 'var(--red-500)' : 'transparent',
+      }}
+    >
+      <Box
+        component="span"
+        sx={won ? { fontWeight: 600, color: 'text.primary' } : { color: 'text.secondary' }}
+      >
         {playerId === null
           ? sourceLabel(source, byId, t)
           : (names.get(playerId) ?? t('results.match.unknownPlayer'))}
-      </span>
-      <span className="tabular-nums text-ink-700">{own ?? ''}</span>
-    </p>
+      </Box>
+      <Box
+        component="span"
+        sx={{
+          fontVariantNumeric: 'tabular-nums',
+          ...(won ? { fontWeight: 600, color: 'primary.main' } : { color: 'var(--ink-400)' }),
+        }}
+      >
+        {own ?? ''}
+      </Box>
+    </Box>
   );
 }
 

@@ -1,3 +1,5 @@
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, type ReactNode } from 'react';
 
@@ -61,51 +63,89 @@ function ScreenPage(): ReactNode {
   // стена продолжает показывать последнее известное.
   if (isMissingResource(error)) {
     return (
-      <div className="flex min-h-full items-center justify-center bg-night px-6 text-center">
-        <p role="alert" className="text-3xl text-night-ink-500">
+      <Box
+        sx={{
+          minHeight: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'background.default',
+          px: 3,
+          textAlign: 'center',
+        }}
+      >
+        <Typography role="alert" color="text.secondary" sx={{ fontSize: 30, lineHeight: '36px' }}>
           {t('screen.notFound')}
-        </p>
-      </div>
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-full bg-night px-6 py-5 text-white">
+    <Box
+      sx={{
+        minHeight: '100%',
+        bgcolor: 'background.default',
+        color: 'text.primary',
+        px: 3,
+        py: 2.5,
+      }}
+    >
       <QueryState isPending={isPending} error={error} onRetry={retry}>
         {view === undefined || boards === null ? null : (
           <>
-            <header className="flex items-baseline justify-between gap-6 border-b border-night-line pb-3">
-              <h1 className="font-display text-display-lg font-bold">{view.tournament.name}</h1>
+            <Box
+              component="header"
+              sx={{
+                display: 'flex',
+                alignItems: 'baseline',
+                justifyContent: 'space-between',
+                gap: 3,
+                pb: 1.5,
+                borderBottom: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="h1" sx={{ fontSize: 44, lineHeight: '44px' }}>
+                {view.tournament.name}
+              </Typography>
 
-              <p className="text-lg text-night-ink-500">
+              <Typography color="text.secondary" sx={{ fontSize: 17, lineHeight: '26px' }}>
                 {/* Метка связи важнее времени: на стене висит последнее
                     известное состояние, и зритель обязан знать, что оно
                     перестало обновляться. */}
                 {live ? (
                   formatDateTime(view.updatedAt, locale)
                 ) : (
-                  <span className="text-night-warn">
+                  <Box component="span" sx={{ color: 'warning.main' }}>
                     {t('screen.offline')} · {formatDateTime(view.updatedAt, locale)}
-                  </span>
+                  </Box>
                 )}
-              </p>
-            </header>
+              </Typography>
+            </Box>
 
-            <div className="mt-5 grid gap-8 xl:grid-cols-[2fr_1fr]">
+            <Box
+              sx={{
+                mt: 2.5,
+                display: 'grid',
+                gap: 4,
+                gridTemplateColumns: { xs: '1fr', xl: '2fr 1fr' },
+              }}
+            >
               <TablesBoard tables={boards.tables} names={boards.names} />
               <QueueBoard queue={boards.queue} names={boards.names} />
-            </div>
+            </Box>
 
-            <div className="mt-8">
+            <Box sx={{ mt: 4 }}>
               <StandingsBoard
                 groups={view.standings.groups}
                 names={boards.names}
                 ratings={boards.ratings}
               />
-            </div>
+            </Box>
           </>
         )}
       </QueryState>
-    </div>
+    </Box>
   );
 }

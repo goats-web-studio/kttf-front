@@ -1,4 +1,9 @@
 import type { StageView } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import ToggleButton from '@mui/material/ToggleButton';
+import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
@@ -72,19 +77,21 @@ export default function DrawPreview({ tournamentId, stages, names }: DrawPreview
   };
 
   return (
-    <section className="mt-8">
-      <h2 className="text-lg font-semibold text-ink-900">{t('draw.title')}</h2>
-      <p className="mt-1 text-sm text-ink-700">{t('draw.swap.hint')}</p>
+    <Box component="section" sx={{ mt: 5 }}>
+      <Typography variant="h2">{t('draw.title')}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+        {t('draw.swap.hint')}
+      </Typography>
 
       {swap.error !== null && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <Alert severity="error" sx={{ mt: 2 }}>
           {t(errorMessageKey(swap.error))}
-        </p>
+        </Alert>
       )}
 
       {stages.map((stage) => (
-        <div key={stage.id} className="mt-3">
-          <h3 className="text-sm font-medium text-ink-700">
+        <Box key={stage.id} sx={{ mt: 2 }}>
+          <Typography variant="h3">
             {/* Название этапа задаёт жеребьёвка, и у круговой схемы оно
                 совпадает с названием типа. Повторять его дважды незачем. */}
             {stage.name === t(STAGE_TYPE_KEYS[stage.type])
@@ -92,45 +99,74 @@ export default function DrawPreview({ tournamentId, stages, names }: DrawPreview
               : `${stage.name} · ${t(STAGE_TYPE_KEYS[stage.type])}`}{' '}
             {/* «Встреч: 2», а не «2 встречи»: русское число согласуется
                 с существительным, а системы склонения в словаре нет. */}
-            <span className="font-normal text-ink-500">
-              {t('draw.matches')}: <span className="tabular-nums">{stage.matches.length}</span>
-            </span>
-          </h3>
+            <Typography component="span" color="text.secondary" sx={{ fontWeight: 400 }}>
+              {t('draw.matches')}:{' '}
+              <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                {stage.matches.length}
+              </Box>
+            </Typography>
+          </Typography>
 
-          <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+          <Box
+            component="ul"
+            sx={{
+              listStyle: 'none',
+              m: 0,
+              mt: 1,
+              p: 0,
+              display: 'grid',
+              gap: 1,
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            }}
+          >
             {placementsOf(stage, t('draw.bracket')).map((placement) => (
-              <li key={placement.key} className="rounded border border-line p-3 text-sm">
-                <p className="font-medium text-ink-900">{placement.label}</p>
+              <Paper key={placement.key} component="li" variant="outlined" sx={{ p: 1.5 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {placement.label}
+                </Typography>
                 {/* Список назван группой: у страницы их много, и без имени
                     состав неотличим для чтеца экрана. */}
-                <ol aria-label={placement.label} className="mt-1">
+                <Box
+                  component="ol"
+                  aria-label={placement.label}
+                  sx={{ listStyle: 'none', m: 0, mt: 0.5, p: 0 }}
+                >
                   {placement.participants.map((id) => (
                     // Порядок — посевной: первый в группе сильнейший.
                     <li key={id}>
-                      <button
-                        type="button"
-                        aria-pressed={selected === id}
+                      {/* Выбранный отмечен и заливкой, и нажатым состоянием
+                          для чтеца экрана: цвет не единственный носитель. */}
+                      <ToggleButton
+                        value={id}
+                        size="small"
+                        fullWidth
+                        selected={selected === id}
                         disabled={swap.isPending}
-                        onClick={() => {
+                        onChange={() => {
                           choose(id);
                         }}
-                        className={
-                          selected === id
-                            ? 'rounded bg-red-600 px-2 py-0.5 text-white'
-                            : 'rounded px-2 py-0.5 text-ink-700 hover:bg-paper-hover disabled:text-ink-400'
-                        }
+                        sx={{
+                          justifyContent: 'flex-start',
+                          border: 0,
+                          minHeight: { xs: 44, sm: 32 },
+                          textTransform: 'none',
+                          '&.Mui-selected, &.Mui-selected:hover': {
+                            bgcolor: 'primary.main',
+                            color: 'primary.contrastText',
+                          },
+                        }}
                       >
                         {names.get(id) ?? t('results.match.unknownPlayer')}
-                      </button>
+                      </ToggleButton>
                     </li>
                   ))}
-                </ol>
-              </li>
+                </Box>
+              </Paper>
             ))}
-          </ul>
-        </div>
+          </Box>
+        </Box>
       ))}
-    </section>
+    </Box>
   );
 }
 

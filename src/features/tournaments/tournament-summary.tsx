@@ -1,9 +1,12 @@
 import type { TournamentView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { formatDateTime, formatMoney, useLocale, useT } from '@/common/i18n';
 
-import { TOURNAMENT_LEVEL_KEYS, TOURNAMENT_STATUS_KEYS } from './labels';
+import { TOURNAMENT_LEVEL_KEYS } from './labels';
+import StatusBadge from './status-badge';
 
 interface TournamentSummaryProps {
   readonly tournament: TournamentView;
@@ -21,31 +24,59 @@ export default function TournamentSummary({
 
   return (
     <header>
-      <h1 className="font-display text-display-md font-bold text-ink-900">{tournament.name}</h1>
+      <Typography variant="h1">{tournament.name}</Typography>
 
-      <dl className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
-        <Field label={t('tournament.status')}>{t(TOURNAMENT_STATUS_KEYS[tournament.status])}</Field>
+      <Box
+        component="dl"
+        sx={{
+          mt: 2,
+          mb: 0,
+          display: 'grid',
+          columnGap: 3,
+          rowGap: 1,
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+        }}
+      >
+        <Field label={t('tournament.status')}>
+          <StatusBadge status={tournament.status} />
+        </Field>
         <Field label={t('tournament.startsAt')}>
           {formatDateTime(tournament.startsAt, locale)}
         </Field>
         <Field label={t('tournament.level')}>{t(TOURNAMENT_LEVEL_KEYS[tournament.level])}</Field>
         {clubName !== null && <Field label={t('tournament.club')}>{clubName}</Field>}
-        <Field label={t('tournament.participants')}>{tournament.participantCount}</Field>
-        <Field label={t('tournament.entryFee')}>
-          {tournament.entryFee === 0
-            ? t('tournament.entryFee.free')
-            : formatMoney(tournament.entryFee, locale)}
+        <Field label={t('tournament.participants')}>
+          <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+            {tournament.participantCount}
+          </Box>
         </Field>
-      </dl>
+        <Field label={t('tournament.entryFee')}>
+          <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+            {tournament.entryFee === 0
+              ? t('tournament.entryFee.free')
+              : formatMoney(tournament.entryFee, locale)}
+          </Box>
+        </Field>
+      </Box>
     </header>
   );
 }
 
-function Field({ label, children }: { readonly label: string; readonly children: ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  readonly label: string;
+  readonly children: ReactNode;
+}): ReactNode {
   return (
-    <div className="flex gap-2">
-      <dt className="text-ink-500">{label}</dt>
-      <dd className="text-ink-900">{children}</dd>
-    </div>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, typography: 'body2' }}>
+      <Box component="dt" sx={{ color: 'text.secondary' }}>
+        {label}
+      </Box>
+      <Box component="dd" sx={{ m: 0, color: 'text.primary' }}>
+        {children}
+      </Box>
+    </Box>
   );
 }

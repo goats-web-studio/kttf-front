@@ -1,4 +1,9 @@
 import type { MatchResultInput, MatchView } from '@kttf/shared/types';
+import Button from '@mui/material/Button';
+import ButtonBase from '@mui/material/ButtonBase';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -33,26 +38,42 @@ export default function PlayingZone({
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-night-ink-500">{t('console.playing.title')}</h2>
+      <Typography
+        component="h2"
+        variant="subtitle2"
+        color="text.secondary"
+        sx={{ fontWeight: 600 }}
+      >
+        {t('console.playing.title')}
+      </Typography>
 
       {matches.length === 0 ? (
-        <p className="mt-2 text-sm text-night-ink-500">{t('console.playing.empty')}</p>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {t('console.playing.empty')}
+        </Typography>
       ) : (
-        <ul className="mt-2 space-y-2">
+        <Stack component="ul" spacing={1} sx={{ mt: 1, p: 0, listStyle: 'none' }}>
           {matches.map((match) => (
-            <li key={match.id} className="rounded border border-night-line bg-night-raised p-3">
-              <button
-                type="button"
+            <Paper key={match.id} component="li" variant="outlined" sx={{ p: 1.5 }}>
+              <ButtonBase
+                aria-expanded={openId === match.id}
                 onClick={() => {
                   setOpenId(openId === match.id ? null : match.id);
                 }}
-                className="w-full text-left"
+                sx={{
+                  display: 'block',
+                  width: '100%',
+                  minHeight: 56,
+                  textAlign: 'left',
+                  typography: 'body1',
+                  borderRadius: 1,
+                }}
               >
-                <span className="text-xs text-night-ink-500">
+                <Typography component="span" variant="caption" color="text.secondary">
                   {t('console.table.number')} {match.tableNumber}
-                </span>
+                </Typography>
                 <MatchLine match={match} names={names} />
-              </button>
+              </ButtonBase>
 
               {openId === match.id && (
                 <>
@@ -63,21 +84,22 @@ export default function PlayingZone({
                       onResult(match.id, input);
                     }}
                   />
-                  <button
-                    type="button"
+                  <Button
+                    variant="text"
+                    size="large"
                     onClick={() => {
                       setOpenId(null);
                       onCancel(match.id);
                     }}
-                    className="mt-3 text-sm text-night-ink-500 underline"
+                    sx={{ mt: 1.5, minHeight: 56, color: 'text.secondary' }}
                   >
                     {t('console.match.returnToQueue')}
-                  </button>
+                  </Button>
                 </>
               )}
-            </li>
+            </Paper>
           ))}
-        </ul>
+        </Stack>
       )}
     </section>
   );

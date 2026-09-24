@@ -1,4 +1,14 @@
 import { DEFAULT_PAGE_SIZE, type RegistrationView, type TournamentView } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
@@ -10,7 +20,6 @@ import { playersQuery } from '@/features/players/queries';
 import { registerForTournament } from './api';
 import { eligibilityProblems } from './eligibility-problems';
 import { tournamentKeys } from './queries';
-import Button from '@/common/ui/button';
 
 interface AddParticipantProps {
   readonly tournament: TournamentView;
@@ -22,6 +31,10 @@ interface AddParticipantProps {
  *
  * Поиск по фамилии в базе платформы: у половины игроков клуба аккаунта нет
  * вовсе, их заводит организатор, и записывать их на турнир тоже ему.
+ *
+ * Поиск по кнопке «Найти», а не на каждую букву: выдача — список с кнопкой у
+ * каждой строки, и перестраивать его под пальцем, пока человек печатает,
+ * значит промахиваться мимо «Добавить».
  *
  * Заведение нового игрока прямо отсюда (ТЗ 4.3) не сделано: форма профиля
  * живёт в кабинете, и второй её экземпляр здесь означал бы два места, где
@@ -58,70 +71,89 @@ export default function AddParticipant({
   const problems = eligibilityProblems(add.error);
 
   return (
-    <div className="mt-3 rounded border border-line bg-paper-sunken p-3">
-      <form
-        className="flex flex-wrap items-end gap-3"
+    <Paper variant="outlined" sx={{ mt: 2, p: 2, bgcolor: 'var(--paper-sunken)' }}>
+      <Stack
+        component="form"
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        sx={{ alignItems: { sm: 'flex-start' } }}
         onSubmit={(event) => {
           event.preventDefault();
           setSearch(draft.trim());
         }}
       >
-        <label className="block text-sm">
-          <span className="text-ink-700">{t('participants.search')}</span>
-          <input
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.target.value);
-            }}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2 sm:w-64"
-          />
-        </label>
-        <Button variant="primary" type="submit">
+        <TextField
+          label={t('participants.search')}
+          value={draft}
+          autoComplete="off"
+          onChange={(event) => {
+            setDraft(event.target.value);
+          }}
+          sx={{ maxWidth: { sm: 320 } }}
+        />
+        <Button type="submit" sx={{ minHeight: { xs: 44, sm: 40 } }}>
           {t('participants.find')}
         </Button>
-      </form>
+      </Stack>
 
       {add.error !== null && (
-        <div role="alert" className="mt-2 text-sm text-red-700">
+        <Alert severity="error" sx={{ mt: 2 }}>
           {problems.length === 0 ? (
             t(errorMessageKey(add.error))
           ) : (
-            <ul>
+            <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
               {problems.map((problem) => (
                 <li key={problem}>{t(problem)}</li>
               ))}
-            </ul>
+            </Box>
           )}
-        </div>
+        </Alert>
       )}
 
       {search !== '' && found.data !== undefined && (
-        <ul className="mt-3 divide-y divide-line">
+        <List dense disablePadding sx={{ mt: 1 }}>
           {candidates.length === 0 ? (
-            <li className="py-2 text-sm text-ink-500">{t('ratings.empty')}</li>
+            <ListItem disableGutters>
+              <Typography variant="body2" color="text.secondary">
+                {t('ratings.empty')}
+              </Typography>
+            </ListItem>
           ) : (
             candidates.map((player) => (
-              <li key={player.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <span className="text-ink-900">
-                  {playerName(player)}
-                  <span className="ml-2 text-ink-500">{player.city}</span>
-                  <span className="ml-2 tabular-nums text-ink-500">{player.rating}</span>
-                </span>
-                <button
-                  type="button"
-                  disabled={add.isPending}
-                  onClick={() => {
-                    add.mutate(player.id);
-                  }}
-                  className="text-red-600 underline disabled:text-ink-400"
-                >
-                  {t('participants.add')}
-                </button>
-              </li>
+              <ListItem
+                key={player.id}
+                disableGutters
+                divider
+                secondaryAction={
+                  <Button
+                    variant="text"
+                    size="small"
+                    disabled={add.isPending}
+                    onClick={() => {
+                      add.mutate(player.id);
+                    }}
+                    sx={{ minHeight: { xs: 44, sm: 32 } }}
+                  >
+                    {t('participants.add')}
+                  </Button>
+                }
+              >
+                <ListItemText
+                  primary={playerName(player)}
+                  secondary={
+                    <>
+                      {player.city}{' '}
+                      <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                        {player.rating}
+                      </Box>
+                    </>
+                  }
+                />
+              </ListItem>
             ))
           )}
-        </ul>
+        </List>
       )}
-    </div>
+    </Paper>
   );
 }

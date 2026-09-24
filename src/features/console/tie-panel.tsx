@@ -1,4 +1,9 @@
 import type { GroupStandingsView, StageView, TieDecisionInput } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -44,9 +49,13 @@ export default function TiePanel({
   }
 
   return (
-    <section className="rounded border border-night-warn bg-night-raised p-3">
-      <h2 className="text-sm font-semibold text-night-warn">{t('console.tie.title')}</h2>
-      <p className="mt-1 text-xs text-night-warn">{t('console.tie.lead')}</p>
+    <Paper component="section" variant="outlined" sx={{ p: 1.5, borderColor: 'warning.main' }}>
+      <Typography component="h2" variant="subtitle2" color="warning.main" sx={{ fontWeight: 600 }}>
+        {t('console.tie.title')}
+      </Typography>
+      <Typography variant="caption" color="warning.main" component="p" sx={{ mt: 0.5 }}>
+        {t('console.tie.lead')}
+      </Typography>
 
       {pending.map((group) =>
         group.unresolved.map((tie) => (
@@ -61,7 +70,7 @@ export default function TiePanel({
           />
         )),
       )}
-    </section>
+    </Paper>
   );
 }
 
@@ -104,49 +113,68 @@ function TieOrder({
   }
 
   return (
-    <div className="mt-3 rounded bg-night p-2">
-      <p className="text-xs text-night-ink-500">{label}</p>
-      <ol className="mt-1 space-y-1">
+    <Box sx={{ mt: 1.5, p: 1, borderRadius: 1, bgcolor: 'background.default' }}>
+      <Typography variant="caption" color="text.secondary" component="p">
+        {label}
+      </Typography>
+      <Stack component="ol" spacing={0.5} sx={{ mt: 0.5, p: 0, listStyle: 'none' }}>
         {order.map((participant, index) => (
-          <li key={participant} className="flex items-center gap-2 text-sm">
-            <span className="w-5 text-night-ink-500">{index + 1}.</span>
-            <span className="grow">{names.get(participant) ?? participant}</span>
-            <button
-              type="button"
+          <Box
+            key={participant}
+            component="li"
+            sx={{ display: 'flex', alignItems: 'center', gap: 1, typography: 'body2' }}
+          >
+            <Box
+              component="span"
+              sx={{ width: 20, color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}
+            >
+              {index + 1}.
+            </Box>
+            <Box component="span" sx={{ flexGrow: 1 }}>
+              {names.get(participant) ?? participant}
+            </Box>
+            <Button
+              size="large"
               aria-label={t('console.tie.up')}
               onClick={() => {
                 move(index, -1);
               }}
-              className="rounded bg-night-raised px-2 py-1"
+              sx={ARROW}
             >
               ↑
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              size="large"
               aria-label={t('console.tie.down')}
               onClick={() => {
                 move(index, 1);
               }}
-              className="rounded bg-night-raised px-2 py-1"
+              sx={ARROW}
             >
               ↓
-            </button>
-          </li>
+            </Button>
+          </Box>
         ))}
-      </ol>
+      </Stack>
 
-      <button
-        type="button"
+      {/* Не `contained`: главное действие экрана — завершение турнира
+          (запрет №2). Цвет предупреждения связывает кнопку с панелью. */}
+      <Button
+        color="warning"
+        size="large"
         disabled={isPending || groupId === null}
         onClick={() => {
           if (groupId !== null) {
             onDecide({ groupId, orderedIds: [...order] });
           }
         }}
-        className="mt-2 min-h-14 rounded-sm border border-night-red bg-red-600 px-4 font-semibold text-white disabled:opacity-50"
+        sx={{ mt: 1, minHeight: 56, fontWeight: 600 }}
       >
         {t('console.tie.confirm')}
-      </button>
-    </div>
+      </Button>
+    </Box>
   );
 }
+
+/** Стрелки порядка — квадрат 56px, зона нажатия консоли (раздел 9). */
+const ARROW = { minHeight: 56, minWidth: 56, px: 0, fontSize: 20 } as const;

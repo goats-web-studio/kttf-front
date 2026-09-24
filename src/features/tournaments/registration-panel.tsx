@@ -1,18 +1,36 @@
 import { checkEligibility, type EligibilityProblem } from '@kttf/shared/eligibility';
 import type { RegistrationView, TournamentView } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button, { type ButtonProps } from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
-import { useState, type ReactNode } from 'react';
+import { createLink } from '@tanstack/react-router';
+import { forwardRef, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { formatDateTime, useLocale, useT } from '@/common/i18n';
 import { useSessionStore } from '@/features/auth/session-store';
+import { isClubStaff } from '@/features/clubs/roles';
 import { playerQuery } from '@/features/players/queries';
 
 import { registerForTournament, removeRegistration } from './api';
 import { eligibilityProblems, problemKeys } from './eligibility-problems';
 import { tournamentKeys } from './queries';
-import Button from '@/common/ui/button';
+
+/**
+ * Кнопка-ссылка роутера с параметрами поиска: адрес возврата после входа
+ * уходит параметром, и собирать строку запроса руками незачем.
+ */
+const ButtonLink = createLink(
+  forwardRef<HTMLAnchorElement, Omit<ButtonProps<'a'>, 'component'>>(
+    function ButtonAnchor(props, ref) {
+      return <Button {...props} ref={ref} component="a" />;
+    },
+  ),
+);
 
 interface RegistrationPanelProps {
   readonly tournament: TournamentView;
@@ -107,36 +125,39 @@ export default function RegistrationPanel({
   }
 
   return (
-    <section className="mt-8 rounded border border-line p-4">
-      <h2 className="text-lg font-semibold text-ink-900">{t('registration.title')}</h2>
+    <Paper variant="outlined" component="section" sx={{ mt: 4, p: { xs: 2, sm: 3 } }}>
+      <Typography variant="h2">{t('registration.title')}</Typography>
 
       <Conditions tournament={tournament} registrations={registrations} />
 
-      <p className="mt-3 text-sm text-ink-700">
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
         {t('registration.deadline')} {formatDateTime(deadline, locale)}
-      </p>
+      </Typography>
 
-      <div className="mt-4">
+      <Box sx={{ mt: 2 }}>
         {mine !== undefined ? (
           <>
-            <p className="text-ink-900">
+            <Typography>
               {mine.status === 'WAITLIST' ? t('registration.waitlisted') : t('registration.joined')}
-            </p>
+            </Typography>
             {isExpired ? (
               // Отмена только до дедлайна — ТЗ 4.3. После него снять участника
               // может организатор, и просить об этом придётся его.
-              <p className="mt-2 text-sm text-ink-500">{t('registration.cancelClosed')}</p>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {t('registration.cancelClosed')}
+              </Typography>
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="outlined"
+                color="error"
                 disabled={leave.isPending}
                 onClick={() => {
                   leave.mutate(mine.id);
                 }}
-                className="mt-2 text-sm text-red-600 underline disabled:text-ink-400"
+                sx={{ mt: 1.5, minHeight: 44 }}
               >
                 {t('registration.cancel')}
-              </button>
+              </Button>
             )}
             <Refusal error={leave.error} />
           </>
@@ -147,6 +168,9 @@ export default function RegistrationPanel({
             isSignedIn={user !== null}
             isPending={join.isPending}
             isChecking={playerId !== null && profile.data === undefined}
+            // Главное действие одно на экран (запрет №2). У организатора им
+            // служит шаг проведения турнира, у игрока — запись.
+            isMain={!isClubStaff(user, tournament.clubId)}
             problems={problems}
             error={join.error}
             tournamentId={tournament.id}
@@ -155,8 +179,8 @@ export default function RegistrationPanel({
             }}
           />
         )}
-      </div>
-    </section>
+      </Box>
+    </Paper>
   );
 }
 
@@ -216,18 +240,37 @@ function Conditions({
   }
 
   if (rows.length === 0) {
-    return <p className="mt-2 text-sm text-ink-700">{t('registration.noLimits')}</p>;
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        {t('registration.noLimits')}
+      </Typography>
+    );
   }
 
   return (
-    <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
+    <Box
+      component="dl"
+      sx={{
+        mt: 2,
+        mb: 0,
+        display: 'grid',
+        columnGap: 2,
+        rowGap: 0.5,
+        typography: 'body2',
+        gridTemplateColumns: { xs: '1fr', sm: 'max-content 1fr' },
+      }}
+    >
       {rows.map((row) => (
-        <div key={row.label} className="contents">
-          <dt className="text-ink-500">{row.label}</dt>
-          <dd className="tabular-nums text-ink-900">{row.value}</dd>
-        </div>
+        <Box key={row.label} sx={{ display: 'contents' }}>
+          <Box component="dt" sx={{ color: 'text.secondary' }}>
+            {row.label}
+          </Box>
+          <Box component="dd" sx={{ m: 0, fontVariantNumeric: 'tabular-nums' }}>
+            {row.value}
+          </Box>
+        </Box>
       ))}
-    </dl>
+    </Box>
   );
 }
 
@@ -238,6 +281,7 @@ function Join({
   isSignedIn,
   isPending,
   isChecking,
+  isMain,
   problems,
   error,
   tournamentId,
@@ -248,6 +292,7 @@ function Join({
   readonly isSignedIn: boolean;
   readonly isPending: boolean;
   readonly isChecking: boolean;
+  readonly isMain: boolean;
   readonly problems: readonly EligibilityProblem[];
   readonly error: unknown;
   readonly tournamentId: string;
@@ -256,30 +301,27 @@ function Join({
   const t = useT();
 
   if (isExpired) {
-    return <p className="text-ink-700">{t('registration.expired')}</p>;
+    return <Typography color="text.secondary">{t('registration.expired')}</Typography>;
   }
 
   if (!isSignedIn) {
     return (
-      <Link
+      <ButtonLink
         to="/login"
         search={{ redirect: `/tournaments/${tournamentId}` }}
-        className="text-red-600 underline"
+        sx={{ minHeight: 44 }}
       >
         {t('registration.signInToJoin')}
-      </Link>
+      </ButtonLink>
     );
   }
 
   if (!hasProfile) {
     // Записывается игрок, а не аккаунт: без профиля сервер откажет (ТЗ 2.2).
     return (
-      <p className="text-ink-700">
-        {t('registration.profileRequired')}{' '}
-        <Link to="/cabinet" className="text-red-600 underline">
-          {t('page.cabinet.title')}
-        </Link>
-      </p>
+      <Typography color="text.secondary">
+        {t('registration.profileRequired')} <Link href="/cabinet">{t('page.cabinet.title')}</Link>
+      </Typography>
     );
   }
 
@@ -288,10 +330,11 @@ function Join({
   return (
     <>
       <Button
-        variant="primary"
-        type="button"
+        variant={isMain ? 'contained' : 'outlined'}
+        size="large"
         disabled={isPending || isChecking || blocked}
         onClick={onJoin}
+        sx={{ width: { xs: '100%', sm: 'auto' } }}
       >
         {isPending || isChecking ? t('common.loading') : t('registration.join')}
       </Button>
@@ -305,11 +348,13 @@ function Join({
         неизвестно ещё не значит «нельзя».
       */}
       {blocked ? (
-        <ul role="alert" className="mt-2 text-sm text-red-700">
-          {problemKeys(problems).map((key) => (
-            <li key={key}>{t(key)}</li>
-          ))}
-        </ul>
+        <Alert severity="error" sx={{ mt: 2 }}>
+          <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
+            {problemKeys(problems).map((key) => (
+              <li key={key}>{t(key)}</li>
+            ))}
+          </Box>
+        </Alert>
       ) : null}
 
       <Refusal error={error} />
@@ -344,16 +389,16 @@ function Refusal({ error }: { readonly error: unknown }): ReactNode {
   const problems = eligibilityProblems(error);
 
   return (
-    <div role="alert" className="mt-2 text-sm text-red-700">
+    <Alert severity="error" sx={{ mt: 2 }}>
       {problems.length === 0 ? (
         t(errorMessageKey(error))
       ) : (
-        <ul>
+        <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
           {problems.map((problem) => (
             <li key={problem}>{t(problem)}</li>
           ))}
-        </ul>
+        </Box>
       )}
-    </div>
+    </Alert>
   );
 }

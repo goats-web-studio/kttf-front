@@ -1,3 +1,11 @@
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT, type MessageKey } from '@/common/i18n';
@@ -12,6 +20,14 @@ interface FormatEditorProps {
   readonly participants: number;
   readonly onParticipantsChange: (participants: number) => void;
 }
+
+/** Две колонки от 640px, одна на телефоне: поле во всю ширину пальца. */
+const GRID = {
+  display: 'grid',
+  gap: 2,
+  alignItems: 'center',
+  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+} as const;
 
 /**
  * Редактор схемы проведения — ТЗ 5.2, ADR-024, часть 3.
@@ -40,28 +56,22 @@ export default function FormatEditor({
   const hasGroups = draft.type === 'GROUPS_KNOCKOUT' || draft.type === 'GROUPS_FINAL_GROUPS';
 
   return (
-    <fieldset className="mt-8 rounded border border-line p-4">
-      <legend className="px-1 text-sm font-semibold text-ink-900">
-        {t('tournament.form.format')}
-      </legend>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="tournament.form.formatType">
-          <select
-            aria-label={t('tournament.form.formatType')}
-            value={draft.type}
-            onChange={(event) => {
-              set('type', event.target.value as FormatType);
-            }}
-            className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-          >
-            {FORMAT_KEYS.map(([value, key]) => (
-              <option key={value} value={value}>
-                {t(key)}
-              </option>
-            ))}
-          </select>
-        </Field>
+    <Section legend={t('tournament.form.format')}>
+      <Box sx={GRID}>
+        <TextField
+          select
+          label={t('tournament.form.formatType')}
+          value={draft.type}
+          onChange={(event) => {
+            set('type', event.target.value as FormatType);
+          }}
+        >
+          {FORMAT_KEYS.map(([value, key]) => (
+            <MenuItem key={value} value={value}>
+              {t(key)}
+            </MenuItem>
+          ))}
+        </TextField>
 
         {draft.type === 'ROUND_ROBIN' && (
           <RoundsField
@@ -75,19 +85,17 @@ export default function FormatEditor({
 
         {hasGroups && (
           <>
-            <Field label="tournament.form.sizing">
-              <select
-                aria-label={t('tournament.form.sizing')}
-                value={draft.sizing}
-                onChange={(event) => {
-                  set('sizing', event.target.value === 'size' ? 'size' : 'count');
-                }}
-                className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-              >
-                <option value="count">{t('tournament.form.byGroupCount')}</option>
-                <option value="size">{t('tournament.form.byGroupSize')}</option>
-              </select>
-            </Field>
+            <TextField
+              select
+              label={t('tournament.form.sizing')}
+              value={draft.sizing}
+              onChange={(event) => {
+                set('sizing', event.target.value === 'size' ? 'size' : 'count');
+              }}
+            >
+              <MenuItem value="count">{t('tournament.form.byGroupCount')}</MenuItem>
+              <MenuItem value="size">{t('tournament.form.byGroupSize')}</MenuItem>
+            </TextField>
 
             <NumberField
               label={
@@ -150,25 +158,53 @@ export default function FormatEditor({
         )}
 
         {(draft.type === 'KNOCKOUT' || draft.type === 'GROUPS_KNOCKOUT') && (
-          <label className="flex items-center gap-2 self-end text-sm text-ink-700">
-            <input
-              type="checkbox"
-              checked={draft.thirdPlace}
-              onChange={(event) => {
-                set('thirdPlace', event.target.checked);
-              }}
-            />
-            {t('tournament.form.thirdPlace')}
-          </label>
+          <FormControlLabel
+            sx={{ minHeight: 44 }}
+            label={t('tournament.form.thirdPlace')}
+            control={
+              <Checkbox
+                checked={draft.thirdPlace}
+                onChange={(event) => {
+                  set('thirdPlace', event.target.checked);
+                }}
+              />
+            }
+          />
         )}
-      </div>
+      </Box>
 
       <Preview
         draft={draft}
         participants={participants}
         onParticipantsChange={onParticipantsChange}
       />
-    </fieldset>
+    </Section>
+  );
+}
+
+/**
+ * Раздел формы турнира: рамка без тени (запрет №13), подпись — название
+ * группы полей. Общий у редактора схемы и формы создания: разделы одной
+ * формы обязаны выглядеть одинаково.
+ */
+export function Section({
+  legend,
+  children,
+}: {
+  readonly legend: string;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <Paper
+      variant="outlined"
+      component="fieldset"
+      sx={{ m: 0, mt: 4, px: { xs: 2, sm: 3 }, pt: 1, pb: { xs: 2, sm: 3 }, minWidth: 0 }}
+    >
+      <Typography component="legend" variant="h3" sx={{ px: 0.5, mb: 1 }}>
+        {legend}
+      </Typography>
+      {children}
+    </Paper>
   );
 }
 
@@ -223,39 +259,51 @@ function Preview({
   rows.push({ key: 'tournament.preview.totalMatches', value: String(preview.totalMatches) });
 
   return (
-    <div className="mt-5 border-t border-line pt-4">
-      <label className="block text-sm">
-        <span className="text-ink-700">{t('tournament.preview.participants')}</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={2}
-          value={participants}
-          onChange={(event) => {
-            onParticipantsChange(Number(event.target.value));
-          }}
-          className="mt-1 w-28 rounded border border-line-strong px-3 py-2"
-        />
-      </label>
+    <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+      <TextField
+        label={t('tournament.preview.participants')}
+        type="number"
+        value={participants}
+        onChange={(event) => {
+          onParticipantsChange(Number(event.target.value));
+        }}
+        slotProps={{ htmlInput: { inputMode: 'numeric', min: 2 } }}
+        sx={{ width: 160 }}
+      />
 
-      <dl className="mt-3 grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]">
+      <Box
+        component="dl"
+        sx={{
+          mt: 2,
+          mb: 0,
+          display: 'grid',
+          columnGap: 2,
+          rowGap: 0.5,
+          typography: 'body2',
+          gridTemplateColumns: { xs: '1fr', sm: 'max-content 1fr' },
+        }}
+      >
         {rows.map((row) => (
-          <div key={row.key} className="contents">
-            <dt className="text-ink-500">{t(row.key)}</dt>
-            <dd className="tabular-nums text-ink-900">{row.value}</dd>
-          </div>
+          <Box key={row.key} sx={{ display: 'contents' }}>
+            <Box component="dt" sx={{ color: 'text.secondary' }}>
+              {t(row.key)}
+            </Box>
+            <Box component="dd" sx={{ m: 0, fontVariantNumeric: 'tabular-nums' }}>
+              {row.value}
+            </Box>
+          </Box>
         ))}
-      </dl>
+      </Box>
 
       {preview.tooFewAdvancing && (
         // Ровно та проверка, которой жеребьёвка отвергает конфигурацию.
         // Здесь она предупреждение: настоящее число участников выяснится
         // к жеребьёвке, и запрещать создание по догадке не за что.
-        <p role="alert" className="mt-3 text-sm text-warn-text">
+        <Alert severity="warning" sx={{ mt: 2 }}>
           {t('tournament.preview.tooFewAdvancing')}
-        </p>
+        </Alert>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -284,19 +332,17 @@ function RoundsField({
   const t = useT();
 
   return (
-    <Field label={label}>
-      <select
-        aria-label={t(label)}
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value === '2' ? 2 : 1);
-        }}
-        className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-      >
-        <option value="1">{t('tournament.form.oneRound')}</option>
-        <option value="2">{t('tournament.form.twoRounds')}</option>
-      </select>
-    </Field>
+    <TextField
+      select
+      label={t(label)}
+      value={String(value)}
+      onChange={(event) => {
+        onChange(event.target.value === '2' ? 2 : 1);
+      }}
+    >
+      <MenuItem value="1">{t('tournament.form.oneRound')}</MenuItem>
+      <MenuItem value="2">{t('tournament.form.twoRounds')}</MenuItem>
+    </TextField>
   );
 }
 
@@ -313,20 +359,18 @@ function SetsField({
   const t = useT();
 
   return (
-    <Field label={label}>
-      <select
-        aria-label={t(label)}
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value === '2' ? 2 : event.target.value === '4' ? 4 : 3);
-        }}
-        className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-      >
-        <option value="2">{t('tournament.form.bo3')}</option>
-        <option value="3">{t('tournament.form.bo5')}</option>
-        <option value="4">{t('tournament.form.bo7')}</option>
-      </select>
-    </Field>
+    <TextField
+      select
+      label={t(label)}
+      value={String(value)}
+      onChange={(event) => {
+        onChange(event.target.value === '2' ? 2 : event.target.value === '4' ? 4 : 3);
+      }}
+    >
+      <MenuItem value="2">{t('tournament.form.bo3')}</MenuItem>
+      <MenuItem value="3">{t('tournament.form.bo5')}</MenuItem>
+      <MenuItem value="4">{t('tournament.form.bo7')}</MenuItem>
+    </TextField>
   );
 }
 
@@ -342,35 +386,14 @@ function NumberField({
   const t = useT();
 
   return (
-    <Field label={label}>
-      <input
-        aria-label={t(label)}
-        type="number"
-        inputMode="numeric"
-        min={1}
-        value={value}
-        onChange={(event) => {
-          onChange(Number(event.target.value));
-        }}
-        className="mt-1 w-full rounded border border-line-strong px-3 py-2"
-      />
-    </Field>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  readonly label: MessageKey;
-  readonly children: ReactNode;
-}): ReactNode {
-  const t = useT();
-
-  return (
-    <label className="block text-sm">
-      <span className="text-ink-700">{t(label)}</span>
-      {children}
-    </label>
+    <TextField
+      label={t(label)}
+      type="number"
+      value={value}
+      onChange={(event) => {
+        onChange(Number(event.target.value));
+      }}
+      slotProps={{ htmlInput: { inputMode: 'numeric', min: 1 } }}
+    />
   );
 }

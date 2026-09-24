@@ -1,4 +1,12 @@
 import type { GroupStandingsView, MatchView, StageView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -37,7 +45,14 @@ export default function StandingsPanel({
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-night-ink-500">{t('console.standings.title')}</h2>
+      <Typography
+        component="h2"
+        variant="subtitle2"
+        color="text.secondary"
+        sx={{ fontWeight: 600 }}
+      >
+        {t('console.standings.title')}
+      </Typography>
       {groups.map((group) => (
         <GroupTable
           key={`${group.stageId}:${group.groupId ?? 'single'}`}
@@ -85,71 +100,102 @@ function GroupTable({
   const order = group.rows.map((row) => row.participant);
 
   return (
-    <div className="mt-3 overflow-x-auto rounded border border-night-line bg-night-raised p-3">
-      <p className="text-sm font-semibold">{group.label}</p>
-
-      <table className="mt-2 w-full text-xs">
-        <thead>
-          <tr className="text-left text-night-ink-500">
-            <th scope="col" className="py-1 font-normal">
-              {t('console.standings.player')}
-            </th>
+    <Paper variant="outlined" sx={{ mt: 1.5, p: 1.5, overflowX: 'auto' }}>
+      <Table size="small" sx={{ '& .MuiTableCell-root': CELL, '& caption': CAPTION }}>
+        <caption>{group.label}</caption>
+        <TableHead>
+          <TableRow>
+            <TableCell scope="col">{t('console.standings.player')}</TableCell>
             {order.map((_participant, index) => (
-              <th key={index} scope="col" className="px-1 py-1 text-center font-normal">
+              <TableCell key={index} scope="col" align="center">
                 {index + 1}
-              </th>
+              </TableCell>
             ))}
-            <th scope="col" className="px-1 py-1 text-right font-normal">
+            <TableCell scope="col" align="right">
               {t('console.standings.points')}
-            </th>
-            <th scope="col" className="px-1 py-1 text-right font-normal">
+            </TableCell>
+            <TableCell scope="col" align="right">
               {t('console.standings.sets')}
-            </th>
-            <th scope="col" className="px-1 py-1 text-right font-normal">
+            </TableCell>
+            <TableCell scope="col" align="right">
               {t('console.standings.balls')}
-            </th>
-            <th scope="col" className="px-1 py-1 text-right font-normal">
+            </TableCell>
+            <TableCell scope="col" align="right">
               {t('console.standings.place')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {group.rows.map((row, index) => (
-            <tr key={row.participant} className="border-t border-night-line">
-              <th scope="row" className="py-1 text-left font-normal">
-                <span className="text-night-ink-500">{index + 1}.</span>{' '}
+            <TableRow key={row.participant}>
+              <TableCell component="th" scope="row">
+                <Box component="span" sx={{ color: 'text.secondary' }}>
+                  {index + 1}.
+                </Box>{' '}
                 {names.get(row.participant) ?? row.participant}{' '}
                 {/* Рейтинг рядом с фамилией — ТЗ 6.6. */}
-                <span className="text-night-ink-500">{ratings.get(row.participant) ?? ''}</span>
-              </th>
+                <Box component="span" sx={{ color: 'text.secondary' }}>
+                  {ratings.get(row.participant) ?? ''}
+                </Box>
+              </TableCell>
 
               {order.map((opponent, column) => (
-                <td key={column} className="px-1 py-1 text-center tabular-nums">
+                <TableCell key={column} align="center">
                   {column === index ? (
-                    <span className="text-night-ink-400">×</span>
+                    <Box component="span" sx={{ color: 'text.disabled' }}>
+                      ×
+                    </Box>
                   ) : (
                     (scoreBetween(matches, row.participant, opponent) ?? (
-                      <span className="text-night-ink-400">—</span>
+                      <Box component="span" sx={{ color: 'text.disabled' }}>
+                        —
+                      </Box>
                     ))
                   )}
-                </td>
+                </TableCell>
               ))}
 
-              <td className="px-1 py-1 text-right font-semibold tabular-nums">{row.points}</td>
-              <td className="px-1 py-1 text-right tabular-nums text-night-ink-700">
+              <TableCell align="right" sx={{ fontWeight: 600 }}>
+                {row.points}
+              </TableCell>
+              <TableCell align="right" sx={{ color: 'text.secondary' }}>
                 {row.setDiff > 0 ? `+${String(row.setDiff)}` : row.setDiff}
-              </td>
-              <td className="px-1 py-1 text-right tabular-nums text-night-ink-700">
+              </TableCell>
+              <TableCell align="right" sx={{ color: 'text.secondary' }}>
                 {row.ballDiff > 0 ? `+${String(row.ballDiff)}` : row.ballDiff}
-              </td>
-              <td className="px-1 py-1 text-right font-semibold tabular-nums">
+              </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600 }}>
                 {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
-                {row.place ?? <span className="text-night-warn">?</span>}
-              </td>
-            </tr>
+                {row.place ?? (
+                  <Box component="span" sx={{ color: 'warning.main' }}>
+                    ?
+                  </Box>
+                )}
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </Paper>
   );
 }
+
+/** Название группы над таблицей, а не под ней, как ставит MUI. */
+const CAPTION = {
+  captionSide: 'top',
+  p: 0,
+  pb: 1,
+  textAlign: 'left',
+  typography: 'body2',
+  fontWeight: 600,
+  color: 'text.primary',
+} as const;
+
+/** Плотная матрица: ячейки узкие, цифры столбиком. */
+const CELL = {
+  px: 0.5,
+  py: 0.5,
+  fontSize: 12,
+  lineHeight: '18px',
+  fontVariantNumeric: 'tabular-nums',
+} as const;

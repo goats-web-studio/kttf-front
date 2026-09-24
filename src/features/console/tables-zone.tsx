@@ -1,3 +1,6 @@
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -22,40 +25,73 @@ export default function TablesZone({ tables, names }: TablesZoneProps): ReactNod
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-night-ink-500">{t('console.tables.title')}</h2>
-      <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <Typography
+        component="h2"
+        variant="subtitle2"
+        color="text.secondary"
+        sx={{ fontWeight: 600 }}
+      >
+        {t('console.tables.title')}
+      </Typography>
+      <Box
+        component="ul"
+        sx={{
+          mt: 1,
+          p: 0,
+          listStyle: 'none',
+          display: 'grid',
+          gap: 1,
+          gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))' },
+        }}
+      >
         {tables.map((table) => (
-          <li
+          <Paper
             key={table.number}
+            component="li"
+            variant="outlined"
             // Идущий матч маркируется красным — принцип 1.3 дизайн-системы.
             // Состояние при этом всегда написано словом рядом: цвет здесь
             // второй носитель смысла, а не единственный (запрет №6).
-            className={`rounded-sm border p-2 text-sm ${
-              table.status === 'PLAYING'
-                ? 'border-night-red bg-night-raised'
-                : table.status === 'AWAITING'
-                  ? 'border-night-warn bg-night-raised'
-                  : 'border-night-line bg-night-raised'
-            }`}
+            sx={{
+              p: 1,
+              typography: 'body2',
+              borderColor:
+                table.status === 'PLAYING'
+                  ? 'primary.main'
+                  : table.status === 'AWAITING'
+                    ? 'warning.main'
+                    : 'divider',
+            }}
           >
-            <p className="flex items-baseline justify-between">
-              <span className="font-semibold">{table.number}</span>
-              <span className="text-xs text-night-ink-500">
+            <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <Box
+                component="span"
+                sx={{
+                  fontFamily: "'Oswald', system-ui, sans-serif",
+                  fontSize: 22,
+                  lineHeight: '26px',
+                  fontWeight: 600,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {table.number}
+              </Box>
+              <Typography component="span" variant="caption" color="text.secondary">
                 {table.status === 'PLAYING'
                   ? t('console.table.busy')
                   : table.status === 'AWAITING'
                     ? t('console.table.awaiting')
                     : t('console.table.free')}
-              </span>
-            </p>
+              </Typography>
+            </Box>
             {table.match !== null && (
-              <p className="mt-1 text-xs">
+              <Box sx={{ mt: 0.5, typography: 'caption' }}>
                 <MatchLine match={table.match} names={names} />
-              </p>
+              </Box>
             )}
-          </li>
+          </Paper>
         ))}
-      </ul>
+      </Box>
     </section>
   );
 }

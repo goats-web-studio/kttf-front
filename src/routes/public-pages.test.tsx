@@ -184,9 +184,9 @@ describe('фильтры в адресе', () => {
     });
     // Чип активного фильтра — отдельно от выбранного значения в поле.
     expect(
-      screen.getAllByText(ru['tournament.status.REG_OPEN']).some((node) =>
-        node.closest('.MuiChip-root'),
-      ),
+      screen
+        .getAllByText(ru['tournament.status.REG_OPEN'])
+        .some((node) => node.closest('.MuiChip-root')),
     ).toBe(true);
   });
 

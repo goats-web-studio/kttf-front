@@ -355,9 +355,17 @@ describe('панель организатора', () => {
     // с теми же настройками. Копирует сервер — форма их не пересобирает.
     renderTournament(USER_WITH_PROFILE);
 
-    fireEvent.change(await screen.findByLabelText(ru['tournament.form.startsAt']), {
-      target: { value: '2026-12-01T10:00' },
-    });
+    // Поле выбора разбито на секции; скрытое поле под ними принимает дату
+    // строкой в формате языка интерфейса.
+    const [field] = (await screen.findAllByLabelText(ru['tournament.form.startsAt'])).filter(
+      (node) => node instanceof HTMLInputElement,
+    );
+
+    if (field === undefined) {
+      throw new Error('Поле даты начала не найдено');
+    }
+
+    fireEvent.change(field, { target: { value: '01.12.2026 10:00' } });
     fireEvent.click(screen.getByRole('button', { name: ru['tournament.repeat.submit'] }));
 
     await waitFor(() => {

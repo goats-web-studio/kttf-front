@@ -1,9 +1,14 @@
 import { DEFAULT_PAGE_SIZE } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import EmptyState from '@/common/ui/empty-state';
+import Pagination from '@/common/ui/pagination';
 import QueryState from '@/common/ui/query-state';
+import { RowsSkeleton } from '@/common/ui/skeleton';
 
 import MatchesTable from './matches-table';
 import { playerMatchesQuery } from './queries';
@@ -38,48 +43,25 @@ export default function PlayerMatches({
       : Math.max(1, Math.ceil(matches.data.total / matches.data.limit));
 
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-ink-900">{t('player.matches.title')}</h2>
+    <Box component="section" sx={{ mt: 5 }}>
+      <Typography variant="h2">{t('player.matches.title')}</Typography>
 
       <QueryState
         isPending={matches.isPending}
         error={matches.error}
         onRetry={() => void matches.refetch()}
+        loading={<RowsSkeleton />}
       >
         {matches.data === undefined ? null : matches.data.items.length === 0 ? (
-          <p className="mt-3 text-ink-500">{t('player.matches.empty')}</p>
+          <Box sx={{ mt: 2 }}>
+            <EmptyState title={t('player.matches.empty')} />
+          </Box>
         ) : (
           <MatchesTable matches={matches.data.items} onSelectOpponent={onSelectOpponent} />
         )}
       </QueryState>
 
-      {pages > 1 && (
-        <nav className="mt-6 flex items-center justify-center gap-4 text-sm">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => {
-              setPage(page - 1);
-            }}
-            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
-          >
-            {t('common.prev')}
-          </button>
-          <span className="text-ink-700">
-            {t('common.page')} {page} / {pages}
-          </span>
-          <button
-            type="button"
-            disabled={page >= pages}
-            onClick={() => {
-              setPage(page + 1);
-            }}
-            className="text-red-600 underline disabled:text-ink-400 disabled:no-underline"
-          >
-            {t('common.next')}
-          </button>
-        </nav>
-      )}
-    </section>
+      <Pagination page={page} pages={pages} onPage={setPage} />
+    </Box>
   );
 }

@@ -1,9 +1,26 @@
 import type { GroupStandingsView, TournamentStandingsView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 
 import ResultsTies from './results-ties';
+
+/** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
+const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
+
+/**
+ * Колонка с фамилиями липкая при прокрутке вбок (раздел 6.1): на телефоне
+ * таблица шире экрана, и без имени строка цифр ничего не значит.
+ */
+const STICKY = { position: 'sticky', left: 0, zIndex: 1, bgcolor: 'background.paper' } as const;
 
 interface ResultsStandingsProps {
   readonly standings: TournamentStandingsView;
@@ -28,8 +45,8 @@ export default function ResultsStandings({ standings, names }: ResultsStandingsP
   }
 
   return (
-    <section className="mt-10">
-      <h2 className="text-lg font-semibold text-ink-900">{t('results.standings.title')}</h2>
+    <Box component="section" sx={{ mt: 6 }}>
+      <Typography variant="h2">{t('results.standings.title')}</Typography>
       {standings.groups.map((group) => (
         <GroupTable
           key={`${group.stageId}:${group.groupId ?? 'single'}`}
@@ -37,7 +54,7 @@ export default function ResultsStandings({ standings, names }: ResultsStandingsP
           names={names}
         />
       ))}
-    </section>
+    </Box>
   );
 }
 
@@ -51,68 +68,78 @@ function GroupTable({
   const t = useT();
 
   return (
-    <div className="mt-6 overflow-x-auto">
-      <h3 className="text-sm font-semibold text-ink-900">{group.label}</h3>
-      <table className="mt-2 w-full min-w-lg text-sm">
-        <thead>
-          <tr className="border-b border-line text-left text-ink-500">
-            <th scope="col" className="py-2 pr-4 text-right font-normal">
-              {t('standings.place')}
-            </th>
-            <th scope="col" className="py-2 font-normal">
-              {t('standings.player')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
-              {t('standings.played')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
-              {t('standings.wins')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
-              {t('standings.losses')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
-              {t('standings.points')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
-              {t('standings.sets')}
-            </th>
-            <th scope="col" className="py-2 text-right font-normal">
-              {t('standings.balls')}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {group.rows.map((row) => (
-            <tr key={row.participant} className="border-b border-line">
-              <td className="py-2 pr-4 text-right font-medium tabular-nums text-ink-900">
-                {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
-                {row.place ?? <span className="text-ink-400">—</span>}
-              </td>
-              <td className="py-2 text-ink-900">{names.get(row.participant) ?? row.participant}</td>
-              <td className="py-2 text-right tabular-nums text-ink-700">{row.played}</td>
-              <td className="py-2 text-right tabular-nums text-ink-700">{row.wins}</td>
-              <td className="py-2 text-right tabular-nums text-ink-700">{row.losses}</td>
-              <td className="py-2 text-right font-medium tabular-nums text-ink-900">
-                {row.points}
-              </td>
-              <td className="py-2 text-right tabular-nums text-ink-700">
-                {row.setsWon} : {row.setsLost} <Diff value={row.setDiff} />
-              </td>
-              <td className="py-2 text-right tabular-nums text-ink-700">
-                {row.ballsWon} : {row.ballsLost} <Diff value={row.ballDiff} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <Box sx={{ mt: 3 }}>
+      <Typography variant="h3">{group.label}</Typography>
+      <TableContainer sx={{ mt: 1 }}>
+        <Table size="small" sx={{ minWidth: 512 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell align="right" sx={{ width: 48 }}>
+                {t('standings.place')}
+              </TableCell>
+              <TableCell sx={STICKY}>{t('standings.player')}</TableCell>
+              <TableCell align="right">{t('standings.played')}</TableCell>
+              <TableCell align="right">{t('standings.wins')}</TableCell>
+              <TableCell align="right">{t('standings.losses')}</TableCell>
+              <TableCell align="right">{t('standings.points')}</TableCell>
+              <TableCell align="right">{t('standings.sets')}</TableCell>
+              <TableCell align="right">{t('standings.balls')}</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {group.rows.map((row) => (
+              <TableRow key={row.participant}>
+                <TableCell align="right" sx={{ fontWeight: 600, ...NUM }}>
+                  {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
+                  {row.place ?? (
+                    <Box component="span" sx={{ color: 'text.disabled' }}>
+                      —
+                    </Box>
+                  )}
+                </TableCell>
+                <TableCell sx={{ ...STICKY, fontWeight: 500 }}>
+                  {names.get(row.participant) ?? row.participant}
+                </TableCell>
+                <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
+                  {row.played}
+                </TableCell>
+                <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
+                  {row.wins}
+                </TableCell>
+                <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
+                  {row.losses}
+                </TableCell>
+                <TableCell align="right" sx={{ ...NUM, fontWeight: 600 }}>
+                  {row.points}
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ ...NUM, color: 'text.secondary', whiteSpace: 'nowrap' }}
+                >
+                  {row.setsWon} : {row.setsLost} <Diff value={row.setDiff} />
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ ...NUM, color: 'text.secondary', whiteSpace: 'nowrap' }}
+                >
+                  {row.ballsWon} : {row.ballsLost} <Diff value={row.ballDiff} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       <ResultsTies title={t('results.unresolved.title')} ties={group.unresolved} names={names} />
-    </div>
+    </Box>
   );
 }
 
 /** Разница со знаком: по ней читается порядок, когда очки равны (ТЗ 6.6). */
 function Diff({ value }: { readonly value: number }): ReactNode {
-  return <span className="text-ink-400">{value > 0 ? `+${String(value)}` : String(value)}</span>;
+  return (
+    <Box component="span" sx={{ color: 'text.disabled' }}>
+      {value > 0 ? `+${String(value)}` : String(value)}
+    </Box>
+  );
 }

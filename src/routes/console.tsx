@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
@@ -32,9 +33,19 @@ export const Route = createFileRoute('/console')({
 function ConsoleLayout(): ReactNode {
   return (
     <ThemeRoot theme="night">
-      <div className="on-night flex h-full flex-col bg-night text-night-ink-900">
+      {/* on-night — обводка фокуса в ночном цвете (styles.css). */}
+      <Box
+        className="on-night"
+        sx={{
+          display: 'flex',
+          height: '100%',
+          flexDirection: 'column',
+          bgcolor: 'background.default',
+          color: 'text.primary',
+        }}
+      >
         <Outlet />
-      </div>
+      </Box>
     </ThemeRoot>
   );
 }

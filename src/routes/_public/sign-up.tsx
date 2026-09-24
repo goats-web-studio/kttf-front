@@ -1,3 +1,5 @@
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
@@ -19,10 +21,10 @@ function SignUpPage(): ReactNode {
   const navigate = useNavigate();
 
   return (
-    <section className="mx-auto max-w-sm px-4 py-12">
-      <h1 className="mb-6 font-display text-display-md font-bold text-ink-900">
+    <Container maxWidth="xs" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Typography variant="h1" sx={{ mb: 3 }}>
         {t('page.signUp.title')}
-      </h1>
+      </Typography>
       <SignUpForm
         onSignedUp={() => {
           // После регистрации человек попадает в кабинет: там он дозаполняет
@@ -30,6 +32,6 @@ function SignUpPage(): ReactNode {
           void navigate({ to: '/cabinet' });
         }}
       />
-    </section>
+    </Container>
   );
 }

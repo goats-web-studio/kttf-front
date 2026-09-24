@@ -97,12 +97,18 @@ function fillRequired(): void {
     target: { value: 'Асан' },
   });
   // Год выводится из даты: отдельного поля года в форме нет (ADR-037).
-  fireEvent.change(screen.getByLabelText(new RegExp(ru['player.form.birthDate'])), {
-    target: { value: '2000-04-12' },
-  });
-  fireEvent.change(screen.getByLabelText(ru['player.form.gender']), {
-    target: { value: 'MALE' },
-  });
+  // Поле даты MUI подписано и группой секций, и скрытым вводом; значение
+  // принимает ввод, в формате поля — день, месяц, год.
+  const birthDate = screen
+    .getAllByLabelText(new RegExp(ru['player.form.birthDate']))
+    .find((element): element is HTMLInputElement => element instanceof HTMLInputElement);
+  if (birthDate === undefined) {
+    throw new Error('Нет поля даты рождения');
+  }
+  fireEvent.change(birthDate, { target: { value: '12.04.2000' } });
+  // Список MUI открывается нажатием, а не сменой значения родного select.
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['player.form.gender'] }));
+  fireEvent.click(screen.getByRole('option', { name: ru['player.gender.MALE'] }));
   fireEvent.change(screen.getByLabelText(ru['player.form.city']), {
     target: { value: 'Алматы' },
   });
@@ -334,7 +340,9 @@ describe('дата рождения', () => {
     await screen.findByText(ru['cabinet.profile.lead']);
 
     expect(screen.queryByLabelText(ru['player.form.birthYear'])).toBeNull();
-    expect(screen.getByLabelText(new RegExp(ru['player.form.birthDate']))).toBeDefined();
+    expect(
+      screen.getByRole('group', { name: new RegExp(ru['player.form.birthDate']) }),
+    ).toBeDefined();
   });
 
   it('год уходит на сервер выведенным из даты', async () => {

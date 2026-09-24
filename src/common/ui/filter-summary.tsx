@@ -61,12 +61,7 @@ export default function FilterSummary({ total, filters, onReset }: FilterSummary
       )}
 
       {filters.map((filter) => (
-        <Chip
-          key={filter.key}
-          label={filter.label}
-          variant="outlined"
-          onDelete={filter.onRemove}
-        />
+        <Chip key={filter.key} label={filter.label} variant="outlined" onDelete={filter.onRemove} />
       ))}
 
       {filters.length > 0 && (

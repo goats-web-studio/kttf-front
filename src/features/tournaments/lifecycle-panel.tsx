@@ -1,14 +1,22 @@
 import type { ClubCollisionView, DrawResult, TournamentView } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { useSessionStore } from '@/features/auth/session-store';
 import { isClubStaff } from '@/features/clubs/roles';
-
-import Button from '@/common/ui/button';
 
 import {
   cancelTournament,
@@ -20,8 +28,8 @@ import {
   startTournament,
 } from './api';
 import { availableActions, type LifecycleAction } from './lifecycle';
-import { TOURNAMENT_STATUS_KEYS } from './labels';
 import { tournamentKeys } from './queries';
+import StatusBadge from './status-badge';
 
 interface LifecyclePanelProps {
   readonly tournament: TournamentView;
@@ -108,97 +116,87 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
   const actions = availableActions(tournament.status);
   const hint = HINTS[tournament.status];
 
+  // Главное действие экрана одно (запрет №2): шаг, который ведёт турнир
+  // вперёд, — первый в списке. Остальные рядом, но не спорят с ним.
+  const forward = actions.filter((action) => action !== 'cancel');
+  const cancelable = actions.includes('cancel');
+
   return (
-    <section className="mt-8 rounded border border-line-strong bg-paper-sunken p-4">
-      <h2 className="text-lg font-semibold text-ink-900">{t('lifecycle.title')}</h2>
+    <Paper variant="outlined" component="section" sx={{ mt: 4, p: { xs: 2, sm: 3 } }}>
+      <Typography variant="h2">{t('lifecycle.title')}</Typography>
 
-      <p className="mt-1 text-sm text-ink-700">
-        {t('lifecycle.status')}: {t(TOURNAMENT_STATUS_KEYS[tournament.status])}
-      </p>
+      <Stack direction="row" spacing={1} sx={{ mt: 1, alignItems: 'center' }}>
+        <Typography variant="body2" color="text.secondary">
+          {t('lifecycle.status')}:
+        </Typography>
+        <StatusBadge status={tournament.status} />
+      </Stack>
 
-      {hint !== undefined && <p className="mt-2 text-sm text-ink-700">{t(hint)}</p>}
+      {hint !== undefined && (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {t(hint)}
+        </Typography>
+      )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        {actions.map((action) =>
-          action === 'cancel' ? null : (
-            <Button
-              key={action}
-              variant="primary"
-              type="button"
-              disabled={run.isPending}
-              onClick={() => {
-                run.mutate(action);
-              }}
-            >
-              {t(ACTION_LABELS[action])}
-            </Button>
-          ),
-        )}
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        useFlexGap
+        spacing={1.5}
+        sx={{ mt: 2, flexWrap: 'wrap', alignItems: { sm: 'center' } }}
+      >
+        {forward.map((action, index) => (
+          <Button
+            key={action}
+            variant={index === 0 ? 'contained' : 'outlined'}
+            disabled={run.isPending}
+            onClick={() => {
+              run.mutate(action);
+            }}
+            sx={{ minHeight: 44 }}
+          >
+            {t(ACTION_LABELS[action])}
+          </Button>
+        ))}
 
         {/* Консоль — следующий шаг после старта. Ссылка, а не кнопка: судья
             открывает её на своём устройстве и остаётся в ней весь турнир. */}
         {tournament.status === 'RUNNING' && (
-          <Link
-            to="/console/$tournamentId"
-            params={{ tournamentId: tournament.id }}
-            className="text-sm text-red-600 underline"
-          >
+          <Button href={`/console/${tournament.id}`} sx={{ minHeight: 44 }}>
             {t('lifecycle.console')}
-          </Link>
+          </Button>
         )}
 
-        {actions.includes('cancel') &&
-          (confirmingCancel ? (
-            <span className="flex items-center gap-3 text-sm">
-              <span className="text-ink-700">{t('lifecycle.cancelConfirm')}</span>
-              <button
-                type="button"
-                disabled={run.isPending}
-                onClick={() => {
-                  run.mutate('cancel');
-                }}
-                className="text-red-700 underline disabled:text-ink-400"
-              >
-                {t('lifecycle.cancelYes')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setConfirmingCancel(false);
-                }}
-                className="text-ink-700 underline"
-              >
-                {t('lifecycle.cancelNo')}
-              </button>
-            </span>
-          ) : (
-            // Отмена спрашивает подтверждение: обратного перехода у неё нет,
-            // а стоит она рядом с кнопкой, которую нажимают каждый раз.
-            <button
-              type="button"
-              onClick={() => {
-                setConfirmingCancel(true);
-              }}
-              className="text-sm text-red-700 underline"
-            >
-              {t('lifecycle.cancel')}
-            </button>
-          ))}
-      </div>
+        {/* Отмена спрашивает подтверждение: обратного перехода у неё нет,
+            а стоит она рядом с кнопкой, которую нажимают каждый раз. */}
+        {cancelable && (
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => {
+              // Прошлый отказ к отмене не относится: в окне его не повторяем.
+              run.reset();
+              setConfirmingCancel(true);
+            }}
+            sx={{ minHeight: 44, ml: { sm: 'auto' } }}
+          >
+            {t('lifecycle.cancel')}
+          </Button>
+        )}
+      </Stack>
 
       {run.error !== null && (
-        <p role="alert" className="mt-3 text-sm text-red-700">
+        <Alert severity="error" sx={{ mt: 2 }}>
           {t(errorMessageKey(run.error))}
-        </p>
+        </Alert>
       )}
 
       {collisions !== null && collisions.length > 0 && (
-        <div className="mt-4 rounded border border-warn bg-paper-sunken p-3 text-sm">
-          <p className="font-medium text-warn-text">{t('draw.collisions')}</p>
-          <p className="mt-1 text-warn-text">{t('draw.collisions.why')}</p>
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          <AlertTitle>{t('draw.collisions')}</AlertTitle>
+          {t('draw.collisions.why')}
           {/* Список назван: у страницы много списков, и без имени этот
               неотличим для чтеца экрана. */}
-          <ul aria-label={t('draw.collisions')} className="mt-2 text-warn-text">
+          <Box component="ul" aria-label={t('draw.collisions')} sx={{ mt: 1, mb: 0, pl: 2.5 }}>
             {collisions.map((collision) => (
               <li key={`${collision.club}-${collision.group}`}>
                 {collision.group}:{' '}
@@ -207,9 +205,46 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
                   .join(', ')}
               </li>
             ))}
-          </ul>
-        </div>
+          </Box>
+        </Alert>
       )}
-    </section>
+
+      <Dialog
+        open={confirmingCancel}
+        onClose={() => {
+          setConfirmingCancel(false);
+        }}
+        aria-labelledby="cancel-tournament-title"
+      >
+        <DialogTitle id="cancel-tournament-title">{t('lifecycle.cancelConfirm')}</DialogTitle>
+        {/* Отказ виден там, где нажимали: панель под окном закрыта им. */}
+        {run.error !== null && (
+          <DialogContent>
+            <Alert severity="error">{t(errorMessageKey(run.error))}</Alert>
+          </DialogContent>
+        )}
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            variant="text"
+            autoFocus
+            onClick={() => {
+              setConfirmingCancel(false);
+            }}
+          >
+            {t('lifecycle.cancelNo')}
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            disabled={run.isPending}
+            onClick={() => {
+              run.mutate('cancel');
+            }}
+          >
+            {t('lifecycle.cancelYes')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Paper>
   );
 }

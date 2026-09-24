@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -63,8 +64,16 @@ function Restoring(): ReactNode {
   const t = useT();
 
   return (
-    <div className="flex h-full items-center justify-center text-ink-500">
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--ink-500)',
+      }}
+    >
       {t('common.loading')}
-    </div>
+    </Box>
   );
 }

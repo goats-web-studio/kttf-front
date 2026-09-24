@@ -1,7 +1,27 @@
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
+import Snackbar from '@mui/material/Snackbar';
 import type { ReactNode } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 import { useT } from '@/common/i18n';
+
+/**
+ * Кнопка подсказки. `ButtonBase`, а не `Button`: подсказка живёт над
+ * маршрутами, вне оболочки раздела и её темы. Ставить сюда вторую тему нельзя:
+ * тема с CSS-переменными пишет их в `:root` и перебила бы тему раздела —
+ * консоль посветлела бы, пока висит подсказка. Цвета поэтому берутся прямо из
+ * ночных токенов `styles.css`, а высота на телефоне — не меньше 44px (раздел 9).
+ */
+const ACTION = {
+  minHeight: { xs: 44, sm: 40 },
+  flexShrink: 0,
+  px: 1.5,
+  borderRadius: 1,
+  font: 'inherit',
+  fontWeight: 500,
+  '&.Mui-focusVisible': { outline: '2px solid var(--night-red)', outlineOffset: 2 },
+} as const;
 
 /**
  * Предложение обновиться.
@@ -22,27 +42,50 @@ export default function UpdatePrompt(): ReactNode {
   }
 
   return (
-    <div
-      role="status"
-      className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md items-center gap-3 rounded-lg bg-night px-4 py-3 text-sm text-white shadow-lg"
-    >
-      <span className="grow">{t('pwa.update.message')}</span>
-      <button
-        type="button"
-        className="rounded bg-paper px-3 py-1 font-medium text-ink-900"
-        onClick={() => void updateServiceWorker(true)}
-      >
-        {t('pwa.update.apply')}
-      </button>
-      <button
-        type="button"
-        className="rounded px-2 py-1 text-night-ink-700"
-        onClick={() => {
-          setNeedRefresh(false);
+    <Snackbar open anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+      <Box
+        role="status"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          width: '100%',
+          maxWidth: 448,
+          px: 2,
+          py: 1.5,
+          borderRadius: 2,
+          bgcolor: 'var(--night)',
+          color: 'var(--night-ink-900)',
+          boxShadow: 'var(--shadow-modal)',
+          fontSize: 13,
+          lineHeight: '20px',
         }}
       >
-        {t('pwa.update.dismiss')}
-      </button>
-    </div>
+        <Box component="span" sx={{ flexGrow: 1 }}>
+          {t('pwa.update.message')}
+        </Box>
+        <ButtonBase
+          disableRipple
+          sx={{
+            ...ACTION,
+            bgcolor: 'var(--paper)',
+            color: 'var(--ink-900)',
+            '&:hover': { bgcolor: 'var(--paper-hover)' },
+          }}
+          onClick={() => void updateServiceWorker(true)}
+        >
+          {t('pwa.update.apply')}
+        </ButtonBase>
+        <ButtonBase
+          disableRipple
+          sx={{ ...ACTION, color: 'var(--night-ink-700)' }}
+          onClick={() => {
+            setNeedRefresh(false);
+          }}
+        >
+          {t('pwa.update.dismiss')}
+        </ButtonBase>
+      </Box>
+    </Snackbar>
   );
 }

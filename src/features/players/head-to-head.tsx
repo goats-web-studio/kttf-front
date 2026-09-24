@@ -1,8 +1,13 @@
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
+import { RowsSkeleton } from '@/common/ui/skeleton';
 
 import MatchesTable from './matches-table';
 import { playerName } from './player-name';
@@ -29,37 +34,48 @@ export default function HeadToHead({ playerId, opponentId, onClose }: HeadToHead
   const headToHead = useQuery(headToHeadQuery(playerId, opponentId));
 
   return (
-    <section className="mt-10">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-semibold text-ink-900">{t('player.headToHead.title')}</h2>
-        <button type="button" onClick={onClose} className="text-sm text-ink-700 underline">
+    <Box component="section" sx={{ mt: 5 }}>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        sx={{ alignItems: 'baseline', justifyContent: 'space-between' }}
+      >
+        <Typography variant="h2">{t('player.headToHead.title')}</Typography>
+        <Button variant="text" onClick={onClose} sx={{ minHeight: { xs: 44, sm: 40 } }}>
           {t('player.headToHead.close')}
-        </button>
-      </div>
+        </Button>
+      </Stack>
 
       <QueryState
         isPending={headToHead.isPending}
         error={headToHead.error}
         onRetry={() => void headToHead.refetch()}
+        loading={<RowsSkeleton rows={2} />}
       >
         {headToHead.data === undefined ? null : (
           <>
-            <p className="mt-3 text-ink-900">
+            <Typography sx={{ mt: 1.5 }}>
               {playerName(headToHead.data.opponent)}
               {' · '}
-              <span className="tabular-nums">
+              <Box component="span" sx={NUM}>
                 {headToHead.data.wins} : {headToHead.data.losses}
-              </span>{' '}
-              <span className="text-sm text-ink-500">{t('player.headToHead.matches')}</span>
+              </Box>{' '}
+              <Typography component="span" variant="body2" color="text.secondary">
+                {t('player.headToHead.matches')}
+              </Typography>
               {' · '}
-              <span className="tabular-nums">
+              <Box component="span" sx={NUM}>
                 {headToHead.data.setsWon} : {headToHead.data.setsLost}
-              </span>{' '}
-              <span className="text-sm text-ink-500">{t('player.headToHead.sets')}</span>
-            </p>
+              </Box>{' '}
+              <Typography component="span" variant="body2" color="text.secondary">
+                {t('player.headToHead.sets')}
+              </Typography>
+            </Typography>
 
             {headToHead.data.matches.length === 0 ? (
-              <p className="mt-3 text-ink-500">{t('player.headToHead.empty')}</p>
+              <Typography color="text.secondary" sx={{ mt: 1.5 }}>
+                {t('player.headToHead.empty')}
+              </Typography>
             ) : (
               // Соперник уже выбран: кнопка на его же фамилии вела бы туда,
               // где человек и находится.
@@ -68,6 +84,9 @@ export default function HeadToHead({ playerId, opponentId, onClose }: HeadToHead
           </>
         )}
       </QueryState>
-    </section>
+    </Box>
   );
 }
+
+/** Счёт — одной ширины цифр (раздел 3.5). */
+const NUM = { fontVariantNumeric: 'tabular-nums', fontWeight: 600 } as const;

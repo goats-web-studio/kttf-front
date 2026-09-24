@@ -65,6 +65,30 @@ function renderAt(path: string, user: AuthUserView | null): void {
   );
 }
 
+/** Выбор в списке MUI: открыть по нажатию и выбрать пункт. */
+async function choose(field: string, option: string): Promise<void> {
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: field }));
+  fireEvent.click(await screen.findByRole('option', { name: option }));
+}
+
+/**
+ * Дата начала в поле выбора даты и времени.
+ *
+ * Поле разбито на секции, и набирать их по одной в тесте незачем: скрытое
+ * поле под ними принимает дату строкой в формате языка интерфейса.
+ */
+function setStartsAt(value: string): void {
+  const input = screen
+    .getAllByLabelText(ru['tournament.form.startsAt'])
+    .find((node) => node instanceof HTMLInputElement);
+
+  if (input === undefined) {
+    throw new Error('Поле даты начала не найдено');
+  }
+
+  fireEvent.change(input, { target: { value } });
+}
+
 /** Организатор клуба-хозяина: у фикстуры это владелец `CLUB`. */
 const ORGANIZER = USER_WITH_PROFILE;
 const OUTSIDER: AuthUserView = { ...USER_WITH_PROFILE, clubRoles: [] };
@@ -134,9 +158,7 @@ describe('форма создания', () => {
     fireEvent.change(await screen.findByLabelText(ru['tournament.form.name']), {
       target: { value: 'Кубок Достык' },
     });
-    fireEvent.change(screen.getByLabelText(ru['tournament.form.startsAt']), {
-      target: { value: '2026-10-01T09:00' },
-    });
+    setStartsAt('01.10.2026 09:00');
 
     fireEvent.click(screen.getByRole('button', { name: ru['tournament.form.create'] }));
 
@@ -162,16 +184,10 @@ describe('форма создания', () => {
     fireEvent.change(await screen.findByLabelText(ru['tournament.form.name']), {
       target: { value: 'Кубок Достык' },
     });
-    fireEvent.change(screen.getByLabelText(ru['tournament.form.startsAt']), {
-      target: { value: '2026-10-01T09:00' },
-    });
+    setStartsAt('01.10.2026 09:00');
 
-    fireEvent.change(screen.getByLabelText(ru['tournament.form.formatType']), {
-      target: { value: 'GROUPS_KNOCKOUT' },
-    });
-    fireEvent.change(screen.getByLabelText(ru['tournament.form.groupRounds']), {
-      target: { value: '2' },
-    });
+    await choose(ru['tournament.form.formatType'], ru['tournament.format.GROUPS_KNOCKOUT']);
+    await choose(ru['tournament.form.groupRounds'], ru['tournament.form.twoRounds']);
 
     fireEvent.click(screen.getByRole('button', { name: ru['tournament.form.create'] }));
 
@@ -211,9 +227,8 @@ describe('предпросчёт схемы', () => {
   it('пересчитывается при смене схемы', async () => {
     renderAt('/tournaments/new', ORGANIZER);
 
-    fireEvent.change(await screen.findByLabelText(ru['tournament.form.formatType']), {
-      target: { value: 'GROUPS_KNOCKOUT' },
-    });
+    await screen.findByText(ru['tournament.preview.totalMatches']);
+    await choose(ru['tournament.form.formatType'], ru['tournament.format.GROUPS_KNOCKOUT']);
 
     // Четыре группы по четверо: 24 встречи в группах, восемь выходят, сетка
     // на восьмерых — семь встреч плюс матч за третье место. Всего 32.
@@ -224,12 +239,9 @@ describe('предпросчёт схемы', () => {
   it('предупреждает о схеме, которую отвергнет жеребьёвка', async () => {
     renderAt('/tournaments/new', ORGANIZER);
 
-    fireEvent.change(await screen.findByLabelText(ru['tournament.form.formatType']), {
-      target: { value: 'GROUPS_KNOCKOUT' },
-    });
-    fireEvent.change(screen.getByLabelText(ru['tournament.form.sizing']), {
-      target: { value: 'count' },
-    });
+    await screen.findByText(ru['tournament.preview.totalMatches']);
+    await choose(ru['tournament.form.formatType'], ru['tournament.format.GROUPS_KNOCKOUT']);
+    await choose(ru['tournament.form.sizing'], ru['tournament.form.byGroupCount']);
     fireEvent.change(screen.getByLabelText(ru['tournament.form.groupCount']), {
       target: { value: '1' },
     });

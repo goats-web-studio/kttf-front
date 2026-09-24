@@ -1,6 +1,9 @@
 import type { CreateTournamentInput } from '@kttf/shared/types';
+import Container from '@mui/material/Container';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -47,20 +50,16 @@ function NewTournamentPage(): ReactNode {
   });
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="font-display text-display-md font-bold text-ink-900">
-        {t('page.newTournament.title')}
-      </h1>
+    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Typography variant="h1">{t('page.newTournament.title')}</Typography>
 
       {clubIds.length === 0 ? (
         // Клуб-хозяин обязателен (ТЗ 4.2). Показывать форму, которую сервер
         // отвергнет, — ложное обещание.
-        <p className="mt-6 text-ink-700">
+        <Typography color="text.secondary" sx={{ mt: 3 }}>
           {t('tournament.form.noClubs')}{' '}
-          <Link to="/tournaments" className="text-red-600 underline">
-            {t('page.tournaments.title')}
-          </Link>
-        </p>
+          <Link href="/tournaments">{t('page.tournaments.title')}</Link>
+        </Typography>
       ) : (
         <TournamentForm
           clubIds={clubIds}
@@ -71,6 +70,6 @@ function NewTournamentPage(): ReactNode {
           }}
         />
       )}
-    </section>
+    </Container>
   );
 }

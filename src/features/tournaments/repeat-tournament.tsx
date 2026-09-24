@@ -1,6 +1,14 @@
 import type { TournamentView } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import type { Dayjs } from 'dayjs';
 import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
@@ -10,7 +18,6 @@ import { isClubStaff } from '@/features/clubs/roles';
 
 import { duplicateTournament } from './api';
 import { tournamentKeys } from './queries';
-import Button from '@/common/ui/button';
 
 /**
  * «Повторить прошлый турнир» — ТЗ 4.2, обязательный механизм.
@@ -34,10 +41,12 @@ export default function RepeatTournament({
   const queryClient = useQueryClient();
   const user = useSessionStore((state) => state.user);
 
-  const [startsAt, setStartsAt] = useState('');
+  const [startsAt, setStartsAt] = useState<Dayjs | null>(null);
+  // Дата обязательна: копия без неё — тот же турнир в тот же день.
+  const isComplete = startsAt?.isValid() === true;
 
   const repeat = useMutation({
-    mutationFn: () => duplicateTournament(tournament.id, { startsAt: toMoment(startsAt) }),
+    mutationFn: (moment: string) => duplicateTournament(tournament.id, { startsAt: moment }),
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
       await navigate({ to: '/tournaments/$tournamentId', params: { tournamentId: created.id } });
@@ -52,45 +61,49 @@ export default function RepeatTournament({
   }
 
   return (
-    <section className="mt-8 rounded border border-line p-4">
-      <h2 className="text-lg font-semibold text-ink-900">{t('tournament.repeat.title')}</h2>
-      <p className="mt-1 text-sm text-ink-700">{t('tournament.repeat.hint')}</p>
+    <Paper variant="outlined" component="section" sx={{ mt: 4, p: { xs: 2, sm: 3 } }}>
+      <Typography variant="h2">{t('tournament.repeat.title')}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+        {t('tournament.repeat.hint')}
+      </Typography>
 
-      <form
-        className="mt-3 flex flex-wrap items-end gap-3"
+      <Stack
+        component="form"
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={1.5}
+        sx={{ mt: 2, alignItems: { sm: 'flex-start' } }}
         onSubmit={(event) => {
           event.preventDefault();
-          repeat.mutate();
+
+          if (startsAt?.isValid() === true) {
+            repeat.mutate(toMoment(startsAt));
+          }
         }}
       >
-        <label className="block text-sm">
-          <span className="text-ink-700">{t('tournament.form.startsAt')}</span>
-          <input
-            type="datetime-local"
+        <Box sx={{ width: { xs: '100%', sm: 280 } }}>
+          <DateTimePicker
+            label={t('tournament.form.startsAt')}
             value={startsAt}
-            onChange={(event) => {
-              setStartsAt(event.target.value);
-            }}
-            className="mt-1 block rounded border border-line-strong px-3 py-2"
+            onChange={setStartsAt}
+            slotProps={{ field: { clearable: true } }}
           />
-        </label>
+        </Box>
 
         <Button
-          variant="primary"
           type="submit"
-          // Дата обязательна: копия без неё — тот же турнир в тот же день.
-          disabled={startsAt === '' || repeat.isPending}
+          disabled={!isComplete || repeat.isPending}
+          sx={{ minHeight: { xs: 44, sm: 40 } }}
         >
           {repeat.isPending ? t('common.loading') : t('tournament.repeat.submit')}
         </Button>
-      </form>
+      </Stack>
 
       {repeat.error !== null && (
-        <p role="alert" className="mt-2 text-sm text-red-700">
+        <Alert severity="error" sx={{ mt: 2 }}>
           {t(errorMessageKey(repeat.error))}
-        </p>
+        </Alert>
       )}
-    </section>
+    </Paper>
   );
 }
 
@@ -98,8 +111,8 @@ export default function RepeatTournament({
  * Местное время поля — в момент контракта.
  *
  * Без преобразования турнир, назначенный на полдень в Алматы, уехал бы на
- * шесть часов: поле отдаёт время без зоны, а контракт принимает ISO.
+ * шесть часов: поле показывает время без зоны, а контракт принимает ISO.
  */
-function toMoment(value: string): string {
-  return new Date(value).toISOString();
+function toMoment(value: Dayjs): string {
+  return value.toISOString();
 }

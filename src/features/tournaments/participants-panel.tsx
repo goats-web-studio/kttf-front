@@ -1,6 +1,17 @@
 import type { RegistrationView, TournamentView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Stack from '@mui/material/Stack';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
@@ -13,6 +24,12 @@ import AddParticipant from './add-participant';
 import { removeRegistration, updateRegistration } from './api';
 import { REGISTRATION_STATUS_KEYS } from './labels';
 import { tournamentKeys } from './queries';
+
+/** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
+const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
+
+/** Действие в строке: на телефоне — зона нажатия 44px (раздел 9). */
+const ROW_ACTION = { minHeight: { xs: 44, sm: 32 } } as const;
 
 interface ParticipantsPanelProps {
   readonly tournament: TournamentView;
@@ -43,54 +60,55 @@ export default function ParticipantsPanel({
   }
 
   return (
-    <section className="mt-8">
-      <h2 className="text-lg font-semibold text-ink-900">
+    <Box component="section" sx={{ mt: 5 }}>
+      <Typography variant="h2">
         {t('participants.title')}{' '}
-        <span className="text-base font-normal text-ink-500 tabular-nums">
+        <Typography
+          component="span"
+          variant="h2"
+          color="text.secondary"
+          sx={{ fontWeight: 400, ...NUM }}
+        >
           {registrations.length}
-        </span>
-      </h2>
+        </Typography>
+      </Typography>
 
       {isStaff && <AddParticipant tournament={tournament} registrations={registrations} />}
 
       {registrations.length === 0 ? (
-        <p className="mt-3 text-ink-500">{t('participants.empty')}</p>
+        <Typography color="text.secondary" sx={{ mt: 2 }}>
+          {t('participants.empty')}
+        </Typography>
       ) : (
-        <table className="mt-3 w-full text-sm">
-          <thead>
-            <tr className="border-b border-line text-left text-ink-500">
-              <th scope="col" className="py-2 pr-4 text-right font-normal">
-                {t('participants.seed')}
-              </th>
-              <th scope="col" className="py-2 font-normal">
-                {t('participants.player')}
-              </th>
-              <th scope="col" className="py-2 pr-4 text-right font-normal">
-                {t('participants.rating')}
-              </th>
-              <th scope="col" className="py-2 font-normal">
-                {t('participants.status')}
-              </th>
-              {isStaff && (
-                <th scope="col" className="py-2 font-normal">
-                  {t('participants.actions')}
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {registrations.map((registration) => (
-              <Row
-                key={registration.id}
-                tournament={tournament}
-                registration={registration}
-                isStaff={isStaff}
-              />
-            ))}
-          </tbody>
-        </table>
+        // Органы управления шире телефона: таблица прокручивается вбок
+        // целиком, а не сминает имена.
+        <TableContainer sx={{ mt: 2 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell align="right" sx={{ width: 48 }}>
+                  {t('participants.seed')}
+                </TableCell>
+                <TableCell>{t('participants.player')}</TableCell>
+                <TableCell align="right">{t('participants.rating')}</TableCell>
+                <TableCell>{t('participants.status')}</TableCell>
+                {isStaff && <TableCell>{t('participants.actions')}</TableCell>}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {registrations.map((registration) => (
+                <Row
+                  key={registration.id}
+                  tournament={tournament}
+                  registration={registration}
+                  isStaff={isStaff}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-    </section>
+    </Box>
   );
 }
 
@@ -125,93 +143,106 @@ function Row({
   const error = update.error ?? remove.error;
 
   return (
-    <tr className="border-b border-line align-top">
-      <td className="py-2 pr-4 text-right tabular-nums text-ink-500">{registration.seed ?? '—'}</td>
-      <td className="py-2 text-ink-900">
+    <TableRow sx={{ verticalAlign: 'top' }}>
+      <TableCell align="right" sx={{ color: 'text.secondary', ...NUM }}>
+        {registration.seed ?? '—'}
+      </TableCell>
+      <TableCell>
         <Link
-          to="/players/$playerId"
-          params={{ playerId: registration.player.id }}
-          className="text-red-600 underline"
+          href={`/players/${registration.player.id}`}
+          color="text.primary"
+          sx={{ fontWeight: 500 }}
         >
           {playerName(registration.player)}
         </Link>
         {!registration.isRated && (
           // Вне зачёта: играет, но результаты не рейтинговые — ТЗ 4.4.
-          <span className="ml-2 text-xs text-ink-500">{t('participants.unrated')}</span>
+          <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+            {t('participants.unrated')}
+          </Typography>
         )}
         {error !== null && (
-          <span role="alert" className="mt-1 block text-xs text-red-700">
+          <Typography role="alert" variant="body2" color="error" sx={{ mt: 0.5 }}>
             {t(errorMessageKey(error))}
-          </span>
+          </Typography>
         )}
-      </td>
-      <td className="py-2 pr-4 text-right tabular-nums text-ink-700">
+      </TableCell>
+      <TableCell align="right" sx={NUM}>
         {/* Рейтинг на старте, если турнир начат: он и пошёл в расчёт (ТС 5.4). */}
         {registration.ratingAtStart ?? registration.player.rating}
-      </td>
-      <td className="py-2 text-ink-700">{t(REGISTRATION_STATUS_KEYS[registration.status])}</td>
+      </TableCell>
+      <TableCell sx={{ color: 'text.secondary' }}>
+        {t(REGISTRATION_STATUS_KEYS[registration.status])}
+      </TableCell>
       {isStaff && (
-        <td className="py-2">
-          <div className="flex flex-wrap gap-3 text-xs">
-            <button
-              type="button"
+        <TableCell>
+          <Stack
+            direction="row"
+            useFlexGap
+            spacing={1}
+            sx={{ flexWrap: 'wrap', alignItems: 'center', minWidth: 280 }}
+          >
+            <Button
+              variant="text"
+              size="small"
               disabled={update.isPending}
               onClick={() => {
                 update.mutate({ isRated: !registration.isRated });
               }}
-              className="text-red-600 underline disabled:text-ink-400"
+              sx={ROW_ACTION}
             >
               {registration.isRated ? t('participants.markUnrated') : t('participants.markRated')}
-            </button>
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="text"
+              size="small"
               disabled={update.isPending}
               onClick={() => {
                 update.mutate({ status: isWithdrawn ? 'CONFIRMED' : 'WITHDRAWN' });
               }}
-              className="text-red-600 underline disabled:text-ink-400"
+              sx={ROW_ACTION}
             >
               {isWithdrawn ? t('participants.restore') : t('participants.withdraw')}
-            </button>
+            </Button>
 
             {/* Удалить запись можно только до старта: после него участник
                 снимается, а не исчезает — его встречи уже в таблице (ADR-009). */}
             {tournament.startedAt === null && (
-              <button
-                type="button"
+              <Button
+                variant="text"
+                color="error"
+                size="small"
                 disabled={remove.isPending}
                 onClick={() => {
                   remove.mutate();
                 }}
-                className="text-red-600 underline disabled:text-ink-400"
+                sx={ROW_ACTION}
               >
                 {t('participants.remove')}
-              </button>
+              </Button>
             )}
 
-            <label className="flex items-center gap-1 text-ink-500">
-              {t('participants.seed')}
-              <input
-                type="number"
-                min={1}
-                defaultValue={registration.seed ?? ''}
-                onBlur={(event) => {
-                  const raw = event.target.value.trim();
-                  const seed = raw === '' ? null : Number(raw);
+            <TextField
+              label={t('participants.seed')}
+              type="number"
+              defaultValue={registration.seed ?? ''}
+              onBlur={(event) => {
+                const raw = event.target.value.trim();
+                const seed = raw === '' ? null : Number(raw);
 
-                  if (seed === registration.seed || (seed !== null && !Number.isInteger(seed))) {
-                    return;
-                  }
+                if (seed === registration.seed || (seed !== null && !Number.isInteger(seed))) {
+                  return;
+                }
 
-                  update.mutate({ seed });
-                }}
-                className="w-14 rounded border border-line-strong px-1 py-0.5 tabular-nums"
-              />
-            </label>
-          </div>
-        </td>
+                update.mutate({ seed });
+              }}
+              slotProps={{ htmlInput: { inputMode: 'numeric', min: 1, sx: NUM } }}
+              sx={{ width: 88 }}
+            />
+          </Stack>
+        </TableCell>
       )}
-    </tr>
+    </TableRow>
   );
 }

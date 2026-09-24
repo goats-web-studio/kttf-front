@@ -1,3 +1,9 @@
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -31,34 +37,54 @@ export default function QueueZone({
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-night-ink-500">{t('console.queue.title')}</h2>
+      <Typography
+        component="h2"
+        variant="subtitle2"
+        color="text.secondary"
+        sx={{ fontWeight: 600 }}
+      >
+        {t('console.queue.title')}
+      </Typography>
 
       {queue.length === 0 ? (
-        <p className="mt-2 text-sm text-night-ink-500">{t('console.queue.empty')}</p>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {t('console.queue.empty')}
+        </Typography>
       ) : (
-        <ul className="mt-2 space-y-2">
+        <Stack component="ul" spacing={1} sx={{ mt: 1, p: 0, listStyle: 'none' }}>
           {queue.map((item, index) => (
-            <li
+            <Paper
               key={item.match.id}
-              className="rounded border border-night-line bg-night-raised p-3 text-sm"
+              component="li"
+              variant="outlined"
+              sx={{ p: 1.5, typography: 'body2' }}
             >
-              <p className="text-xs text-night-ink-500">
+              <Typography variant="caption" color="text.secondary" component="p">
                 {/* «Круговая · Круговая» — у круговой схемы единственная
                     группа названа как этап. Повторять незачем. */}
                 {item.stageName}
                 {item.groupLabel === null || item.groupLabel === item.stageName
                   ? ''
                   : ` · ${item.groupLabel}`}
-              </p>
+              </Typography>
               <MatchLine match={item.match} names={names} />
 
-              <p className="mt-1 flex gap-2 text-xs">
-                {/* Подсказки ТЗ 6.3: судья решает, кого звать, по ним. */}
-                {index === 0 && <span className="text-sky-400">{t('console.hint.waiting')}</span>}
-                {item.lastForBoth && (
-                  <span className="text-night-ink-500">{t('console.hint.lastForBoth')}</span>
-                )}
-              </p>
+              {(index === 0 || item.lastForBoth) && (
+                <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+                  {/* Подсказки ТЗ 6.3: судья решает, кого звать, по ним. */}
+                  {index === 0 && (
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color="warning"
+                      label={t('console.hint.waiting')}
+                    />
+                  )}
+                  {item.lastForBoth && (
+                    <Chip size="small" variant="outlined" label={t('console.hint.lastForBoth')} />
+                  )}
+                </Stack>
+              )}
 
               <Assign
                 tables={tables}
@@ -67,9 +93,9 @@ export default function QueueZone({
                   onAssign(item.match.id, tableNumber);
                 }}
               />
-            </li>
+            </Paper>
           ))}
-        </ul>
+        </Stack>
       )}
     </section>
   );
@@ -88,51 +114,59 @@ function Assign({
   const [choosing, setChoosing] = useState(false);
 
   if (suggested === null) {
-    return <p className="mt-2 text-xs text-night-ink-500">{t('console.queue.noFreeTable')}</p>;
+    return (
+      <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 1 }}>
+        {t('console.queue.noFreeTable')}
+      </Typography>
+    );
   }
 
   return (
-    <div className="mt-2 flex items-center gap-3">
-      <button
-        type="button"
+    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+      <Button
+        size="large"
         onClick={() => {
           onAssign(suggested);
         }}
-        className="min-h-14 rounded-sm border border-night-line-strong bg-night-raised px-4 font-semibold text-white active:bg-night-line-strong"
+        sx={{ minHeight: 56, fontWeight: 600 }}
       >
         {t('console.queue.assign')} {suggested}
-      </button>
+      </Button>
 
       {choosing ? (
-        <select
+        // Номера столов кнопками, а не выпадающим списком: в зале это одно
+        // касание пальцем, а не прокрутка крошечного меню.
+        <Box
+          role="group"
           aria-label={t('console.queue.otherTable')}
-          defaultValue=""
-          onChange={(event) => {
-            setChoosing(false);
-            onAssign(Number(event.target.value));
-          }}
-          className="rounded border border-night-line-strong bg-night-raised px-2 py-1 text-white"
+          sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}
         >
-          <option value="" disabled>
-            {t('console.queue.otherTable')}
-          </option>
           {tables.map((table) => (
-            <option key={table.number} value={table.number}>
+            <Button
+              key={table.number}
+              size="large"
+              onClick={() => {
+                setChoosing(false);
+                onAssign(table.number);
+              }}
+              sx={{ minHeight: 56, minWidth: 56, fontVariantNumeric: 'tabular-nums' }}
+            >
               {table.number}
-            </option>
+            </Button>
           ))}
-        </select>
+        </Box>
       ) : (
-        <button
-          type="button"
+        <Button
+          variant="text"
+          size="large"
           onClick={() => {
             setChoosing(true);
           }}
-          className="text-xs text-night-ink-500 underline"
+          sx={{ minHeight: 56, color: 'text.secondary' }}
         >
           {t('console.queue.otherTable')}
-        </button>
+        </Button>
       )}
-    </div>
+    </Box>
   );
 }

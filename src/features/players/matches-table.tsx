@@ -1,5 +1,12 @@
 import type { PlayerMatchView } from '@kttf/shared/types';
-import { Link } from '@tanstack/react-router';
+import Box from '@mui/material/Box';
+import Link from '@mui/material/Link';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { formatDate, formatDelta, useLocale, useT } from '@/common/i18n';
@@ -18,6 +25,12 @@ interface MatchesTableProps {
   readonly onSelectOpponent?: ((opponentId: string) => void) | undefined;
 }
 
+/** Колонки, которых на телефоне нет: дата и турнир уходят подписью под соперника. */
+const WIDE = { display: { xs: 'none', sm: 'table-cell' } } as const;
+
+/** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
+const NUM = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' } as const;
+
 /**
  * Встречи глазами игрока — ТЗ 9.3.
  *
@@ -32,35 +45,23 @@ export default function MatchesTable({ matches, onSelectOpponent }: MatchesTable
   const t = useT();
 
   return (
-    <table className="mt-3 w-full text-sm">
-      <thead>
-        <tr className="border-b border-line text-left text-ink-500">
-          <th scope="col" className="py-2 font-normal">
-            {t('player.matches.date')}
-          </th>
-          <th scope="col" className="py-2 font-normal">
-            {t('player.matches.tournament')}
-          </th>
-          <th scope="col" className="py-2 font-normal">
-            {t('player.matches.opponent')}
-          </th>
-          <th scope="col" className="py-2 pr-4 text-right font-normal">
-            {t('player.matches.score')}
-          </th>
-          <th scope="col" className="py-2 font-normal">
-            {t('player.matches.outcome')}
-          </th>
-          <th scope="col" className="py-2 text-right font-normal">
-            {t('player.matches.delta')}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table stickyHeader size="small" sx={{ mt: 2 }}>
+      <TableHead>
+        <TableRow>
+          <TableCell sx={WIDE}>{t('player.matches.date')}</TableCell>
+          <TableCell sx={WIDE}>{t('player.matches.tournament')}</TableCell>
+          <TableCell>{t('player.matches.opponent')}</TableCell>
+          <TableCell align="right">{t('player.matches.score')}</TableCell>
+          <TableCell>{t('player.matches.outcome')}</TableCell>
+          <TableCell align="right">{t('player.matches.delta')}</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
         {matches.map((match) => (
           <Row key={match.matchId} match={match} onSelectOpponent={onSelectOpponent} />
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   );
 }
 
@@ -73,42 +74,75 @@ function Row({
 }): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const date = match.playedAt === null ? '—' : formatDate(match.playedAt, locale);
 
   return (
-    <tr className="border-b border-line align-top">
-      <td className="py-2 whitespace-nowrap text-ink-700">
-        {match.playedAt === null ? '—' : formatDate(match.playedAt, locale)}
-      </td>
-      <td className="py-2">
-        <Link
-          to="/tournaments/$tournamentId"
-          params={{ tournamentId: match.tournamentId }}
-          className="text-red-600 underline"
-        >
-          {match.tournamentName}
-        </Link>
-        <span className="block text-xs text-ink-500">{match.stageName}</span>
-      </td>
-      <td className="py-2 text-ink-900">
+    <TableRow
+      sx={{
+        verticalAlign: 'top',
+        // Победа отмечена трижды — словом, насыщенностью счёта и линейкой
+        // слева (раздел 3.4): цвет не единственный носитель смысла.
+        ...(match.won ? { boxShadow: 'inset 2px 0 0 var(--red-500)' } : {}),
+      }}
+    >
+      <TableCell sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>{date}</TableCell>
+      <TableCell sx={WIDE}>
+        <Tournament match={match} />
+      </TableCell>
+      <TableCell>
         <Opponent match={match} onSelectOpponent={onSelectOpponent} />
-      </td>
-      <td className="py-2 pr-4 text-right tabular-nums whitespace-nowrap text-ink-900">
+        {/* На телефоне дата и турнир — подписью под соперником. */}
+        <Box sx={{ display: { sm: 'none' } }}>
+          <Typography variant="body2" color="text.secondary" sx={NUM}>
+            {date}
+          </Typography>
+          <Tournament match={match} />
+        </Box>
+      </TableCell>
+      <TableCell
+        align="right"
+        sx={{
+          ...NUM,
+          fontWeight: match.won ? 600 : 400,
+          color: match.won ? 'primary.main' : 'text.secondary',
+        }}
+      >
         {match.setsFor} : {match.setsAgainst}
         {match.resultType !== 'NORMAL' && (
-          <span className="ml-2 text-xs text-ink-500">{t(RESULT_TYPE_KEYS[match.resultType])}</span>
+          <Typography
+            component="span"
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block' }}
+          >
+            {t(RESULT_TYPE_KEYS[match.resultType])}
+          </Typography>
         )}
-      </td>
-      <td className="py-2 whitespace-nowrap text-ink-700">
+      </TableCell>
+      <TableCell sx={{ whiteSpace: 'nowrap', color: 'text.secondary' }}>
         {match.won ? t('player.matches.won') : t('player.matches.lost')}
-      </td>
-      <td className="py-2 text-right font-medium tabular-nums whitespace-nowrap text-ink-900">
+      </TableCell>
+      <TableCell align="right" sx={{ ...NUM, fontWeight: 500 }}>
         {match.delta === null ? (
-          <span className="font-normal text-ink-400">{t('player.matches.notRated')}</span>
+          <Typography component="span" variant="body2" color="text.secondary">
+            {t('player.matches.notRated')}
+          </Typography>
         ) : (
           formatDelta(match.delta)
         )}
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function Tournament({ match }: { readonly match: PlayerMatchView }): ReactNode {
+  return (
+    <>
+      <Link href={`/tournaments/${match.tournamentId}`}>{match.tournamentName}</Link>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+        {match.stageName}
+      </Typography>
+    </>
   );
 }
 
@@ -128,7 +162,11 @@ function Opponent({
   const t = useT();
 
   if (match.opponent === null) {
-    return <span className="text-ink-400">{t('player.matches.noOpponent')}</span>;
+    return (
+      <Typography component="span" color="text.secondary">
+        {t('player.matches.noOpponent')}
+      </Typography>
+    );
   }
 
   const name = playerName(match.opponent);
@@ -140,14 +178,17 @@ function Opponent({
   const opponentId = match.opponent.id;
 
   return (
-    <button
+    <Link
+      component="button"
       type="button"
+      underline="always"
       onClick={() => {
         onSelectOpponent(opponentId);
       }}
-      className="text-left text-red-600 underline"
+      // Зона нажатия на телефоне — не меньше 44px (раздел 9).
+      sx={{ textAlign: 'left', minHeight: { xs: 44, sm: 'auto' }, font: 'inherit' }}
     >
       {name}
-    </button>
+    </Link>
   );
 }

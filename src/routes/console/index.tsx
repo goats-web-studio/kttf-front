@@ -1,6 +1,11 @@
 import { DEFAULT_PAGE_SIZE } from '@kttf/shared/types';
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link } from '@tanstack/react-router';
+import Box from '@mui/material/Box';
+import CardActionArea from '@mui/material/CardActionArea';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { createFileRoute } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { formatDateTime, useLocale, useT } from '@/common/i18n';
@@ -31,38 +36,44 @@ function ConsolePage(): ReactNode {
   const running = useQuery(runningQuery);
 
   return (
-    <section className="mx-auto w-full max-w-3xl px-4 py-10">
-      <h1 className="font-display text-display-md font-bold">{t('page.console.title')}</h1>
-      <p className="mt-2 text-sm text-night-ink-500">{t('console.pick.lead')}</p>
+    <Box component="section" sx={{ mx: 'auto', width: '100%', maxWidth: 768, px: 2, py: 5 }}>
+      <Typography variant="h1">{t('page.console.title')}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        {t('console.pick.lead')}
+      </Typography>
 
-      <div className="mt-6">
+      <Box sx={{ mt: 3 }}>
         <QueryState
           isPending={running.isPending}
           error={running.error}
           onRetry={() => void running.refetch()}
         >
           {running.data === undefined ? null : running.data.items.length === 0 ? (
-            <p className="text-night-ink-500">{t('console.pick.empty')}</p>
+            <Typography color="text.secondary">{t('console.pick.empty')}</Typography>
           ) : (
-            <ul className="space-y-2">
+            <Stack component="ul" spacing={1} sx={{ m: 0, p: 0, listStyle: 'none' }}>
               {running.data.items.map((tournament) => (
-                <li key={tournament.id}>
-                  <Link
-                    to="/console/$tournamentId"
-                    params={{ tournamentId: tournament.id }}
-                    className="block rounded border border-night-line bg-night-raised p-4"
-                  >
-                    <span className="font-semibold">{tournament.name}</span>
-                    <span className="mt-1 block text-sm text-night-ink-500">
+                <Paper key={tournament.id} component="li" variant="outlined">
+                  {/* `href` уходит в роутер через `LinkComponent` темы. */}
+                  <CardActionArea href={`/console/${tournament.id}`} sx={{ p: 2, minHeight: 56 }}>
+                    <Typography component="span" sx={{ display: 'block', fontWeight: 600 }}>
+                      {tournament.name}
+                    </Typography>
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.5, display: 'block' }}
+                    >
                       {formatDateTime(tournament.startsAt, locale)}
-                    </span>
-                  </Link>
-                </li>
+                    </Typography>
+                  </CardActionArea>
+                </Paper>
               ))}
-            </ul>
+            </Stack>
           )}
         </QueryState>
-      </div>
-    </section>
+      </Box>
+    </Box>
   );
 }
