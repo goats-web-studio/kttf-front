@@ -166,6 +166,22 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
           </Button>
         )}
 
+        {/* Экран зала — на телевизор. Открывается в новой вкладке: её
+            перетаскивают на второй монитор, а эта страница остаётся. */}
+        {(tournament.status === 'RUNNING' ||
+          tournament.status === 'FINISHED' ||
+          tournament.status === 'RATED') && (
+          <Button
+            component="a"
+            href={`/screen/${tournament.publicToken}`}
+            target="_blank"
+            rel="noopener"
+            sx={{ minHeight: 44 }}
+          >
+            {t('lifecycle.screen')}
+          </Button>
+        )}
+
         {/* Отмена спрашивает подтверждение: обратного перехода у неё нет,
             а стоит она рядом с кнопкой, которую нажимают каждый раз. */}
         {cancelable && (

@@ -1,7 +1,7 @@
 import type { AuthUserView, TournamentSnapshotView } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
@@ -213,8 +213,6 @@ describe('разрешение равенства', () => {
 
     renderConsole();
 
-    fireEvent.click(await screen.findByRole('tab', { name: ru['console.tab.standings'] }));
-
     expect(
       await screen.findByRole('heading', { name: ru['console.standings.title'] }),
     ).toBeDefined();
@@ -226,11 +224,9 @@ describe('разрешение равенства', () => {
 
     renderConsole();
 
-    // Из зала видно, что судью ждут таблицы, — и переход туда одним касанием.
+    // Сверху предупреждение, ниже на той же странице — сама панель равенства.
     expect(await screen.findByText(ru['console.tie.alert'])).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: ru['console.tie.open'] }));
-
-    expect(await screen.findByText(ru['console.tie.title'])).toBeDefined();
+    expect(screen.getByText(ru['console.tie.title'])).toBeDefined();
   });
 });
 
@@ -320,9 +316,12 @@ describe('действия в окнах', () => {
     fireEvent.click(await screen.findByRole('button', { name: '3:1' }));
     await lastQueued(1);
 
-    fireEvent.click(screen.getByRole('tab', { name: ru['console.tab.played'] }));
+    const played = screen
+      .getByRole('heading', { name: ru['console.played.title'] })
+      .closest('section');
+    if (played === null) throw new Error('нет блока сыгранных');
     fireEvent.click(
-      await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }),
+      await within(played).findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }),
     );
     fireEvent.click(await screen.findByRole('button', { name: ru['console.dialog.editResult'] }));
     fireEvent.click(await screen.findByRole('button', { name: '3:2' }));

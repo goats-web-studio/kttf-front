@@ -4,9 +4,9 @@ import ButtonBase from '@mui/material/ButtonBase';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
-import { useT } from '@/common/i18n';
+import { fill, useT } from '@/common/i18n';
 
 import MatchLine from './match-line';
 import type { QueuedMatch } from './queue';
@@ -20,6 +20,9 @@ interface QueueZoneProps {
   /** Открыть встречу: выбрать другой стол или ввести счёт без стола. */
   readonly onOpen: (matchId: string) => void;
 }
+
+/** Сколько пар видно без раскрытия: судье нужны ближайшие, а не весь вечер. */
+const SHOWN = 5;
 
 /**
  * Зона «В ожидании» — ТЗ 6.1 и 6.2.
@@ -37,6 +40,8 @@ export default function QueueZone({
   onOpen,
 }: QueueZoneProps): ReactNode {
   const t = useT();
+  const [all, setAll] = useState(false);
+  const shown = all ? queue : queue.slice(0, SHOWN);
 
   return (
     <section>
@@ -60,12 +65,19 @@ export default function QueueZone({
         </Typography>
       ) : (
         <Stack component="ol" spacing={1} sx={{ mt: 1, p: 0, listStyle: 'none' }}>
-          {queue.map((item, index) => (
+          {shown.map((item, index) => (
             <Paper
               key={item.match.id}
               component="li"
               variant="outlined"
-              sx={{ display: 'flex', alignItems: 'stretch' }}
+              sx={{
+                display: 'flex',
+                alignItems: 'stretch',
+                opacity: item.busyTable === null ? 1 : 0.75,
+                ...(index === 0 && item.busyTable === null
+                  ? { borderColor: 'warning.main', borderWidth: 2 }
+                  : {}),
+              }}
             >
               <ButtonBase
                 onClick={() => {
@@ -86,10 +98,21 @@ export default function QueueZone({
                   {item.label}
                 </Typography>
                 <MatchLine match={item.match} names={names} />
-                <Hints first={index === 0} lastForBoth={item.lastForBoth} />
+                {item.busyTable === null ? (
+                  <Hints first={index === 0} lastForBoth={item.lastForBoth} />
+                ) : (
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="warning.main"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
+                    {fill(t('console.queue.busy'), { number: String(item.busyTable) })}
+                  </Typography>
+                )}
               </ButtonBase>
 
-              {suggested !== null && (
+              {suggested !== null && item.busyTable === null && (
                 <Box sx={{ display: 'flex', alignItems: 'center', pr: 1.5, flexShrink: 0 }}>
                   <Button
                     size="large"
@@ -105,6 +128,18 @@ export default function QueueZone({
             </Paper>
           ))}
         </Stack>
+      )}
+
+      {!all && queue.length > SHOWN && (
+        <Button
+          variant="text"
+          onClick={() => {
+            setAll(true);
+          }}
+          sx={{ mt: 1, minHeight: 44, color: 'text.secondary' }}
+        >
+          {t('console.queue.all')} ({queue.length})
+        </Button>
       )}
 
       {queue.length > 0 && suggested === null && (

@@ -38,7 +38,9 @@ function ConsoleLayout(): ReactNode {
         className="on-night"
         sx={{
           display: 'flex',
-          height: '100%',
+          // Не height: лента консоли длиннее экрана, и ниже первого экрана
+          // просвечивал бы светлый фон страницы.
+          minHeight: '100dvh',
           flexDirection: 'column',
           bgcolor: 'background.default',
           color: 'text.primary',

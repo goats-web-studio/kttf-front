@@ -4,11 +4,9 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Snackbar from '@mui/material/Snackbar';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { fill, useT } from '@/common/i18n';
@@ -40,8 +38,6 @@ export const Route = createFileRoute('/console/$tournamentId')({
   component: ConsoleScreen,
 });
 
-type ConsoleTab = 'hall' | 'standings' | 'played';
-
 /** Что открыто поверх зала: окно встречи или окно свободного стола. */
 type Opened =
   | { readonly kind: 'match'; readonly matchId: string }
@@ -57,9 +53,9 @@ interface Toast {
 /**
  * Экран проведения турнира — ТЗ 6.1.
  *
- * Три вкладки: зал (столы и очередь), таблицы с разрешением равенства
- * (ADR-008) и сыгранные встречи для правки счёта. Судья почти всё время
- * на первой: остальные нужны пару раз за турнир.
+ * Одна страница: столы, очередь, таблицы с разрешением равенства (ADR-008)
+ * и последние результаты для правки счёта. Ссылка на экран зала — в шапке,
+ * там, где судья ищет её перед турниром.
  *
  * Все действия — в окнах поверх зала. Касание стола или встречи открывает
  * окно ровно с теми действиями, которые сейчас возможны. После действия окно
@@ -76,7 +72,7 @@ function ConsoleScreen(): ReactNode {
   const { state, assign, result, cancel, tie, finish, queue } = useConsole(tournamentId);
   const now = useNow(30_000);
 
-  const [tab, setTab] = useState<ConsoleTab>('hall');
+  const standingsRef = useRef<HTMLElement>(null);
   const [opened, setOpened] = useState<Opened>(null);
   const [toast, setToast] = useState<Toast | null>(null);
 
@@ -170,7 +166,9 @@ function ConsoleScreen(): ReactNode {
       <Box
         component="header"
         sx={{
-          position: 'sticky',
+          // На телефоне шапка с кнопками заняла бы четверть экрана — там она
+          // уезжает вместе с лентой; закреплена только на широком.
+          position: { xs: 'static', lg: 'sticky' },
           top: 0,
           zIndex: 'appBar',
           bgcolor: 'background.default',
@@ -183,7 +181,7 @@ function ConsoleScreen(): ReactNode {
             mx: 'auto',
             maxWidth: 1440,
             px: 2,
-            pt: 1.5,
+            py: 1.5,
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'center',
@@ -221,38 +219,17 @@ function ConsoleScreen(): ReactNode {
             )}
           </Box>
 
-          <SyncBadge queue={queue} />
-        </Box>
-
-        <Box sx={{ mx: 'auto', maxWidth: 1440, px: 1 }}>
-          <Tabs
-            value={tab}
-            onChange={(_event, next: ConsoleTab) => {
-              setTab(next);
-            }}
-            variant="fullWidth"
-            sx={{ maxWidth: 560, '& .MuiTab-root': { minHeight: 48, textTransform: 'none' } }}
-          >
-            <Tab value="hall" label={t('console.tab.hall')} />
-            <Tab
-              value="standings"
-              label={
-                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
-                  {t('console.tab.standings')}
-                  {/* Равенство ждёт судью — видно с любой вкладки. Точка —
-                      второй носитель, текст предупреждения есть в зале. */}
-                  {view?.ties === true && (
-                    <Box
-                      component="span"
-                      aria-hidden
-                      sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'warning.main' }}
-                    />
-                  )}
-                </Box>
-              }
-            />
-            <Tab value="played" label={t('console.tab.played')} />
-          </Tabs>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+            {snapshot !== undefined && (
+              <TvLink
+                token={snapshot.tournament.publicToken}
+                onCopied={() => {
+                  notify(t('console.tv.copied'), null);
+                }}
+              />
+            )}
+            <SyncBadge queue={queue} />
+          </Box>
         </Box>
       </Box>
 
@@ -269,37 +246,50 @@ function ConsoleScreen(): ReactNode {
         >
           {snapshot === undefined || view === null ? null : (
             <>
-              {tab === 'hall' && (
-                <>
-                  {view.ties && (
-                    <Alert
-                      severity="warning"
-                      variant="outlined"
-                      action={
-                        <Button
-                          color="warning"
-                          onClick={() => {
-                            setTab('standings');
-                          }}
-                          sx={{ minHeight: 44 }}
-                        >
-                          {t('console.tie.open')}
-                        </Button>
-                      }
-                      sx={{ mb: 2, alignItems: 'center' }}
+              {view.ties && (
+                <Alert
+                  severity="warning"
+                  variant="outlined"
+                  action={
+                    <Button
+                      color="warning"
+                      onClick={() => {
+                        standingsRef.current?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      sx={{ minHeight: 44 }}
                     >
-                      {t('console.tie.alert')}
-                    </Alert>
-                  )}
+                      {t('console.tie.open')}
+                    </Button>
+                  }
+                  sx={{ mb: 2, alignItems: 'center' }}
+                >
+                  {t('console.tie.alert')}
+                </Alert>
+              )}
 
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gap: 3,
-                      alignItems: 'start',
-                      gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(0, 1fr)' },
-                    }}
-                  >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                {t('console.hint.tap')}
+              </Typography>
+
+              {/* Одна страница, а не вкладки: судья видит зал, очередь и
+                  таблицы разом и не ищет, где спрятано нужное. На широком
+                  экране — две колонки, на телефоне — одна лента. */}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 3,
+                  alignItems: 'start',
+                  gridTemplateColumns: {
+                    xs: 'minmax(0, 1fr)',
+                    lg: 'minmax(0, 2fr) minmax(0, 1fr)',
+                  },
+                }}
+              >
+                {/* На телефоне обёртки колонок растворяются (`contents`), и
+                    порядок задают сами блоки: столы, очередь, таблицы,
+                    сыгранные — в том порядке, в каком судья к ним обращается. */}
+                <Box sx={COLUMN}>
+                  <Box sx={{ order: 1 }}>
                     <TablesZone
                       tables={view.tables}
                       names={view.names}
@@ -312,7 +302,38 @@ function ConsoleScreen(): ReactNode {
                         );
                       }}
                     />
+                  </Box>
 
+                  <Box
+                    ref={standingsRef}
+                    sx={{
+                      order: 3,
+                      display: 'grid',
+                      gap: 3,
+                      gridTemplateColumns: 'minmax(0, 1fr)',
+                      scrollMarginTop: 96,
+                    }}
+                  >
+                    <TiePanel
+                      groups={snapshot.standings.groups}
+                      stages={snapshot.stages}
+                      names={view.names}
+                      onDecide={(input) => {
+                        tie(input);
+                      }}
+                      isPending={false}
+                    />
+                    <StandingsPanel
+                      groups={snapshot.standings.groups}
+                      stages={snapshot.stages}
+                      names={view.names}
+                      ratings={view.ratings}
+                    />
+                  </Box>
+                </Box>
+
+                <Box sx={COLUMN}>
+                  <Box sx={{ order: 2 }}>
                     <QueueZone
                       queue={view.queue}
                       suggested={view.suggested}
@@ -327,41 +348,18 @@ function ConsoleScreen(): ReactNode {
                       }}
                     />
                   </Box>
-                </>
-              )}
-
-              {tab === 'standings' && (
-                // minmax(0, 1fr): широкая матрица группы прокручивается внутри
-                // своей карточки, а не растягивает всю страницу вбок.
-                <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: 'minmax(0, 1fr)' }}>
-                  <TiePanel
-                    groups={snapshot.standings.groups}
-                    stages={snapshot.stages}
-                    names={view.names}
-                    onDecide={(input) => {
-                      tie(input);
-                    }}
-                    isPending={false}
-                  />
-                  <StandingsPanel
-                    groups={snapshot.standings.groups}
-                    stages={snapshot.stages}
-                    names={view.names}
-                    ratings={view.ratings}
-                  />
+                  <Box sx={{ order: 4 }}>
+                    <PlayedZone
+                      matches={view.played}
+                      stages={snapshot.stages}
+                      names={view.names}
+                      onOpen={(matchId) => {
+                        setOpened({ kind: 'match', matchId });
+                      }}
+                    />
+                  </Box>
                 </Box>
-              )}
-
-              {tab === 'played' && (
-                <PlayedZone
-                  matches={view.played}
-                  stages={snapshot.stages}
-                  names={view.names}
-                  onOpen={(matchId) => {
-                    setOpened({ kind: 'match', matchId });
-                  }}
-                />
-              )}
+              </Box>
             </>
           )}
         </QueryState>
@@ -496,6 +494,54 @@ function ConsoleScreen(): ReactNode {
           },
         }}
       />
+    </Box>
+  );
+}
+
+/** Колонка широкого экрана; на телефоне растворяется в общую ленту. */
+const COLUMN = {
+  display: { xs: 'contents', lg: 'grid' },
+  gap: 3,
+  gridTemplateColumns: 'minmax(0, 1fr)',
+} as const;
+
+/**
+ * Ссылка на экран зала — в шапке консоли, где судья её и ищет перед турниром.
+ *
+ * Открывается в новой вкладке: её перетаскивают на телевизор или второй
+ * монитор, а консоль остаётся на месте. Рядом копирование — чтобы отправить
+ * ссылку на ноутбук у телевизора.
+ */
+function TvLink({
+  token,
+  onCopied,
+}: {
+  readonly token: string;
+  readonly onCopied: () => void;
+}): ReactNode {
+  const t = useT();
+  const url = `${window.location.origin}/screen/${token}`;
+
+  return (
+    <Box sx={{ display: 'flex', gap: 0.5 }}>
+      <Button
+        variant="contained"
+        component="a"
+        href={url}
+        target="_blank"
+        rel="noopener"
+        sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
+      >
+        {t('console.tv')}
+      </Button>
+      <Button
+        onClick={() => {
+          void navigator.clipboard.writeText(url).then(onCopied);
+        }}
+        sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
+      >
+        {t('console.tv.copy')}
+      </Button>
     </Box>
   );
 }

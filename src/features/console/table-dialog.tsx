@@ -80,6 +80,8 @@ export default function TableDialog({
             {queue.slice(0, SHOWN).map((item, index) => (
               <Paper key={item.match.id} component="li" variant="outlined">
                 <ButtonBase
+                  // Игрок ещё за другим столом — звать пару нельзя.
+                  disabled={item.busyTable !== null}
                   onClick={() => {
                     onCall(item.match.id);
                   }}
@@ -91,13 +93,20 @@ export default function TableDialog({
                     textAlign: 'left',
                     borderRadius: 1,
                     typography: 'body1',
+                    '&.Mui-disabled': { opacity: 0.6 },
                   }}
                 >
                   <Typography component="span" variant="caption" color="text.secondary">
                     {item.label}
                   </Typography>
                   <MatchLine match={item.match} names={names} />
-                  <Hints first={index === 0} lastForBoth={item.lastForBoth} />
+                  {item.busyTable === null ? (
+                    <Hints first={index === 0} lastForBoth={item.lastForBoth} />
+                  ) : (
+                    <Typography component="span" variant="caption" color="warning.main">
+                      {fill(t('console.queue.busy'), { number: String(item.busyTable) })}
+                    </Typography>
+                  )}
                 </ButtonBase>
               </Paper>
             ))}

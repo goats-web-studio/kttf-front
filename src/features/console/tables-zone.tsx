@@ -72,7 +72,15 @@ export default function TablesZone({ tables, names, now, onOpen }: TablesZonePro
                   : table.status === 'AWAITING'
                     ? 'warning.main'
                     : 'divider',
-              bgcolor: table.status === 'FREE' ? 'background.default' : 'background.paper',
+              // Подложка в цвет состояния: зал читается цветом раньше, чем
+              // словами. Свободный стол — пунктиром: к нему и нужно звать.
+              bgcolor:
+                table.status === 'PLAYING'
+                  ? 'color-mix(in srgb, var(--night-red) 12%, var(--night-raised))'
+                  : table.status === 'AWAITING'
+                    ? 'color-mix(in srgb, var(--night-warn) 10%, var(--night-raised))'
+                    : 'background.default',
+              borderStyle: table.status === 'FREE' ? 'dashed' : 'solid',
             }}
           >
             <ButtonBase
