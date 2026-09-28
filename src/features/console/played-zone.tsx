@@ -1,0 +1,74 @@
+import type { MatchView, StageView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import type { ReactNode } from 'react';
+
+import { useT } from '@/common/i18n';
+
+import MatchLine from './match-line';
+import { matchLabel } from './queue';
+
+interface PlayedZoneProps {
+  readonly matches: readonly MatchView[];
+  readonly stages: readonly StageView[];
+  readonly names: ReadonlyMap<string, string>;
+  readonly onOpen: (matchId: string) => void;
+}
+
+/**
+ * Сыгранные встречи — отсюда исправляют счёт (ТЗ 6.3).
+ *
+ * Свежие сверху: ошибку замечают почти сразу, когда игроки подходят к судье
+ * со словами «было три-два, а не три-один». Исправление — в окне встречи,
+ * за отдельной кнопкой: правка пишется в журнал.
+ */
+export default function PlayedZone({ matches, stages, names, onOpen }: PlayedZoneProps): ReactNode {
+  const t = useT();
+
+  if (matches.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        {t('console.played.empty')}
+      </Typography>
+    );
+  }
+
+  return (
+    <Stack component="ol" spacing={1} sx={{ m: 0, p: 0, listStyle: 'none' }}>
+      {matches.map((match) => (
+        <Paper key={match.id} component="li" variant="outlined">
+          <ButtonBase
+            onClick={() => {
+              onOpen(match.id);
+            }}
+            sx={{
+              display: 'block',
+              width: '100%',
+              minHeight: 56,
+              p: 1.5,
+              textAlign: 'left',
+              borderRadius: 1,
+              typography: 'body2',
+            }}
+          >
+            <Typography component="span" variant="caption" color="text.secondary">
+              {matchLabel(stages, match)}
+              {match.tableNumber !== null &&
+                ` · ${t('console.table.number')} ${String(match.tableNumber)}`}
+              {match.resultType === 'WALKOVER' && (
+                <Box component="span" sx={{ color: 'warning.main' }}>
+                  {' · '}
+                  {t('console.played.walkover')}
+                </Box>
+              )}
+            </Typography>
+            <MatchLine match={match} names={names} />
+          </ButtonBase>
+        </Paper>
+      ))}
+    </Stack>
+  );
+}

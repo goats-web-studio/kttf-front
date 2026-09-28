@@ -1,43 +1,70 @@
-import type { MatchView } from '@kttf/shared/types';
+import type { MatchResultInput, MatchView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
+import Snackbar from '@mui/material/Snackbar';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
-import { useT } from '@/common/i18n';
+import { fill, useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
-import PlayingZone from '@/features/console/playing-zone';
+import { isPlayedOut, matchesOf } from '@/features/console/group-matches';
+import MatchDialog from '@/features/console/match-dialog';
+import PlayedZone from '@/features/console/played-zone';
 import {
   allPlayed,
   buildQueue,
   buildTables,
-  playingMatches,
+  matchLabel,
+  playedMatches,
+  progressOf,
   suggestedTable,
 } from '@/features/console/queue';
 import QueueZone from '@/features/console/queue-zone';
 import { setsToWinFor } from '@/features/console/score';
 import StandingsPanel from '@/features/console/standings-panel';
 import { namesOf, ratingsOf } from '@/features/console/state';
-import SyncBadge from '@/features/console/sync-badge';
+import SyncBadge, { SyncRejections } from '@/features/console/sync-badge';
+import TableDialog from '@/features/console/table-dialog';
 import TablesZone from '@/features/console/tables-zone';
 import TiePanel from '@/features/console/tie-panel';
 import { useConsole } from '@/features/console/use-console';
+import { useNow } from '@/features/console/use-now';
 
 export const Route = createFileRoute('/console/$tournamentId')({
   component: ConsoleScreen,
 });
 
+type ConsoleTab = 'hall' | 'standings' | 'played';
+
+/** Что открыто поверх зала: окно встречи или окно свободного стола. */
+type Opened =
+  | { readonly kind: 'match'; readonly matchId: string }
+  | { readonly kind: 'table'; readonly number: number }
+  | null;
+
+interface Toast {
+  readonly key: number;
+  readonly message: string;
+  readonly action: { readonly label: string; readonly run: () => void } | null;
+}
+
 /**
  * Экран проведения турнира — ТЗ 6.1.
  *
- * Три зоны: столы, играется, очередь. Плюс таблицы и разрешение равенства,
- * без которого турнир не закрыть (ADR-008).
+ * Три вкладки: зал (столы и очередь), таблицы с разрешением равенства
+ * (ADR-008) и сыгранные встречи для правки счёта. Судья почти всё время
+ * на первой: остальные нужны пару раз за турнир.
+ *
+ * Все действия — в окнах поверх зала. Касание стола или встречи открывает
+ * окно ровно с теми действиями, которые сейчас возможны. После действия окно
+ * закрывается само, а внизу появляется подтверждение с отменой: судья видит,
+ * что нажал, и исправляет промах одним касанием.
  *
  * Ни одно действие не ждёт ответа сервера — запрет №1 брифа. Введённое
  * ложится в очередь на диск и уходит на сервер само; состояние связи и длина
@@ -47,6 +74,11 @@ function ConsoleScreen(): ReactNode {
   const t = useT();
   const { tournamentId } = Route.useParams();
   const { state, assign, result, cancel, tie, finish, queue } = useConsole(tournamentId);
+  const now = useNow(30_000);
+
+  const [tab, setTab] = useState<ConsoleTab>('hall');
+  const [opened, setOpened] = useState<Opened>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
 
   const snapshot = state.data;
 
@@ -60,11 +92,15 @@ function ConsoleScreen(): ReactNode {
     return {
       tables,
       queue: buildQueue(snapshot.stages),
-      playing: playingMatches(snapshot.stages),
+      played: playedMatches(snapshot.stages),
       suggested: suggestedTable(tables),
       names: namesOf(snapshot),
       ratings: ratingsOf(snapshot),
+      progress: progressOf(snapshot.stages),
       done: allPlayed(snapshot.stages),
+      ties: snapshot.standings.groups.some(
+        (group) => group.unresolved.length > 0 && isPlayedOut(matchesOf(snapshot.stages, group)),
+      ),
     };
   }, [snapshot]);
 
@@ -76,120 +112,390 @@ function ConsoleScreen(): ReactNode {
       : setsToWinFor(snapshot.tournament.formatConfig, stage.type);
   }
 
+  function findMatch(matchId: string): MatchView | undefined {
+    return snapshot?.stages.flatMap((stage) => stage.matches).find((match) => match.id === matchId);
+  }
+
+  function pairOf(match: MatchView): string {
+    const name = (id: string | null): string =>
+      id === null ? t('console.match.pending') : (view?.names.get(id) ?? '');
+
+    return `${name(match.playerAId)} — ${name(match.playerBId)}`;
+  }
+
+  function notify(message: string, action: Toast['action']): void {
+    setToast({ key: Date.now(), message, action });
+  }
+
+  function doAssign(match: MatchView, tableNumber: number): void {
+    setOpened(null);
+    assign(match.id, tableNumber);
+    notify(
+      fill(t('console.toast.assigned'), { number: String(tableNumber), pair: pairOf(match) }),
+      {
+        label: t('console.toast.undo'),
+        run: () => {
+          cancel(match.id);
+        },
+      },
+    );
+  }
+
+  function doResult(match: MatchView, input: MatchResultInput, correcting: boolean): void {
+    setOpened(null);
+    // Правка уже введённого результата уходит другим типом операции и
+    // фиксируется в журнале — ТЗ 6.3.
+    result(match.id, input, correcting);
+    notify(
+      fill(t('console.toast.recorded'), {
+        score: `${String(input.setsA)}:${String(input.setsB)}`,
+      }),
+      {
+        label: t('console.toast.edit'),
+        run: () => {
+          setOpened({ kind: 'match', matchId: match.id });
+        },
+      },
+    );
+  }
+
+  const openedMatch = opened?.kind === 'match' ? findMatch(opened.matchId) : undefined;
+  const openedTable =
+    opened?.kind === 'table'
+      ? view?.tables.find((table) => table.number === opened.number)
+      : undefined;
+
   return (
-    <Box sx={{ mx: 'auto', width: '100%', maxWidth: 1152, px: 2, py: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
       <Box
         component="header"
         sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 2,
+          position: 'sticky',
+          top: 0,
+          zIndex: 'appBar',
+          bgcolor: 'background.default',
+          borderBottom: 1,
+          borderColor: 'divider',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-          <Link href="/console" variant="body2" color="text.secondary" underline="always">
-            {t('page.console.title')}
-          </Link>
-          <Typography variant="h1" sx={{ fontSize: 22, lineHeight: '26px' }}>
-            {snapshot?.tournament.name ?? ''}
-          </Typography>
-        </Box>
-
-        <SyncBadge queue={queue} />
-      </Box>
-
-      <QueryState
-        isPending={state.isPending}
-        error={state.error}
-        onRetry={() => void state.refetch()}
-      >
-        {snapshot === undefined || view === null ? null : (
-          <Stack spacing={3} sx={{ mt: 2 }}>
-            <TablesZone tables={view.tables} names={view.names} />
-
-            <Box
+        <Box
+          sx={{
+            mx: 'auto',
+            maxWidth: 1440,
+            px: 2,
+            pt: 1.5,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1.5,
+          }}
+        >
+          <Box sx={{ minWidth: 0, flex: '1 1 240px' }}>
+            <Link href="/console" variant="caption" color="text.secondary" underline="always">
+              {t('page.console.title')}
+            </Link>
+            <Typography
+              variant="h1"
               sx={{
-                display: 'grid',
-                gap: 3,
-                gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+                fontSize: 22,
+                lineHeight: '26px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
-              <PlayingZone
-                matches={view.playing}
-                names={view.names}
-                setsToWinOf={setsToWinOf}
-                onResult={(matchId, input) => {
-                  // Правка уже введённого результата уходит другим типом
-                  // операции и фиксируется в журнале — ТЗ 6.3.
-                  result(matchId, input, false);
-                }}
-                onCancel={(matchId) => {
-                  cancel(matchId);
-                }}
-              />
-
-              <QueueZone
-                queue={view.queue}
-                tables={view.tables}
-                suggested={view.suggested}
-                names={view.names}
-                onAssign={(matchId, tableNumber) => {
-                  assign(matchId, tableNumber);
-                }}
-              />
-            </Box>
-
-            <TiePanel
-              groups={snapshot.standings.groups}
-              stages={snapshot.stages}
-              names={view.names}
-              onDecide={(input) => {
-                tie(input);
-              }}
-              isPending={false}
-            />
-
-            <StandingsPanel
-              groups={snapshot.standings.groups}
-              stages={snapshot.stages}
-              names={view.names}
-              ratings={view.ratings}
-            />
-
-            {view.done && snapshot.tournament.status === 'RUNNING' && (
-              <Paper component="section" variant="outlined" sx={{ p: 1.5 }}>
-                {/* Завершение — единственное действие консоли, которому нужна
-                    сеть: рейтинг считает сервер (ТС 6.2, ADR-022). Пока очередь
-                    не ушла, закрывать турнир нечем — сервер не видел половины
-                    результатов. */}
-                <Button
-                  variant="contained"
-                  size="large"
-                  disabled={finish.isPending || queue.queued > 0 || queue.connection === 'OFFLINE'}
-                  onClick={() => {
-                    finish.mutate();
-                  }}
-                  sx={{ minHeight: 56, fontWeight: 600 }}
-                >
-                  {t('console.finish')}
-                </Button>
-                {queue.queued > 0 && (
-                  <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-                    {t('console.finish.queueFirst')}
-                  </Typography>
-                )}
-                {finish.error !== null && (
-                  <Alert severity="error" sx={{ mt: 1 }}>
-                    {t(errorMessageKey(finish.error))}
-                  </Alert>
-                )}
-              </Paper>
+              {snapshot?.tournament.name ?? ''}
+            </Typography>
+            {view !== null && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontVariantNumeric: 'tabular-nums' }}
+              >
+                {fill(t('console.progress'), {
+                  done: String(view.progress.done),
+                  total: String(view.progress.total),
+                })}
+              </Typography>
             )}
-          </Stack>
-        )}
-      </QueryState>
+          </Box>
+
+          <SyncBadge queue={queue} />
+        </Box>
+
+        <Box sx={{ mx: 'auto', maxWidth: 1440, px: 1 }}>
+          <Tabs
+            value={tab}
+            onChange={(_event, next: ConsoleTab) => {
+              setTab(next);
+            }}
+            variant="fullWidth"
+            sx={{ maxWidth: 560, '& .MuiTab-root': { minHeight: 48, textTransform: 'none' } }}
+          >
+            <Tab value="hall" label={t('console.tab.hall')} />
+            <Tab
+              value="standings"
+              label={
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                  {t('console.tab.standings')}
+                  {/* Равенство ждёт судью — видно с любой вкладки. Точка —
+                      второй носитель, текст предупреждения есть в зале. */}
+                  {view?.ties === true && (
+                    <Box
+                      component="span"
+                      aria-hidden
+                      sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'warning.main' }}
+                    />
+                  )}
+                </Box>
+              }
+            />
+            <Tab value="played" label={t('console.tab.played')} />
+          </Tabs>
+        </Box>
+      </Box>
+
+      <Box
+        component="main"
+        sx={{ mx: 'auto', width: '100%', maxWidth: 1440, px: 2, py: 2, flexGrow: 1 }}
+      >
+        <SyncRejections queue={queue} />
+
+        <QueryState
+          isPending={state.isPending}
+          error={state.error}
+          onRetry={() => void state.refetch()}
+        >
+          {snapshot === undefined || view === null ? null : (
+            <>
+              {tab === 'hall' && (
+                <>
+                  {view.ties && (
+                    <Alert
+                      severity="warning"
+                      variant="outlined"
+                      action={
+                        <Button
+                          color="warning"
+                          onClick={() => {
+                            setTab('standings');
+                          }}
+                          sx={{ minHeight: 44 }}
+                        >
+                          {t('console.tie.open')}
+                        </Button>
+                      }
+                      sx={{ mb: 2, alignItems: 'center' }}
+                    >
+                      {t('console.tie.alert')}
+                    </Alert>
+                  )}
+
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gap: 3,
+                      alignItems: 'start',
+                      gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(0, 1fr)' },
+                    }}
+                  >
+                    <TablesZone
+                      tables={view.tables}
+                      names={view.names}
+                      now={now}
+                      onOpen={(table) => {
+                        setOpened(
+                          table.status === 'PLAYING' && table.match !== null
+                            ? { kind: 'match', matchId: table.match.id }
+                            : { kind: 'table', number: table.number },
+                        );
+                      }}
+                    />
+
+                    <QueueZone
+                      queue={view.queue}
+                      suggested={view.suggested}
+                      names={view.names}
+                      onAssign={(matchId, tableNumber) => {
+                        const match = findMatch(matchId);
+
+                        if (match !== undefined) doAssign(match, tableNumber);
+                      }}
+                      onOpen={(matchId) => {
+                        setOpened({ kind: 'match', matchId });
+                      }}
+                    />
+                  </Box>
+                </>
+              )}
+
+              {tab === 'standings' && (
+                // minmax(0, 1fr): широкая матрица группы прокручивается внутри
+                // своей карточки, а не растягивает всю страницу вбок.
+                <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: 'minmax(0, 1fr)' }}>
+                  <TiePanel
+                    groups={snapshot.standings.groups}
+                    stages={snapshot.stages}
+                    names={view.names}
+                    onDecide={(input) => {
+                      tie(input);
+                    }}
+                    isPending={false}
+                  />
+                  <StandingsPanel
+                    groups={snapshot.standings.groups}
+                    stages={snapshot.stages}
+                    names={view.names}
+                    ratings={view.ratings}
+                  />
+                </Box>
+              )}
+
+              {tab === 'played' && (
+                <PlayedZone
+                  matches={view.played}
+                  stages={snapshot.stages}
+                  names={view.names}
+                  onOpen={(matchId) => {
+                    setOpened({ kind: 'match', matchId });
+                  }}
+                />
+              )}
+            </>
+          )}
+        </QueryState>
+      </Box>
+
+      {view?.done === true && snapshot?.tournament.status === 'RUNNING' && (
+        <Box
+          component="section"
+          sx={{
+            position: 'sticky',
+            bottom: 0,
+            borderTop: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Box sx={{ mx: 'auto', maxWidth: 1440, px: 2, py: 1.5 }}>
+            {/* Завершение — единственное действие консоли, которому нужна
+                сеть: рейтинг считает сервер (ТС 6.2, ADR-022). Пока очередь
+                не ушла, закрывать турнир нечем — сервер не видел половины
+                результатов. */}
+            <Button
+              variant="contained"
+              size="large"
+              fullWidth
+              disabled={finish.isPending || queue.queued > 0 || queue.connection === 'OFFLINE'}
+              onClick={() => {
+                finish.mutate();
+              }}
+              sx={{ minHeight: 56, fontWeight: 600, maxWidth: { sm: 480 } }}
+            >
+              {t('console.finish')}
+            </Button>
+            {queue.queued > 0 && (
+              <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
+                {t('console.finish.queueFirst')}
+              </Typography>
+            )}
+            {finish.error !== null && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                {t(errorMessageKey(finish.error))}
+              </Alert>
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {openedMatch !== undefined && view !== null && snapshot !== undefined && (
+        <MatchDialog
+          key={openedMatch.id}
+          match={openedMatch}
+          label={matchLabel(snapshot.stages, openedMatch)}
+          names={view.names}
+          ratings={view.ratings}
+          tables={view.tables}
+          suggested={view.suggested}
+          setsToWin={setsToWinOf(openedMatch)}
+          now={now}
+          onClose={() => {
+            setOpened(null);
+          }}
+          onAssign={(tableNumber) => {
+            doAssign(openedMatch, tableNumber);
+          }}
+          onResult={(input, correcting) => {
+            doResult(openedMatch, input, correcting);
+          }}
+          onCancel={() => {
+            setOpened(null);
+            cancel(openedMatch.id);
+          }}
+        />
+      )}
+
+      {openedTable !== undefined && view !== null && (
+        <TableDialog
+          key={openedTable.number}
+          table={openedTable}
+          queue={view.queue}
+          names={view.names}
+          onClose={() => {
+            setOpened(null);
+          }}
+          onCall={(matchId) => {
+            const match = findMatch(matchId);
+
+            if (match !== undefined) doAssign(match, openedTable.number);
+          }}
+          onOpenMatch={(matchId) => {
+            setOpened({ kind: 'match', matchId });
+          }}
+        />
+      )}
+
+      <Snackbar
+        key={toast?.key}
+        open={toast !== null}
+        autoHideDuration={6000}
+        onClose={(_event, reason) => {
+          // Касание мимо не должно прятать отмену: судья как раз тянется к ней.
+          if (reason !== 'clickaway') setToast(null);
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        message={toast?.message}
+        action={
+          toast?.action == null ? undefined : (
+            <Button
+              color="primary"
+              onClick={() => {
+                toast.action?.run();
+                setToast(null);
+              }}
+              sx={{ minHeight: 44 }}
+            >
+              {toast.action.label}
+            </Button>
+          )
+        }
+        // Над панелью завершения, когда она есть, а не поверх её кнопки.
+        sx={view?.done === true ? { bottom: { xs: 96, sm: 104 } } : undefined}
+        // Светлая плашка MUI по умолчанию в ночной теме слепит и гасит
+        // красную кнопку отмены: плашка в цвет карточки с рамкой.
+        slotProps={{
+          content: {
+            sx: {
+              bgcolor: 'background.paper',
+              color: 'text.primary',
+              border: 1,
+              borderColor: 'divider',
+              flexWrap: 'nowrap',
+            },
+          },
+        }}
+      />
     </Box>
   );
 }

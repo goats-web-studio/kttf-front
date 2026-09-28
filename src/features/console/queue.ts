@@ -18,6 +18,8 @@ export interface QueuedMatch {
   readonly stageName: string;
   /** Метка группы, если встреча из группового этапа. */
   readonly groupLabel: string | null;
+  /** Этап и группа одной строкой — см. `matchLabel`. */
+  readonly label: string;
   /**
    * Момент, с которого пара свободна: позднейшее из времён закрытия двух
    * последних встреч. `null` — хотя бы один из двоих ещё не играл вовсе.
@@ -115,6 +117,7 @@ export function buildQueue(stages: readonly StageView[]): readonly QueuedMatch[]
         match,
         stageName: stage.name,
         groupLabel: stage.groups.find((group) => group.id === match.groupId)?.label ?? null,
+        label: matchLabel(stages, match),
         // Пара свободна не раньше, чем закончил позднейший из двоих.
         waitingSince: times.length === 2 ? maxOf(times) : null,
         lastForBoth: [a, b].every((playerId) => playerId !== null && left.get(playerId) === 1),
@@ -221,6 +224,44 @@ export function suggestedTable(tables: readonly TableState[]): number | null {
   const free = tables.find((table) => table.status === 'FREE');
 
   return (free ?? tables.find((table) => table.status === 'AWAITING'))?.number ?? null;
+}
+
+/**
+ * Подпись встречи: этап и группа.
+ *
+ * «Круговая · Круговая» не пишется: у круговой схемы единственная группа
+ * названа как этап, и повторять её незачем.
+ */
+export function matchLabel(stages: readonly StageView[], match: MatchView): string {
+  const stage = stages.find((current) => current.id === match.stageId);
+
+  if (stage === undefined) {
+    return '';
+  }
+
+  const group = stage.groups.find((current) => current.id === match.groupId)?.label ?? null;
+
+  return group === null || group === stage.name ? stage.name : `${stage.name} · ${group}`;
+}
+
+/** Сыгранные встречи, свежие сверху: правят обычно только что введённое. */
+export function playedMatches(stages: readonly StageView[]): readonly MatchView[] {
+  return [
+    ...allMatches(stages).filter((match) => match.setsA !== null && match.setsB !== null),
+  ].sort((left, right) => (right.finishedAt ?? '').localeCompare(left.finishedAt ?? ''));
+}
+
+/** Сколько встреч сыграно из скольких — прогресс турнира в шапке консоли. */
+export function progressOf(stages: readonly StageView[]): {
+  readonly done: number;
+  readonly total: number;
+} {
+  const matches = allMatches(stages).filter((match) => match.status !== 'CANCELLED');
+
+  return {
+    done: matches.filter((match) => match.status === 'FINISHED').length,
+    total: matches.length,
+  };
 }
 
 /** Все ли встречи турнира сыграны: только тогда его можно завершать. */

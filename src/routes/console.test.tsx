@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { db } from '@/features/console/db';
 import { pending } from '@/features/console/outbox';
@@ -85,10 +86,10 @@ afterEach(() => {
 });
 
 describe('экран проведения', () => {
-  it('показывает идущую встречу и очередь', async () => {
+  it('показывает столы и очередь', async () => {
     renderConsole();
 
-    expect(await screen.findByText(ru['console.playing.title'])).toBeDefined();
+    expect(await screen.findByText(ru['console.tables.title'])).toBeDefined();
     // Первый в очереди отмечен как ждущий дольше всех — ТЗ 6.1.
     expect(await screen.findByText(ru['console.hint.waiting'])).toBeDefined();
   });
@@ -105,7 +106,7 @@ describe('экран проведения', () => {
   it('закрывает встречу двумя действиями и не ждёт сервера', async () => {
     renderConsole();
 
-    // Действие первое: раскрыть карточку идущей встречи.
+    // Действие первое: коснуться стола, за которым идёт встреча.
     const card = await screen.findByRole('button', {
       name: new RegExp(PLAYERS.first.lastName),
     });
@@ -115,8 +116,12 @@ describe('экран проведения', () => {
     // Действие второе: нажать счёт. Больше между ними ничего нет — ТЗ 6.3.
     fireEvent.click(await screen.findByRole('button', { name: '3:1' }));
 
-    // Ответ сервера не придёт никогда, а счёт обязан быть на экране.
-    expect(await screen.findByText('3:1')).toBeDefined();
+    // Ответ сервера не придёт никогда, а счёт обязан быть на экране:
+    // подтверждение внизу и стол, ждущий следующую пару.
+    expect(
+      await screen.findByText(fill(ru['console.toast.recorded'], { score: '3:1' })),
+    ).toBeDefined();
+    expect(screen.getByText(ru['console.table.awaiting'])).toBeDefined();
   });
 
   it('введённое ложится в очередь на диск — ТЗ 6.4', async () => {
@@ -168,7 +173,7 @@ describe('экран проведения', () => {
     renderConsole();
 
     // Судья открыл консоль в зале без интернета и обязан увидеть турнир.
-    expect(await screen.findByText(ru['console.playing.title'])).toBeDefined();
+    expect(await screen.findByText(ru['console.tables.title'])).toBeDefined();
     expect(sent).toHaveLength(0);
   });
 });
@@ -208,7 +213,11 @@ describe('разрешение равенства', () => {
 
     renderConsole();
 
-    expect(await screen.findByText(ru['console.standings.title'])).toBeDefined();
+    fireEvent.click(await screen.findByRole('tab', { name: ru['console.tab.standings'] }));
+
+    expect(
+      await screen.findByRole('heading', { name: ru['console.standings.title'] }),
+    ).toBeDefined();
     expect(screen.queryByText(ru['console.tie.title'])).toBeNull();
   });
 
@@ -217,6 +226,111 @@ describe('разрешение равенства', () => {
 
     renderConsole();
 
+    // Из зала видно, что судью ждут таблицы, — и переход туда одним касанием.
+    expect(await screen.findByText(ru['console.tie.alert'])).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: ru['console.tie.open'] }));
+
     expect(await screen.findByText(ru['console.tie.title'])).toBeDefined();
+  });
+});
+
+/** Последняя операция в очереди на диске — то, что судья только что сделал. */
+async function lastQueued(count: number): Promise<unknown> {
+  await waitFor(async () => {
+    expect(await pending(TOURNAMENT_ID)).toHaveLength(count);
+  });
+
+  return (await pending(TOURNAMENT_ID)).at(-1)?.operation;
+}
+
+describe('действия в окнах', () => {
+  it('свободный стол зовёт пару из очереди', async () => {
+    renderConsole();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(ru['console.table.call']) }),
+    );
+    // Окно стола предлагает очередь: единственная ждущая пара — третий с четвёртым.
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(PLAYERS.third.lastName) }),
+    );
+
+    expect(await lastQueued(1)).toMatchObject({
+      type: 'MATCH_ASSIGN',
+      payload: { tableNumber: 2 },
+    });
+  });
+
+  it('встреча из очереди ставится на выбранный стол', async () => {
+    renderConsole();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(PLAYERS.third.lastName) }),
+    );
+    fireEvent.click(await screen.findByRole('button', { name: `${ru['console.table.number']} 2` }));
+
+    expect(await lastQueued(1)).toMatchObject({
+      type: 'MATCH_ASSIGN',
+      payload: { tableNumber: 2 },
+    });
+  });
+
+  it('стол, занятый идущей встречей, выбрать нельзя', async () => {
+    renderConsole();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(PLAYERS.third.lastName) }),
+    );
+
+    const busy = await screen.findByRole('button', { name: `${ru['console.table.number']} 1` });
+
+    expect((busy as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('идущую встречу можно перенести на другой стол', async () => {
+    renderConsole();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }),
+    );
+    fireEvent.click(await screen.findByRole('button', { name: ru['console.dialog.moveTable'] }));
+    fireEvent.click(await screen.findByRole('button', { name: `${ru['console.table.number']} 2` }));
+
+    expect(await lastQueued(1)).toMatchObject({
+      type: 'MATCH_ASSIGN',
+      payload: { tableNumber: 2 },
+    });
+  });
+
+  it('назначение отменяется из подтверждения', async () => {
+    renderConsole();
+
+    fireEvent.click(await screen.findByRole('button', { name: `${ru['console.queue.assign']} 2` }));
+    fireEvent.click(await screen.findByRole('button', { name: ru['console.toast.undo'] }));
+
+    expect(await lastQueued(2)).toMatchObject({ type: 'MATCH_CANCEL' });
+  });
+
+  it('исправление сыгранной встречи уходит правкой, а не новым результатом', async () => {
+    renderConsole();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }),
+    );
+    fireEvent.click(await screen.findByRole('button', { name: '3:1' }));
+    await lastQueued(1);
+
+    fireEvent.click(screen.getByRole('tab', { name: ru['console.tab.played'] }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(PLAYERS.first.lastName) }),
+    );
+    fireEvent.click(await screen.findByRole('button', { name: ru['console.dialog.editResult'] }));
+    fireEvent.click(await screen.findByRole('button', { name: '3:2' }));
+
+    // Правка пишется в журнал отдельным типом — ТЗ 6.3.
+    expect(await lastQueued(2)).toMatchObject({
+      type: 'MATCH_EDIT',
+      payload: { setsA: 3, setsB: 2 },
+    });
   });
 });

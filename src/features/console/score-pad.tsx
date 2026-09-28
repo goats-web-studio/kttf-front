@@ -7,13 +7,16 @@ import ToggleButton from '@mui/material/ToggleButton';
 import Typography from '@mui/material/Typography';
 import { useId, useState, type ReactNode } from 'react';
 
-import { useT } from '@/common/i18n';
+import { fill, useT } from '@/common/i18n';
 
 import { quickResults } from './score';
 
 interface ScorePadProps {
   readonly setsToWin: number;
   readonly onSubmit: (input: MatchResultInput) => void;
+  /** Фамилии сторон: ряд кнопок подписан тем, кто в нём побеждает. */
+  readonly nameA?: string | undefined;
+  readonly nameB?: string | undefined;
 }
 
 /**
@@ -26,7 +29,7 @@ interface ScorePadProps {
  * Ни одна кнопка не ждёт ответа сервера: обработчик применяет результат
  * к снимку сразу, запрос уходит следом (запрет №1).
  */
-export default function ScorePad({ setsToWin, onSubmit }: ScorePadProps): ReactNode {
+export default function ScorePad({ setsToWin, onSubmit, nameA, nameB }: ScorePadProps): ReactNode {
   const t = useT();
   const [detailed, setDetailed] = useState(false);
 
@@ -37,16 +40,11 @@ export default function ScorePad({ setsToWin, onSubmit }: ScorePadProps): ReactN
   return (
     <Box sx={{ mt: 1.5 }}>
       {/* Верхний ряд — победа первого, нижний — второго. Ряды различаются не
-          только цветом: заливка против обводки читается и при дальтонизме, и
-          на выгоревшем экране в зале. Колонок ровно по числу исходов, иначе
-          при встрече до двух сетов ряд разъезжается. */}
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 1,
-          gridTemplateColumns: `repeat(${String(setsToWin + 1)}, minmax(0, 1fr))`,
-        }}
-      >
+          только цветом: над каждым написано, кто в нём побеждает, а заливка
+          против обводки читается и при дальтонизме, и на выгоревшем экране
+          в зале. Колонок ровно по числу исходов, иначе при встрече до двух
+          сетов ряд разъезжается. */}
+      <ScoreRow title={nameA === undefined ? null : fill(t('console.score.wins'), { name: nameA })}>
         {wonByA.map((result) => (
           <ScoreButton
             key={`${String(result.setsA)}:${String(result.setsB)}`}
@@ -60,14 +58,17 @@ export default function ScorePad({ setsToWin, onSubmit }: ScorePadProps): ReactN
         ))}
         <ScoreButton
           filled
+          small
           label={t('console.score.walkoverA')}
           onClick={() => {
             onSubmit({ setsA: setsToWin, setsB: 0, resultType: 'WALKOVER' });
           }}
         >
-          W:L
+          {t('console.score.walkover')}
         </ScoreButton>
+      </ScoreRow>
 
+      <ScoreRow title={nameB === undefined ? null : fill(t('console.score.wins'), { name: nameB })}>
         {wonByB.map((result) => (
           <ScoreButton
             key={`${String(result.setsA)}:${String(result.setsB)}`}
@@ -79,14 +80,15 @@ export default function ScorePad({ setsToWin, onSubmit }: ScorePadProps): ReactN
           </ScoreButton>
         ))}
         <ScoreButton
+          small
           label={t('console.score.walkoverB')}
           onClick={() => {
             onSubmit({ setsA: 0, setsB: setsToWin, resultType: 'WALKOVER' });
           }}
         >
-          L:W
+          {t('console.score.walkover')}
         </ScoreButton>
-      </Box>
+      </ScoreRow>
 
       <ToggleButton
         value="detailed"
@@ -104,10 +106,45 @@ export default function ScorePad({ setsToWin, onSubmit }: ScorePadProps): ReactN
   );
 }
 
+/** Ряд исходов одной стороны с подписью, кто в нём побеждает. */
+function ScoreRow({
+  title,
+  children,
+}: {
+  readonly title: string | null;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <Box sx={{ mt: 1, '&:first-of-type': { mt: 0 } }}>
+      {title !== null && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          component="p"
+          sx={{ mb: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
+          {title}
+        </Typography>
+      )}
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(64px, 1fr))',
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
 interface ScoreButtonProps {
   readonly children: ReactNode;
   readonly onClick: () => void;
   readonly filled?: boolean;
+  /** Словом, а не счётом: надпись мельче, чтобы влезть в ту же клетку. */
+  readonly small?: boolean;
   readonly label?: string;
 }
 
@@ -123,7 +160,7 @@ interface ScoreButtonProps {
  * заливка — `primary.main` (`--night-red`), граница остаётся на случай
  * смены токена.
  */
-function ScoreButton({ children, onClick, filled, label }: ScoreButtonProps): ReactNode {
+function ScoreButton({ children, onClick, filled, small, label }: ScoreButtonProps): ReactNode {
   return (
     <Button
       variant={filled === true ? 'contained' : 'outlined'}
@@ -136,10 +173,11 @@ function ScoreButton({ children, onClick, filled, label }: ScoreButtonProps): Re
         minWidth: 0,
         px: 1,
         fontFamily: "'Oswald', system-ui, sans-serif",
-        fontSize: 22,
-        lineHeight: '26px',
+        fontSize: small === true ? 15 : 22,
+        lineHeight: small === true ? '20px' : '26px',
         fontWeight: 600,
         fontVariantNumeric: 'tabular-nums',
+        textTransform: 'none',
         // Граница у заливки обязательна — см. выше.
         ...(filled === true ? { border: '1px solid', borderColor: 'primary.main' } : {}),
       }}

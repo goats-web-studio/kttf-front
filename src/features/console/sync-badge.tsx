@@ -62,10 +62,28 @@ export default function SyncBadge({ queue }: SyncBadgeProps): ReactNode {
         sx={{ height: 'auto', minHeight: 40, fontSize: 13, '& .MuiChip-label': { py: 1 } }}
       />
 
-      <Button size="large" onClick={queue.syncNow} sx={{ minHeight: 56 }}>
+      <Button onClick={queue.syncNow} sx={{ minHeight: 44, whiteSpace: 'nowrap' }}>
         {t('console.sync.now')}
       </Button>
+    </Box>
+  );
+}
 
+/**
+ * Отклонённые сервером операции — под шапкой, а не в ней.
+ *
+ * Сервер отверг операцию: повторять её бессмысленно, и судья решает сам —
+ * ввести заново или оставить как есть. Отказ висит, пока судья его не уберёт.
+ */
+export function SyncRejections({ queue }: SyncBadgeProps): ReactNode {
+  const t = useT();
+
+  if (queue.rejected.length === 0) {
+    return null;
+  }
+
+  return (
+    <Box sx={{ display: 'grid', gap: 1 }}>
       {queue.rejected.map((item) => (
         <Alert
           key={item.seq}
@@ -86,8 +104,6 @@ export default function SyncBadge({ queue }: SyncBadgeProps): ReactNode {
           }
           sx={{ alignItems: 'center', py: 0 }}
         >
-          {/* Сервер отверг операцию: повторять её бессмысленно, и судья
-              решает сам — ввести заново или оставить как есть. */}
           {t('console.sync.rejected')} {t(reasonKey(item.rejectedReason))}
         </Alert>
       ))}
