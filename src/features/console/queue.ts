@@ -27,6 +27,13 @@ export interface QueuedMatch {
   readonly waitingSince: string | null;
   /** После этой встречи обоим играть больше нечего — ТЗ 6.3. */
   readonly lastForBoth: boolean;
+  /**
+   * Стол, за которым сейчас стоит один из двоих. `null` — оба свободны.
+   *
+   * Такую пару звать нельзя: игрок доигрывает другую встречу. Она остаётся
+   * в очереди, чтобы судья видел, кого ждёт, но уходит вниз.
+   */
+  readonly busyTable: number | null;
 }
 
 /** Встреча готова к назначению: оба участника известны и она не сыграна. */
@@ -104,6 +111,13 @@ export function buildQueue(stages: readonly StageView[]): readonly QueuedMatch[]
   const matches = allMatches(stages);
   const last = lastPlayed(matches);
   const left = remaining(matches);
+  const busy = new Map<string, number>();
+
+  for (const match of matches) {
+    if (!isPlaying(match) || match.tableNumber === null) continue;
+    if (match.playerAId !== null) busy.set(match.playerAId, match.tableNumber);
+    if (match.playerBId !== null) busy.set(match.playerBId, match.tableNumber);
+  }
 
   const queued = stages.flatMap((stage) =>
     stage.matches.filter(isReady).map((match): QueuedMatch => {
@@ -121,6 +135,8 @@ export function buildQueue(stages: readonly StageView[]): readonly QueuedMatch[]
         // Пара свободна не раньше, чем закончил позднейший из двоих.
         waitingSince: times.length === 2 ? maxOf(times) : null,
         lastForBoth: [a, b].every((playerId) => playerId !== null && left.get(playerId) === 1),
+        busyTable:
+          (a === null ? undefined : busy.get(a)) ?? (b === null ? undefined : busy.get(b)) ?? null,
       };
     }),
   );
@@ -133,6 +149,10 @@ function maxOf(times: readonly string[]): string {
 }
 
 function compareQueued(left: QueuedMatch, right: QueuedMatch): number {
+  // Пара, где кто-то ещё за столом, позвать нельзя — она ниже всех свободных.
+  if (left.busyTable === null && right.busyTable !== null) return -1;
+  if (left.busyTable !== null && right.busyTable === null) return 1;
+
   // Ещё не игравший ждёт с начала турнира: он впереди любого, кто уже сыграл.
   if (left.waitingSince === null && right.waitingSince !== null) return -1;
   if (left.waitingSince !== null && right.waitingSince === null) return 1;

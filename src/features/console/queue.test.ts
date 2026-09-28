@@ -138,6 +138,36 @@ describe('очередь встреч', () => {
     expect(queue.find((item) => item.match.id === 'first')?.lastForBoth).toBe(false);
   });
 
+  it('опускает вниз пару, где игрок ещё за столом, и называет стол', () => {
+    // A ещё играет на третьем столе: звать его на следующую встречу нельзя,
+    // хотя по времени ожидания он был бы первым.
+    const queue = buildQueue([
+      stage([
+        match({ id: 'now', playerAId: A, playerBId: B, status: 'PLAYING', tableNumber: 3 }),
+        match({ id: 'busy', playerAId: A, playerBId: C, bracketSlot: 1 }),
+        match({
+          id: 'free',
+          playerAId: C,
+          playerBId: D,
+          bracketSlot: 2,
+          status: 'PENDING',
+        }),
+        match({
+          id: 'old',
+          playerAId: C,
+          playerBId: D,
+          status: 'FINISHED',
+          finishedAt: '2026-09-05T10:00:00.000Z',
+        }),
+      ]),
+    ]);
+
+    expect(queue.map((item) => [item.match.id, item.busyTable])).toEqual([
+      ['free', null],
+      ['busy', 3],
+    ]);
+  });
+
   it('подписывает встречу этапом и группой', () => {
     const queue = buildQueue([
       stage([match({ id: 'm1', playerAId: A, playerBId: B, groupId: 'g1' })], {
