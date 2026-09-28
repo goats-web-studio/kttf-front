@@ -5,6 +5,7 @@ import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { installFakeEventSource, openStreams } from '@/test/event-source';
 import { PLAYERS, SCREEN_STATE, SCREEN_TOKEN } from '@/test/fixtures';
@@ -61,12 +62,16 @@ describe('экран зала', () => {
     expect(
       await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name }),
     ).toBeDefined();
-    expect(screen.getByText(ru['screen.tables.title'])).toBeDefined();
-    // Стол занят идущей встречей, второй свободен — ТЗ 6.1.
+    expect(screen.getByText(ru['screen.now.title'])).toBeDefined();
+    // Стол занят идущей встречей, второй свободен — ТЗ 6.1. Свободные
+    // собраны в одну строку, а не висят пустыми карточками.
     expect(screen.getAllByText(PLAYERS.first.lastName, { exact: false }).length).toBeGreaterThan(0);
-    expect(screen.getByText(ru['screen.table.free'])).toBeDefined();
-    expect(screen.getByText(ru['screen.queue.title'])).toBeDefined();
+    expect(screen.getByText(fill(ru['screen.free'], { list: '2' }))).toBeDefined();
+    expect(screen.getByText(ru['screen.next.title'])).toBeDefined();
+    expect(screen.getByText(ru['screen.recent.title'])).toBeDefined();
+    // Группа — матрицей «каждый с каждым».
     expect(screen.getByText(ru['screen.standings.title'])).toBeDefined();
+    expect(screen.getByRole('table', { name: 'Группа A' })).toBeDefined();
   });
 
   it('запрашивает состояние по публичному маршруту', async () => {
