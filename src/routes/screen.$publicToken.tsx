@@ -6,10 +6,12 @@ import { useMemo, type ReactNode } from 'react';
 import { isMissingResource } from '@/common/api';
 import { formatDateTime, useLocale, useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
-import { buildQueue, buildTables } from '@/features/console/queue';
+import { buildQueue, buildTables, matchLabel } from '@/features/console/queue';
+import { useNow } from '@/features/console/use-now';
 import { namesOf, ratingsOf } from '@/features/screen/names';
 import QueueBoard from '@/features/screen/queue-board';
 import StandingsBoard from '@/features/screen/standings-board';
+import { DISPLAY, size } from '@/features/screen/scale';
 import TablesBoard from '@/features/screen/tables-board';
 import { useScreen } from '@/features/screen/use-screen';
 import ThemeRoot from '@/common/ui/theme';
@@ -43,6 +45,8 @@ function ScreenPage(): ReactNode {
   const locale = useLocale();
   const { publicToken } = Route.useParams();
   const { view, isPending, error, live, retry } = useScreen(publicToken);
+  // Часы и подсветка вызова: секундная точность стене не нужна.
+  const now = useNow(5_000);
 
   const boards = useMemo(() => {
     if (view === undefined) {
@@ -65,7 +69,7 @@ function ScreenPage(): ReactNode {
     return (
       <Box
         sx={{
-          minHeight: '100%',
+          height: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -74,21 +78,28 @@ function ScreenPage(): ReactNode {
           textAlign: 'center',
         }}
       >
-        <Typography role="alert" color="text.secondary" sx={{ fontSize: 30, lineHeight: '36px' }}>
+        <Typography role="alert" color="text.secondary" sx={{ fontSize: size(2), lineHeight: 1.3 }}>
           {t('screen.notFound')}
         </Typography>
       </Box>
     );
   }
 
+  const hasGroups = (view?.standings.groups.length ?? 0) > 0;
+
+  // Стена занимает экран ровно целиком: телевизор никто не прокручивает, и
+  // всё, что уехало за нижний край, для зала не существует.
   return (
     <Box
       sx={{
-        minHeight: '100%',
+        height: '100vh',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         bgcolor: 'background.default',
         color: 'text.primary',
-        px: 3,
-        py: 2.5,
+        px: '1.6vw',
+        py: '1.6vh',
       }}
     >
       <QueryState isPending={isPending} error={error} onRetry={retry}>
@@ -98,50 +109,89 @@ function ScreenPage(): ReactNode {
               component="header"
               sx={{
                 display: 'flex',
-                alignItems: 'baseline',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: 3,
-                pb: 1.5,
+                gap: '2vw',
+                pb: '1.2vh',
                 borderBottom: 1,
                 borderColor: 'divider',
               }}
             >
-              <Typography variant="h1" sx={{ fontSize: 44, lineHeight: '44px' }}>
+              <Typography
+                variant="h1"
+                sx={{
+                  fontSize: size(2.4),
+                  lineHeight: 1.1,
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {view.tournament.name}
               </Typography>
 
-              <Typography color="text.secondary" sx={{ fontSize: 17, lineHeight: '26px' }}>
-                {/* Метка связи важнее времени: на стене висит последнее
-                    известное состояние, и зритель обязан знать, что оно
-                    перестало обновляться. */}
-                {live ? (
-                  formatDateTime(view.updatedAt, locale)
-                ) : (
-                  <Box component="span" sx={{ color: 'warning.main' }}>
-                    {t('screen.offline')} · {formatDateTime(view.updatedAt, locale)}
-                  </Box>
-                )}
-              </Typography>
+              <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                <Typography
+                  component="p"
+                  sx={{
+                    fontFamily: DISPLAY,
+                    fontSize: size(2.4),
+                    lineHeight: 1.1,
+                    fontWeight: 700,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {new Date(now).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                </Typography>
+                {/* Метка связи важнее времени обновления: на стене висит
+                    последнее известное состояние, и зритель обязан знать, что
+                    оно перестало обновляться. */}
+                <Typography
+                  component="p"
+                  color={live ? 'text.secondary' : 'warning.main'}
+                  sx={{ fontSize: size(0.8), lineHeight: 1.3 }}
+                >
+                  {live
+                    ? formatDateTime(view.updatedAt, locale)
+                    : `${t('screen.offline')} · ${formatDateTime(view.updatedAt, locale)}`}
+                </Typography>
+              </Box>
             </Box>
 
             <Box
               sx={{
-                mt: 2.5,
+                mt: '1.6vh',
+                flexGrow: 1,
+                minHeight: 0,
                 display: 'grid',
-                gap: 4,
-                gridTemplateColumns: { xs: '1fr', xl: '2fr 1fr' },
+                gap: '1.6vw',
+                gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 30vw)',
               }}
             >
-              <TablesBoard tables={boards.tables} names={boards.names} />
-              <QueueBoard queue={boards.queue} names={boards.names} />
-            </Box>
-
-            <Box sx={{ mt: 4 }}>
-              <StandingsBoard
-                groups={view.standings.groups}
+              <TablesBoard
+                tables={boards.tables}
                 names={boards.names}
-                ratings={boards.ratings}
+                labelOf={(match) => matchLabel(view.stages, match)}
+                now={now}
               />
+
+              <Box
+                sx={{
+                  minHeight: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2.4vh',
+                  overflow: 'hidden',
+                }}
+              >
+                <QueueBoard queue={boards.queue} names={boards.names} shown={hasGroups ? 4 : 10} />
+                <StandingsBoard
+                  groups={view.standings.groups}
+                  names={boards.names}
+                  ratings={boards.ratings}
+                />
+              </Box>
             </Box>
           </>
         )}
