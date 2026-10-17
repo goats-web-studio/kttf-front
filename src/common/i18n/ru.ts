@@ -139,6 +139,15 @@ export const ru = {
   'club.staff.removeConfirm': 'Убрать «{name}» из состава клуба?',
   'club.staff.removeNo': 'Оставить',
   'club.staff.removeYes': 'Убрать',
+  'club.staff.add.identifier': 'Логин или телефон',
+  'club.staff.add.hint': 'У человека уже должен быть аккаунт на сайте',
+  'club.staff.add.role': 'Роль',
+  'club.staff.add.submit': 'Добавить',
+  'club.staff.add.done': '«{name}» в составе клуба',
+  'club.staff.add.notFound':
+    'На сайте нет аккаунта с таким логином или телефоном. Попросите человека зарегистрироваться.',
+  'club.staff.add.lastOwner':
+    'Это единственный владелец клуба. Сначала назначьте владельцем кого-то ещё.',
   'clubs.filter.name': 'Название клуба',
   'clubs.notFound.title': 'Клубов не найдено',
   'clubs.notFound.text': 'Попробуйте другое название или другой город.',

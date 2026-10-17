@@ -1,4 +1,5 @@
 import type {
+  AddMemberInput,
   ClubMemberView,
   ClubView,
   CreateClubInput,
@@ -36,4 +37,13 @@ export function listClubMembers(id: string): Promise<readonly ClubMemberView[]> 
 /** Убрать из состава. Последнего владельца сервер убрать не даст. */
 export async function removeClubMember(id: string, userId: string): Promise<void> {
   await apiRequest<undefined>(`/clubs/${id}/members/${userId}`, { method: 'DELETE' });
+}
+
+/**
+ * Добавить в состав — логином или телефоном (ADR-043).
+ *
+ * Уже состоящему в клубе меняет роль. Последнего владельца так не понизить.
+ */
+export function addClubMember(id: string, input: AddMemberInput): Promise<ClubMemberView> {
+  return apiRequest<ClubMemberView>(`/clubs/${id}/members`, { method: 'POST', body: input });
 }

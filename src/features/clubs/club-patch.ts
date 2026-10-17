@@ -1,11 +1,13 @@
 import type { ClubView, CreateClubInput, UpdateClubInput } from '@kttf/shared/types';
 
-const FIELDS = [
-  'name',
+/** Поля, которые форма задаёт всегда: без них клуба нет. */
+const REQUIRED = ['name', 'city', 'tableCount'] as const satisfies readonly (keyof CreateClubInput &
+  keyof ClubView)[];
+
+/** Необязательные поля формы — их можно и задать, и стереть (ADR-043). */
+const OPTIONAL = [
   'shortName',
-  'city',
   'address',
-  'tableCount',
   'phone',
   'whatsapp',
   'instagram',
@@ -19,16 +21,24 @@ const FIELDS = [
  * без изменений — не ошибка человека, и до сервера такой запрос не доходит.
  * `null` значит «изменений нет».
  *
- * Стёртое необязательное поле сюда не попадает: контракт правки не умеет
- * обнулять значения, только задавать новые.
+ * Стёртое в форме необязательное поле уходит `null`: убранный телефон
+ * обязан исчезнуть и со страницы клуба.
  */
 export function clubPatch(club: ClubView, values: CreateClubInput): UpdateClubInput | null {
-  const patch: Record<string, string | number> = {};
+  const patch: Record<string, string | number | null> = {};
 
-  for (const field of FIELDS) {
+  for (const field of REQUIRED) {
     const next = values[field];
 
     if (next !== undefined && next !== club[field]) {
+      patch[field] = next;
+    }
+  }
+
+  for (const field of OPTIONAL) {
+    const next = values[field] ?? null;
+
+    if (next !== club[field]) {
       patch[field] = next;
     }
   }

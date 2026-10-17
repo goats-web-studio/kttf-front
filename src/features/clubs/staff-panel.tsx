@@ -18,6 +18,7 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 
+import AddMemberForm from './add-member-form';
 import { removeClubMember } from './api';
 import MemberName from './member-name';
 import { clubKeys, clubMembersQuery } from './queries';
@@ -26,7 +27,7 @@ import RoleName from './role-name';
 /**
  * Состав клуба — ТЗ 3.2, «состав организаторов с ролями».
  *
- * Состав ведёт владелец (ТЗ 1): только у него есть кнопка «Убрать».
+ * Состав ведёт владелец (ТЗ 1): только у него есть добавление и «Убрать».
  * Последнего владельца сервер убрать не даст — клуб без владельца некому
  * передать.
  */
@@ -124,6 +125,8 @@ export default function StaffPanel({ clubId }: { readonly clubId: string }): Rea
           </Box>
         </QueryState>
       </Box>
+
+      {isOwner && <AddMemberForm clubId={clubId} />}
 
       <Dialog
         open={removing !== null}

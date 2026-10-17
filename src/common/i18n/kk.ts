@@ -143,6 +143,15 @@ export const kk: Record<MessageKey, string> = {
   'club.staff.removeConfirm': '«{name}» клуб құрамынан шығарылсын ба?',
   'club.staff.removeNo': 'Қалдыру',
   'club.staff.removeYes': 'Шығару',
+  'club.staff.add.identifier': 'Логин немесе телефон',
+  'club.staff.add.hint': 'Адамның сайтта аккаунты болуы керек',
+  'club.staff.add.role': 'Рөл',
+  'club.staff.add.submit': 'Қосу',
+  'club.staff.add.done': '«{name}» клуб құрамында',
+  'club.staff.add.notFound':
+    'Мұндай логині немесе телефоны бар аккаунт сайтта жоқ. Адамнан тіркелуді сұраңыз.',
+  'club.staff.add.lastOwner':
+    'Бұл клубтың жалғыз иесі. Алдымен басқа біреуді ие етіп тағайындаңыз.',
   'clubs.filter.name': 'Клуб атауы',
   'clubs.notFound.title': 'Клубтар табылмады',
   'clubs.notFound.text': 'Басқа атауды немесе басқа қаланы көріңіз.',
