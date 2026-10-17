@@ -2,9 +2,7 @@ import { DEFAULT_PAGE_SIZE, type ListClubsQuery } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
@@ -12,7 +10,7 @@ import { useCallback, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { fill, useT } from '@/common/i18n';
-import { orUndefined, searchPage, searchText } from '@/common/search';
+import { orUndefined, searchId, searchPage, searchText } from '@/common/search';
 import EmptyState from '@/common/ui/empty-state';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import Pagination from '@/common/ui/pagination';
@@ -21,11 +19,13 @@ import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
 import ClubCard from '@/features/clubs/club-card';
-import { clubCities } from '@/features/clubs/cities';
-import { clubDirectoryQuery, clubsQuery } from '@/features/clubs/queries';
+import { clubsQuery } from '@/features/clubs/queries';
+import CityFilter from '@/features/places/city-filter';
+import { useCityLabel } from '@/features/places/city-label';
 
 const searchSchema = z.object({
-  city: searchText,
+  /** Город справочника — по идентификатору (ADR-046). */
+  city: searchId,
   q: searchText,
   page: searchPage,
 });
@@ -70,8 +70,7 @@ function ClubsPage(): ReactNode {
     },
     [filter],
   );
-  const directory = useQuery(clubDirectoryQuery);
-  const cities = clubCities(directory.data?.values() ?? [], search.city);
+  const cityLabel = useCityLabel();
 
   const active: ActiveFilter[] = [];
   if (search.q !== undefined) {
@@ -86,7 +85,7 @@ function ClubsPage(): ReactNode {
   if (search.city !== undefined) {
     active.push({
       key: 'city',
-      label: fill(t('filter.chip'), { label: t('filter.city'), value: search.city }),
+      label: fill(t('filter.chip'), { label: t('filter.city'), value: cityLabel(search.city) }),
       onRemove: () => {
         filter({ city: undefined });
       },
@@ -119,23 +118,14 @@ function ClubsPage(): ReactNode {
         sx={{ mt: 3, display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}
       >
         <SearchInput label={t('clubs.filter.name')} value={search.q} onCommit={commitQ} />
-        {/* Город выбирается, а не набирается: сервер сравнивает его точно, и
-            «алматы» со строчной буквы не нашло бы ни одного клуба. */}
-        <TextField
-          select
-          label={t('filter.city')}
-          value={search.city ?? ''}
-          onChange={(event) => {
-            filter({ city: orUndefined(event.target.value) });
+        {/* Город выбирается из справочника, а не набирается: сервер
+            фильтрует по записи, а не по строке (ADR-046). */}
+        <CityFilter
+          value={search.city}
+          onChange={(city) => {
+            filter({ city });
           }}
-        >
-          <MenuItem value="">{t('filter.any')}</MenuItem>
-          {cities.map((city) => (
-            <MenuItem key={city} value={city}>
-              {city}
-            </MenuItem>
-          ))}
-        </TextField>
+        />
       </Box>
 
       <FilterSummary
@@ -195,7 +185,7 @@ function toQuery(search: Search, page: number): ListClubsQuery {
   return {
     page,
     limit: DEFAULT_PAGE_SIZE,
-    ...(search.city === undefined ? {} : { city: search.city }),
+    ...(search.city === undefined ? {} : { cityId: search.city }),
     ...(search.q === undefined ? {} : { search: search.q }),
   };
 }

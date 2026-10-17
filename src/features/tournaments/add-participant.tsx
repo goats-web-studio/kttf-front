@@ -14,6 +14,7 @@ import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
+import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
 
@@ -46,6 +47,7 @@ export default function AddParticipant({
   registrations,
 }: AddParticipantProps): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   const queryClient = useQueryClient();
 
   const [draft, setDraft] = useState('');
@@ -142,7 +144,7 @@ export default function AddParticipant({
                   primary={playerName(player)}
                   secondary={
                     <>
-                      {player.city}{' '}
+                      {placeName(player.city)}{' '}
                       <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
                         {player.rating}
                       </Box>

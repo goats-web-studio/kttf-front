@@ -16,6 +16,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import ClubMark from '@/features/clubs/club-mark';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import RoleName from '@/features/clubs/role-name';
+import { usePlaceName } from '@/features/places/place-name';
 
 export const Route = createFileRoute('/_app/cabinet/clubs/')({
   component: MyClubsPage,
@@ -30,6 +31,7 @@ export const Route = createFileRoute('/_app/cabinet/clubs/')({
  */
 function MyClubsPage(): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   const user = useSessionStore((state) => state.user);
   const clubs = useQuery(clubDirectoryQuery);
   const roles = user?.clubRoles ?? [];
@@ -104,7 +106,7 @@ function MyClubsPage(): ReactNode {
                           {club?.name ?? role.clubId}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" noWrap>
-                          {club?.city}
+                          {club === undefined ? null : placeName(club.city)}
                         </Typography>
                       </Box>
                       <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>

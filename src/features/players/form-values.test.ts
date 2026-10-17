@@ -1,6 +1,8 @@
 import type { CreatePlayerInput, PlayerProfileView } from '@kttf/shared/types';
 import { describe, expect, it } from 'vitest';
 
+import { CITIES } from '@/test/fixtures';
+
 import { toFormValues, toPlayerPatch } from './form-values';
 
 /**
@@ -18,7 +20,7 @@ const profile: PlayerProfileView = {
   middleName: 'Ерланович',
   birthYear: 2001,
   gender: 'MALE',
-  city: 'Алматы',
+  city: CITIES.almaty,
   photoUrl: null,
   clubId: null,
   rating: '250.00',
@@ -42,7 +44,7 @@ const filled: CreatePlayerInput = {
   firstName: 'Данияр',
   birthYear: 2001,
   gender: 'MALE',
-  city: 'Алматы',
+  cityId: CITIES.almaty.id,
 };
 
 describe('профиль в форму', () => {
@@ -50,6 +52,8 @@ describe('профиль в форму', () => {
     const values = toFormValues(profile);
 
     expect(values).toMatchObject({
+      // Город в форме — идентификатор записи справочника (ADR-046).
+      cityId: CITIES.almaty.id,
       birthDate: '2001-04-12',
       playingHand: 'RIGHT',
       grip: 'SHAKEHAND',
@@ -96,7 +100,7 @@ describe('форма в правку', () => {
   it('заполненное доходит как есть', () => {
     const patch = toPlayerPatch({ ...filled, blade: 'Butterfly', bio: 'о себе' });
 
-    expect(patch).toMatchObject({ blade: 'Butterfly', bio: 'о себе', city: 'Алматы' });
+    expect(patch).toMatchObject({ blade: 'Butterfly', bio: 'о себе', cityId: CITIES.almaty.id });
   });
 
   it('обязательные поля не обращаются в null', () => {
@@ -105,5 +109,6 @@ describe('форма в правку', () => {
     expect(patch.lastName).toBe('Ахметов');
     expect(patch.birthYear).toBe(2001);
     expect(patch.gender).toBe('MALE');
+    expect(patch.cityId).toBe(CITIES.almaty.id);
   });
 });

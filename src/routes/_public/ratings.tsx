@@ -1,7 +1,6 @@
 import { DEFAULT_PAGE_SIZE, type ListPlayersQuery } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
@@ -26,12 +25,16 @@ import QueryState from '@/common/ui/query-state';
 import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import CityFilter from '@/features/places/city-filter';
+import { useCityLabel } from '@/features/places/city-label';
+import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
 
 const searchSchema = z.object({
   search: searchText,
-  city: searchText,
+  /** Город справочника — по идентификатору (ADR-046). */
+  city: searchId,
   club: searchId,
   page: searchPage,
 });
@@ -70,6 +73,8 @@ function RatingsPage(): ReactNode {
   const page = search.page ?? 1;
   const players = useQuery(playersQuery(toQuery(search, page)));
   const clubs = useQuery(clubDirectoryQuery);
+  const placeName = usePlaceName();
+  const cityLabel = useCityLabel();
 
   // Смена фильтра возвращает на первую страницу; текст правится на месте,
   // чтобы «Назад» не проходил по буквам.
@@ -88,12 +93,6 @@ function RatingsPage(): ReactNode {
     },
     [filter],
   );
-  const commitCity = useCallback(
-    (value: string) => {
-      filter({ city: orUndefined(value) }, true);
-    },
-    [filter],
-  );
 
   const active: ActiveFilter[] = [];
   if (search.search !== undefined) {
@@ -108,7 +107,7 @@ function RatingsPage(): ReactNode {
   if (search.city !== undefined) {
     active.push({
       key: 'city',
-      label: fill(t('filter.chip'), { label: t('filter.city'), value: search.city }),
+      label: fill(t('filter.chip'), { label: t('filter.city'), value: cityLabel(search.city) }),
       onRemove: () => {
         filter({ city: undefined });
       },
@@ -155,11 +154,11 @@ function RatingsPage(): ReactNode {
           onCommit={commitSearch}
           autoComplete="off"
         />
-        <SearchInput
-          label={t('filter.city')}
+        <CityFilter
           value={search.city}
-          onCommit={commitCity}
-          autoComplete="address-level2"
+          onChange={(city) => {
+            filter({ city });
+          }}
         />
         <TextField
           select
@@ -227,22 +226,29 @@ function RatingsPage(): ReactNode {
                       {player.isProvisional && (
                         // Провизорный рейтинг двигается быстрее и означает, что
                         // игрок сыграл меньше 20 рейтинговых встреч (ТЗ 7.1).
-                        <Chip
-                          label={t('ratings.provisional')}
-                          size="small"
-                          variant="outlined"
-                          sx={{ ml: 1, height: 20, fontSize: 11, color: 'text.secondary' }}
-                        />
+                        // Подписью, а не плашкой в рамке: в новом рейтинге
+                        // провизорны почти все, и рамки в каждой строке
+                        // рябили сильнее самих фамилий.
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ ml: 1, whiteSpace: 'nowrap' }}
+                        >
+                          {t('ratings.provisional')}
+                        </Typography>
                       )}
                       <Typography
                         variant="body2"
                         color="text.secondary"
                         sx={{ display: { sm: 'none' }, mt: -0.5 }}
                       >
-                        {player.city}
+                        {placeName(player.city)}
                       </Typography>
                     </TableCell>
-                    <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>{player.city}</TableCell>
+                    <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>
+                      {placeName(player.city)}
+                    </TableCell>
                     <TableCell
                       align="right"
                       sx={{
@@ -297,7 +303,7 @@ function toQuery(search: Search, page: number): ListPlayersQuery {
     page,
     limit: DEFAULT_PAGE_SIZE,
     ...(search.search === undefined ? {} : { search: search.search }),
-    ...(search.city === undefined ? {} : { city: search.city }),
+    ...(search.city === undefined ? {} : { cityId: search.city }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
   };
 }

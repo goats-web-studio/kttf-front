@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest';
 
-import { CLUB } from '@/test/fixtures';
+import { CITIES, CLUB } from '@/test/fixtures';
 
 import { clubPatch } from './club-patch';
 
 describe('правка клуба', () => {
   it('отправляет только изменённое', () => {
     expect(
-      clubPatch(CLUB, { name: CLUB.name, city: CLUB.city, tableCount: 10, phone: '+77011234567' }),
+      clubPatch(CLUB, {
+        name: CLUB.name,
+        cityId: CLUB.city.id,
+        tableCount: 10,
+        phone: '+77011234567',
+      }),
     ).toEqual({ tableCount: 10, phone: '+77011234567' });
   });
 
@@ -17,16 +22,22 @@ describe('правка клуба', () => {
     expect(
       clubPatch(club, {
         name: club.name,
-        city: club.city,
+        cityId: club.city.id,
         tableCount: club.tableCount,
         description: club.description,
       }),
     ).toEqual({ phone: null });
   });
 
+  it('другой город уходит идентификатором из справочника', () => {
+    expect(
+      clubPatch(CLUB, { name: CLUB.name, cityId: CITIES.astana.id, tableCount: CLUB.tableCount }),
+    ).toEqual({ cityId: CITIES.astana.id });
+  });
+
   it('без изменений запроса нет: сервер отверг бы пустую правку', () => {
-    expect(clubPatch(CLUB, { name: CLUB.name, city: CLUB.city, tableCount: CLUB.tableCount })).toBe(
-      null,
-    );
+    expect(
+      clubPatch(CLUB, { name: CLUB.name, cityId: CLUB.city.id, tableCount: CLUB.tableCount }),
+    ).toBe(null);
   });
 });

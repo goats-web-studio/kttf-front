@@ -12,9 +12,10 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { z } from 'zod';
 
-import { useT } from '@/common/i18n';
-import { orUndefined, searchText } from '@/common/search';
+import { useLocale, useT } from '@/common/i18n';
+import { orUndefined, searchId } from '@/common/search';
 import { RowsSkeleton } from '@/common/ui/skeleton';
+import { clubCities } from '@/features/clubs/cities';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { latestNewsQuery } from '@/features/home/news';
 import NewsFeed from '@/features/home/news-feed';
@@ -22,7 +23,8 @@ import TopPlayers from '@/features/home/top-players';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 import TournamentCard from '@/features/tournaments/tournament-card';
 
-const searchSchema = z.object({ city: searchText });
+/** Город лидеров — по идентификатору справочника (ADR-046). */
+const searchSchema = z.object({ city: searchId });
 
 export const Route = createFileRoute('/_public/')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
@@ -48,6 +50,7 @@ const CARDS = 4;
  */
 function HomePage(): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
@@ -68,11 +71,8 @@ function HomePage(): ReactNode {
   const clubs = useQuery(clubDirectoryQuery);
 
   const cities = useMemo(
-    () =>
-      [...new Set([...(clubs.data?.values() ?? [])].map((club) => club.city))].sort((a, b) =>
-        a.localeCompare(b, 'ru'),
-      ),
-    [clubs.data],
+    () => clubCities(clubs.data?.values() ?? [], locale),
+    [clubs.data, locale],
   );
 
   return (

@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { formatDateParts, formatMoney, useLocale, useT } from '@/common/i18n';
+import { usePlaceName } from '@/features/places/place-name';
 
 import { TOURNAMENT_LEVEL_KEYS } from './labels';
 import StatusBadge from './status-badge';
@@ -29,6 +30,7 @@ interface TournamentCardProps {
  */
 export default function TournamentCard({ tournament, club }: TournamentCardProps): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   const locale = useLocale();
   const date = formatDateParts(tournament.startsAt, locale);
   const titleId = `tournament-${tournament.id}`;
@@ -79,7 +81,7 @@ export default function TournamentCard({ tournament, club }: TournamentCardProps
         </Typography>
         {club !== undefined && (
           <Typography variant="body2" color="text.secondary" noWrap>
-            {club.name} · {club.city}
+            {club.name} · {placeName(club.city)}
           </Typography>
         )}
         <Stack

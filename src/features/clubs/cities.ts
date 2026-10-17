@@ -1,20 +1,22 @@
-import type { ClubView } from '@kttf/shared/types';
+import type { CityRef, ClubView } from '@kttf/shared/types';
+
+import type { Locale } from '@/common/i18n';
+import { placeName } from '@/features/places/place-name';
 
 /**
- * Города, в которых есть клубы, — для выбора города в фильтре.
+ * Города, в которых есть клубы, — для чипов города на главной.
  *
- * Выбранный город остаётся в списке, даже если клубов в нём больше нет:
- * иначе ссылка с `?city=` открылась бы с фильтром, которого не видно в поле.
+ * Город сравнивается по записи справочника, а не по названию (ADR-046):
+ * подпись зависит от языка, а запись одна.
  */
-export function clubCities(clubs: Iterable<ClubView>, selected?: string): readonly string[] {
-  const cities = new Set<string>();
+export function clubCities(clubs: Iterable<ClubView>, locale: Locale): readonly CityRef[] {
+  const cities = new Map<string, CityRef>();
 
   for (const club of clubs) {
-    cities.add(club.city);
-  }
-  if (selected !== undefined) {
-    cities.add(selected);
+    cities.set(club.city.id, club.city);
   }
 
-  return [...cities].sort((a, b) => a.localeCompare(b, 'ru'));
+  return [...cities.values()].sort((a, b) =>
+    placeName(a, locale).localeCompare(placeName(b, locale), locale),
+  );
 }

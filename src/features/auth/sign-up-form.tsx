@@ -16,6 +16,7 @@ import { useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
+import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
 
@@ -43,6 +44,7 @@ const ANNOUNCED = { formHelperText: { role: 'alert' } } as const;
  */
 export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   const signedIn = useSessionStore((state) => state.signedIn);
 
   const [search, setSearch] = useState('');
@@ -165,7 +167,7 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
                       >
                         <ListItemText
                           primary={playerName(player)}
-                          secondary={`${player.city} · ${player.rating}`}
+                          secondary={`${placeName(player.city)} · ${player.rating}`}
                         />
                       </ListItemButton>
                     </ListItem>

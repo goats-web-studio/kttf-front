@@ -29,6 +29,7 @@ import { clubKeys, clubQuery } from '@/features/clubs/queries';
 import { isClubStaff } from '@/features/clubs/roles';
 import StaffPanel from '@/features/clubs/staff-panel';
 import TournamentList from '@/features/clubs/tournament-list';
+import { usePlaceName } from '@/features/places/place-name';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 
 export const Route = createFileRoute('/_app/cabinet/club/$clubId')({
@@ -97,6 +98,7 @@ function ClubManagementPage(): ReactNode {
 
 function Management({ club }: { readonly club: ClubView }): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
 
   return (
     <>
@@ -110,7 +112,7 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
           <ClubMark club={club} size={56} />
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h1">{club.name}</Typography>
-            <Typography color="text.secondary">{club.city}</Typography>
+            <Typography color="text.secondary">{placeName(club.city)}</Typography>
           </Box>
         </Stack>
         <Button href={`/clubs/${club.id}`}>{t('manage.publicPage')}</Button>
@@ -164,7 +166,10 @@ function ClubTournaments({ club }: { readonly club: ClubView }): ReactNode {
           loading={<RowsSkeleton rows={3} />}
         >
           {groups.length === 0 ? (
-            <EmptyState title={t('manage.tournaments.empty.title')} text={t('manage.tournaments.empty.text')} />
+            <EmptyState
+              title={t('manage.tournaments.empty.title')}
+              text={t('manage.tournaments.empty.text')}
+            />
           ) : (
             groups.map((group) => (
               <Box key={group} sx={{ mt: 3 }}>
@@ -186,10 +191,7 @@ function ClubTournaments({ club }: { readonly club: ClubView }): ReactNode {
                       tournament.status === 'RUNNING' ? (
                         // Главное действие экрана одно — создание турнира
                         // (ADR-039): консоль рядом, но не спорит с ним.
-                        <Button
-                          href={`/console/${tournament.id}`}
-                          sx={{ mr: { sm: 1.5 } }}
-                        >
+                        <Button href={`/console/${tournament.id}`} sx={{ mr: { sm: 1.5 } }}>
                           {t('manage.console')}
                         </Button>
                       ) : null

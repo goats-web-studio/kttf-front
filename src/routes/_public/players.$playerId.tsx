@@ -14,6 +14,7 @@ import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { usePlaceName } from '@/features/places/place-name';
 import HeadToHead from '@/features/players/head-to-head';
 import PlayerMatches from '@/features/players/player-matches';
 import { playerName } from '@/features/players/player-name';
@@ -47,6 +48,7 @@ export const Route = createFileRoute('/_public/players/$playerId')({
  */
 function PlayerPage(): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   // Параметр типизирован деревом маршрутов: опечатка в имени не соберётся.
   const { playerId } = Route.useParams();
 
@@ -83,7 +85,7 @@ function PlayerPage(): ReactNode {
           <header>
             <Typography variant="h1">{playerName(player.data)}</Typography>
             <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-              {player.data.city}
+              {placeName(player.data.city)}
               {player.data.clubId !== null &&
                 ` · ${clubs.data?.get(player.data.clubId)?.name ?? ''}`}
               {` · ${String(player.data.birthYear)}`}

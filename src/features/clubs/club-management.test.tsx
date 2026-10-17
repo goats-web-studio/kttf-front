@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAppRouter } from '@/app/router';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
-import { CLUB, pageOf, USER_WITH_PROFILE } from '@/test/fixtures';
+import { CLUB, pageOf, placesReply, USER_WITH_PROFILE } from '@/test/fixtures';
 
 /**
  * Управление клубом — состав (ТЗ 1, ADR-043).
@@ -48,12 +48,21 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
   sent.push({ url, method, body: typeof raw === 'string' ? JSON.parse(raw) : undefined });
 
+  // Форма клуба в управлении выбирает город из справочника (ADR-046).
+  const places = placesReply(url);
+  if (places !== undefined) return reply(places);
+
   if (/\/clubs\/[^/]+\/members$/.test(url)) {
     if (method === 'GET') return reply([OWNER_MEMBER]);
     if (refusal !== null) {
       return reply({ error: { code: refusal.code, message: 'refused' } }, refusal.status);
     }
-    return reply({ userId: 'u-2', role: 'ORGANIZER', playerId: null, name: 'Организаторова Ольга' });
+    return reply({
+      userId: 'u-2',
+      role: 'ORGANIZER',
+      playerId: null,
+      name: 'Организаторова Ольга',
+    });
   }
   if (/\/clubs\/[^/?]+$/.test(url)) return reply(CLUB);
   if (url.includes('/clubs')) return reply(pageOf([CLUB]));

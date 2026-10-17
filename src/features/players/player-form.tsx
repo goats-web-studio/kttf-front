@@ -4,6 +4,7 @@ import {
   genderSchema,
   gripSchema,
   playingHandSchema,
+  type CityRef,
   type CreatePlayerInput,
 } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
@@ -28,6 +29,7 @@ import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import CityPicker from '@/features/places/city-picker';
 import PhotoField from '@/features/players/photo-field';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
@@ -35,6 +37,11 @@ import { playersQuery } from '@/features/players/queries';
 interface PlayerFormProps {
   /** Заполненные поля при правке. Пусто — профиль заводится впервые. */
   readonly defaultValues?: Partial<CreatePlayerInput> | undefined;
+  /**
+   * Город профиля из ответа API. Скрытый из справочника город остаётся
+   * выбранным, хотя в списке его больше нет (ADR-046).
+   */
+  readonly city?: CityRef | undefined;
   readonly submitLabel: MessageKey;
   readonly isPending: boolean;
   readonly error: unknown;
@@ -58,6 +65,7 @@ interface PlayerFormProps {
  */
 export default function PlayerForm({
   defaultValues,
+  city,
   submitLabel,
   isPending,
   error,
@@ -75,7 +83,7 @@ export default function PlayerForm({
     defaultValues: {
       lastName: '',
       firstName: '',
-      city: '',
+      cityId: '',
       // Умолчание совпадает со схемой: до появления даты профиль показывал
       // только год, и галочка ничего не меняет в том, что о человеке видно.
       birthYearOnly: true,
@@ -223,12 +231,21 @@ export default function PlayerForm({
           ))}
         </TextInput>
 
-        <TextInput
+        <Controller
           control={control}
-          name="city"
-          label="player.form.city"
-          error={errors.city === undefined ? undefined : 'error.form.city'}
-          autoComplete="address-level2"
+          name="cityId"
+          render={({ field }) => (
+            <CityPicker
+              name={field.name}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+              label={<FieldLabel label="player.form.city" optional={false} />}
+              current={city}
+              error={errors.cityId === undefined ? undefined : 'error.form.city'}
+            />
+          )}
         />
 
         {/* Клуб при саморегистрации сервер не проверяет: игрок объявляет
@@ -343,7 +360,6 @@ type TextName =
   | 'firstName'
   | 'middleName'
   | 'gender'
-  | 'city'
   | 'clubId'
   | 'blade'
   | 'rubberForehand'

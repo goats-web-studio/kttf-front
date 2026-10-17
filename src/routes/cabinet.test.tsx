@@ -1,4 +1,4 @@
-import type { AuthUserView } from '@kttf/shared/types';
+import type { AuthUserView, PlayerProfileView } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -9,8 +9,11 @@ import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
 import { playerName } from '@/features/players/player-name';
 import {
+  ADMIN_USER,
+  CITIES,
   CLUB,
   pageOf,
+  placesReply,
   PLAYER_PROFILE,
   PLAYERS,
   USER_WITH_PROFILE,
@@ -35,6 +38,8 @@ interface Sent {
 let sent: Sent[] = [];
 /** Кого отдаёт `/auth/me`: после заведения профиля — уже с `playerId`. */
 let me: AuthUserView = USER_WITH_PROFILE;
+/** Профиль, которым отвечает `/players`. */
+let profile: PlayerProfileView = PLAYER_PROFILE;
 
 function reply(body: unknown): Response {
   return {
@@ -54,6 +59,11 @@ function answer(url: string, init: RequestInit | undefined): Response {
     body: typeof raw === 'string' ? JSON.parse(raw) : undefined,
   });
 
+  const places = placesReply(url);
+  if (places !== undefined) {
+    return reply(places);
+  }
+
   if (url.includes('/auth/change-password')) {
     return reply({ accessToken: 'new-access', refreshToken: 'new-refresh' });
   }
@@ -68,7 +78,7 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
   if (url.includes('/players')) {
     // И создание, и правка, и чтение отвечают полным профилем — ТС 7.2.
-    return reply(PLAYER_PROFILE);
+    return reply(profile);
   }
 
   throw new Error(`Неожидаемый запрос: ${url}`);
@@ -89,7 +99,7 @@ function renderCabinet(user: AuthUserView): void {
 }
 
 /** Заполнение обязательных полей ТЗ 2.2. */
-function fillRequired(): void {
+async function fillRequired(): Promise<void> {
   fireEvent.change(screen.getByLabelText(ru['player.form.lastName']), {
     target: { value: 'Ержанов' },
   });
@@ -109,9 +119,14 @@ function fillRequired(): void {
   // Список MUI открывается нажатием, а не сменой значения родного select.
   fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['player.form.gender'] }));
   fireEvent.click(screen.getByRole('option', { name: ru['player.gender.MALE'] }));
-  fireEvent.change(screen.getByLabelText(ru['player.form.city']), {
-    target: { value: 'Алматы' },
-  });
+  // Город выбирается из справочника, а не набирается (ADR-046).
+  await chooseCity(CITIES.almaty.name);
+}
+
+/** Выбор города: список с поиском открывается нажатием на поле. */
+async function chooseCity(name: string): Promise<void> {
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['player.form.city'] }));
+  fireEvent.click(await screen.findByRole('option', { name }));
 }
 
 function submit(name: string): void {
@@ -125,6 +140,7 @@ function requests(method: string): Sent[] {
 beforeEach(() => {
   sent = [];
   me = USER_WITH_PROFILE;
+  profile = PLAYER_PROFILE;
   vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) =>
     Promise.resolve(answer(String(input), init)),
   );
@@ -147,7 +163,7 @@ describe('профиль при регистрации', () => {
     renderCabinet(USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
-    fillRequired();
+    await fillRequired();
     submit(ru['cabinet.profile.create']);
 
     await waitFor(() => {
@@ -165,7 +181,7 @@ describe('профиль при регистрации', () => {
       birthDate: '2000-04-12',
       birthYearOnly: true,
       gender: 'MALE',
-      city: 'Алматы',
+      cityId: CITIES.almaty.id,
     });
   });
 
@@ -184,7 +200,7 @@ describe('профиль при регистрации', () => {
     renderCabinet(USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
-    fillRequired();
+    await fillRequired();
     submit(ru['cabinet.profile.create']);
 
     // `playerId` пришёл перечитанным пользователем, а не выведен из ответа:
@@ -210,12 +226,12 @@ describe('свой профиль', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: ru['cabinet.profile.edit'] }));
 
-    const city = await screen.findByLabelText(ru['player.form.city']);
+    const city = await screen.findByRole('combobox', { name: ru['player.form.city'] });
 
     // Форма открывается заполненной: правка не заставляет вводить всё заново.
-    expect((city as HTMLInputElement).value).toBe(PLAYERS.first.city);
+    expect((city as HTMLInputElement).value).toBe(PLAYERS.first.city.name);
 
-    fireEvent.change(city, { target: { value: 'Астана' } });
+    await chooseCity(CITIES.astana.name);
     submit(ru['cabinet.profile.save']);
 
     await waitFor(() => {
@@ -225,7 +241,30 @@ describe('свой профиль', () => {
     const [request] = requests('PATCH');
 
     expect(request?.url).toContain(`/players/${PLAYERS.first.id}`);
-    expect(request?.body).toMatchObject({ city: 'Астана', lastName: PLAYERS.first.lastName });
+    expect(request?.body).toMatchObject({
+      cityId: CITIES.astana.id,
+      lastName: PLAYERS.first.lastName,
+    });
+  });
+
+  it('скрытый город профиля остаётся выбранным, хотя в списке его нет', async () => {
+    const hidden = { id: '00000000-0000-4000-8000-0000000000c9', name: 'Байконур', nameKk: null };
+    profile = { ...PLAYER_PROFILE, city: hidden };
+    renderCabinet(USER_WITH_PROFILE);
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['cabinet.profile.edit'] }));
+
+    const city = await screen.findByRole('combobox', { name: ru['player.form.city'] });
+
+    expect((city as HTMLInputElement).value).toBe('Байконур');
+    expect(await screen.findByText(ru['places.city.hidden'])).toBeDefined();
+
+    // Не тронутый город уходит прежним: сервер оставит его тому, у кого он уже есть.
+    submit(ru['cabinet.profile.save']);
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+    expect(requests('PATCH')[0]?.body).toMatchObject({ cityId: hidden.id });
   });
 
   it('называет роль в клубе словом, а не значением из базы', async () => {
@@ -349,7 +388,7 @@ describe('дата рождения', () => {
     renderCabinet(USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
-    fillRequired();
+    await fillRequired();
     submit(ru['cabinet.profile.create']);
 
     await waitFor(() => {
@@ -382,5 +421,24 @@ describe('дата рождения', () => {
 
     // Профиль приходит с включённой галочкой, нажатие её снимает.
     expect((requests('PATCH')[0]?.body as { birthYearOnly: unknown }).birthYearOnly).toBe(false);
+  });
+});
+
+/** Раздел администратора — ADR-046. */
+describe('справочник в кабинете', () => {
+  it('администратору — ссылка на страны и города', async () => {
+    renderCabinet(ADMIN_USER);
+
+    const link = await screen.findByRole('link', { name: ru['page.places.title'] });
+
+    expect(link.getAttribute('href')).toBe('/cabinet/places');
+  });
+
+  it('остальным ссылки нет', async () => {
+    renderCabinet(USER_WITH_PROFILE);
+
+    await screen.findByText(playerName(PLAYERS.first));
+
+    expect(screen.queryByRole('link', { name: ru['page.places.title'] })).toBeNull();
   });
 });

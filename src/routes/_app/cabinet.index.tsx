@@ -20,6 +20,7 @@ import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import RoleName from '@/features/clubs/role-name';
+import { usePlaceName } from '@/features/places/place-name';
 import { createPlayer, updatePlayer } from '@/features/players/api';
 import { toFormValues, toPlayerPatch } from '@/features/players/form-values';
 import PlayerForm from '@/features/players/player-form';
@@ -99,6 +100,8 @@ function CabinetPage(): ReactNode {
           <PasswordForm />
 
           <Roles user={user} />
+
+          {user.isAdmin && <Admin />}
         </>
       )}
     </Container>
@@ -167,6 +170,7 @@ function Profile({ playerId }: { readonly playerId: string }): ReactNode {
       {player.data === undefined ? null : isEditing ? (
         <PlayerForm
           defaultValues={toFormValues(player.data)}
+          city={player.data.city}
           submitLabel="cabinet.profile.save"
           isPending={update.isPending}
           error={update.error}
@@ -198,6 +202,7 @@ function ProfileCard({
 }): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const placeName = usePlaceName();
   const clubs = useQuery(clubDirectoryQuery);
 
   return (
@@ -212,7 +217,7 @@ function ProfileCard({
               {playerName(player)}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {player.city}
+              {placeName(player.city)}
               {player.clubId !== null && ` · ${clubs.data?.get(player.clubId)?.name ?? ''}`}
               {/* Своя карточка показывает дату целиком, если она известна:
                   прячут её от посторонних, а не от себя (ADR-037). */}
@@ -304,6 +309,28 @@ function gripLabel(value: string | null, t: (key: MessageKey) => string): string
 }
 
 /**
+ * Раздел администратора платформы — ADR-046.
+ *
+ * Ссылка видна только администратору; сама страница справочника тоже
+ * проверяет признак, а права на запись — сервер (ТС 8.3).
+ */
+function Admin(): ReactNode {
+  const t = useT();
+
+  return (
+    <Box component="section" sx={{ mt: 5 }}>
+      <Typography variant="h3">{t('cabinet.admin.title')}</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+        {t('cabinet.admin.lead')}
+      </Typography>
+      <Button href="/cabinet/places" sx={{ mt: 2, ...TOUCH }}>
+        {t('page.places.title')}
+      </Button>
+    </Box>
+  );
+}
+
+/**
  * Роли в клубах — ссылками на управление клубом.
  *
  * По ним человек узнаёт, где он вправе действовать. Полный список клубов с
@@ -332,9 +359,7 @@ function Roles({ user }: { readonly user: AuthUserView }): ReactNode {
               {/* Судья клубом не управляет (ADR-014): ему — страница клуба. */}
               <Link
                 href={
-                  role.role === 'REFEREE'
-                    ? `/clubs/${role.clubId}`
-                    : `/cabinet/club/${role.clubId}`
+                  role.role === 'REFEREE' ? `/clubs/${role.clubId}` : `/cabinet/club/${role.clubId}`
                 }
               >
                 {clubs.data?.get(role.clubId)?.name ?? role.clubId}

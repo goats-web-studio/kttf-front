@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
+import { usePlaceName } from '@/features/places/place-name';
 
 import ClubMark from './club-mark';
 
@@ -17,6 +18,7 @@ import ClubMark from './club-mark';
  */
 export default function ClubCard({ club }: { readonly club: ClubView }): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   const titleId = `club-${club.id}`;
 
   return (
@@ -31,7 +33,9 @@ export default function ClubCard({ club }: { readonly club: ClubView }): ReactNo
           {club.name}
         </Typography>
         <Typography variant="body2" color="text.secondary" noWrap>
-          {club.address === null ? club.city : `${club.city} · ${club.address}`}
+          {club.address === null
+            ? placeName(club.city)
+            : `${placeName(club.city)} · ${club.address}`}
         </Typography>
       </Box>
       <Typography

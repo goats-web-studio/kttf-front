@@ -19,16 +19,17 @@ import { useCallback, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { endOfDay, fill, formatDate, startOfDay, useLocale, useT } from '@/common/i18n';
-import { orUndefined, searchDay, searchId, searchPage, searchText } from '@/common/search';
+import { orUndefined, searchDay, searchId, searchPage } from '@/common/search';
 import EmptyState from '@/common/ui/empty-state';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import Pagination from '@/common/ui/pagination';
 import QueryState from '@/common/ui/query-state';
-import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { managedClubIds } from '@/features/clubs/roles';
+import CityFilter from '@/features/places/city-filter';
+import { useCityLabel } from '@/features/places/city-label';
 import { TOURNAMENT_STATUS_KEYS } from '@/features/tournaments/labels';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 import TournamentCard from '@/features/tournaments/tournament-card';
@@ -51,7 +52,8 @@ const FILTERABLE: readonly TournamentStatus[] = [
 ];
 
 const searchSchema = z.object({
-  city: searchText,
+  /** Город клуба-организатора, по идентификатору справочника (ADR-046). */
+  city: searchId,
   club: searchId,
   status: tournamentStatusSchema
     .refine((status) => FILTERABLE.includes(status))
@@ -89,6 +91,7 @@ function TournamentsPage(): ReactNode {
   const page = search.page ?? 1;
   const tournaments = useQuery(tournamentsQuery(toQuery(search, page)));
   const clubs = useQuery(clubDirectoryQuery);
+  const cityLabel = useCityLabel();
 
   // Создание турнира стоит там, где организатор смотрит турниры, а не в
   // отдельном разделе кабинета: разделов ТЗ кабинету не отводит.
@@ -107,18 +110,12 @@ function TournamentsPage(): ReactNode {
     },
     [navigate],
   );
-  const commitCity = useCallback(
-    (value: string) => {
-      filter({ city: orUndefined(value) }, true);
-    },
-    [filter],
-  );
 
   const active: ActiveFilter[] = [];
   if (search.city !== undefined) {
     active.push({
       key: 'city',
-      label: fill(t('filter.chip'), { label: t('filter.city'), value: search.city }),
+      label: fill(t('filter.chip'), { label: t('filter.city'), value: cityLabel(search.city) }),
       onRemove: () => {
         filter({ city: undefined });
       },
@@ -215,11 +212,11 @@ function TournamentsPage(): ReactNode {
         }}
       >
         <Box sx={{ gridColumn: { xs: 'span 2', sm: 'span 3' } }}>
-          <SearchInput
-            label={t('filter.city')}
+          <CityFilter
             value={search.city}
-            onCommit={commitCity}
-            autoComplete="address-level2"
+            onChange={(city) => {
+              filter({ city });
+            }}
           />
         </Box>
 
@@ -386,7 +383,7 @@ function toQuery(search: Search, page: number): ListTournamentsQuery {
   return {
     page,
     limit: DEFAULT_PAGE_SIZE,
-    ...(search.city === undefined ? {} : { city: search.city }),
+    ...(search.city === undefined ? {} : { cityId: search.city }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
     ...(search.status === undefined ? {} : { status: search.status }),
     ...(search.from === undefined ? {} : { from: startOfDay(search.from).toISOString() }),

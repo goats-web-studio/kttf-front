@@ -5,10 +5,11 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import type { ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
+import CityPicker from '@/features/places/city-picker';
 
 interface ClubFormProps {
   /** Клуб для правки. Без него форма заводит новый. */
@@ -32,7 +33,8 @@ const NUMERIC = { inputMode: 'numeric' } as const;
 /**
  * Данные клуба — ТЗ 3.1, в объёме модели `Club`.
  *
- * Обязательны название и город: по ним клуб находят. Столы заполнены
+ * Обязательны название и город: по ним клуб находят. Город — из
+ * справочника (ADR-046). Столы заполнены
  * умолчанием — без них клуб не проводит турниров, а форма турнира берёт
  * число столов отсюда как подсказку. Остальное необязательно и пусто.
  *
@@ -52,7 +54,7 @@ export default function ClubForm({
     resolver: zodResolver(createClubSchema),
     defaultValues: {
       name: club?.name ?? '',
-      city: club?.city ?? '',
+      cityId: club?.city.id ?? '',
       tableCount: club?.tableCount ?? 4,
       ...defined({
         shortName: club?.shortName,
@@ -100,11 +102,21 @@ export default function ClubForm({
           {...register('shortName', optionalText)}
           {...hint(t, undefined, true)}
         />
-        <TextField
-          label={t('club.field.city')}
-          autoComplete="address-level2"
-          {...register('city')}
-          {...hint(t, errors.city === undefined ? undefined : 'error.form.city')}
+        <Controller
+          control={form.control}
+          name="cityId"
+          render={({ field }) => (
+            <CityPicker
+              name={field.name}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+              label={t('club.field.city')}
+              current={club?.city}
+              error={errors.cityId === undefined ? undefined : 'error.form.city'}
+            />
+          )}
         />
         <TextField
           label={t('club.field.address')}
@@ -178,7 +190,9 @@ function defined(
   values: Readonly<Record<string, string | null | undefined>>,
 ): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(values).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+    Object.entries(values).filter(
+      (entry): entry is [string, string] => typeof entry[1] === 'string',
+    ),
   );
 }
 

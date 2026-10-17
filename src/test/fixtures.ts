@@ -1,6 +1,9 @@
 import type {
   AuthUserView,
+  CityRef,
+  CityView,
   ClubView,
+  CountryView,
   HeadToHeadView,
   PlayerMatchView,
   PlayerProfileView,
@@ -40,6 +43,67 @@ const FINAL_ID = '00000000-0000-4000-8000-000000000012';
 export const PLAYING_MATCH_ID = '00000000-0000-4000-8000-000000000031';
 export const QUEUED_MATCH_ID = '00000000-0000-4000-8000-000000000032';
 
+/**
+ * Справочник мест — ответы `GET /countries` и `GET /cities` (ADR-046).
+ *
+ * У Усть-Каменогорска казахское название другое: по нему видно, что
+ * подпись берётся по языку, а не переписывается из русского.
+ */
+export const COUNTRY: CountryView = {
+  id: '00000000-0000-4000-8000-0000000000b1',
+  code: 'KZ',
+  name: 'Казахстан',
+  nameKk: 'Қазақстан',
+  sortOrder: 0,
+  isActive: true,
+};
+
+export const CITIES = {
+  almaty: {
+    id: '00000000-0000-4000-8000-0000000000c1',
+    countryId: COUNTRY.id,
+    name: 'Алматы',
+    nameKk: 'Алматы',
+    sortOrder: 0,
+    isActive: true,
+  },
+  astana: {
+    id: '00000000-0000-4000-8000-0000000000c2',
+    countryId: COUNTRY.id,
+    name: 'Астана',
+    nameKk: 'Астана',
+    sortOrder: 1,
+    isActive: true,
+  },
+  oskemen: {
+    id: '00000000-0000-4000-8000-0000000000c3',
+    countryId: COUNTRY.id,
+    name: 'Усть-Каменогорск',
+    nameKk: 'Өскемен',
+    sortOrder: 2,
+    isActive: true,
+  },
+} as const satisfies Record<string, CityView>;
+
+/** Открытый список городов — в порядке справочника. */
+export const CITY_LIST: CityView[] = [CITIES.almaty, CITIES.astana, CITIES.oskemen];
+
+/** Город, встроенный в клуб и игрока: только подпись. */
+export function cityRef(city: CityView): CityRef {
+  return { id: city.id, name: city.name, nameKk: city.nameKk };
+}
+
+/**
+ * Ответ справочника по адресу запроса — для заглушек `fetch` в тестах
+ * экранов. `undefined` — запрос не к справочнику.
+ */
+export function placesReply(url: string): unknown {
+  if (/\/countries(\?|$)/.test(url)) return [COUNTRY];
+  if (/\/cities(\?|$)/.test(url)) return CITY_LIST;
+
+  return undefined;
+}
+
 function player(id: string, lastName: string, rating: string): PlayerView {
   return {
     id,
@@ -49,7 +113,7 @@ function player(id: string, lastName: string, rating: string): PlayerView {
     middleName: null,
     birthYear: 2000,
     gender: 'MALE',
-    city: 'Алматы',
+    city: cityRef(CITIES.almaty),
     photoUrl: null,
     clubId: CLUB_ID,
     rating,
@@ -309,7 +373,7 @@ export const CLUB: ClubView = {
   id: CLUB_ID,
   name: 'Клуб «Алатау»',
   shortName: null,
-  city: 'Алматы',
+  city: cityRef(CITIES.almaty),
   address: null,
   lat: null,
   lng: null,
@@ -565,6 +629,7 @@ export const USER_WITHOUT_PROFILE: AuthUserView = {
   createdAt: '2026-09-01T00:00:00.000Z',
   playerId: null,
   clubRoles: [],
+  isAdmin: false,
 };
 
 /** Тот же человек после заведения профиля и с ролью в клубе. */
@@ -572,6 +637,12 @@ export const USER_WITH_PROFILE: AuthUserView = {
   ...USER_WITHOUT_PROFILE,
   playerId: PLAYER_IDS.first,
   clubRoles: [{ clubId: CLUB.id, role: 'OWNER' }],
+};
+
+/** Администратор платформы — ведёт справочник мест (ADR-046). */
+export const ADMIN_USER: AuthUserView = {
+  ...USER_WITH_PROFILE,
+  isAdmin: true,
 };
 
 /**

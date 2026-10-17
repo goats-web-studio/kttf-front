@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 import { formatCount, useLocale, useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
+import { usePlaceName } from '@/features/places/place-name';
 
 import { playerName } from './player-name';
 import { playersQuery } from './queries';
@@ -32,6 +33,7 @@ interface LeadersTableProps {
  */
 export default function LeadersTable({ query, empty }: LeadersTableProps): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   const locale = useLocale();
   const players = useQuery(playersQuery(query));
 
@@ -53,12 +55,18 @@ export default function LeadersTable({ query, empty }: LeadersTableProps): React
                   {formatCount((query.page - 1) * query.limit + index + 1, locale)}
                 </TableCell>
                 <TableCell>
-                  <Link href={`/players/${player.id}`} color="text.primary" sx={{ fontWeight: 500 }}>
+                  <Link
+                    href={`/players/${player.id}`}
+                    color="text.primary"
+                    sx={{ fontWeight: 500 }}
+                  >
                     {playerName(player)}
                   </Link>
                 </TableCell>
-                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, color: 'text.secondary' }}>
-                  {player.city}
+                <TableCell
+                  sx={{ display: { xs: 'none', sm: 'table-cell' }, color: 'text.secondary' }}
+                >
+                  {placeName(player.city)}
                 </TableCell>
                 <TableCell align="right" sx={{ ...NUM, fontWeight: 600 }}>
                   {player.rating}

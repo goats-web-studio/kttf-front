@@ -22,6 +22,7 @@ import MemberName from '@/features/clubs/member-name';
 import RoleName from '@/features/clubs/role-name';
 import { isClubStaff } from '@/features/clubs/roles';
 import TournamentList from '@/features/clubs/tournament-list';
+import { usePlaceName } from '@/features/places/place-name';
 import LeadersTable from '@/features/players/leaders-table';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 
@@ -81,6 +82,7 @@ function ClubPage(): ReactNode {
 
 function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   const user = useSessionStore((state) => state.user);
 
   return (
@@ -96,7 +98,9 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h1">{club.name}</Typography>
             <Typography color="text.secondary">
-              {club.address === null ? club.city : `${club.city} · ${club.address}`}
+              {club.address === null
+                ? placeName(club.city)
+                : `${placeName(club.city)} · ${club.address}`}
             </Typography>
           </Box>
         </Stack>
@@ -195,7 +199,9 @@ function Fact({
  */
 function Tournaments({ club }: { readonly club: ClubView }): ReactNode {
   const t = useT();
-  const tournaments = useQuery(tournamentsQuery({ page: 1, limit: MAX_PAGE_SIZE, clubId: club.id }));
+  const tournaments = useQuery(
+    tournamentsQuery({ page: 1, limit: MAX_PAGE_SIZE, clubId: club.id }),
+  );
   const grouped = useMemo(
     () => groupClubTournaments(tournaments.data?.items ?? []),
     [tournaments.data],

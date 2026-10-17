@@ -1,7 +1,7 @@
 import type { ClubView, CreateClubInput, UpdateClubInput } from '@kttf/shared/types';
 
 /** Поля, которые форма задаёт всегда: без них клуба нет. */
-const REQUIRED = ['name', 'city', 'tableCount'] as const satisfies readonly (keyof CreateClubInput &
+const REQUIRED = ['name', 'tableCount'] as const satisfies readonly (keyof CreateClubInput &
   keyof ClubView)[];
 
 /** Необязательные поля формы — их можно и задать, и стереть (ADR-043). */
@@ -33,6 +33,12 @@ export function clubPatch(club: ClubView, values: CreateClubInput): UpdateClubIn
     if (next !== undefined && next !== club[field]) {
       patch[field] = next;
     }
+  }
+
+  // Город в ответе — ссылка на справочник, в форме — её идентификатор.
+  // Стереть его нельзя: без города клуба не найти (ADR-043, ADR-046).
+  if (values.cityId !== club.city.id) {
+    patch.cityId = values.cityId;
   }
 
   for (const field of OPTIONAL) {

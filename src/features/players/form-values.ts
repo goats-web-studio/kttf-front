@@ -21,7 +21,7 @@ export function toFormValues(player: PlayerProfileView): Partial<CreatePlayerInp
     // Пол в ответе — строка, а не перечень (ТС 7.2). Незнакомое значение не
     // подставляется молча: человек выберет сам.
     ...(player.gender === 'MALE' || player.gender === 'FEMALE' ? { gender: player.gender } : {}),
-    city: player.city,
+    cityId: player.city.id,
     ...(player.clubId === null ? {} : { clubId: player.clubId }),
     ...(player.photoUrl === null ? {} : { photoUrl: player.photoUrl }),
     ...(player.playingHand === 'RIGHT' || player.playingHand === 'LEFT'
@@ -59,7 +59,8 @@ export function toPlayerPatch(values: CreatePlayerInput): UpdatePlayerInput {
     // а не «стереть», поэтому null здесь неуместен.
     birthYearOnly: values.birthYearOnly ?? true,
     gender: values.gender,
-    city: values.city,
+    // Город стереть нельзя: правка всегда несёт выбранный (ADR-046).
+    cityId: values.cityId,
     clubId: values.clubId ?? null,
     photoUrl: values.photoUrl ?? null,
     playingHand: values.playingHand ?? null,

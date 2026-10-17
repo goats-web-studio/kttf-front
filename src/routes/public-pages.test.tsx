@@ -7,7 +7,16 @@ import { createAppRouter } from '@/app/router';
 import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { playerName } from '@/features/players/player-name';
-import { CLUB, pageOf, PLAYERS, RESULTS, TOURNAMENT, TOURNAMENT_ID } from '@/test/fixtures';
+import {
+  CITIES,
+  CLUB,
+  pageOf,
+  placesReply,
+  PLAYERS,
+  RESULTS,
+  TOURNAMENT,
+  TOURNAMENT_ID,
+} from '@/test/fixtures';
 
 /**
  * Публичные экраны от адреса до данных — ТЗ 9.1, 9.2, 9.4.
@@ -27,6 +36,11 @@ function reply(body: unknown): Response {
 }
 
 function answer(url: string): Response {
+  const places = placesReply(url);
+  if (places !== undefined) {
+    return reply(places);
+  }
+
   if (/\/tournaments\/[^/]+\/results$/.test(url)) {
     return reply(RESULTS);
   }
@@ -168,14 +182,49 @@ describe('неверная ссылка на турнир', () => {
  */
 describe('фильтры в адресе', () => {
   it('ссылка с городом открывает рейтинг этого города', async () => {
-    renderAt('/ratings?city=Алматы');
+    // Город в адресе — идентификатор записи справочника (ADR-046).
+    renderAt(`/ratings?city=${CITIES.almaty.id}`);
 
     await screen.findAllByRole('row');
 
-    expect(requests.some((url) => url.includes('/players') && url.includes('city=Алматы'))).toBe(
+    expect(
+      requests.some(
+        (url) => url.includes('/players') && url.includes(`cityId=${CITIES.almaty.id}`),
+      ),
+    ).toBe(true);
+    // Подпись чипа — название из справочника, а не идентификатор из адреса.
+    expect(await screen.findByText(`${ru['filter.city']}: ${CITIES.almaty.name}`)).toBeDefined();
+  });
+
+  it('город вне справочника фильтр не снимает и подписан словом', async () => {
+    const hidden = '00000000-0000-4000-8000-0000000000c9';
+    renderAt(`/clubs?city=${hidden}`);
+
+    expect(
+      await screen.findByText(`${ru['filter.city']}: ${ru['places.city.unknown']}`),
+    ).toBeDefined();
+    expect(requests.some((url) => url.includes('/clubs') && url.includes(`cityId=${hidden}`))).toBe(
       true,
     );
-    expect(screen.getByText(`${ru['filter.city']}: Алматы`)).toBeDefined();
+  });
+
+  it('выбор города в календаре кладёт в адрес его идентификатор', async () => {
+    renderAt('/tournaments');
+
+    await screen.findByRole('link', { name: TOURNAMENT.name });
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['filter.city'] }));
+    fireEvent.click(await screen.findByRole('option', { name: CITIES.astana.name }));
+
+    await waitFor(() => {
+      expect(window.location.search).toContain(`city=${CITIES.astana.id}`);
+    });
+    await waitFor(() => {
+      expect(
+        requests.some(
+          (url) => url.includes('/tournaments') && url.includes(`cityId=${CITIES.astana.id}`),
+        ),
+      ).toBe(true);
+    });
   });
 
   it('кривая ссылка отбрасывает фильтр, а не показывает ошибку', async () => {

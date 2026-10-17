@@ -34,6 +34,10 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   TOURNAMENT_NOT_COMPLETE: 'error.api.TOURNAMENT_NOT_COMPLETE',
   TIES_UNRESOLVED: 'error.api.TIES_UNRESOLVED',
   RATING_SNAPSHOT_MISSING: 'error.api.RATING_SNAPSHOT_MISSING',
+
+  // Справочник стран и городов — ADR-046.
+  CITY_UNAVAILABLE: 'error.api.CITY_UNAVAILABLE',
+  PLACE_ALREADY_EXISTS: 'error.api.PLACE_ALREADY_EXISTS',
 };
 
 /**
