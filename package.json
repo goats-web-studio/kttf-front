@@ -26,7 +26,7 @@
     "@fontsource-variable/inter": "5.3.0",
     "@fontsource-variable/oswald": "5.3.0",
     "@hookform/resolvers": "^5.9.1",
-    "@kttf/shared": "github:goats-web-studio/kttf-shared#4d57e448815c6d7b338ba5966e9454a39da1b2e5",
+    "@kttf/shared": "github:goats-web-studio/kttf-shared#fe9974323b38034b553ea8a223c4e85ece21fe95",
     "@mui/material": "^9.4.0",
     "@mui/x-date-pickers": "^9.14.0",
     "@tanstack/react-query": "^5.102.8",
