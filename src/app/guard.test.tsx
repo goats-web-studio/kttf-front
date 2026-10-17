@@ -54,7 +54,8 @@ describe('прямая ссылка на защищённую страницу',
 
     render(<App />);
 
-    expect(await screen.findByText(ru['page.cabinet.title'])).toBeDefined();
+    // Именно заголовок: «Кабинет» есть ещё и в шапке вошедшего.
+    expect(await screen.findByRole('heading', { name: ru['page.cabinet.title'] })).toBeDefined();
     expect(screen.queryByRole('heading', { name: ru['page.login.title'] })).toBeNull();
   });
 

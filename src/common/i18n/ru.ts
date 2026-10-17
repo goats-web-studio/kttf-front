@@ -14,6 +14,10 @@ export const ru = {
   'nav.home': 'Главная',
   'nav.ratings': 'Рейтинг',
   'nav.tournaments': 'Турниры',
+  'nav.clubs': 'Клубы',
+  'nav.sections': 'Разделы сайта',
+  'nav.profile': 'Профиль',
+  'nav.myClubs': 'Мои клубы',
 
   'page.home.title': 'Настольный теннис Казахстана',
   'page.home.lead': 'Рейтинг игроков, календарь и итоги турниров по всей стране.',

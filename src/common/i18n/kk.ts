@@ -16,6 +16,10 @@ export const kk: Record<MessageKey, string> = {
   'nav.home': 'Басты бет',
   'nav.ratings': 'Рейтинг',
   'nav.tournaments': 'Турнирлер',
+  'nav.clubs': 'Клубтар',
+  'nav.sections': 'Сайт бөлімдері',
+  'nav.profile': 'Профиль',
+  'nav.myClubs': 'Менің клубтарым',
 
   'page.home.title': 'Қазақстан үстел теннисі',
   'page.home.lead': 'Ойыншылар рейтингі, бүкіл ел бойынша турнирлер күнтізбесі мен қорытындылары.',

@@ -1,14 +1,7 @@
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
-import Link from '@mui/material/Link';
-import Stack from '@mui/material/Stack';
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
-import { useT } from '@/common/i18n';
-import ThemeRoot from '@/common/ui/theme';
-import { signOut } from '@/features/auth/session';
+import SiteLayout from '@/features/shell/site-layout';
 
 export const Route = createFileRoute('/_app')({
   /**
@@ -29,48 +22,11 @@ export const Route = createFileRoute('/_app')({
   component: AppLayout,
 });
 
+/** Кабинет: та же шапка, что у публичной части, на утопленной подложке. */
 function AppLayout(): ReactNode {
-  const t = useT();
-
   return (
-    <ThemeRoot>
-      <Box
-        sx={{
-          display: 'flex',
-          minHeight: '100%',
-          flexDirection: 'column',
-          bgcolor: 'var(--paper-sunken)',
-        }}
-      >
-        <Box
-          component="header"
-          sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
-        >
-          <Container maxWidth="md" component="nav">
-            <Stack direction="row" sx={{ alignItems: 'center', minHeight: 56 }}>
-              <Link href="/" sx={{ display: 'flex', flexShrink: 0 }}>
-                <img
-                  src="/logo-wordmark.png"
-                  alt={t('app.logo')}
-                  style={{ height: 20, width: 'auto' }}
-                />
-              </Link>
-              <Box sx={{ flexGrow: 1 }} />
-              <Button
-                variant="text"
-                onClick={() => {
-                  void signOut();
-                }}
-              >
-                {t('login.signOut')}
-              </Button>
-            </Stack>
-          </Container>
-        </Box>
-        <Box component="main" sx={{ flexGrow: 1 }}>
-          <Outlet />
-        </Box>
-      </Box>
-    </ThemeRoot>
+    <SiteLayout surface="sunken">
+      <Outlet />
+    </SiteLayout>
   );
 }
