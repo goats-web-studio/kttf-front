@@ -37,11 +37,13 @@ export const TOURNAMENT_LEVEL_KEYS: Readonly<Record<TournamentLevel, MessageKey>
 
 export const REGISTRATION_STATUS_KEYS: Readonly<Record<RegistrationStatus, MessageKey>> = {
   REGISTERED: 'registration.status.REGISTERED',
+  PENDING: 'registration.status.PENDING',
   WAITLIST: 'registration.status.WAITLIST',
   CONFIRMED: 'registration.status.CONFIRMED',
   PLAYING: 'registration.status.PLAYING',
   WITHDRAWN: 'registration.status.WITHDRAWN',
   NO_SHOW: 'registration.status.NO_SHOW',
+  REJECTED: 'registration.status.REJECTED',
 };
 
 /**

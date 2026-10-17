@@ -1,7 +1,13 @@
 import { formatConfigSchema } from '@kttf/shared/types';
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_DRAFT, toFormatConfig, type FormatDraft, type FormatType } from './format-draft';
+import {
+  DEFAULT_DRAFT,
+  fromFormatConfig,
+  toFormatConfig,
+  type FormatDraft,
+  type FormatType,
+} from './format-draft';
 
 /**
  * Черновик схемы — в конфигурацию контракта.
@@ -76,5 +82,46 @@ describe('перевод черновика в конфигурацию', () => 
       rounds: 1,
       setsToWin: 3,
     });
+  });
+});
+
+describe('длины по кругам плей-офф — ADR-044', () => {
+  it('заданные круги уходят в конфигурацию, пустые — нет', () => {
+    const config = toFormatConfig({
+      ...DEFAULT_DRAFT,
+      type: 'KNOCKOUT',
+      playoffSetsToWin: { final: 4, semifinal: undefined },
+    });
+
+    expect(config).toMatchObject({ playoffSetsToWin: { final: 4 } });
+    expect(formatConfigSchema.safeParse(config).success).toBe(true);
+  });
+
+  it('без заданных кругов поля в конфигурации нет вовсе', () => {
+    expect(toFormatConfig({ ...DEFAULT_DRAFT, type: 'GROUPS_KNOCKOUT' })).not.toHaveProperty(
+      'playoffSetsToWin',
+    );
+  });
+});
+
+describe('конфигурация обратно в черновик — правка турнира', () => {
+  it('сохранённое возвращается в форму без потерь', () => {
+    for (const type of TYPES) {
+      for (const sizing of ['count', 'size'] as const) {
+        const draft: FormatDraft = {
+          ...DEFAULT_DRAFT,
+          type,
+          sizing,
+          groupCount: 3,
+          groupSize: 5,
+          advancePerGroup: 2,
+          koSetsToWin: 4,
+          playoffSetsToWin: type === 'KNOCKOUT' || type === 'GROUPS_KNOCKOUT' ? { final: 4 } : {},
+        };
+        const config = toFormatConfig(draft);
+
+        expect(toFormatConfig(fromFormatConfig(config)), `${type}/${sizing}`).toEqual(config);
+      }
+    }
   });
 });

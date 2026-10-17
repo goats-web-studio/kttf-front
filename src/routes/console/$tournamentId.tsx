@@ -24,7 +24,7 @@ import {
   suggestedTable,
 } from '@/features/console/queue';
 import QueueZone from '@/features/console/queue-zone';
-import { setsToWinFor } from '@/features/console/score';
+import { matchSetsToWin } from '@/features/console/score';
 import StandingsPanel from '@/features/console/standings-panel';
 import { namesOf, ratingsOf } from '@/features/console/state';
 import SyncBadge, { SyncRejections } from '@/features/console/sync-badge';
@@ -105,7 +105,7 @@ function ConsoleScreen(): ReactNode {
 
     return stage === undefined || snapshot === undefined
       ? 3
-      : setsToWinFor(snapshot.tournament.formatConfig, stage.type);
+      : matchSetsToWin(snapshot.tournament.formatConfig, stage, match);
   }
 
   function findMatch(matchId: string): MatchView | undefined {

@@ -1,5 +1,5 @@
 import { checkEligibility, type EligibilityProblem } from '@kttf/shared/eligibility';
-import type { RegistrationView, TournamentView } from '@kttf/shared/types';
+import type { RegistrationStatus, RegistrationView, TournamentView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button, { type ButtonProps } from '@mui/material/Button';
@@ -11,7 +11,7 @@ import { createLink } from '@tanstack/react-router';
 import { forwardRef, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
-import { formatDateTime, useLocale, useT } from '@/common/i18n';
+import { formatDateTime, useLocale, useT, type MessageKey } from '@/common/i18n';
 import { useSessionStore } from '@/features/auth/session-store';
 import { isClubStaff } from '@/features/clubs/roles';
 import { playerQuery } from '@/features/players/queries';
@@ -105,6 +105,13 @@ export default function RegistrationPanel({
           },
         );
 
+  // Планку рейтинга организатор разрешил переступать по заявке (ADR-044).
+  // Возраст и пол — нет: с ними запись по-прежнему закрыта.
+  const reviewable =
+    tournament.reviewOutOfRating &&
+    problems.length > 0 &&
+    problems.every((problem) => problem === 'RATING_TOO_HIGH' || problem === 'RATING_TOO_LOW');
+
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
   };
@@ -137,10 +144,8 @@ export default function RegistrationPanel({
       <Box sx={{ mt: 2 }}>
         {mine !== undefined ? (
           <>
-            <Typography>
-              {mine.status === 'WAITLIST' ? t('registration.waitlisted') : t('registration.joined')}
-            </Typography>
-            {isExpired ? (
+            <Typography>{t(ownStatusKey(mine.status))}</Typography>
+            {mine.status === 'REJECTED' ? null : isExpired ? (
               // Отмена только до дедлайна — ТЗ 4.3. После него снять участника
               // может организатор, и просить об этом придётся его.
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -172,6 +177,7 @@ export default function RegistrationPanel({
             // служит шаг проведения турнира, у игрока — запись.
             isMain={!isClubStaff(user, tournament.clubId)}
             problems={problems}
+            reviewable={reviewable}
             error={join.error}
             tournamentId={tournament.id}
             onJoin={() => {
@@ -200,8 +206,10 @@ function Conditions({
 }): ReactNode {
   const t = useT();
 
-  const taken = registrations.filter(
-    (registration) => registration.status !== 'WAITLIST' && registration.status !== 'WITHDRAWN',
+  // Место занимает допущенный, а не всякая запись: заявка на рассмотрении
+  // и отклонённая его не держат (ADR-044).
+  const taken = registrations.filter((registration) =>
+    OCCUPYING.includes(registration.status),
   ).length;
 
   const rows: { readonly label: string; readonly value: string }[] = [];
@@ -212,6 +220,13 @@ function Conditions({
 
   if (tournament.ratingCapMax !== null) {
     rows.push({ label: t('registration.ratingTo'), value: tournament.ratingCapMax });
+  }
+
+  if (
+    tournament.reviewOutOfRating &&
+    (tournament.ratingCapMin !== null || tournament.ratingCapMax !== null)
+  ) {
+    rows.push({ label: t('registration.outOfRating'), value: t('registration.outOfRating.value') });
   }
 
   if (tournament.birthYearFrom !== null) {
@@ -283,6 +298,7 @@ function Join({
   isChecking,
   isMain,
   problems,
+  reviewable,
   error,
   tournamentId,
   onJoin,
@@ -294,6 +310,8 @@ function Join({
   readonly isChecking: boolean;
   readonly isMain: boolean;
   readonly problems: readonly EligibilityProblem[];
+  /** Причины только в рейтинге, и турнир принимает такие заявки — ADR-044. */
+  readonly reviewable: boolean;
   readonly error: unknown;
   readonly tournamentId: string;
   readonly onJoin: () => void;
@@ -325,7 +343,7 @@ function Join({
     );
   }
 
-  const blocked = problems.length > 0;
+  const blocked = problems.length > 0 && !reviewable;
 
   return (
     <>
@@ -336,7 +354,9 @@ function Join({
         onClick={onJoin}
         sx={{ width: { xs: '100%', sm: 'auto' } }}
       >
-        {isPending || isChecking ? t('common.loading') : t('registration.join')}
+        {isPending || isChecking
+          ? t('common.loading')
+          : t(reviewable ? 'registration.apply' : 'registration.join')}
       </Button>
 
       {/*
@@ -357,9 +377,39 @@ function Join({
         </Alert>
       ) : null}
 
+      {/* Вне планки, но заявку принимают: причина та же, исход другой —
+          решит организатор до начала турнира. */}
+      {reviewable && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          {t('registration.apply.hint')}
+          <Box component="ul" sx={{ m: 0, mt: 1, pl: 2.5 }}>
+            {problemKeys(problems).map((key) => (
+              <li key={key}>{t(key)}</li>
+            ))}
+          </Box>
+        </Alert>
+      )}
+
       <Refusal error={error} />
     </>
   );
+}
+
+/** Статусы, занимающие место в турнире, — как на сервере. */
+const OCCUPYING: readonly RegistrationStatus[] = ['REGISTERED', 'CONFIRMED', 'PLAYING'];
+
+/** Что сказать игроку о его записи. */
+function ownStatusKey(status: RegistrationStatus): MessageKey {
+  switch (status) {
+    case 'WAITLIST':
+      return 'registration.waitlisted';
+    case 'PENDING':
+      return 'registration.pending';
+    case 'REJECTED':
+      return 'registration.rejected';
+    default:
+      return 'registration.joined';
+  }
 }
 
 /**

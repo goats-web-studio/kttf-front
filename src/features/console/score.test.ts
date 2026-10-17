@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { quickResults, setsToWinFor } from './score';
+import type { MatchView } from '@kttf/shared/types';
+
+import { matchSetsToWin, quickResults, setsToWinFor } from './score';
 
 describe('длина встречи по схеме', () => {
   it('у групп и плей-офф она разная', () => {
@@ -26,6 +28,44 @@ describe('длина встречи по схеме', () => {
         'KNOCKOUT',
       ),
     ).toBe(4);
+  });
+});
+
+describe('длина встречи по кругу плей-офф — ADR-044', () => {
+  /** Встреча сетки на 8: три круга, финал и встреча за третье — в третьем. */
+  function knockoutMatch(round: number, slot: number): MatchView {
+    return { bracketRound: round, bracketSlot: slot } as MatchView;
+  }
+
+  const stage = {
+    type: 'KNOCKOUT' as const,
+    matches: [knockoutMatch(1, 0), knockoutMatch(2, 0), knockoutMatch(3, 0), knockoutMatch(3, 1)],
+  };
+  const config = {
+    type: 'GROUPS_KNOCKOUT' as const,
+    groupCount: 2,
+    advancePerGroup: 4,
+    groupRounds: 1 as const,
+    groupSetsToWin: 2 as const,
+    koSetsToWin: 3 as const,
+    thirdPlace: true,
+    playoffSetsToWin: { final: 4 as const },
+  };
+
+  it('финал консоль считает той же длиной, что сервер', () => {
+    expect(matchSetsToWin(config, stage, knockoutMatch(3, 0))).toBe(4);
+    expect(matchSetsToWin(config, stage, knockoutMatch(3, 1))).toBe(3);
+    expect(matchSetsToWin(config, stage, knockoutMatch(1, 0))).toBe(3);
+  });
+
+  it('группы длин по кругам не знают', () => {
+    expect(
+      matchSetsToWin(
+        config,
+        { type: 'GROUPS', matches: [] },
+        { bracketRound: 1, bracketSlot: null },
+      ),
+    ).toBe(2);
   });
 });
 

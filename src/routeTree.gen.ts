@@ -29,6 +29,7 @@ import { Route as PublicTournamentsTournamentIdRouteImport } from './routes/_pub
 import { Route as AppCabinetClubClubIdRouteImport } from './routes/_app/cabinet.club.$clubId'
 import { Route as AppCabinetClubsIndexRouteImport } from './routes/_app/cabinet.clubs.index'
 import { Route as AppCabinetClubsNewRouteImport } from './routes/_app/cabinet.clubs.new'
+import { Route as AppTournamentsTournamentIdEditRouteImport } from './routes/_app/tournaments.$tournamentId.edit'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -129,6 +130,12 @@ const AppCabinetClubsNewRoute = AppCabinetClubsNewRouteImport.update({
   path: '/cabinet/clubs/new',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTournamentsTournamentIdEditRoute =
+  AppTournamentsTournamentIdEditRouteImport.update({
+    id: '/tournaments/$tournamentId/edit',
+    path: '/tournaments/$tournamentId/edit',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/tournaments/': typeof PublicTournamentsIndexRoute
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
+  '/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
   '/cabinet/clubs/': typeof AppCabinetClubsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -167,6 +175,7 @@ export interface FileRoutesByTo {
   '/tournaments': typeof PublicTournamentsIndexRoute
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
+  '/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
   '/cabinet/clubs': typeof AppCabinetClubsIndexRoute
 }
 export interface FileRoutesById {
@@ -190,6 +199,7 @@ export interface FileRoutesById {
   '/_public/tournaments/': typeof PublicTournamentsIndexRoute
   '/_app/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/_app/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
+  '/_app/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
   '/_app/cabinet/clubs/': typeof AppCabinetClubsIndexRoute
 }
 export interface FileRouteTypes {
@@ -212,6 +222,7 @@ export interface FileRouteTypes {
     | '/tournaments/'
     | '/cabinet/club/$clubId'
     | '/cabinet/clubs/new'
+    | '/tournaments/$tournamentId/edit'
     | '/cabinet/clubs/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/tournaments'
     | '/cabinet/club/$clubId'
     | '/cabinet/clubs/new'
+    | '/tournaments/$tournamentId/edit'
     | '/cabinet/clubs'
   id:
     | '__root__'
@@ -253,6 +265,7 @@ export interface FileRouteTypes {
     | '/_public/tournaments/'
     | '/_app/cabinet/club/$clubId'
     | '/_app/cabinet/clubs/new'
+    | '/_app/tournaments/$tournamentId/edit'
     | '/_app/cabinet/clubs/'
   fileRoutesById: FileRoutesById
 }
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCabinetClubsNewRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/tournaments/$tournamentId/edit': {
+      id: '/_app/tournaments/$tournamentId/edit'
+      path: '/tournaments/$tournamentId/edit'
+      fullPath: '/tournaments/$tournamentId/edit'
+      preLoaderRoute: typeof AppTournamentsTournamentIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -413,6 +433,7 @@ interface AppRouteChildren {
   AppCabinetIndexRoute: typeof AppCabinetIndexRoute
   AppCabinetClubClubIdRoute: typeof AppCabinetClubClubIdRoute
   AppCabinetClubsNewRoute: typeof AppCabinetClubsNewRoute
+  AppTournamentsTournamentIdEditRoute: typeof AppTournamentsTournamentIdEditRoute
   AppCabinetClubsIndexRoute: typeof AppCabinetClubsIndexRoute
 }
 
@@ -421,6 +442,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCabinetIndexRoute: AppCabinetIndexRoute,
   AppCabinetClubClubIdRoute: AppCabinetClubClubIdRoute,
   AppCabinetClubsNewRoute: AppCabinetClubsNewRoute,
+  AppTournamentsTournamentIdEditRoute: AppTournamentsTournamentIdEditRoute,
   AppCabinetClubsIndexRoute: AppCabinetClubsIndexRoute,
 }
 

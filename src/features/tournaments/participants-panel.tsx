@@ -55,7 +55,14 @@ export default function ParticipantsPanel({
   const user = useSessionStore((state) => state.user);
   const isStaff = isClubStaff(user, tournament.clubId);
 
-  if (registrations.length === 0 && !isStaff) {
+  // Заявки вне рейтинга участниками ещё не стали (ADR-044): в составе их
+  // нет, организатор видит их отдельным списком, отклонённые не видны никому.
+  const applications = registrations.filter((registration) => registration.status === 'PENDING');
+  const participants = registrations.filter(
+    (registration) => registration.status !== 'PENDING' && registration.status !== 'REJECTED',
+  );
+
+  if (participants.length === 0 && !isStaff) {
     return null;
   }
 
@@ -69,13 +76,17 @@ export default function ParticipantsPanel({
           color="text.secondary"
           sx={{ fontWeight: 400, ...NUM }}
         >
-          {registrations.length}
+          {participants.length}
         </Typography>
       </Typography>
 
+      {isStaff && applications.length > 0 && (
+        <Applications tournament={tournament} applications={applications} />
+      )}
+
       {isStaff && <AddParticipant tournament={tournament} registrations={registrations} />}
 
-      {registrations.length === 0 ? (
+      {participants.length === 0 ? (
         <Typography color="text.secondary" sx={{ mt: 2 }}>
           {t('participants.empty')}
         </Typography>
@@ -96,7 +107,7 @@ export default function ParticipantsPanel({
               </TableRow>
             </TableHead>
             <TableBody>
-              {registrations.map((registration) => (
+              {participants.map((registration) => (
                 <Row
                   key={registration.id}
                   tournament={tournament}
@@ -244,5 +255,118 @@ function Row({
         </TableCell>
       )}
     </TableRow>
+  );
+}
+
+/**
+ * Заявки вне рейтинговой планки — ADR-044.
+ *
+ * Стоят над составом: это решения, которых ждут люди, и до старта их нужно
+ * принять. Не рассмотренные к старту в турнир не попадают.
+ */
+function Applications({
+  tournament,
+  applications,
+}: {
+  readonly tournament: TournamentView;
+  readonly applications: readonly RegistrationView[];
+}): ReactNode {
+  const t = useT();
+
+  return (
+    <Box
+      sx={{
+        mt: 2,
+        p: { xs: 2, sm: 2.5 },
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        bgcolor: 'var(--paper-sunken)',
+      }}
+    >
+      <Typography variant="h3">
+        {t('participants.applications')}{' '}
+        <Typography component="span" variant="h3" color="text.secondary" sx={NUM}>
+          {applications.length}
+        </Typography>
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+        {t('participants.applications.hint')}
+      </Typography>
+      <Stack component="ul" spacing={1} sx={{ m: 0, mt: 1.5, p: 0, listStyle: 'none' }}>
+        {applications.map((application) => (
+          <Application key={application.id} tournament={tournament} application={application} />
+        ))}
+      </Stack>
+    </Box>
+  );
+}
+
+function Application({
+  tournament,
+  application,
+}: {
+  readonly tournament: TournamentView;
+  readonly application: RegistrationView;
+}): ReactNode {
+  const t = useT();
+  const queryClient = useQueryClient();
+
+  const decide = useMutation({
+    mutationFn: (status: 'CONFIRMED' | 'REJECTED') =>
+      updateRegistration(tournament.id, application.id, { status }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+    },
+  });
+
+  return (
+    <Stack
+      component="li"
+      direction="row"
+      useFlexGap
+      spacing={1.5}
+      sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+    >
+      <Box sx={{ flex: 1, minWidth: 180 }}>
+        <Link
+          href={`/players/${application.player.id}`}
+          color="text.primary"
+          sx={{ fontWeight: 500 }}
+        >
+          {playerName(application.player)}
+        </Link>
+        <Typography component="span" color="text.secondary" sx={{ ml: 1, ...NUM }}>
+          {application.player.rating}
+        </Typography>
+        {decide.error !== null && (
+          <Typography role="alert" variant="body2" color="error" sx={{ mt: 0.5 }}>
+            {t(errorMessageKey(decide.error))}
+          </Typography>
+        )}
+      </Box>
+      <Button
+        size="small"
+        disabled={decide.isPending}
+        onClick={() => {
+          decide.mutate('CONFIRMED');
+        }}
+        sx={ROW_ACTION}
+      >
+        {t('participants.accept')}
+      </Button>
+      <Button
+        variant="text"
+        color="error"
+        size="small"
+        disabled={decide.isPending}
+        onClick={() => {
+          decide.mutate('REJECTED');
+        }}
+        sx={ROW_ACTION}
+      >
+        {t('participants.reject')}
+      </Button>
+    </Stack>
   );
 }

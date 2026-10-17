@@ -9,9 +9,11 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT, type MessageKey } from '@/common/i18n';
+import IntegerField from '@/common/ui/integer-field';
 
 import { previewFormat } from './format-preview';
 import { toFormatConfig, type FormatDraft, type FormatType } from './format-draft';
+import PlayoffLengths from './playoff-lengths';
 
 interface FormatEditorProps {
   readonly draft: FormatDraft;
@@ -173,6 +175,18 @@ export default function FormatEditor({
         )}
       </Box>
 
+      {(draft.type === 'KNOCKOUT' || draft.type === 'GROUPS_KNOCKOUT') && (
+        <PlayoffLengths
+          base={draft.type === 'GROUPS_KNOCKOUT' ? draft.koSetsToWin : draft.setsToWin}
+          lengths={draft.playoffSetsToWin}
+          bracketSize={previewFormat(toFormatConfig(draft), participants).bracketSize}
+          thirdPlace={draft.thirdPlace}
+          onChange={(lengths) => {
+            set('playoffSetsToWin', lengths);
+          }}
+        />
+      )}
+
       <Preview
         draft={draft}
         participants={participants}
@@ -260,14 +274,10 @@ function Preview({
 
   return (
     <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-      <TextField
+      <IntegerField
         label={t('tournament.preview.participants')}
-        type="number"
         value={participants}
-        onChange={(event) => {
-          onParticipantsChange(Number(event.target.value));
-        }}
-        slotProps={{ htmlInput: { inputMode: 'numeric', min: 2 } }}
+        onChange={onParticipantsChange}
         sx={{ width: 160 }}
       />
 
@@ -385,15 +395,5 @@ function NumberField({
 }): ReactNode {
   const t = useT();
 
-  return (
-    <TextField
-      label={t(label)}
-      type="number"
-      value={value}
-      onChange={(event) => {
-        onChange(Number(event.target.value));
-      }}
-      slotProps={{ htmlInput: { inputMode: 'numeric', min: 1 } }}
-    />
-  );
+  return <IntegerField label={t(label)} value={value} onChange={onChange} />;
 }

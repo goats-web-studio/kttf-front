@@ -4,6 +4,7 @@ import {
   genderSchema,
   tournamentLevelSchema,
   type CreateTournamentInput,
+  type TournamentView,
 } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -16,19 +17,22 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { useQuery } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useState, type ReactNode, type Ref } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, type DefaultValues } from 'react-hook-form';
+import type { z } from 'zod';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 
 import FormatEditor, { Section } from './format-editor';
-import { DEFAULT_DRAFT, toFormatConfig, type FormatDraft } from './format-draft';
+import { DEFAULT_DRAFT, fromFormatConfig, toFormatConfig, type FormatDraft } from './format-draft';
 import { TOURNAMENT_LEVEL_KEYS } from './labels';
 
 interface TournamentFormProps {
   /** Клубы, которыми человек управляет. Пустой список сюда не доходит. */
   readonly clubIds: readonly string[];
+  /** Турнир для правки. Без него форма заводит новый. */
+  readonly tournament?: TournamentView;
   readonly isPending: boolean;
   readonly error: unknown;
   readonly onSubmit: (values: CreateTournamentInput) => void;
@@ -40,6 +44,9 @@ const GRID = {
   gap: 2,
   gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
 } as const;
+
+/** Значения формы до разбора схемой — то, что лежит в полях. */
+type FormValues = z.input<typeof createTournamentSchema>;
 
 /** Числовое поле: цифровая клавиатура на телефоне. */
 const NUMERIC = { inputMode: 'numeric' } as const;
@@ -60,6 +67,7 @@ const NUMERIC = { inputMode: 'numeric' } as const;
  */
 export default function TournamentForm({
   clubIds,
+  tournament,
   isPending,
   error,
   onSubmit,
@@ -70,20 +78,18 @@ export default function TournamentForm({
   // Черновик схемы живёт отдельно: у формы плоские поля, а `formatConfig` —
   // объединение четырёх форм, и переключение схемы не должно терять
   // введённое в соседней.
-  const [draft, setDraft] = useState<FormatDraft>(DEFAULT_DRAFT);
-  const [participants, setParticipants] = useState(16);
+  const [draft, setDraft] = useState<FormatDraft>(() =>
+    tournament === undefined ? DEFAULT_DRAFT : fromFormatConfig(tournament.formatConfig),
+  );
+  // Для записанного турнира предпросчёт сразу считается по его составу.
+  const [participants, setParticipants] = useState(
+    tournament !== undefined && tournament.participantCount > 1 ? tournament.participantCount : 16,
+  );
 
-  const form = useForm({
+  const form = useForm<FormValues, unknown, CreateTournamentInput>({
     resolver: zodResolver(createTournamentSchema),
-    defaultValues: {
-      clubId: clubIds[0] ?? '',
-      name: '',
-      entryFee: 0,
-      level: 'CLUB' as const,
-      tableCount: 4,
-      formatConfig: toFormatConfig(DEFAULT_DRAFT),
-      seedingConfig: { method: 'RATING' as const, separateByClub: true },
-    },
+    defaultValues:
+      tournament === undefined ? NEW_TOURNAMENT(clubIds[0] ?? '') : toValues(tournament),
   });
 
   const { errors } = form.formState;
@@ -129,6 +135,8 @@ export default function TournamentForm({
               label={t('tournament.form.club')}
               {...field}
               inputRef={ref}
+              // Турнир остаётся в клубе, где создан (ТС 7.5).
+              disabled={tournament !== undefined}
               {...hint(t, errors.clubId === undefined ? undefined : 'error.form.club')}
             >
               {clubIds.map((clubId) => (
@@ -177,7 +185,10 @@ export default function TournamentForm({
         <TextField
           label={t('tournament.form.entryFee')}
           type="number"
-          {...register('entryFee', { valueAsNumber: true })}
+          // Стёртый взнос — бесплатный турнир, а не ошибка формы.
+          {...register('entryFee', {
+            setValueAs: (value: string) => (value === '' ? 0 : Number(value)),
+          })}
           {...hint(t, errors.entryFee === undefined ? undefined : 'error.form.entryFee', false, {
             ...NUMERIC,
             min: 0,
@@ -323,6 +334,30 @@ export default function TournamentForm({
             {...hint(t, undefined, true, NUMERIC)}
           />
 
+          {/* Заявки вне планки — ADR-044. Возраст и пол галочка не трогает:
+              это условия турнира, а не уровня игры. */}
+          <Controller
+            control={form.control}
+            name="reviewOutOfRating"
+            render={({ field }) => (
+              <FormControlLabel
+                sx={{ minHeight: 44, gridColumn: { sm: 'span 2' } }}
+                label={t('tournament.form.reviewOutOfRating')}
+                control={
+                  <Checkbox
+                    name={field.name}
+                    checked={field.value === true}
+                    onChange={(event) => {
+                      field.onChange(event.target.checked);
+                    }}
+                    onBlur={field.onBlur}
+                    slotProps={{ input: { ref: field.ref } }}
+                  />
+                }
+              />
+            )}
+          />
+
           <TextField
             label={t('tournament.form.birthYearFrom')}
             type="number"
@@ -379,7 +414,9 @@ export default function TournamentForm({
         disabled={isPending}
         sx={{ mt: 3, width: { xs: '100%', sm: 'auto' } }}
       >
-        {isPending ? t('common.loading') : t('tournament.form.create')}
+        {isPending
+          ? t('common.loading')
+          : t(tournament === undefined ? 'tournament.form.create' : 'tournament.form.save')}
       </Button>
     </Box>
   );
@@ -472,4 +509,56 @@ function MomentPicker({
       }}
     />
   );
+}
+
+/** Умолчания нового турнира — обычный клубный, его заводят за полминуты. */
+function NEW_TOURNAMENT(clubId: string): DefaultValues<FormValues> {
+  return {
+    clubId,
+    name: '',
+    entryFee: 0,
+    level: 'CLUB',
+    tableCount: 4,
+    formatConfig: toFormatConfig(DEFAULT_DRAFT),
+    seedingConfig: { method: 'RATING', separateByClub: true },
+    reviewOutOfRating: false,
+  };
+}
+
+/**
+ * Сохранённый турнир — в значения формы. Пустое в ответе (`null`) —
+ * незаполненное поле формы, а не пустая строка.
+ */
+function toValues(tournament: TournamentView): DefaultValues<FormValues> {
+  const optional = <K extends keyof CreateTournamentInput>(
+    key: K,
+    value: CreateTournamentInput[K] | null,
+  ): DefaultValues<FormValues> => (value === null ? {} : { [key]: value });
+
+  return {
+    clubId: tournament.clubId,
+    name: tournament.name,
+    startsAt: tournament.startsAt,
+    entryFee: tournament.entryFee,
+    level: tournament.level,
+    tableCount: tournament.tableCount,
+    formatConfig: tournament.formatConfig,
+    seedingConfig: tournament.seedingConfig ?? { method: 'RATING', separateByClub: true },
+    reviewOutOfRating: tournament.reviewOutOfRating,
+    ...optional('registrationEndsAt', tournament.registrationEndsAt),
+    ...optional('maxParticipants', tournament.maxParticipants),
+    ...optional(
+      'ratingCapMin',
+      tournament.ratingCapMin === null ? null : Number(tournament.ratingCapMin),
+    ),
+    ...optional(
+      'ratingCapMax',
+      tournament.ratingCapMax === null ? null : Number(tournament.ratingCapMax),
+    ),
+    ...optional('birthYearFrom', tournament.birthYearFrom),
+    ...optional('birthYearTo', tournament.birthYearTo),
+    ...optional('genderLimit', tournament.genderLimit),
+    ...optional('description', tournament.description),
+    ...optional('prizeInfo', tournament.prizeInfo),
+  };
 }

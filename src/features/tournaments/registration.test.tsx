@@ -280,6 +280,57 @@ describe('запись игрока', () => {
   });
 });
 
+describe('заявки вне рейтинга — ADR-044', () => {
+  it('игрок вне планки подаёт заявку, если турнир их принимает', async () => {
+    // Рейтинг 520.00 против планки 400.00 — вне планки, но рассмотрение включено.
+    tournament = { ...tournament, ratingCapMax: '400.00', reviewOutOfRating: true };
+
+    renderTournament(USER_WITH_PROFILE);
+
+    const button = await screen.findByRole('button', { name: ru['registration.apply'] });
+
+    expect(button.hasAttribute('disabled')).toBe(false);
+    expect(screen.getByText(ru['registration.problem.RATING_TOO_HIGH'])).toBeDefined();
+
+    fireEvent.click(button);
+
+    await waitFor(() => {
+      expect(sent.filter((request) => request.method === 'POST')).toHaveLength(1);
+    });
+  });
+
+  it('пол заявкой не переступить: кнопка погашена, как и без рассмотрения', async () => {
+    tournament = { ...tournament, genderLimit: 'FEMALE', reviewOutOfRating: true };
+
+    renderTournament(USER_WITH_PROFILE);
+
+    const button = await screen.findByRole('button', { name: ru['registration.join'] });
+
+    expect(button.hasAttribute('disabled')).toBe(true);
+  });
+
+  it('организатор видит заявку отдельно от состава и принимает её', async () => {
+    const [first] = REGISTRATIONS;
+
+    if (first === undefined) throw new Error('Нет участника в фикстуре');
+    registrations = [{ ...first, status: 'PENDING' }];
+
+    renderTournament(USER_WITH_PROFILE);
+
+    expect(await screen.findByText(ru['participants.applications'])).toBeDefined();
+    // Заявка ещё не участник: в составе её нет.
+    expect(screen.queryByRole('button', { name: ru['participants.withdraw'] })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.accept'] }));
+
+    await waitFor(() => {
+      expect(sent.find((request) => request.method === 'PATCH')?.body).toEqual({
+        status: 'CONFIRMED',
+      });
+    });
+  });
+});
+
 describe('панель организатора', () => {
   it('игроку без роли в клубе органов управления не показывает', async () => {
     registrations = REGISTRATIONS;

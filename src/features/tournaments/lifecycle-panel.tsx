@@ -158,6 +158,14 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
           </Button>
         ))}
 
+        {/* Правка — до старта (ТС 7.5): после него схема уже разложена в
+            сетку, а условия отработали при записи. */}
+        {tournament.startedAt === null && tournament.status !== 'CANCELLED' && (
+          <Button href={`/tournaments/${tournament.id}/edit`} sx={{ minHeight: 44 }}>
+            {t('lifecycle.edit')}
+          </Button>
+        )}
+
         {/* Консоль — следующий шаг после старта. Ссылка, а не кнопка: судья
             открывает её на своём устройстве и остаётся в ней весь турнир. */}
         {tournament.status === 'RUNNING' && (

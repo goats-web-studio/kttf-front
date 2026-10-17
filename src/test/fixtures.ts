@@ -77,6 +77,7 @@ export const TOURNAMENT: TournamentView = {
   maxParticipants: null,
   ratingCapMax: null,
   ratingCapMin: null,
+  reviewOutOfRating: false,
   birthYearFrom: null,
   birthYearTo: null,
   genderLimit: null,

@@ -10,6 +10,7 @@ import type {
   TournamentResultsView,
   TournamentView,
   UpdateRegistrationInput,
+  UpdateTournamentInput,
 } from '@kttf/shared/types';
 
 import { apiRequest, queryString } from '@/common/api';
@@ -51,6 +52,19 @@ export function duplicateTournament(
     method: 'POST',
     body: input,
   });
+}
+
+/**
+ * Правка турнира — до старта (ТС 7.5).
+ *
+ * Смена схемы или посева сбрасывает жеребьёвку на сервере (ADR-044),
+ * поэтому отправляется только изменённое — см. `tournamentPatch`.
+ */
+export function updateTournament(
+  id: string,
+  input: UpdateTournamentInput,
+): Promise<TournamentView> {
+  return apiRequest<TournamentView>(`/tournaments/${id}`, { method: 'PATCH', body: input });
 }
 
 export function fetchTournament(id: string): Promise<TournamentView> {

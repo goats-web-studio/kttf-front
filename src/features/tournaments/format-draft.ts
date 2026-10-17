@@ -1,4 +1,4 @@
-import type { FormatConfig } from '@kttf/shared/types';
+import type { FormatConfig, PlayoffSetsToWin } from '@kttf/shared/types';
 
 /**
  * Черновик схемы проведения — состояние формы, а не источник истины.
@@ -28,6 +28,12 @@ export interface FormatDraft {
   readonly groupRounds: 1 | 2;
   readonly groupSetsToWin: 2 | 3 | 4;
   readonly koSetsToWin: 2 | 3 | 4;
+  /**
+   * Длины по кругам плей-офф — ADR-044. Пусто — все круги общей длиной.
+   * Хранятся и для кругов, которых при нынешнем числе участников нет:
+   * предположение о числе меняется, а введённое теряться не должно.
+   */
+  readonly playoffSetsToWin: PlayoffSetsToWin;
 }
 
 /**
@@ -47,6 +53,7 @@ export const DEFAULT_DRAFT: FormatDraft = {
   groupRounds: 1,
   groupSetsToWin: 3,
   koSetsToWin: 3,
+  playoffSetsToWin: {},
 };
 
 /**
@@ -71,6 +78,7 @@ export function toFormatConfig(draft: FormatDraft): FormatConfig {
       return {
         type: 'KNOCKOUT',
         setsToWin: draft.setsToWin,
+        ...playoff(draft.playoffSetsToWin),
         thirdPlace: draft.thirdPlace,
         consolation: false,
       };
@@ -83,6 +91,7 @@ export function toFormatConfig(draft: FormatDraft): FormatConfig {
         groupRounds: draft.groupRounds,
         groupSetsToWin: draft.groupSetsToWin,
         koSetsToWin: draft.koSetsToWin,
+        ...playoff(draft.playoffSetsToWin),
         thirdPlace: draft.thirdPlace,
       };
 
@@ -96,4 +105,69 @@ export function toFormatConfig(draft: FormatDraft): FormatConfig {
         setsToWin: draft.setsToWin,
       };
   }
+}
+
+/** Пустые длины по кругам в конфигурацию не пишутся: «как весь плей-офф». */
+function playoff(lengths: PlayoffSetsToWin): { playoffSetsToWin?: PlayoffSetsToWin } {
+  const set = Object.fromEntries(
+    Object.entries(lengths).filter((entry) => entry[1] !== undefined),
+  ) as PlayoffSetsToWin;
+
+  return Object.keys(set).length === 0 ? {} : { playoffSetsToWin: set };
+}
+
+/**
+ * Конфигурация турнира — обратно в черновик: правка открывается с тем, что
+ * уже сохранено. Поля схем, которых у турнира нет, берутся из умолчаний —
+ * чтобы переключение схемы в правке вело себя так же, как при создании.
+ */
+export function fromFormatConfig(config: FormatConfig): FormatDraft {
+  const base: FormatDraft = { ...DEFAULT_DRAFT, type: config.type };
+
+  switch (config.type) {
+    case 'ROUND_ROBIN':
+      return { ...base, rounds: config.rounds, setsToWin: config.setsToWin };
+
+    case 'KNOCKOUT':
+      return {
+        ...base,
+        setsToWin: config.setsToWin,
+        thirdPlace: config.thirdPlace,
+        playoffSetsToWin: config.playoffSetsToWin ?? {},
+      };
+
+    case 'GROUPS_KNOCKOUT':
+      return {
+        ...base,
+        ...groupSizing(config),
+        advancePerGroup: config.advancePerGroup,
+        groupRounds: config.groupRounds,
+        groupSetsToWin: config.groupSetsToWin,
+        koSetsToWin: config.koSetsToWin,
+        thirdPlace: config.thirdPlace,
+        playoffSetsToWin: config.playoffSetsToWin ?? {},
+      };
+
+    case 'GROUPS_FINAL_GROUPS':
+      return {
+        ...base,
+        ...groupSizing(config),
+        advancePerGroup: config.advancePerGroup,
+        groupRounds: config.groupRounds,
+        setsToWin: config.setsToWin,
+      };
+  }
+}
+
+function groupSizing(config: {
+  readonly groupCount?: number | undefined;
+  readonly groupSize?: number | undefined;
+}): Pick<FormatDraft, 'sizing' | 'groupCount' | 'groupSize'> {
+  return config.groupSize === undefined
+    ? {
+        sizing: 'count',
+        groupCount: config.groupCount ?? DEFAULT_DRAFT.groupCount,
+        groupSize: DEFAULT_DRAFT.groupSize,
+      }
+    : { sizing: 'size', groupCount: DEFAULT_DRAFT.groupCount, groupSize: config.groupSize };
 }

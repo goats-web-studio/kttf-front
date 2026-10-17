@@ -1,4 +1,5 @@
-import type { FormatConfig, StageType } from '@kttf/shared/types';
+import { playoffSetsToWin } from '@kttf/shared/brackets';
+import type { FormatConfig, MatchView, StageType } from '@kttf/shared/types';
 
 /**
  * Быстрые кнопки счёта — ТЗ 6.3.
@@ -17,8 +18,7 @@ import type { FormatConfig, StageType } from '@kttf/shared/types';
  * `INVALID_SCORE`, а расхождение схемы с сервером невозможно — обе стороны
  * читают один и тот же `formatConfig` (запрет №2).
  *
- * Длина встречи, меняющаяся к концовке (ТЗ 5.2), сюда не помещается: она
- * потребует колонку `Match.setsToWin` и ждёт решения владельца — ОВ-17.
+ * Длина конкретной встречи плей-офф — `matchSetsToWin` ниже.
  */
 export function setsToWinFor(config: FormatConfig, stageType: StageType): number {
   switch (config.type) {
@@ -31,6 +31,41 @@ export function setsToWinFor(config: FormatConfig, stageType: StageType): number
     case 'GROUPS_FINAL_GROUPS':
       return config.setsToWin;
   }
+}
+
+/**
+ * До скольких побед идёт эта встреча — с длинами по кругам плей-офф
+ * (ADR-044).
+ *
+ * Правило общее с сервером — `playoffSetsToWin`, а не своя копия: финал до
+ * четырёх побед консоль без сети обязана знать так же, как сервер.
+ * Число кругов берётся из самих встреч этапа: финал всегда стоит в
+ * последнем круге, даже когда первый круг прорежен свободными проходами.
+ */
+export function matchSetsToWin(
+  config: FormatConfig,
+  stage: { readonly type: StageType; readonly matches: readonly MatchView[] },
+  match: Pick<MatchView, 'bracketRound' | 'bracketSlot'>,
+): number {
+  const base = setsToWinFor(config, stage.type);
+
+  if (
+    stage.type !== 'KNOCKOUT' ||
+    match.bracketRound === null ||
+    match.bracketSlot === null ||
+    (config.type !== 'KNOCKOUT' && config.type !== 'GROUPS_KNOCKOUT')
+  ) {
+    return base;
+  }
+
+  const rounds = Math.max(...stage.matches.map((item) => item.bracketRound ?? 0));
+
+  return playoffSetsToWin(
+    base,
+    config.playoffSetsToWin,
+    { round: match.bracketRound, slot: match.bracketSlot },
+    rounds,
+  );
 }
 
 export interface QuickResult {
