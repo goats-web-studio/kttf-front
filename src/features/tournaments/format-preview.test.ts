@@ -63,7 +63,18 @@ describe('группы и сетка', () => {
     groupSetsToWin: 3,
     koSetsToWin: 3,
     thirdPlace: false,
+    exitBracket: false,
   } as const;
+
+  it('сетка за места добавляет встречи не вышедших — ADR-045', () => {
+    // Восемь в двух группах, выходят по двое: четверо не вышли — сетка на
+    // четверых без встречи за третье, это три встречи.
+    const preview = previewFormat({ ...GROUPS, exitBracket: true }, 8);
+
+    expect(preview.exitBracketMatches).toBe(3);
+    expect(preview.totalMatches).toBe(preview.groupMatches + preview.bracketMatches + 3);
+    expect(previewFormat(GROUPS, 8).exitBracketMatches).toBe(0);
+  });
 
   it('разбивает и считает обе части турнира', () => {
     const preview = previewFormat(GROUPS, 8);

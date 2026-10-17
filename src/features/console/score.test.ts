@@ -14,6 +14,7 @@ describe('длина встречи по схеме', () => {
       groupSetsToWin: 2,
       koSetsToWin: 3,
       thirdPlace: false,
+      exitBracket: false,
     } as const;
 
     expect(setsToWinFor(config, 'GROUPS')).toBe(2);
@@ -49,6 +50,7 @@ describe('длина встречи по кругу плей-офф — ADR-044'
     groupSetsToWin: 2 as const,
     koSetsToWin: 3 as const,
     thirdPlace: true,
+    exitBracket: false,
     playoffSetsToWin: { final: 4 as const },
   };
 

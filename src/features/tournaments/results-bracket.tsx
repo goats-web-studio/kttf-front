@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 
 import { useT, type MessageKey } from '@/common/i18n';
 
-import { STAGE_TYPE_KEYS } from './labels';
+import { stageTitle } from './labels';
 
 interface ResultsBracketProps {
   readonly stages: readonly StageView[];
@@ -58,9 +58,7 @@ function StageBracket({
 
   return (
     <Box sx={{ mt: 3 }}>
-      <Typography variant="h3">
-        {stage.name} · {t(STAGE_TYPE_KEYS[stage.type])}
-      </Typography>
+      <Typography variant="h3">{stageTitle(stage, t)}</Typography>
 
       {/* На телефоне круги листаются свайпом вбок, каждый прилипает к краю
           (раздел 5.2, BracketView): сетка целиком шире экрана. */}

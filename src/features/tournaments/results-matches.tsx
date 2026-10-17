@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 
-import { MATCH_STATUS_KEYS, RESULT_TYPE_KEYS, STAGE_TYPE_KEYS } from './labels';
+import { MATCH_STATUS_KEYS, RESULT_TYPE_KEYS, stageTitle } from './labels';
 
 interface ResultsMatchesProps {
   readonly stages: readonly StageView[];
@@ -31,9 +31,7 @@ export default function ResultsMatches({ stages, names }: ResultsMatchesProps): 
       <Typography variant="h2">{t('results.matches.title')}</Typography>
       {stages.map((stage) => (
         <Box key={stage.id} sx={{ mt: 3 }}>
-          <Typography variant="h3">
-            {stage.name} · {t(STAGE_TYPE_KEYS[stage.type])}
-          </Typography>
+          <Typography variant="h3">{stageTitle(stage, t)}</Typography>
           {partition(stage).map((part) => (
             <Box key={part.label} sx={{ mt: 1.5 }}>
               {part.label !== '' && (

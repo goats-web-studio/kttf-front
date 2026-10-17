@@ -231,9 +231,11 @@ describe('предпросчёт схемы', () => {
     await choose(ru['tournament.form.formatType'], ru['tournament.format.GROUPS_KNOCKOUT']);
 
     // Четыре группы по четверо: 24 встречи в группах, восемь выходят, сетка
-    // на восьмерых — семь встреч плюс матч за третье место. Всего 32.
+    // на восьмерых — семь встреч плюс матч за третье место. Не вышедшие
+    // восемь играют сетку за места — ещё восемь (ADR-045). Всего 40.
     expect(screen.getByText(ru['tournament.preview.groups'])).toBeDefined();
-    expect(screen.getByText('32')).toBeDefined();
+    expect(screen.getByText(ru['tournament.preview.exitBracket'])).toBeDefined();
+    expect(screen.getByText('40')).toBeDefined();
   });
 
   it('предупреждает о схеме, которую отвергнет жеребьёвка', async () => {

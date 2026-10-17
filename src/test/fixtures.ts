@@ -91,6 +91,7 @@ export const TOURNAMENT: TournamentView = {
     groupSetsToWin: 3,
     koSetsToWin: 3,
     thirdPlace: false,
+    exitBracket: false,
   },
   seedingConfig: { method: 'RATING', separateByClub: true },
   description: null,

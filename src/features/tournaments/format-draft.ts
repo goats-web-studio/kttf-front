@@ -34,6 +34,8 @@ export interface FormatDraft {
    * предположение о числе меняется, а введённое теряться не должно.
    */
   readonly playoffSetsToWin: PlayoffSetsToWin;
+  /** Не вышедшие из групп играют сетку за места — ADR-045. */
+  readonly exitBracket: boolean;
 }
 
 /**
@@ -54,6 +56,9 @@ export const DEFAULT_DRAFT: FormatDraft = {
   groupSetsToWin: 3,
   koSetsToWin: 3,
   playoffSetsToWin: {},
+  // Включено: на любительском турнире играют все, и место получает
+  // каждый. Выключить — одна галочка.
+  exitBracket: true,
 };
 
 /**
@@ -93,6 +98,7 @@ export function toFormatConfig(draft: FormatDraft): FormatConfig {
         koSetsToWin: draft.koSetsToWin,
         ...playoff(draft.playoffSetsToWin),
         thirdPlace: draft.thirdPlace,
+        exitBracket: draft.exitBracket,
       };
 
     default:
@@ -146,6 +152,7 @@ export function fromFormatConfig(config: FormatConfig): FormatDraft {
         koSetsToWin: config.koSetsToWin,
         thirdPlace: config.thirdPlace,
         playoffSetsToWin: config.playoffSetsToWin ?? {},
+        exitBracket: config.exitBracket,
       };
 
     case 'GROUPS_FINAL_GROUPS':

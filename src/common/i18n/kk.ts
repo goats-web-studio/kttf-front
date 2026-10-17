@@ -354,7 +354,7 @@ export const kk: Record<MessageKey, string> = {
   'stage.type.GROUPS': 'Топтар',
   'stage.type.KNOCKOUT': 'Олимпиадалық тор',
   'stage.type.ROUND_ROBIN': 'Айналымдық',
-  'stage.type.CONSOLATION': 'Төменгі тор',
+  'stage.type.CONSOLATION': 'Орындар үшін тор',
 
   'match.status.PENDING': 'Басталмаған',
   'match.status.QUEUED': 'Кезекте',
@@ -694,7 +694,7 @@ export const kk: Record<MessageKey, string> = {
     'Жеребе тартылып қойған. Өткізу схемасын немесе себуді өзгертсеңіз, оны қайта өткізу керек болады.',
   'tournament.form.save': 'Сақтау',
   'tournament.form.reviewOutOfRating': 'Рейтингтен тыс өтінімдерді қарауға қабылдау',
-  'tournament.form.playoffRounds': 'Айналымдар бойынша кездесу ұзақтығы',
+  'tournament.form.playoffRounds': 'Айналымдар бойынша ұзақтықты баптау',
   'tournament.form.playoffRounds.hint':
     'Берілмеген айналым плей-оффтың жалпы ұзақтығымен ойналады.',
   'tournament.form.sameAsPlayoff': 'Бүкіл плей-офф сияқты — {length}',
@@ -718,4 +718,8 @@ export const kk: Record<MessageKey, string> = {
   'participants.applications.hint': 'Басталғанға дейін қаралмағандар турнирге қатыспайды.',
   'participants.accept': 'Қабылдау',
   'participants.reject': 'Қабылдамау',
+  'tournament.form.exitBracket': 'Топтан шықпағандар орындар үшін торда ойнайды',
+  'tournament.preview.exitBracket': 'Орындар үшін тордағы кездесулер',
+  'tournament.form.playoffRounds.configured':
+    'Айналымдар бойынша ұзақтық: берілген айналымдар — {count}',
 };

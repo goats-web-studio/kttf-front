@@ -30,6 +30,8 @@ export interface FormatPreview {
   /** Размер олимпийской сетки, ноль — сетки в схеме нет. */
   readonly bracketSize: number;
   readonly bracketMatches: number;
+  /** Встречи сетки за места для не вышедших из групп — ADR-045. */
+  readonly exitBracketMatches: number;
   /** Туров у круговой схемы. У остальных ноль: там их считает сетка. */
   readonly roundRobinRounds: number;
   readonly totalMatches: number;
@@ -51,6 +53,7 @@ const EMPTY: FormatPreview = {
   finalGroupMatches: 0,
   bracketSize: 0,
   bracketMatches: 0,
+  exitBracketMatches: 0,
   roundRobinRounds: 0,
   totalMatches: 0,
   tooFewAdvancing: false,
@@ -93,13 +96,20 @@ export function previewFormat(config: FormatConfig, participants: number): Forma
       const bracket = buildKnockout(placeholders(stage.advancing), {
         thirdPlace: config.thirdPlace,
       });
+      // Сетка за места — из не вышедших, теми же правилами (ADR-045).
+      const exits = participants - stage.advancing;
+      const exitMatches =
+        config.exitBracket && exits >= 2
+          ? buildKnockout(placeholders(exits), { thirdPlace: config.thirdPlace }).matches.length
+          : 0;
 
       return {
         ...EMPTY,
         ...stage,
         bracketSize: bracket.bracketSize,
         bracketMatches: bracket.matches.length,
-        totalMatches: stage.groupMatches + bracket.matches.length,
+        exitBracketMatches: exitMatches,
+        totalMatches: stage.groupMatches + bracket.matches.length + exitMatches,
         tooFewAdvancing: stage.advancing < 2,
       };
     }

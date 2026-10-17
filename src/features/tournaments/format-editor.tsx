@@ -173,6 +173,22 @@ export default function FormatEditor({
             }
           />
         )}
+
+        {/* Не вышедшие из групп доигрывают за места — ADR-045. */}
+        {draft.type === 'GROUPS_KNOCKOUT' && (
+          <FormControlLabel
+            sx={{ minHeight: 44, gridColumn: { sm: 'span 2' } }}
+            label={t('tournament.form.exitBracket')}
+            control={
+              <Checkbox
+                checked={draft.exitBracket}
+                onChange={(event) => {
+                  set('exitBracket', event.target.checked);
+                }}
+              />
+            }
+          />
+        )}
       </Box>
 
       {(draft.type === 'KNOCKOUT' || draft.type === 'GROUPS_KNOCKOUT') && (
@@ -264,6 +280,13 @@ function Preview({
 
   if (preview.bracketSize > 0) {
     rows.push({ key: 'tournament.preview.bracketSize', value: String(preview.bracketSize) });
+  }
+
+  if (preview.exitBracketMatches > 0) {
+    rows.push({
+      key: 'tournament.preview.exitBracket',
+      value: String(preview.exitBracketMatches),
+    });
   }
 
   if (preview.roundRobinRounds > 0) {

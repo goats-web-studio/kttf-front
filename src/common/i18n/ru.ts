@@ -348,7 +348,7 @@ export const ru = {
   'stage.type.GROUPS': 'Группы',
   'stage.type.KNOCKOUT': 'Олимпийская сетка',
   'stage.type.ROUND_ROBIN': 'Круговая',
-  'stage.type.CONSOLATION': 'Нижняя сетка',
+  'stage.type.CONSOLATION': 'Сетка за места',
 
   'match.status.PENDING': 'Не начата',
   'match.status.QUEUED': 'В очереди',
@@ -689,7 +689,7 @@ export const ru = {
     'Жеребьёвка уже проведена. Если изменить схему проведения или посев, её придётся провести заново.',
   'tournament.form.save': 'Сохранить',
   'tournament.form.reviewOutOfRating': 'Принимать заявки вне рейтинга на рассмотрение',
-  'tournament.form.playoffRounds': 'Длина встреч по кругам',
+  'tournament.form.playoffRounds': 'Настроить длину по кругам',
   'tournament.form.playoffRounds.hint': 'Не заданный круг играется общей длиной плей-офф.',
   'tournament.form.sameAsPlayoff': 'Как весь плей-офф — {length}',
   'tournament.round.final': 'Финал',
@@ -712,4 +712,7 @@ export const ru = {
   'participants.applications.hint': 'Не рассмотренные к старту в турнир не попадут.',
   'participants.accept': 'Принять',
   'participants.reject': 'Отклонить',
+  'tournament.form.exitBracket': 'Не вышедшие из групп играют сетку за места',
+  'tournament.preview.exitBracket': 'Встреч в сетке за места',
+  'tournament.form.playoffRounds.configured': 'Длина по кругам: задано кругов — {count}',
 } as const satisfies Record<string, string>;

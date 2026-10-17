@@ -55,7 +55,8 @@ export default function PlayoffLengths({
   onChange,
 }: PlayoffLengthsProps): ReactNode {
   const t = useT();
-  const configured = Object.values(lengths).some((value) => value !== undefined);
+  const count = Object.values(lengths).filter((value) => value !== undefined).length;
+  const configured = count > 0;
   const [open, setOpen] = useState(configured);
   const rounds = playoffRoundsFor(bracketSize, thirdPlace);
 
@@ -65,15 +66,19 @@ export default function PlayoffLengths({
 
   return (
     <Box sx={{ mt: 2 }}>
+      {/* Обычная кнопка со стрелкой, а не текст: подпись без рамки читалась
+          как заголовок, и нажать её никто не догадывался. */}
       <Button
-        variant="text"
         aria-expanded={open || configured}
+        endIcon={<span aria-hidden="true">{open || configured ? '▴' : '▾'}</span>}
         onClick={() => {
           setOpen(!open);
         }}
-        sx={{ minHeight: 44, px: 0 }}
+        sx={{ minHeight: 44 }}
       >
-        {t('tournament.form.playoffRounds')}
+        {configured
+          ? fill(t('tournament.form.playoffRounds.configured'), { count: String(count) })
+          : t('tournament.form.playoffRounds')}
       </Button>
 
       {(open || configured) && (

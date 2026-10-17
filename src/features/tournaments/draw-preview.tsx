@@ -11,7 +11,7 @@ import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
 
 import { swapDraw } from './api';
-import { STAGE_TYPE_KEYS } from './labels';
+import { stageTitle } from './labels';
 import { tournamentKeys } from './queries';
 
 interface DrawPreviewProps {
@@ -92,11 +92,7 @@ export default function DrawPreview({ tournamentId, stages, names }: DrawPreview
       {stages.map((stage) => (
         <Box key={stage.id} sx={{ mt: 2 }}>
           <Typography variant="h3">
-            {/* Название этапа задаёт жеребьёвка, и у круговой схемы оно
-                совпадает с названием типа. Повторять его дважды незачем. */}
-            {stage.name === t(STAGE_TYPE_KEYS[stage.type])
-              ? stage.name
-              : `${stage.name} · ${t(STAGE_TYPE_KEYS[stage.type])}`}{' '}
+            {stageTitle(stage, t)}{' '}
             {/* «Встреч: 2», а не «2 встречи»: русское число согласуется
                 с существительным, а системы склонения в словаре нет. */}
             <Typography component="span" color="text.secondary" sx={{ fontWeight: 400 }}>

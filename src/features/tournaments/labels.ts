@@ -75,6 +75,21 @@ export const RESULT_TYPE_KEYS: Readonly<Record<ResultType, MessageKey>> = {
   RETIRED: 'match.resultType.RETIRED',
 };
 
+/**
+ * Заголовок этапа: название и тип.
+ *
+ * Название задаёт жеребьёвка, и у круговой схемы и сетки за места оно
+ * совпадает с названием типа. Повторять его дважды незачем.
+ */
+export function stageTitle(
+  stage: { readonly name: string; readonly type: StageType },
+  t: (key: MessageKey) => string,
+): string {
+  const type = t(STAGE_TYPE_KEYS[stage.type]);
+
+  return stage.name === type ? stage.name : `${stage.name} · ${type}`;
+}
+
 export const STAGE_TYPE_KEYS: Readonly<Record<StageType, MessageKey>> = {
   GROUPS: 'stage.type.GROUPS',
   KNOCKOUT: 'stage.type.KNOCKOUT',
