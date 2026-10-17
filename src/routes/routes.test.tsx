@@ -121,3 +121,24 @@ describe('охрана кабинета', () => {
     expect(screen.getByRole('heading', { name: ru['page.cabinet.title'] })).toBeDefined();
   });
 });
+
+describe('мои клубы', () => {
+  it('без клуба предлагает его создать', async () => {
+    await renderAt('/cabinet/clubs', SIGNED_IN);
+
+    expect(screen.getByRole('heading', { name: ru['nav.myClubs'] })).toBeDefined();
+    const create = screen.getAllByRole('link', { name: ru['club.create'] });
+
+    expect(create[0]?.getAttribute('href')).toBe('/cabinet/clubs/new');
+  });
+
+  it('управление чужим клубом не открывает, а ведёт на его страницу', async () => {
+    // Права проверяет сервер (ТС 8.3), но форма, которую он отвергнет на
+    // первом же сохранении, — ложное обещание.
+    await renderAt('/cabinet/club/00000000-0000-4000-8000-000000000002', SIGNED_IN);
+
+    expect(screen.getByRole('heading', { name: ru['club.manage'] })).toBeDefined();
+    expect(screen.getByText(ru['manage.forbidden.title'])).toBeDefined();
+    expect(screen.queryByRole('heading', { name: ru['manage.settings.title'] })).toBeNull();
+  });
+});

@@ -5,6 +5,7 @@ import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
+import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,15 +18,15 @@ import AccountForm from '@/features/auth/account-form';
 import PasswordForm from '@/features/auth/password-form';
 import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
-import { clubRoleKey } from '@/features/clubs/labels';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import RoleName from '@/features/clubs/role-name';
 import { createPlayer, updatePlayer } from '@/features/players/api';
 import { toFormValues, toPlayerPatch } from '@/features/players/form-values';
 import PlayerForm from '@/features/players/player-form';
 import { playerName } from '@/features/players/player-name';
 import { playerKeys, playerQuery } from '@/features/players/queries';
 
-export const Route = createFileRoute('/_app/cabinet')({
+export const Route = createFileRoute('/_app/cabinet/')({
   component: CabinetPage,
 });
 
@@ -303,10 +304,10 @@ function gripLabel(value: string | null, t: (key: MessageKey) => string): string
 }
 
 /**
- * Роли в клубах.
+ * Роли в клубах — ссылками на управление клубом.
  *
- * Нужны здесь потому, что по ним человек узнаёт, где он вправе действовать:
- * в самом клубе они видны только его составу.
+ * По ним человек узнаёт, где он вправе действовать. Полный список клубов с
+ * созданием нового — в «Моих клубах».
  */
 function Roles({ user }: { readonly user: AuthUserView }): ReactNode {
   const t = useT();
@@ -328,27 +329,25 @@ function Roles({ user }: { readonly user: AuthUserView }): ReactNode {
               variant="body2"
               color="text.secondary"
             >
-              {clubs.data?.get(role.clubId)?.name ?? role.clubId}
+              {/* Судья клубом не управляет (ADR-014): ему — страница клуба. */}
+              <Link
+                href={
+                  role.role === 'REFEREE'
+                    ? `/clubs/${role.clubId}`
+                    : `/cabinet/club/${role.clubId}`
+                }
+              >
+                {clubs.data?.get(role.clubId)?.name ?? role.clubId}
+              </Link>
               {' · '}
               <RoleName role={role.role} />
             </Typography>
           ))}
         </Stack>
       )}
+      <Button href="/cabinet/clubs" sx={{ mt: 2 }}>
+        {t('nav.myClubs')}
+      </Button>
     </Box>
   );
-}
-
-/**
- * Название роли.
- *
- * В контракте ТС 7.1 роль осталась строкой, а не перечнем, поэтому значение
- * приходится сверять с известными. Неизвестное показывается как есть: молча
- * подставленная чужая роль хуже непереведённого слова.
- */
-function RoleName({ role }: { readonly role: string }): ReactNode {
-  const t = useT();
-  const key = clubRoleKey(role);
-
-  return key === undefined ? role : t(key);
 }

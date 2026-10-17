@@ -41,6 +41,14 @@ function answer(url: string): Response {
     return reply(pageOf([TOURNAMENT]));
   }
 
+  if (/\/clubs\/[^/?]+\/members$/.test(url)) {
+    return reply([OWNER]);
+  }
+
+  if (/\/clubs\/[^/?]+$/.test(url)) {
+    return reply(CLUB);
+  }
+
   if (url.includes('/clubs')) {
     return reply(pageOf([CLUB]));
   }
@@ -51,6 +59,14 @@ function answer(url: string): Response {
 
   throw new Error(`Неожидаемый запрос: ${url}`);
 }
+
+/** Владелец клуба с профилем игрока — состав на странице клуба. */
+const OWNER = {
+  userId: '00000000-0000-4000-8000-0000000000aa',
+  role: 'OWNER',
+  playerId: PLAYERS.first.id,
+  name: playerName(PLAYERS.first),
+};
 
 function renderAt(path: string): void {
   window.history.pushState({}, '', path);
@@ -241,5 +257,45 @@ describe('главная', () => {
       expect(window.location.pathname).toBe('/ratings');
     });
     expect(decodeURIComponent(window.location.search)).toContain('Иванов');
+  });
+});
+
+describe('клубы', () => {
+  it('раздел есть в шапке на любой публичной странице', async () => {
+    renderAt('/ratings');
+
+    const links = await screen.findAllByRole('link', { name: ru['nav.clubs'] });
+
+    expect(links[0]?.getAttribute('href')).toBe('/clubs');
+  });
+
+  it('список ведёт на страницу клуба', async () => {
+    renderAt('/clubs');
+
+    const link = await screen.findByRole('link', { name: CLUB.name });
+
+    expect(link.getAttribute('href')).toBe(`/clubs/${CLUB.id}`);
+  });
+
+  it('страница клуба открывается без входа: турниры, игроки и состав клуба', async () => {
+    renderAt(`/clubs/${CLUB.id}`);
+
+    expect(await screen.findByRole('heading', { name: CLUB.name })).toBeDefined();
+    expect(await screen.findByText(new RegExp(ru['club.role.OWNER']))).toBeDefined();
+    // Турниры и игроки запрошены именно этого клуба, а не всей страны.
+    await waitFor(() => {
+      expect(requests.some((url) => url.includes('/tournaments') && url.includes(CLUB.id))).toBe(
+        true,
+      );
+      expect(requests.some((url) => url.includes('/players') && url.includes(CLUB.id))).toBe(true);
+    });
+  });
+
+  it('прошедший турнир клуба виден ссылкой на результаты', async () => {
+    renderAt(`/clubs/${CLUB.id}`);
+
+    const link = await screen.findByRole('link', { name: TOURNAMENT.name });
+
+    expect(link.getAttribute('href')).toBe(`/tournaments/${TOURNAMENT_ID}`);
   });
 });

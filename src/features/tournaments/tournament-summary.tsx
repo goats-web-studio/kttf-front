@@ -1,5 +1,6 @@
 import type { TournamentView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
+import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
@@ -44,7 +45,11 @@ export default function TournamentSummary({
           {formatDateTime(tournament.startsAt, locale)}
         </Field>
         <Field label={t('tournament.level')}>{t(TOURNAMENT_LEVEL_KEYS[tournament.level])}</Field>
-        {clubName !== null && <Field label={t('tournament.club')}>{clubName}</Field>}
+        {clubName !== null && (
+          <Field label={t('tournament.club')}>
+            <Link href={`/clubs/${tournament.clubId}`}>{clubName}</Link>
+          </Field>
+        )}
         <Field label={t('tournament.participants')}>
           <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
             {tournament.participantCount}
