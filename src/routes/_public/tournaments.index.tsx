@@ -1,9 +1,4 @@
-import {
-  DEFAULT_PAGE_SIZE,
-  tournamentStatusSchema,
-  type ListTournamentsRequest,
-  type TournamentStatus,
-} from '@kttf/shared/types';
+import { tournamentStatusSchema, type TournamentStatus } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -12,17 +7,24 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
-import { endOfDay, fill, formatDate, startOfDay, useLocale, useT } from '@/common/i18n';
-import { orUndefined, searchDay, searchId, searchPage } from '@/common/search';
-import EmptyState from '@/common/ui/empty-state';
+import {
+  endOfDay,
+  fill,
+  formatDate,
+  startOfDay,
+  useLocale,
+  useT,
+  type MessageKey,
+} from '@/common/i18n';
+import { orUndefined, searchDay, searchId } from '@/common/search';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
-import Pagination from '@/common/ui/pagination';
+import PillTabs from '@/common/ui/pill-tabs';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -31,8 +33,21 @@ import { managedClubIds } from '@/features/clubs/roles';
 import CityFilter from '@/features/places/city-filter';
 import { useCityLabel } from '@/features/places/city-label';
 import { TOURNAMENT_STATUS_KEYS } from '@/features/tournaments/labels';
-import { tournamentsQuery } from '@/features/tournaments/queries';
-import TournamentCard from '@/features/tournaments/tournament-card';
+import {
+  dayKeyOf,
+  monthOf,
+  monthRange,
+  parseMonth,
+  startOfToday,
+  type MonthKey,
+} from '@/features/tournaments/calendar-model';
+import {
+  monthTournamentsQuery,
+  tournamentsFeedQuery,
+  type TournamentFilters,
+} from '@/features/tournaments/queries';
+import TournamentCalendar from '@/features/tournaments/tournament-calendar';
+import TournamentList from '@/features/tournaments/tournament-list';
 
 /**
  * Статусы, которыми фильтруют публичный календарь.
@@ -71,8 +86,22 @@ const searchSchema = z.object({
     .catch(undefined),
   from: searchDay,
   to: searchDay,
-  page: searchPage,
+  /** Вид страницы: календарь по умолчанию, список — `?view=list` (ADR-052). */
+  view: z.enum(['calendar', 'list']).optional().catch(undefined),
+  /** Месяц календаря `2026-10`; без него — текущий. */
+  month: z
+    .string()
+    .refine((value) => parseMonth(value) !== undefined)
+    .optional()
+    .catch(undefined),
 });
+
+type View = 'calendar' | 'list';
+
+const VIEWS: readonly (readonly [View, MessageKey])[] = [
+  ['calendar', 'tournaments.view.calendar'],
+  ['list', 'tournaments.view.list'],
+];
 
 type Search = z.infer<typeof searchSchema>;
 
@@ -82,7 +111,8 @@ export const Route = createFileRoute('/_public/tournaments/')({
 });
 
 /**
- * Календарь турниров — ТЗ 9.2.
+ * Календарь турниров — ТЗ 9.2, в двух видах как у RTTF (ADR-052): сетка
+ * месяца — основной, список «Ближайшие / Прошедшие» по датам — второй.
  *
  * Фильтры ТЗ реализованы теми, что даёт контракт ТС 7.5: город, клуб, даты,
  * состояние. Планки рейтинга и возраста в запросе списка нет — расхождение
@@ -98,8 +128,33 @@ function TournamentsPage(): ReactNode {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
 
-  const page = search.page ?? 1;
-  const tournaments = useQuery(tournamentsQuery(toQuery(search, page)));
+  const view: View = search.view ?? 'calendar';
+  // «Сегодня» фиксируется на время жизни страницы: иначе граница блоков
+  // списка сдвигалась бы в полночь посреди чтения.
+  const [now] = useState(() => new Date());
+  const today = startOfToday(now);
+  const month: MonthKey = search.month ?? monthOf(now);
+  const filters = toFilters(search);
+  const range = monthRange(month);
+
+  const calendar = useQuery({
+    ...monthTournamentsQuery(filters, range.from, range.to),
+    enabled: view === 'calendar',
+    // Пока грузится соседний месяц, видна прежняя сетка, а не скелетон.
+    placeholderData: keepPreviousData,
+  });
+  const dates = {
+    ...(search.from === undefined ? {} : { from: startOfDay(search.from) }),
+    ...(search.to === undefined ? {} : { to: endOfDay(search.to) }),
+  };
+  const upcoming = useInfiniteQuery({
+    ...tournamentsFeedQuery(filters, 'upcoming', today, dates),
+    enabled: view === 'list',
+  });
+  const past = useInfiniteQuery({
+    ...tournamentsFeedQuery(filters, 'past', today, dates),
+    enabled: view === 'list',
+  });
   const clubs = useQuery(clubDirectoryQuery);
   const cityLabel = useCityLabel();
 
@@ -108,13 +163,12 @@ function TournamentsPage(): ReactNode {
   const user = useSessionStore((state) => state.user);
   const canCreate = managedClubIds(user).length > 0;
 
-  // Любая смена фильтра возвращает на первую страницу: третьей страницы
-  // суженного списка может не быть. Текст правится на месте (`replace`),
-  // чтобы «Назад» не проходил по буквам.
+  // Фильтр меняет адрес: ссылку пересылают в чат клуба, и она открывается
+  // тем же видом, месяцем и условиями.
   const filter = useCallback(
     (patch: Partial<Search>, replace = false) => {
       void navigate({
-        search: (previous) => ({ ...previous, ...patch, page: undefined }),
+        search: (previous) => ({ ...previous, ...patch }),
         replace,
       });
     },
@@ -152,7 +206,7 @@ function TournamentsPage(): ReactNode {
       },
     });
   }
-  if (search.from !== undefined) {
+  if (view === 'list' && search.from !== undefined) {
     active.push({
       key: 'from',
       label: fill(t('filter.chip'), {
@@ -164,7 +218,7 @@ function TournamentsPage(): ReactNode {
       },
     });
   }
-  if (search.to !== undefined) {
+  if (view === 'list' && search.to !== undefined) {
     active.push({
       key: 'to',
       label: fill(t('filter.chip'), {
@@ -182,17 +236,26 @@ function TournamentsPage(): ReactNode {
   // Поле с заданным значением скрытым не бывает: иначе фильтр действует, а
   // человек его не видит.
   const [more, setMore] = useState(false);
-  const extraSet = [search.club, search.from, search.to].filter((v) => v !== undefined).length;
+  const extraSet = [search.club, ...(view === 'list' ? [search.from, search.to] : [])].filter(
+    (v) => v !== undefined,
+  ).length;
   const extra = more || extraSet > 0 ? {} : { display: { xs: 'none', sm: 'block' } };
 
+  // Сброс снимает условия, но не вид и не месяц: человек остаётся там, где смотрел.
   const reset = (): void => {
-    void navigate({ search: {} });
+    void navigate({ search: { view: search.view, month: search.month } });
   };
 
-  const pages =
-    tournaments.data === undefined
-      ? 1
-      : Math.max(1, Math.ceil(tournaments.data.total / tournaments.data.limit));
+  const total =
+    view === 'calendar'
+      ? calendar.isError
+        ? null
+        : calendar.data?.length
+      : upcoming.isError || past.isError
+        ? null
+        : upcoming.data === undefined || past.data === undefined
+          ? undefined
+          : (upcoming.data.pages[0]?.total ?? 0) + (past.data.pages[0]?.total ?? 0);
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
@@ -212,10 +275,21 @@ function TournamentsPage(): ReactNode {
         )}
       </Stack>
 
+      <Box sx={{ mt: 3 }}>
+        <PillTabs
+          value={view}
+          options={VIEWS}
+          label={t('tournaments.view.label')}
+          onChange={(next) => {
+            filter({ view: next === 'calendar' ? undefined : next });
+          }}
+        />
+      </Box>
+
       <Box
         role="search"
         sx={{
-          mt: 3,
+          mt: 2,
           display: 'grid',
           gap: 1.5,
           gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(6, 1fr)' },
@@ -249,37 +323,43 @@ function TournamentsPage(): ReactNode {
           </TextField>
         </Box>
 
-        <Box sx={{ gridColumn: { sm: 'span 2' }, ...extra }}>
-          <DatePicker
-            label={t('filter.from')}
-            value={search.from === undefined ? null : dayjs(search.from)}
-            {...(search.to === undefined ? {} : { maxDate: dayjs(search.to) })}
-            onChange={(value) => {
-              filter({ from: toDay(value) });
-            }}
-            slotProps={{
-              textField: { size: 'small', fullWidth: true },
-              field: { clearable: true },
-            }}
-          />
-        </Box>
+        {view === 'list' && (
+          <Box sx={{ gridColumn: { sm: 'span 2' }, ...extra }}>
+            <DatePicker
+              label={t('filter.from')}
+              value={search.from === undefined ? null : dayjs(search.from)}
+              {...(search.to === undefined ? {} : { maxDate: dayjs(search.to) })}
+              onChange={(value) => {
+                filter({ from: toDay(value) });
+              }}
+              slotProps={{
+                textField: { size: 'small', fullWidth: true },
+                field: { clearable: true },
+              }}
+            />
+          </Box>
+        )}
 
-        <Box sx={{ gridColumn: { sm: 'span 2' }, ...extra }}>
-          <DatePicker
-            label={t('filter.to')}
-            value={search.to === undefined ? null : dayjs(search.to)}
-            {...(search.from === undefined ? {} : { minDate: dayjs(search.from) })}
-            onChange={(value) => {
-              filter({ to: toDay(value) });
-            }}
-            slotProps={{
-              textField: { size: 'small', fullWidth: true },
-              field: { clearable: true },
-            }}
-          />
-        </Box>
+        {view === 'list' && (
+          <Box sx={{ gridColumn: { sm: 'span 2' }, ...extra }}>
+            <DatePicker
+              label={t('filter.to')}
+              value={search.to === undefined ? null : dayjs(search.to)}
+              {...(search.from === undefined ? {} : { minDate: dayjs(search.from) })}
+              onChange={(value) => {
+                filter({ to: toDay(value) });
+              }}
+              slotProps={{
+                textField: { size: 'small', fullWidth: true },
+                field: { clearable: true },
+              }}
+            />
+          </Box>
+        )}
 
-        <Box sx={{ gridColumn: 'span 2', ...extra }}>
+        <Box
+          sx={{ gridColumn: view === 'list' ? 'span 2' : { xs: 'span 2', sm: 'span 6' }, ...extra }}
+        >
           <TextField
             select
             label={t('filter.club')}
@@ -316,55 +396,35 @@ function TournamentsPage(): ReactNode {
         )}
       </Box>
 
-      <FilterSummary
-        total={tournaments.isError ? null : tournaments.data?.total}
-        filters={active}
-        onReset={reset}
-      />
+      <FilterSummary total={total} filters={active} onReset={reset} />
 
       <Box sx={{ mt: 2 }}>
-        <QueryState
-          isPending={tournaments.isPending}
-          error={tournaments.error}
-          onRetry={() => void tournaments.refetch()}
-          loading={<RowsSkeleton />}
-        >
-          {tournaments.data === undefined ? null : tournaments.data.items.length > 0 ? (
-            <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 1.5 }}>
-              {tournaments.data.items.map((tournament) => (
-                <Box component="li" key={tournament.id}>
-                  <TournamentCard
-                    tournament={tournament}
-                    club={clubs.data?.get(tournament.clubId)}
-                  />
-                </Box>
-              ))}
+        {view === 'calendar' ? (
+          <QueryState
+            isPending={calendar.isPending}
+            error={calendar.error}
+            onRetry={() => void calendar.refetch()}
+            loading={<RowsSkeleton />}
+          >
+            <Box sx={{ opacity: calendar.isPlaceholderData ? 0.6 : 1 }}>
+              <TournamentCalendar
+                month={month}
+                today={dayKeyOf(today)}
+                items={calendar.data ?? []}
+                onMonth={(next) => {
+                  filter({ month: next === monthOf(now) ? undefined : next });
+                }}
+              />
             </Box>
-          ) : active.length > 0 ? (
-            <EmptyState
-              title={t('tournaments.notFound.title')}
-              text={t('tournaments.notFound.text')}
-              action={<Button onClick={reset}>{t('filter.resetAll')}</Button>}
-            />
-          ) : (
-            <EmptyState
-              title={t('tournaments.emptyState.title')}
-              text={t('tournaments.emptyState.text')}
-              action={<Button href="/ratings">{t('tournaments.emptyState.action')}</Button>}
-            />
-          )}
-        </QueryState>
+          </QueryState>
+        ) : (
+          <TournamentList
+            upcoming={upcoming}
+            past={past}
+            clubName={(id) => clubs.data?.get(id)?.name}
+          />
+        )}
       </Box>
-
-      <Pagination
-        page={page}
-        pages={pages}
-        onPage={(next) => {
-          void navigate({
-            search: (previous) => ({ ...previous, page: next === 1 ? undefined : next }),
-          });
-        }}
-      />
     </Container>
   );
 }
@@ -375,21 +435,14 @@ function toDay(value: Dayjs | null): string | undefined {
 }
 
 /**
- * Фильтры адреса — в запрос ТС 7.5.
- *
- * Границы дат раздвигаются до краёв суток по часам человека: он выбирает
- * день, а контракт принимает момент времени. Без этого турнир, начинающийся
- * в полдень, не попал бы в выборку «по сегодня», а границы по UTC сдвинули
- * бы казахстанские сутки на пять часов.
+ * Фильтры адреса — в запрос ТС 7.5, общие для календаря и списка. Даты
+ * «с / по» и месяц сюда не входят: у календаря границы — месяц, у списка —
+ * свои блоки (ADR-052).
  */
-function toQuery(search: Search, page: number): ListTournamentsRequest {
+function toFilters(search: Search): TournamentFilters {
   return {
-    page,
-    limit: DEFAULT_PAGE_SIZE,
     ...(search.city === undefined ? {} : { cityId: search.city }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
     ...(search.status === undefined ? {} : { status: STATUSES_OF[search.status] ?? search.status }),
-    ...(search.from === undefined ? {} : { from: startOfDay(search.from).toISOString() }),
-    ...(search.to === undefined ? {} : { to: endOfDay(search.to).toISOString() }),
   };
 }

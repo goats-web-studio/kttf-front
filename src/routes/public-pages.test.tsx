@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
@@ -112,9 +112,102 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** Месяц турнира-фикстуры: календарь открывается на месяце, а не на всех датах. */
+const FIXTURE_MONTH = TOURNAMENT.startsAt.slice(0, 7);
+
+/** Ширина экрана для `useMediaQuery`: в jsdom `matchMedia` нет, и без неё — телефон. */
+function asDesktop(): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('min-width'),
+    media: query,
+    onchange: null,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    dispatchEvent: () => false,
+  }));
+}
+
 describe('календарь турниров', () => {
-  it('показывает турнир ссылкой на его результаты', async () => {
+  it('открывается календарём текущего месяца и грузит месяц целиком', async () => {
+    const now = new Date();
+    const month = `${String(now.getFullYear())}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
     renderAt('/tournaments');
+
+    await waitFor(() => {
+      expect(document.querySelector(`[data-calendar="${month}"]`)).not.toBeNull();
+    });
+    const query = requests.find((url) => url.includes('/tournaments?'));
+    // Сотня на страницу и границы месяца — календарю нужен весь месяц сразу.
+    expect(query).toContain('limit=100');
+    expect(query).toContain('from=');
+    expect(query).toContain('to=');
+  });
+
+  it('стрелка ведёт на следующий месяц и кладёт его в адрес', async () => {
+    // Далёкий месяц: текущий в адрес не пишется, ссылка на «сейчас» короче.
+    renderAt('/tournaments?month=2025-03');
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['tournaments.month.next'] }));
+
+    await waitFor(() => {
+      expect(window.location.search).toContain('month=2025-04');
+    });
+  });
+
+  it('на десктопе — сетка недель с понедельника, турнир в клетке своего дня', async () => {
+    asDesktop();
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
+
+    await screen.findByRole('link', { name: TOURNAMENT.name });
+    const grid = document.querySelector('[data-calendar-grid]');
+    const day = TOURNAMENT.startsAt.slice(0, 10);
+
+    expect(grid?.querySelectorAll('[role="columnheader"]')[0]?.textContent).toBe('пн');
+    expect(grid?.querySelector(`[data-day="${day}"]`)?.textContent).toContain(TOURNAMENT.name);
+  });
+
+  it('на телефоне — лента дней с турнирами, без сетки', async () => {
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
+
+    await screen.findByRole('link', { name: TOURNAMENT.name });
+
+    expect(document.querySelector('[data-calendar-grid]')).toBeNull();
+    expect(document.querySelector('[data-calendar-agenda]')).not.toBeNull();
+  });
+});
+
+describe('список турниров', () => {
+  it('два блока: «Ближайшие» от ранних, «Прошедшие» от свежих', async () => {
+    renderAt('/tournaments?view=list');
+
+    expect(await screen.findByRole('heading', { name: ru['tournaments.upcoming'] })).toBeDefined();
+    expect(screen.getByRole('heading', { name: ru['tournaments.past'] })).toBeDefined();
+
+    await waitFor(() => {
+      const lists = requests.filter((url) => url.includes('/tournaments?'));
+      expect(lists.some((url) => url.includes('order=asc') && url.includes('from='))).toBe(true);
+      expect(lists.some((url) => url.includes('order=desc') && url.includes('to='))).toBe(true);
+    });
+  });
+
+  it('переключатель вида кладёт список в адрес, календарь — по умолчанию', async () => {
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
+
+    const views = await screen.findByRole('radiogroup', { name: ru['tournaments.view.label'] });
+    fireEvent.click(within(views).getByRole('radio', { name: ru['tournaments.view.list'] }));
+
+    await waitFor(() => {
+      expect(window.location.search).toContain('view=list');
+    });
+  });
+});
+
+describe('календарь турниров: ссылки', () => {
+  it('показывает турнир ссылкой на его результаты', async () => {
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
 
     const link = await screen.findByRole('link', { name: TOURNAMENT.name });
 
@@ -214,7 +307,7 @@ describe('фильтры в адресе', () => {
   });
 
   it('выбор города в календаре кладёт в адрес его идентификатор', async () => {
-    renderAt('/tournaments');
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
 
     await screen.findByRole('link', { name: TOURNAMENT.name });
     fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['filter.city'] }));
@@ -243,7 +336,7 @@ describe('фильтры в адресе', () => {
   });
 
   it('выбор состояния в календаре попадает в адрес', async () => {
-    renderAt('/tournaments');
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
 
     await screen.findByRole('link', { name: TOURNAMENT.name });
     // Список MUI открывается нажатием, а не сменой значения родного select.
@@ -262,7 +355,7 @@ describe('фильтры в адресе', () => {
   });
 
   it('«Завершён» находит и обсчитанные турниры; отдельного «Рейтинг начислен» нет', async () => {
-    renderAt('/tournaments');
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
 
     await screen.findByRole('link', { name: TOURNAMENT.name });
     fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['filter.status'] }));
@@ -282,7 +375,7 @@ describe('фильтры в адресе', () => {
   });
 
   it('старая ссылка с «Рейтинг начислен» открывается как «Завершён»', async () => {
-    renderAt('/tournaments?status=RATED');
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}&status=RATED`);
 
     await screen.findByRole('link', { name: TOURNAMENT.name });
 

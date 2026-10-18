@@ -11,7 +11,7 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import StatTile from '@/common/ui/stat-tile';
 import Surface from '@/common/ui/surface';
 
-import PeriodTabs from './period-tabs';
+import PillTabs from '@/common/ui/pill-tabs';
 
 const PERIODS: readonly (readonly [PlayerStatsPeriod, MessageKey])[] = [
   ['QUARTER', 'profile.period.QUARTER'],
@@ -43,7 +43,7 @@ export default function PlayerSummary({
 
   return (
     <Surface title={t('profile.stats.title')}>
-      <PeriodTabs
+      <PillTabs
         value={period}
         options={PERIODS}
         label={t('profile.stats.period')}

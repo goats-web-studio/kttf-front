@@ -184,3 +184,20 @@ export function formatTimeTick(time: number, unit: TimeTickUnit, locale: Locale)
     unit === 'month' ? { month: 'short' } : { day: 'numeric', month: 'short' },
   ).format(date);
 }
+
+/**
+ * Заголовок месяца календаря: «Октябрь 2026».
+ *
+ * Месяц в именительном падеже (`month: 'long'` без числа даёт «октябрь», а
+ * не «октября»), год — числом, без «г.»: заголовок, а не дата в тексте.
+ */
+export function formatMonthTitle(date: Date, locale: Locale): string {
+  const month = new Intl.DateTimeFormat(locale, { month: 'long' }).format(date);
+
+  return `${month.charAt(0).toLocaleUpperCase(locale)}${month.slice(1)} ${String(date.getFullYear())}`;
+}
+
+/** День недели: «пн» в шапке календаря, «понедельник» в заголовке дня. */
+export function formatWeekday(date: Date, locale: Locale, width: 'short' | 'long'): string {
+  return new Intl.DateTimeFormat(locale, { weekday: width }).format(date);
+}

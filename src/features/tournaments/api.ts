@@ -8,6 +8,7 @@ import type {
   RegisterInput,
   RegistrationView,
   TournamentResultsView,
+  TournamentListItemView,
   TournamentView,
   UpdateRegistrationInput,
   UpdateTournamentInput,
@@ -23,8 +24,10 @@ import { apiRequest, queryString } from '@/common/api';
  * `anonymous` здесь отнял бы у вошедшего часть его же турниров.
  */
 
-export function listTournaments(query: ListTournamentsRequest): Promise<Page<TournamentView>> {
-  return apiRequest<Page<TournamentView>>(`/tournaments${queryString(query)}`);
+export function listTournaments(
+  query: ListTournamentsRequest,
+): Promise<Page<TournamentListItemView>> {
+  return apiRequest<Page<TournamentListItemView>>(`/tournaments${queryString(query)}`);
 }
 
 /**

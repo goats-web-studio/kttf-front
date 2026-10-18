@@ -21,7 +21,7 @@ import Surface from '@/common/ui/surface';
 import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 
 import { Minutes, Score } from './match-cells';
-import PeriodTabs from './period-tabs';
+import PillTabs from '@/common/ui/pill-tabs';
 import { playerName } from './player-name';
 import { playerBestWinsQuery } from './queries';
 
@@ -57,7 +57,7 @@ export default function BestWins({ playerId }: { readonly playerId: string }): R
   return (
     <Surface title={t('profile.bestWins.title')} flush>
       <Box sx={{ px: { xs: 2, sm: 3 }, pb: 2 }}>
-        <PeriodTabs
+        <PillTabs
           value={period}
           options={PERIODS}
           label={t('profile.bestWins.period')}

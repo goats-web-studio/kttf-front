@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import { useT, type MessageKey } from '@/common/i18n';
 
-interface PeriodTabsProps<T extends string> {
+interface PillTabsProps<T extends string> {
   readonly value: T;
   readonly options: readonly (readonly [T, MessageKey])[];
   readonly label: string;
@@ -12,19 +12,20 @@ interface PeriodTabsProps<T extends string> {
 }
 
 /**
- * Переключатель периода — пилюлей, как вкладки сайта: дорожка `--ink-100`,
- * выбранное белое с тенью (07, 5.2).
+ * Переключатель-пилюля, как вкладки сайта: дорожка `--ink-100`, выбранное
+ * белое с тенью (07, 5.2). Период в профиле, вид страницы турниров —
+ * «Календарь / Список» (ADR-052).
  *
  * Не вкладки MUI: те листаются вбок, и на 360px первый период уезжал за
  * край. Здесь на телефоне периоды делят ширину поровну. По смыслу это
  * выбор одного из нескольких — радиогруппа, а не вкладки с панелями.
  */
-export default function PeriodTabs<T extends string>({
+export default function PillTabs<T extends string>({
   value,
   options,
   label,
   onChange,
-}: PeriodTabsProps<T>): ReactNode {
+}: PillTabsProps<T>): ReactNode {
   const t = useT();
 
   return (

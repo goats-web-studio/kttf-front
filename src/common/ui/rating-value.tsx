@@ -10,6 +10,11 @@ interface RatingValueProps {
   readonly value: string;
   /** Кегль, начертание и гарнитуру задаёт место: звезда — доля кегля. */
   readonly sx?: Exclude<SxProps<Theme>, readonly unknown[]>;
+  /**
+   * Целое — как есть, без «.00»: средний рейтинг поля турнира — мера силы,
+   * а не чей-то рейтинг, и сотые в ней шум (ADR-052).
+   */
+  readonly whole?: boolean;
 }
 
 /**
@@ -24,7 +29,7 @@ interface RatingValueProps {
  * таблицы съели бы правило 5% (07, 1.3). Чтецу экрана звезда не нужна: рядом
  * всегда подпись «Рейтинг» или заголовок колонки.
  */
-export default function RatingValue({ value, sx }: RatingValueProps): ReactNode {
+export default function RatingValue({ value, sx, whole = false }: RatingValueProps): ReactNode {
   return (
     <Box
       component="span"
@@ -54,7 +59,7 @@ export default function RatingValue({ value, sx }: RatingValueProps): ReactNode 
           alignSelf: 'center',
         }}
       />
-      <span>{formatRating(value)}</span>
+      <span>{whole ? value : formatRating(value)}</span>
     </Box>
   );
 }

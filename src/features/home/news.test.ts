@@ -1,4 +1,4 @@
-import type { ListTournamentsRequest, TournamentView } from '@kttf/shared/types';
+import type { TournamentListItemView } from '@kttf/shared/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { listTournaments } from '@/features/tournaments/api';
@@ -9,34 +9,21 @@ import { latestFinished } from './news';
 vi.mock('@/features/tournaments/api', () => ({ listTournaments: vi.fn() }));
 
 /**
- * Свежие итоги с хвоста списка — ADR-042.
+ * Свежие итоги — ADR-042, ADR-051, ADR-052.
  *
- * Контракт отдаёт турниры по возрастанию даты, и первая страница — самые
- * старые. Проверяется, что лента берёт последние, а не первые, в том числе
- * когда последняя страница неполная.
+ * Лента — один запрос: оба состояния доигранного, свежие сверху. Порядок и
+ * отбор делает сервер, клиент их не повторяет.
  */
 
-function tournament(day: number, status: 'RATED' | 'FINISHED'): TournamentView {
+function tournament(day: number): TournamentListItemView {
   return {
     ...TOURNAMENT,
     id: `00000000-0000-4000-8000-${String(day).padStart(12, '0')}`,
-    status,
+    status: 'RATED',
     startsAt: `2026-01-${String(day).padStart(2, '0')}T09:00:00.000Z`,
+    averageRating: null,
+    matchesPlayed: 0,
   };
-}
-
-/** Список по возрастанию даты, постранично — как отвечает сервер. */
-function serve(all: readonly TournamentView[]): void {
-  vi.mocked(listTournaments).mockImplementation((query: ListTournamentsRequest) => {
-    const items = all.filter((item) => item.status === query.status);
-    const start = (query.page - 1) * query.limit;
-    return Promise.resolve({
-      items: items.slice(start, start + query.limit),
-      total: items.length,
-      page: query.page,
-      limit: query.limit,
-    });
-  });
 }
 
 beforeEach(() => {
@@ -44,20 +31,23 @@ beforeEach(() => {
 });
 
 describe('последние доигранные турниры', () => {
-  it('берёт хвост списка, свежие сверху, даже при неполной последней странице', async () => {
-    // Двенадцать обсчитанных: страницы по пять — 5, 5, 2.
-    serve(Array.from({ length: 12 }, (_, index) => tournament(index + 1, 'RATED')));
+  it('один запрос: оба состояния доигранного, от свежих, ровно лимит', async () => {
+    vi.mocked(listTournaments).mockResolvedValue({
+      items: [tournament(12), tournament(11)],
+      total: 12,
+      page: 1,
+      limit: 5,
+    });
 
     const days = (await latestFinished(5)).map((item) => item.startsAt.slice(8, 10));
 
-    expect(days).toEqual(['12', '11', '10', '09', '08']);
-  });
-
-  it('сводит оба состояния в одну ленту по дате', async () => {
-    serve([tournament(3, 'RATED'), tournament(7, 'FINISHED'), tournament(5, 'RATED')]);
-
-    const days = (await latestFinished(5)).map((item) => item.startsAt.slice(8, 10));
-
-    expect(days).toEqual(['07', '05', '03']);
+    expect(days).toEqual(['12', '11']);
+    expect(listTournaments).toHaveBeenCalledTimes(1);
+    expect(listTournaments).toHaveBeenCalledWith({
+      status: ['RATED', 'FINISHED'],
+      order: 'desc',
+      page: 1,
+      limit: 5,
+    });
   });
 });

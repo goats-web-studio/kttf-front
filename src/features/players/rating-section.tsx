@@ -8,7 +8,7 @@ import EmptyState from '@/common/ui/empty-state';
 import RatingValue from '@/common/ui/rating-value';
 import Surface from '@/common/ui/surface';
 
-import PeriodTabs from './period-tabs';
+import PillTabs from '@/common/ui/pill-tabs';
 import RatingChart from './rating-chart';
 import { pointsOf, type Span } from './rating-scale';
 
@@ -48,12 +48,7 @@ export default function RatingSection({
 
   return (
     <Surface title={t('profile.rating.title')}>
-      <PeriodTabs
-        value={span}
-        options={SPANS}
-        label={t('profile.chart.label')}
-        onChange={setSpan}
-      />
+      <PillTabs value={span} options={SPANS} label={t('profile.chart.label')} onChange={setSpan} />
       {peak !== null && history.points.length > 0 && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }} data-rating-peak>
           {t('profile.maxRating')}{' '}

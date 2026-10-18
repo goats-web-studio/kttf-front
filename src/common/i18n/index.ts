@@ -9,6 +9,8 @@ export {
   formatRating,
   formatTime,
   formatTimeTick,
+  formatMonthTitle,
+  formatWeekday,
   type TimeTickUnit,
   endOfDay,
   fill,

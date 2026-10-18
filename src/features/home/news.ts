@@ -33,41 +33,13 @@ export type NewsItem =
 const FINISHED: readonly TournamentStatus[] = ['RATED', 'FINISHED'];
 
 /**
- * Последние доигранные турниры, свежие сверху.
- *
- * Список турниров контракт отдаёт только по возрастанию даты (ТС 7.5), и
- * первая страница — это самые старые турниры. Свежие лежат на последней:
- * первый запрос узнаёт общее число, второй и третий берут хвост. Когда в
- * контракт придёт порядок сортировки, это место станет одним запросом —
- * долг записан в ADR-042.
+ * Последние доигранные турниры, свежие сверху — одним запросом: оба
+ * состояния доигранного (ADR-051) и порядок от свежих (ADR-052). Раньше
+ * контракт умел только по возрастанию, и свежие добирались с хвоста списка
+ * тремя запросами на каждое состояние (ADR-042).
  */
 export async function latestFinished(limit: number): Promise<readonly TournamentView[]> {
-  const perStatus = await Promise.all(FINISHED.map((status) => tail(status, limit)));
-
-  // Турнир может сменить состояние между запросами — «завершён» и «рейтинг
-  // начислен» разными ответами — и попасть в оба; в ленте он один.
-  const unique = new Map(perStatus.flat().map((tournament) => [tournament.id, tournament]));
-
-  return [...unique.values()]
-    .sort((a, b) => Date.parse(b.startsAt) - Date.parse(a.startsAt))
-    .slice(0, limit);
-}
-
-async function tail(status: TournamentStatus, limit: number): Promise<readonly TournamentView[]> {
-  const first = await listTournaments({ status, page: 1, limit });
-  const pages = Math.ceil(first.total / limit);
-
-  if (pages <= 1) {
-    return first.items;
-  }
-
-  // Последняя страница бывает неполной — добираем из предпоследней.
-  const [previous, last] = await Promise.all([
-    listTournaments({ status, page: pages - 1, limit }),
-    listTournaments({ status, page: pages, limit }),
-  ]);
-
-  return [...previous.items, ...last.items].slice(-limit);
+  return (await listTournaments({ status: FINISHED, order: 'desc', page: 1, limit })).items;
 }
 
 export const latestNewsQuery = queryOptions({
