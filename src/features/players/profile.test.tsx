@@ -1,6 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import type { AuthUserView, PlayerSummaryView, PlayerTournamentView } from '@kttf/shared/types';
+import type {
+  AuthUserView,
+  PlayerBestWinsView,
+  PlayerProfileView,
+  PlayerSummaryView,
+  PlayerTournamentView,
+} from '@kttf/shared/types';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,6 +19,7 @@ import {
   HEAD_TO_HEAD,
   pageOf,
   PLAYER_IDS,
+  PLAYER_PROFILE,
   PLAYERS,
   RATING_HISTORY,
   TOURNAMENT_ID,
@@ -39,34 +46,56 @@ let missing = false;
 
 const CUP = { id: TOURNAMENT_ID, name: 'Кубок Алматы', startsAt: '2026-03-14T09:00:00.000Z' };
 
+const CLUB_REF = { id: CLUB.id, name: CLUB.name };
+const OTHER_CLUB = { id: '00000000-0000-4000-8000-0000000000c9', name: 'Спин-Астана' };
+const AUTUMN = {
+  id: '00000000-0000-4000-8000-0000000000a7',
+  name: 'Осенний кубок',
+  startsAt: '2025-10-04T09:00:00.000Z',
+};
+
 const SUMMARY: PlayerSummaryView = {
   playerId: PLAYER_IDS.first,
   rank: 8,
   rankedPlayers: 120,
   maxRating: '612.40',
+  maxRatingAt: '2026-03-14T09:00:00.000Z',
   period: 'ALL',
   tournaments: 3,
   wins: 11,
   losses: 4,
   firstTournament: CUP,
-  favoriteClub: { id: CLUB.id, name: CLUB.name, tournaments: 3 },
-  bestWins: [
+  favoriteClub: { ...CLUB_REF, tournaments: 3 },
+  awards: [
+    { tournament: CUP, club: CLUB_REF, place: 1 },
+    { tournament: AUTUMN, club: OTHER_CLUB, place: 3 },
+  ],
+};
+
+const BEST_WINS: PlayerBestWinsView = {
+  period: 'ALL',
+  items: [
     {
       matchId: '00000000-0000-4000-8000-0000000000e1',
       tournament: CUP,
+      startedAt: '2026-03-14T11:41:00.000Z',
       playedAt: '2026-03-14T12:00:00.000Z',
+      ratingBefore: '471.30',
       opponent: PLAYERS.second,
       opponentRating: '640.00',
       setsFor: 3,
       setsAgainst: 2,
       delta: '9.10',
+      durationMinutes: 19,
     },
   ],
-  awards: [{ tournament: CUP, place: 1 }],
 };
 
+/** Полный профиль — с отметкой посещения; у игрока без аккаунта её нет. */
+let profile: PlayerProfileView = PLAYER_PROFILE;
+
 const TOURNAMENT_ROW: PlayerTournamentView = {
-  tournament: { ...CUP, status: 'RATED', club: { id: CLUB.id, name: CLUB.name } },
+  tournament: { ...CUP, status: 'RATED', level: 'REGIONAL', club: CLUB_REF },
   place: 5,
   placeTo: 8,
   participants: 16,
@@ -80,18 +109,42 @@ const TOURNAMENT_ROW: PlayerTournamentView = {
       groupLabel: null,
       roundFromFinal: 0,
       placement: false,
+      startedAt: '2026-03-14T11:35:00.000Z',
       playedAt: '2026-03-14T12:00:00.000Z',
       opponent: PLAYERS.second,
+      opponentRating: '505.20',
+      ratingBefore: '486.50',
       setsFor: 3,
       setsAgainst: 1,
       won: true,
       resultType: 'NORMAL',
       delta: '6.00',
+      durationMinutes: 25,
+    },
+    {
+      matchId: '00000000-0000-4000-8000-0000000000e3',
+      stageName: 'Плей-офф',
+      groupLabel: null,
+      roundFromFinal: 1,
+      placement: false,
+      // Внесена без вызова к столу: ни времени, ни длительности.
+      startedAt: null,
+      playedAt: '2026-03-14T11:00:00.000Z',
+      opponent: PLAYERS.third,
+      opponentRating: '455.00',
+      ratingBefore: '490.00',
+      setsFor: 1,
+      setsAgainst: 3,
+      won: false,
+      resultType: 'NORMAL',
+      delta: '-3.50',
+      durationMinutes: null,
     },
   ],
 };
 
 let summary = SUMMARY;
+let bestWins = BEST_WINS;
 let tournaments: PlayerTournamentView[] = [TOURNAMENT_ROW];
 /** Всего турниров у игрока: больше страницы — появляется «Показать ещё». */
 let total = 1;
@@ -135,6 +188,10 @@ function answer(url: string): Response {
     return reply(summary);
   }
 
+  if (url.includes('/best-wins')) {
+    return reply(bestWins);
+  }
+
   if (url.includes('/tournaments?')) {
     return reply({ items: tournaments, total, page: url.includes('page=2') ? 2 : 1, limit: 5 });
   }
@@ -144,7 +201,7 @@ function answer(url: string): Response {
   }
 
   if (url.includes('/players/')) {
-    return reply(PLAYERS.first);
+    return reply(profile);
   }
 
   throw new Error(`Неожидаемый запрос: ${url}`);
@@ -177,11 +234,46 @@ beforeEach(() => {
   history = RATING_HISTORY;
   missing = false;
   summary = SUMMARY;
+  bestWins = BEST_WINS;
+  profile = PLAYER_PROFILE;
   tournaments = [TOURNAMENT_ROW];
   total = 1;
   requested = [];
   vi.stubGlobal('fetch', (input: unknown) => Promise.resolve(answer(String(input))));
 });
+
+/** Ширина экрана для `useMediaQuery`: в jsdom `matchMedia` нет, и без неё — телефон. */
+function asDesktop(): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('min-width'),
+    media: query,
+    onchange: null,
+    addListener: () => undefined,
+    removeListener: () => undefined,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    dispatchEvent: () => false,
+  }));
+}
+
+/** Элемент, без которого тест дальше бессмыслен: отсутствие — понятная ошибка. */
+function found(root: ParentNode, selector: string): HTMLElement {
+  const element = root.querySelector(selector);
+
+  if (!(element instanceof HTMLElement)) {
+    throw new Error(`Нет элемента ${selector}`);
+  }
+
+  return element;
+}
+
+function required<T>(value: T | undefined): T {
+  if (value === undefined) {
+    throw new Error('Нет ожидаемой строки');
+  }
+
+  return value;
+}
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -198,7 +290,23 @@ describe('карточка игрока', () => {
     // Строкой, а не числом: сотая доля обязана дожить до экрана (ADR-014).
     expect(screen.getAllByText(PLAYERS.first.rating).length).toBeGreaterThan(0);
     // Максимальный — из сводки сервера.
-    expect(await screen.findByText(SUMMARY.maxRating)).toBeDefined();
+    expect((await screen.findAllByText(SUMMARY.maxRating)).length).toBeGreaterThan(0);
+  });
+
+  it('рейтинг — со звездой, одним компонентом во всех блоках', async () => {
+    renderProfile();
+
+    await screen.findAllByText(SUMMARY.maxRating);
+    // Шапка профиля, а не сайта: у обеих тег header.
+    const header = screen
+      .getByRole('heading', { name: playerName(PLAYERS.first), level: 1 })
+      .closest('header');
+
+    expect(header?.querySelector('[data-rating-value]')?.textContent).toBe(PLAYERS.first.rating);
+    // Звезда — знак, а не текст: чтецу экрана она не читается.
+    expect(header?.querySelector('[data-rating-value] svg')?.getAttribute('aria-hidden')).toBe(
+      'true',
+    );
   });
 
   it('называет клуб, хотя игрок несёт только его идентификатор', async () => {
@@ -220,6 +328,45 @@ describe('карточка игрока', () => {
 
     await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
     expect(screen.queryByRole('link', { name: ru['profile.edit'] })).toBeNull();
+  });
+});
+
+describe('в сети и последнее посещение', () => {
+  it('заходил только что — точка «в сети» у имени и дата посещения', async () => {
+    profile = {
+      ...PLAYER_PROFILE,
+      userId: '00000000-0000-4000-8000-0000000000f1',
+      createdAt: '2025-03-12T08:00:00.000Z',
+      lastSeenAt: '2025-10-18T09:00:00.000Z',
+      online: true,
+    };
+
+    renderProfile();
+
+    expect(await screen.findByText(ru['profile.online'])).toBeDefined();
+    expect(screen.getByText(/последнее посещение: 18 октября 2025/)).toBeDefined();
+  });
+
+  it('давно не заходил — без точки, но с датой', async () => {
+    profile = {
+      ...PLAYER_PROFILE,
+      userId: '00000000-0000-4000-8000-0000000000f1',
+      lastSeenAt: '2025-10-18T09:00:00.000Z',
+      online: false,
+    };
+
+    renderProfile();
+
+    expect(await screen.findByText(/последнее посещение/)).toBeDefined();
+    expect(screen.queryByText(ru['profile.online'])).toBeNull();
+  });
+
+  it('у игрока без аккаунта статуса нет вовсе', async () => {
+    renderProfile();
+
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(screen.queryByText(ru['profile.online'])).toBeNull();
+    expect(screen.queryByText(/последнее посещение/)).toBeNull();
   });
 });
 
@@ -257,6 +404,49 @@ describe('кривая рейтинга', () => {
     );
   });
 
+  it('сетка со значениями и датами, заливка под кривой', async () => {
+    const { container } = renderProfile();
+
+    await screen.findByRole('heading', { name: ru['profile.rating.title'] });
+    const chart = container.querySelector('[data-rating-chart]');
+
+    expect(chart?.querySelectorAll('text').length).toBeGreaterThan(3);
+    expect(chart?.querySelector('path[fill^="url("]')).not.toBeNull();
+  });
+
+  it('над графиком — максимальный с датой', async () => {
+    const { container } = renderProfile();
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-rating-peak]')?.textContent).toContain('14 марта');
+    });
+    expect(container.querySelector('[data-rating-peak]')?.textContent).toContain(SUMMARY.maxRating);
+  });
+
+  it('стрелками с клавиатуры — подсказка о турнире: дата, турнир, рейтинг, изменение', async () => {
+    const { container } = renderProfile();
+
+    const chart = await screen.findByRole('figure', { name: ru['profile.chart.hint'] });
+    fireEvent.keyDown(chart, { key: 'ArrowRight' });
+
+    const tip = container.querySelector('[data-rating-tip]');
+    const [first] = RATING_HISTORY.points;
+    if (first === undefined) throw new Error('нет точки');
+
+    expect(tip?.textContent).toContain(first.tournamentName ?? '');
+    expect(tip?.textContent).toContain(first.ratingAfter);
+    expect(tip?.textContent).toContain(`+${first.delta}`);
+
+    fireEvent.keyDown(chart, { key: 'ArrowRight' });
+    // Корректировка вне турнира названа словами, а не пустой строкой.
+    expect(container.querySelector('[data-rating-tip]')?.textContent).toContain(
+      ru['player.history.adjustment'],
+    );
+
+    fireEvent.keyDown(chart, { key: 'Escape' });
+    expect(container.querySelector('[data-rating-tip]')).toBeNull();
+  });
+
   it('без обсчитанных турниров показывает строку, а не пустой холст', async () => {
     history = EMPTY_RATING_HISTORY;
 
@@ -287,10 +477,26 @@ describe('общая статистика', () => {
     });
   });
 
-  it('награды — медалями', async () => {
-    renderProfile();
+  it('награды — строкой на клуб, медаль ведёт на турнир и называет его', async () => {
+    const { container } = renderProfile();
 
-    expect(await screen.findByText(ru['profile.awards.title'])).toBeDefined();
+    await screen.findByText(ru['profile.awards.title']);
+
+    expect(container.querySelectorAll('[data-award-club]')).toHaveLength(2);
+    const medal = screen.getByRole('link', { name: /1 место — Кубок Алматы/ });
+    expect(medal.getAttribute('href')).toBe(`/tournaments/${CUP.id}`);
+    expect(
+      container.querySelector(`[data-award-club="${OTHER_CLUB.id}"] [data-medal="3"]`),
+    ).not.toBeNull();
+  });
+
+  it('«Все призовые турниры» раскрывает список строками', async () => {
+    const { container } = renderProfile();
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['profile.awards.all'] }));
+
+    expect(container.querySelectorAll('[data-award-list] tr')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: ru['profile.awards.hide'] })).toBeDefined();
   });
 
   it('без призовых мест блока наград нет', async () => {
@@ -303,13 +509,121 @@ describe('общая статистика', () => {
   });
 });
 
+describe('лучшие победы', () => {
+  it('свой запрос и свой период, отдельно от статистики', async () => {
+    renderProfile();
+
+    const tabs = await screen.findByRole('radiogroup', { name: ru['profile.bestWins.period'] });
+    expect(requested.some((url) => url.includes('/best-wins?period=ALL'))).toBe(true);
+
+    fireEvent.click(within(tabs).getByRole('radio', { name: ru['profile.period.HALF'] }));
+
+    await waitFor(() => {
+      expect(requested.some((url) => url.includes('/best-wins?period=HALF'))).toBe(true);
+    });
+    expect(requested.some((url) => url.includes('/summary?period=HALF'))).toBe(false);
+  });
+
+  it('на десктопе — таблица: оба рейтинга, счёт, изменение, минуты', async () => {
+    asDesktop();
+    const { container } = renderProfile();
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-best-wins="table"]')).not.toBeNull();
+    });
+    const table = found(container, '[data-best-wins="table"]');
+    const [row] = within(table).getAllByRole('row').slice(1);
+    if (row === undefined) throw new Error('нет строки');
+
+    expect(row.textContent).toContain('471.30');
+    expect(row.textContent).toContain('640.00');
+    expect(row.textContent).toContain('+9.10');
+    expect(row.textContent).toContain('19');
+    // Соперник — ссылкой на его профиль.
+    expect(
+      within(row)
+        .getByRole('link', { name: playerName(PLAYERS.second) })
+        .getAttribute('href'),
+    ).toBe(`/players/${PLAYER_IDS.second}`);
+  });
+
+  it('на телефоне — карточками, без таблицы', async () => {
+    const { container } = renderProfile();
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-best-wins="cards"]')).not.toBeNull();
+    });
+    expect(container.querySelector('[data-best-wins="table"]')).toBeNull();
+    expect(container.querySelector('[data-best-wins="cards"]')?.textContent).toContain('19 мин');
+  });
+
+  it('пусто за период — так и написано', async () => {
+    bestWins = { period: 'ALL', items: [] };
+
+    renderProfile();
+
+    expect(await screen.findByText(ru['profile.bestWins.empty'])).toBeDefined();
+  });
+});
+
 describe('результаты по турнирам', () => {
+  it('шапка турнира — уровень, участники и «я» с рейтингом на старте', async () => {
+    const { container } = renderProfile(PLAYER_ID, USER_WITH_PROFILE);
+
+    await screen.findByText('5–8');
+    const card = found(container, `[data-result="${CUP.id}"]`);
+
+    expect(card.textContent).toContain(ru['tournament.level.REGIONAL']);
+    expect(card.textContent).toContain('участников: 16');
+    expect(card.querySelector('[data-result-me]')?.textContent).toMatch(/^Я.*480\.00/);
+  });
+
+  it('на чужом профиле вместо «Я» — имя игрока', async () => {
+    const { container } = renderProfile();
+
+    await screen.findByText('5–8');
+
+    expect(container.querySelector('[data-result-me]')?.textContent).toContain(
+      playerName(PLAYERS.first),
+    );
+  });
+
+  it('встречи таблицей: время, рейтинг соперника, счёт цветом победы, минуты', async () => {
+    asDesktop();
+    const { container } = renderProfile();
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-result-table]')).not.toBeNull();
+    });
+    const table = found(container, '[data-result-table]');
+    const [won, lost] = within(found(table, 'tbody')).getAllByRole('row');
+
+    expect(won?.textContent).toContain('505.20');
+    expect(won?.textContent).toContain('25');
+    expect(within(required(won)).getByLabelText(`${ru['player.matches.won']} 3:1`)).toBeDefined();
+    // Без вызова к столу — прочерки, а не нули.
+    expect(lost?.textContent).toContain('—');
+    expect(within(required(lost)).getByLabelText(`${ru['player.matches.lost']} 1:3`)).toBeDefined();
+  });
+
+  it('итоговая строка: победы и поражения, сумма изменений, минуты, рейтинг после', async () => {
+    const { container } = renderProfile();
+
+    await screen.findByText('5–8');
+    const total = container.querySelector('[data-result-total]');
+
+    expect(total?.textContent).toContain('Победы: 1 · Поражения: 1');
+    expect(total?.textContent).toContain('+12.50');
+    expect(total?.textContent).toContain('25 мин');
+    expect(total?.textContent).toContain('492.50');
+  });
+
   it('место диапазоном, круг сетки словами, изменение рейтинга', async () => {
     renderProfile();
 
     expect(await screen.findByText('5–8')).toBeDefined();
     expect(screen.getByText(`${ru['results.bracket.final']} · Плей-офф`)).toBeDefined();
-    expect(screen.getByText('+12.50')).toBeDefined();
+    expect(screen.getAllByText('+12.50').length).toBeGreaterThan(0);
   });
 
   it('у идущего турнира места нет — так и написано', async () => {

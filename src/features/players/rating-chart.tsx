@@ -1,117 +1,329 @@
+import type { RatingPointView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
+import {
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 
-import { formatDate, useLocale, useT } from '@/common/i18n';
+import { formatCount, formatDate, formatTimeTick, useLocale, useT } from '@/common/i18n';
+import DeltaPill from '@/common/ui/delta-pill';
+import RatingValue from '@/common/ui/rating-value';
 
-import type { RatingScale } from './rating-scale';
+import { buildRatingScale, nearestPoint, type RatingChartPoint } from './rating-scale';
+
+/** Ширина до первого замера и в среде без раскладки (тесты). */
+const FALLBACK_WIDTH = 640;
+/** Высота холста: на телефоне ниже, чтобы график и вкладки влезали в экран. */
+const HEIGHT = { wide: 260, narrow: 200 } as const;
+const NARROW = 480;
+/** Больше стольких точек кружки не рисуются: кривая из бусин читается хуже линии. */
+const DOTS_UP_TO = 30;
 
 interface RatingChartProps {
-  readonly scale: RatingScale;
+  readonly points: readonly RatingPointView[];
 }
 
 /**
- * Кривая рейтинга — ТЗ 9.3.
+ * Кривая рейтинга как у RTTF — ТЗ 9.3, ADR-050: сетка со значениями и
+ * датами, заливка под кривой, подсказка о турнире под указателем.
  *
- * Рисуется своим SVG, без библиотеки графиков (ADR-028): десяток точек в год
- * не стоит зависимости, а публичная часть делит бандл с консолью судьи, куда
- * тяжёлое тянуть нельзя (ADR-004).
+ * Рисуется своим SVG, без библиотеки графиков (07, раздел 2): десяток точек
+ * в год не стоит зависимости, а публичная часть делит бандл с консолью судьи.
  *
- * Сам холст скрыт от чтения с экрана: кривую голосом не пересказать. Доступной
- * заменой служит список турниров под ним — в нём те же числа текстом. Подписи
- * границ и дат остаются обычной разметкой, а не текстом внутри SVG: иначе они
- * растягивались бы вместе с холстом.
+ * Перекрестие ищет ближайший турнир по горизонтали — попадать в линию не
+ * нужно. Мышь ведёт подсказку наведением, палец — касанием и протяжкой,
+ * клавиатура — стрелками. Вертикальная прокрутка страницы пальцем остаётся:
+ * холст забирает себе только горизонтальный жест.
+ *
+ * Подсказка дополняет, а не прячет: те же числа есть текстом в результатах
+ * по турнирам ниже. Сам холст скрыт от чтения с экрана, а подсказка
+ * объявляется вежливо — человек с клавиатурой слышит турнир, на который
+ * перешёл.
  */
-export default function RatingChart({ scale }: RatingChartProps): ReactNode {
+export default function RatingChart({ points }: RatingChartProps): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const gradient = useId();
+  const frame = useRef<HTMLDivElement>(null);
+  const width = useWidth(frame);
+  const height = width < NARROW ? HEIGHT.narrow : HEIGHT.wide;
+  const scale = buildRatingScale(points, { width, height });
+  const [active, setActive] = useState<number | null>(null);
+
+  if (scale === null) {
+    return null;
+  }
+
+  const { plot } = scale;
+  const current = active === null ? undefined : scale.points[active];
+  const dots = scale.points.length <= DOTS_UP_TO;
+
+  const pick = (event: PointerEvent<SVGSVGElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    // Холст в пикселях места, но страховка от масштаба браузера не мешает.
+    const x = ((event.clientX - box.left) / (box.width || width)) * width;
+    const index = nearestPoint(scale.points, x);
+
+    setActive(index < 0 ? null : index);
+  };
+
+  const step = (event: KeyboardEvent<HTMLDivElement>) => {
+    const last = scale.points.length - 1;
+    const moves: Readonly<Record<string, number>> = {
+      ArrowLeft: Math.max(0, (active ?? last + 1) - 1),
+      ArrowRight: Math.min(last, (active ?? -1) + 1),
+      Home: 0,
+      End: last,
+    };
+    const next = moves[event.key];
+
+    if (next !== undefined) {
+      event.preventDefault();
+      setActive(next);
+    } else if (event.key === 'Escape') {
+      setActive(null);
+    }
+  };
 
   return (
-    <Box component="figure" sx={{ mt: 2, mx: 0, mb: 0 }}>
-      {/* Подписи стоят у своих линий: обе в одной строке читались бы как
-          легенда, и «минимум» оказывался бы сверху над верхней границей. */}
-      <Typography variant="caption" color="text.secondary" component="p">
-        {t('player.chart.highest')}{' '}
-        <Box component="span" sx={NUM}>
-          {scale.highest}
-        </Box>
-      </Typography>
-
-      <Box
-        sx={{
-          mt: 0.5,
-          color: 'var(--red-600)',
-          '& > svg': { display: 'block', width: '100%', height: 'auto' },
+    <Box
+      ref={frame}
+      component="figure"
+      tabIndex={0}
+      aria-label={t('profile.chart.hint')}
+      onKeyDown={step}
+      onBlur={() => {
+        setActive(null);
+      }}
+      sx={{
+        position: 'relative',
+        m: 0,
+        borderRadius: 3,
+        '&:focus-visible': { outline: '2px solid var(--red-600)', outlineOffset: '4px' },
+      }}
+    >
+      <svg
+        width={scale.width}
+        height={scale.height}
+        viewBox={`0 0 ${String(scale.width)} ${String(scale.height)}`}
+        aria-hidden="true"
+        data-rating-chart
+        style={{ display: 'block', touchAction: 'pan-y', userSelect: 'none' }}
+        onPointerMove={pick}
+        onPointerDown={pick}
+        onPointerLeave={(event) => {
+          // Палец «уходит» с холста сразу после касания — подсказка остаётся,
+          // пока человек не тронет другое место. Мышь уводят — подсказка гаснет.
+          if (event.pointerType === 'mouse') setActive(null);
         }}
       >
-        <svg
-          viewBox={`0 0 ${String(scale.width)} ${String(scale.height)}`}
-          aria-hidden="true"
-          data-rating-chart
-        >
-          {/* Границы размаха: без них глаз не понимает, крутая кривая или ровная. */}
-          <line
-            x1={0}
-            y1={10}
-            x2={scale.width}
-            y2={10}
-            stroke="var(--line)"
-            strokeDasharray="4 4"
-            vectorEffect="non-scaling-stroke"
-          />
-          <line
-            x1={0}
-            y1={scale.height - 10}
-            x2={scale.width}
-            y2={scale.height - 10}
-            stroke="var(--line)"
-            strokeDasharray="4 4"
-            vectorEffect="non-scaling-stroke"
-          />
+        <defs>
+          <linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--red-500)" stopOpacity={0.18} />
+            <stop offset="100%" stopColor="var(--red-500)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
 
-          {scale.line !== '' && (
-            <polyline
-              points={scale.line}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              // Толщина линии не растёт вместе с холстом: на широком экране
-              // кривая иначе превращается в полосу.
-              vectorEffect="non-scaling-stroke"
+        {/* Сетка приглушена: она служит кривой, а не спорит с ней. */}
+        <g stroke="var(--line)" strokeWidth={1}>
+          {scale.valueTicks.map((tick) => (
+            <line
+              key={`v${String(tick.value)}`}
+              x1={plot.left}
+              x2={plot.right}
+              y1={tick.y}
+              y2={tick.y}
             />
-          )}
-
-          {scale.points.map((point) => (
-            <circle key={point.key} cx={point.x} cy={point.y} r={4} fill="currentColor">
-              <title>
-                {point.tournamentName ?? t('player.history.adjustment')}: {point.rating}
-              </title>
-            </circle>
           ))}
-        </svg>
+          {scale.timeTicks.map((tick) => (
+            <line
+              key={`t${String(tick.time)}`}
+              x1={tick.x}
+              x2={tick.x}
+              y1={plot.top}
+              y2={plot.bottom}
+              strokeDasharray="2 4"
+            />
+          ))}
+        </g>
+
+        <g
+          fill="var(--ink-500)"
+          fontSize={12}
+          style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'var(--font-mono)' }}
+        >
+          {scale.valueTicks.map((tick) => (
+            <text
+              key={`vl${String(tick.value)}`}
+              x={plot.left - 8}
+              y={tick.y}
+              textAnchor="end"
+              dominantBaseline="middle"
+            >
+              {formatCount(tick.value, locale)}
+            </text>
+          ))}
+        </g>
+        <g fill="var(--ink-500)" fontSize={12}>
+          {scale.timeTicks.map((tick) => {
+            // Крайние подписи прижимаются внутрь, чтобы не вылезать за холст.
+            const anchor =
+              tick.x - plot.left < 24 ? 'start' : plot.right - tick.x < 24 ? 'end' : 'middle';
+
+            return (
+              <text
+                key={`tl${String(tick.time)}`}
+                x={tick.x}
+                y={plot.bottom + 18}
+                textAnchor={anchor}
+              >
+                {formatTimeTick(tick.time, tick.unit, locale)}
+                {tick.showYear && (
+                  <tspan x={tick.x} dy={14}>
+                    {formatTimeTick(tick.time, 'year', locale)}
+                  </tspan>
+                )}
+              </text>
+            );
+          })}
+        </g>
+
+        {scale.area !== '' && <path d={scale.area} fill={`url(#${gradient})`} />}
+        {scale.line !== '' && (
+          <polyline
+            points={scale.line}
+            fill="none"
+            stroke="var(--red-500)"
+            strokeWidth={2}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        )}
+
+        {current !== undefined && (
+          <line
+            x1={current.x}
+            x2={current.x}
+            y1={plot.top}
+            y2={plot.bottom}
+            stroke="var(--ink-400)"
+            strokeWidth={1}
+          />
+        )}
+
+        {scale.points.map((point, index) =>
+          dots || index === active || scale.points.length === 1 ? (
+            <circle
+              key={point.key}
+              cx={point.x}
+              cy={point.y}
+              r={index === active ? 6 : 4}
+              fill="var(--red-500)"
+              // Белое кольцо отделяет точку от линии и сетки под ней.
+              stroke="var(--paper)"
+              strokeWidth={2}
+            />
+          ) : null,
+        )}
+      </svg>
+
+      <Box aria-live="polite" sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+        {current !== undefined && <Tip point={current} width={scale.width} plotTop={plot.top} />}
       </Box>
-
-      <Typography variant="caption" color="text.secondary" component="p">
-        {t('player.chart.lowest')}{' '}
-        <Box component="span" sx={NUM}>
-          {scale.lowest}
-        </Box>
-      </Typography>
-
-      <Typography
-        component="figcaption"
-        variant="caption"
-        color="text.secondary"
-        sx={{ mt: 0.5, display: 'flex', justifyContent: 'space-between' }}
-      >
-        <span>{formatDate(scale.from, locale)}</span>
-        <span>{formatDate(scale.to, locale)}</span>
-      </Typography>
     </Box>
   );
 }
 
-/** Границы размаха — одной ширины цифр (раздел 3.5). */
-const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
+/** Подсказка о турнире: дата, турнир, рейтинг после, изменение. */
+function Tip({
+  point,
+  width,
+  plotTop,
+}: {
+  readonly point: RatingChartPoint;
+  readonly width: number;
+  readonly plotTop: number;
+}): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+  // Над точкой, а у верхнего края — под ней; у боковых краёв — прижата внутрь.
+  const below = point.y - plotTop < 96;
+  const shift = point.x < 110 ? '-12px' : width - point.x < 110 ? 'calc(-100% + 12px)' : '-50%';
+
+  return (
+    <Box
+      data-rating-tip
+      sx={{
+        position: 'absolute',
+        left: point.x,
+        top: point.y,
+        transform: `translate(${shift}, ${below ? '14px' : 'calc(-100% - 14px)'})`,
+        minWidth: 168,
+        maxWidth: 240,
+        px: 1.5,
+        py: 1.25,
+        borderRadius: 3,
+        bgcolor: 'var(--paper)',
+        border: 1,
+        borderColor: 'var(--line)',
+        boxShadow: 'var(--shadow-pop)',
+      }}
+    >
+      <Typography variant="caption" color="text.secondary" component="p">
+        {formatDate(point.playedAt, locale)}
+      </Typography>
+      <Typography variant="body2" component="p" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
+        {point.tournamentName ?? t('player.history.adjustment')}
+      </Typography>
+      <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <RatingValue value={point.rating} sx={{ fontWeight: 700, fontSize: 18 }} />
+        <DeltaPill value={point.delta} />
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * Ширина места под холст. Замер, а не растяжение SVG: подписи осей и точки
+ * держат свой размер на любом экране.
+ */
+function useWidth(ref: RefObject<HTMLElement | null>): number {
+  const [width, setWidth] = useState(FALLBACK_WIDTH);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+
+    if (element === null) {
+      return undefined;
+    }
+
+    const measure = () => {
+      const next = Math.floor(element.getBoundingClientRect().width);
+
+      // Ноль — среда без раскладки: остаётся ширина по умолчанию.
+      if (next > 0) setWidth(next);
+    };
+
+    measure();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [ref]);
+
+  return width;
+}

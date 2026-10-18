@@ -16,8 +16,11 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { usePlaceName } from '@/features/places/place-name';
 import { useSessionStore } from '@/features/auth/session-store';
+import Awards from '@/features/players/awards';
+import BestWins from '@/features/players/best-wins';
 import HeadToHead from '@/features/players/head-to-head';
 import PlayerResults from '@/features/players/player-results';
+import { playerName } from '@/features/players/player-name';
 import PlayerSummary from '@/features/players/player-summary';
 import ProfileHeader from '@/features/players/profile-header';
 import {
@@ -34,9 +37,9 @@ export const Route = createFileRoute('/_public/players/$playerId')({
 /**
  * Публичный профиль игрока — ТЗ 9.3, в структуре RTTF (ADR-048).
  *
- * Сверху вниз, как у RTTF: шапка с анкетой и рейтингом, кривая рейтинга,
- * общая статистика, лучшие победы, награды и результаты по турнирам. Дизайн
- * свой — карточки «Спорт-модерн».
+ * Сверху вниз, как у RTTF: шапка с анкетой, «в сети» и рейтингом, кривая
+ * рейтинга, общая статистика, лучшие победы, награды и результаты по
+ * турнирам (ADR-048, ADR-050). Дизайн свой — карточки «Спорт-модерн».
  *
  * Открыт без входа: результаты турниров — спортивный факт, а не персональные
  * данные. Свой профиль отличается только кнопками правки и кабинета: «Мой
@@ -44,7 +47,8 @@ export const Route = createFileRoute('/_public/players/$playerId')({
  * других.
  *
  * Запросы раздельные: карточка нужна раньше всех, кривая приходит целиком,
- * сводка зависит от периода, а результаты подгружаются. Сложенные в один
+ * сводка и лучшие победы зависят каждая от своего периода, а результаты
+ * подгружаются. Сложенные в один
  * ответ, они ждали бы самую медленную часть.
  *
  * **Отказ у страницы один на всех.** Секции ниже шапки рисуются только
@@ -75,6 +79,7 @@ function PlayerPage(): ReactNode {
   const clubs = useQuery(clubDirectoryQuery);
 
   const [opponentId, setOpponentId] = useState<string | null>(null);
+  const isOwn = user?.playerId === playerId;
 
   if (!isKnownId || isMissingResource(player.error)) {
     return (
@@ -106,7 +111,7 @@ function PlayerPage(): ReactNode {
             // Максимум — за всё время и от периода не зависит: берётся из
             // любой пришедшей сводки.
             maxRating={summary.data?.maxRating ?? null}
-            isOwn={user?.playerId === playerId}
+            isOwn={isOwn}
           />
         )}
       </QueryState>
@@ -119,15 +124,22 @@ function PlayerPage(): ReactNode {
             onRetry={() => void history.refetch()}
             loading={<RowsSkeleton />}
           >
-            {history.data === undefined ? null : <RatingSection history={history.data} />}
+            {history.data === undefined ? null : (
+              <RatingSection
+                history={history.data}
+                // Максимум — за всё время, от периода сводки не зависит.
+                peak={
+                  summary.data === undefined
+                    ? null
+                    : { rating: summary.data.maxRating, at: summary.data.maxRatingAt }
+                }
+              />
+            )}
           </QueryState>
 
-          <PlayerSummary
-            summary={summary}
-            period={period}
-            onPeriod={setPeriod}
-            onSelectOpponent={setOpponentId}
-          />
+          <PlayerSummary summary={summary} period={period} onPeriod={setPeriod} />
+          <BestWins playerId={playerId} />
+          {summary.data !== undefined && <Awards awards={summary.data.awards} />}
 
           {/* Личный счёт — над результатами: это ответ на только что
               заданный вопрос, внизу страницы его пришлось бы искать. */}
@@ -141,7 +153,11 @@ function PlayerPage(): ReactNode {
             />
           )}
 
-          <PlayerResults playerId={playerId} onSelectOpponent={setOpponentId} />
+          <PlayerResults
+            playerId={playerId}
+            playerLabel={isOwn ? t('profile.results.me') : playerName(player.data)}
+            onSelectOpponent={setOpponentId}
+          />
         </Stack>
       )}
     </Container>

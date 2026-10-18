@@ -3,6 +3,7 @@ import type {
   HeadToHeadView,
   ListPlayersQuery,
   Page,
+  PlayerBestWinsView,
   PlayerMatchesQuery,
   PlayerMatchView,
   PlayerProfileView,
@@ -92,7 +93,7 @@ export function fetchHeadToHead(id: string, opponentId: string): Promise<HeadToH
   return apiRequest<HeadToHeadView>(`/players/${id}/head-to-head/${opponentId}`);
 }
 
-/** Общая статистика, лучшие победы и награды — ADR-048. Считает сервер. */
+/** Общая статистика и награды — ADR-048. Считает сервер. */
 export function fetchPlayerSummary(
   id: string,
   period: PlayerStatsPeriod,
@@ -106,4 +107,12 @@ export function fetchPlayerTournaments(
   query: PlayerTournamentsQuery,
 ): Promise<Page<PlayerTournamentView>> {
   return apiRequest<Page<PlayerTournamentView>>(`/players/${id}/tournaments${queryString(query)}`);
+}
+
+/** Лучшие победы за период — свой запрос, у блока свои вкладки (ADR-050). */
+export function fetchPlayerBestWins(
+  id: string,
+  period: PlayerStatsPeriod,
+): Promise<PlayerBestWinsView> {
+  return apiRequest<PlayerBestWinsView>(`/players/${id}/best-wins${queryString({ period })}`);
 }

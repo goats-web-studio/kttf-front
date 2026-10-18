@@ -1,38 +1,61 @@
-import type { PlayerTournamentMatchView, PlayerTournamentView } from '@kttf/shared/types';
+import type {
+  PlayerTournamentMatchView,
+  PlayerTournamentView,
+  TournamentLevel,
+} from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import { useTheme } from '@mui/material/styles';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableFooter from '@mui/material/TableFooter';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
-import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, formatDateTime, formatTime, useLocale, useT, type MessageKey } from '@/common/i18n';
 import { roundName } from '@/common/ui/bracket-model';
 import DeltaPill from '@/common/ui/delta-pill';
 import EmptyState from '@/common/ui/empty-state';
 import QueryState from '@/common/ui/query-state';
 import RankBadge from '@/common/ui/rank-badge';
+import RatingValue from '@/common/ui/rating-value';
 import { RowsSkeleton } from '@/common/ui/skeleton';
+import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 
-import { OpponentButton } from './player-summary';
+import { Minutes, OpponentButton, Score } from './match-cells';
+import { playerName } from './player-name';
 import { playerTournamentsQuery } from './queries';
 
 interface PlayerResultsProps {
   readonly playerId: string;
+  /** Как игрок назван в строке «Я ★400 · место»: «Я» на своём профиле, имя — на чужом. */
+  readonly playerLabel: string;
   readonly onSelectOpponent: (opponentId: string) => void;
 }
 
 /**
- * «Результаты» — по турнирам, как у RTTF, ADR-048.
+ * «Результаты» — по турнирам, как у RTTF (ADR-048, ADR-050).
  *
- * Карточка на турнир: дата, клуб, место, изменение рейтинга; внутри встречи
- * стадией, соперником и счётом. Плоский список встреч прятал главное — чем
- * турнир кончился: место приходилось искать на странице результатов.
+ * Карточка на турнир. Шапка: когда, какого уровня, где, сколько играло, с
+ * каким рейтингом игрок пришёл и каким местом кончил. Внутри — встречи
+ * таблицей: время, стадия, соперник с рейтингом на тот момент, счёт,
+ * изменение, минуты. Внизу итог: победы и поражения, сумма изменений,
+ * минуты за столом и рейтинг после.
+ *
+ * На телефоне встречи — карточками: семь колонок в 360px без
+ * горизонтального скролла не помещаются (07, 4).
  */
 export default function PlayerResults({
   playerId,
+  playerLabel,
   onSelectOpponent,
 }: PlayerResultsProps): ReactNode {
   const t = useT();
@@ -57,6 +80,7 @@ export default function PlayerResults({
                 <TournamentCard
                   key={item.tournament.id}
                   item={item}
+                  playerLabel={playerLabel}
                   onSelectOpponent={onSelectOpponent}
                 />
               ))}
@@ -78,69 +102,80 @@ export default function PlayerResults({
   );
 }
 
-function TournamentCard({
-  item,
-  onSelectOpponent,
-}: {
+interface CardProps {
   readonly item: PlayerTournamentView;
+  readonly playerLabel: string;
   readonly onSelectOpponent: (opponentId: string) => void;
-}): ReactNode {
+}
+
+function TournamentCard({ item, playerLabel, onSelectOpponent }: CardProps): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const theme = useTheme();
+  const wide = useMediaQuery(theme.breakpoints.up('md'), { noSsr: true });
+  const totals = totalsOf(item);
 
   return (
-    <Paper component="li" variant="outlined" sx={{ overflow: 'hidden' }}>
-      <Box
-        sx={{
-          px: { xs: 2, sm: 3 },
-          pt: { xs: 2, sm: 2.5 },
-          pb: 1.5,
-          display: 'grid',
-          gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 1fr) auto' },
-          gap: { xs: 1.5, sm: 3 },
-          alignItems: 'center',
-        }}
-      >
-        <Box sx={{ minWidth: 0 }}>
-          <Link
-            href={`/tournaments/${item.tournament.id}`}
-            color="inherit"
-            sx={{ typography: 'h3', display: 'block' }}
-          >
-            {item.tournament.name}
+    <Paper
+      component="li"
+      variant="outlined"
+      sx={{ overflow: 'hidden' }}
+      data-result={item.tournament.id}
+    >
+      <Box sx={{ px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 2.5 }, pb: 1.5 }}>
+        <Link
+          href={`/tournaments/${item.tournament.id}`}
+          color="inherit"
+          sx={{ typography: 'h3', display: 'block' }}
+        >
+          {item.tournament.name}
+        </Link>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+          {formatDateTime(item.tournament.startsAt, locale)}
+          {' · '}
+          {t(LEVEL[item.tournament.level])}
+          {' · '}
+          <Link href={`/clubs/${item.tournament.club.id}`} color="inherit">
+            {item.tournament.club.name}
           </Link>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-            {formatDate(item.tournament.startsAt, locale)} ·{' '}
-            <Link href={`/clubs/${item.tournament.club.id}`} color="inherit">
-              {item.tournament.club.name}
-            </Link>
-          </Typography>
-        </Box>
-
-        <Stack direction="row" spacing={2.5} sx={{ alignItems: 'center' }}>
-          <Place item={item} />
-          {item.delta !== null && (
-            <Box sx={{ textAlign: 'right' }}>
-              <DeltaPill value={item.delta} />
-              {item.ratingAfter !== null && (
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ display: 'block', mt: 0.25, fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {t('profile.results.ratingAfter')} {item.ratingAfter}
-                </Typography>
-              )}
-            </Box>
+          {item.participants > 0 && (
+            <>
+              {' · '}
+              {fill(t('profile.results.participants'), { count: String(item.participants) })}
+            </>
           )}
+        </Typography>
+
+        <Stack
+          direction="row"
+          useFlexGap
+          spacing={1}
+          sx={{ mt: 1.5, alignItems: 'center', flexWrap: 'wrap', typography: 'body2' }}
+          data-result-me
+        >
+          <Box component="span" sx={{ fontWeight: 600 }}>
+            {playerLabel}
+          </Box>
+          {item.ratingBefore !== null && (
+            <>
+              <RatingValue value={item.ratingBefore} sx={{ fontWeight: 600 }} />
+              <Box component="span" sx={{ color: 'text.secondary' }}>
+                {t('profile.results.atStart')}
+              </Box>
+            </>
+          )}
+          <Box component="span" aria-hidden sx={{ color: 'text.secondary' }}>
+            ·
+          </Box>
+          <Place item={item} />
         </Stack>
       </Box>
 
-      <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-        {item.matches.map((match) => (
-          <MatchRow key={match.matchId} match={match} onSelectOpponent={onSelectOpponent} />
-        ))}
-      </Box>
+      {wide ? (
+        <MatchTable item={item} totals={totals} onSelectOpponent={onSelectOpponent} />
+      ) : (
+        <MatchCards item={item} totals={totals} onSelectOpponent={onSelectOpponent} />
+      )}
     </Paper>
   );
 }
@@ -151,41 +186,236 @@ function Place({ item }: { readonly item: PlayerTournamentView }): ReactNode {
 
   if (item.place === null) {
     return (
-      <Typography variant="body2" color="text.secondary">
+      <Box component="span" sx={{ color: 'text.secondary' }}>
         {item.tournament.status === 'RUNNING'
           ? t('profile.results.running')
           : t('profile.results.noPlace')}
-      </Typography>
+      </Box>
     );
   }
 
   return (
-    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-      <Typography variant="body2" color="text.secondary">
+    <>
+      <Box component="span" sx={{ color: 'text.secondary' }}>
         {t('profile.results.place')}
-      </Typography>
+      </Box>
       {item.placeTo === null ? (
         <RankBadge rank={item.place} />
       ) : (
-        <Typography sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+        <Box component="span" sx={{ ...NUM, fontWeight: 600 }}>
           {item.place}–{item.placeTo}
-        </Typography>
+        </Box>
       )}
-      {item.participants > 0 && (
-        <Typography variant="body2" color="text.secondary">
-          {fill(t('profile.results.of'), { count: String(item.participants) })}
-        </Typography>
-      )}
-    </Stack>
+    </>
   );
 }
 
+interface Totals {
+  readonly wins: number;
+  readonly losses: number;
+  /** Сумма минут известных встреч; `null` — ни у одной длительности нет. */
+  readonly minutes: number | null;
+}
+
 /**
- * Встреча внутри турнира: стадия, соперник, счёт, изменение рейтинга.
- * Победитель — полужирный счёт, поражение приглушено (07, 3.4); исход ещё
- * и словом для чтеца экрана.
+ * Итог турнира из его встреч. Изменение рейтинга не складывается здесь:
+ * сумму дельт считает сервер (ADR-014) — она приходит полем турнира.
  */
-function MatchRow({
+function totalsOf(item: PlayerTournamentView): Totals {
+  const known = item.matches.flatMap((match) =>
+    match.durationMinutes === null ? [] : [match.durationMinutes],
+  );
+  const wins = item.matches.filter((match) => match.won).length;
+
+  return {
+    wins,
+    losses: item.matches.length - wins,
+    minutes: known.length === 0 ? null : known.reduce((sum, value) => sum + value, 0),
+  };
+}
+
+interface MatchesProps {
+  readonly item: PlayerTournamentView;
+  readonly totals: Totals;
+  readonly onSelectOpponent: (opponentId: string) => void;
+}
+
+function MatchTable({ item, totals, onSelectOpponent }: MatchesProps): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+
+  return (
+    <Table size="small" data-result-table>
+      <Box component="caption" sx={VISUALLY_HIDDEN}>
+        {t('profile.results.matches')}
+      </Box>
+      <TableHead>
+        <TableRow>
+          <TableCell sx={EDGE_START}>{t('profile.col.time')}</TableCell>
+          <TableCell>{t('profile.results.stage')}</TableCell>
+          <TableCell>{t('profile.col.opponent')}</TableCell>
+          <TableCell align="right">{t('profile.col.opponentRating')}</TableCell>
+          <TableCell align="right">{t('profile.col.score')}</TableCell>
+          <TableCell align="right">
+            <abbr title={t('profile.col.deltaFull')}>{t('profile.col.delta')}</abbr>
+          </TableCell>
+          <TableCell align="right" sx={EDGE_END}>
+            <abbr title={t('profile.col.durationFull')}>{t('profile.col.duration')}</abbr>
+          </TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {item.matches.map((match) => (
+          <TableRow key={match.matchId}>
+            <TableCell sx={{ ...EDGE_START, ...NUM, color: 'text.secondary' }}>
+              {match.startedAt === null ? '—' : formatTime(match.startedAt, locale)}
+            </TableCell>
+            <TableCell sx={{ color: 'text.secondary' }}>{stageLabel(match, t)}</TableCell>
+            <TableCell>
+              <Opponent match={match} onSelectOpponent={onSelectOpponent} />
+            </TableCell>
+            <TableCell align="right">
+              {match.opponentRating === null ? '—' : <RatingValue value={match.opponentRating} />}
+            </TableCell>
+            <TableCell align="right">
+              <Score setsFor={match.setsFor} setsAgainst={match.setsAgainst} won={match.won} />
+            </TableCell>
+            <TableCell align="right">
+              {match.delta !== null && <DeltaPill value={match.delta} />}
+            </TableCell>
+            <TableCell align="right" sx={{ ...EDGE_END, ...NUM, color: 'text.secondary' }}>
+              <Minutes value={match.durationMinutes} />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+      <TableFooter data-result-total>
+        <TableRow
+          sx={{
+            bgcolor: 'var(--paper-sunken)',
+            '& td': { borderBottom: 0, color: 'text.primary', fontSize: 'inherit' },
+          }}
+        >
+          <TableCell sx={{ ...EDGE_START, fontWeight: 600 }}>
+            {t('profile.results.total')}
+          </TableCell>
+          <TableCell colSpan={3}>
+            <Box
+              sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}
+            >
+              <span>{record(totals, t)}</span>
+              {item.ratingAfter !== null && (
+                <span>
+                  {t('profile.results.ratingAfter')}{' '}
+                  <RatingValue value={item.ratingAfter} sx={{ fontWeight: 700 }} />
+                </span>
+              )}
+            </Box>
+          </TableCell>
+          <TableCell />
+          <TableCell align="right">
+            {item.delta !== null && <DeltaPill value={item.delta} />}
+          </TableCell>
+          <TableCell align="right" sx={{ ...EDGE_END, ...NUM, fontWeight: 600 }}>
+            <Minutes value={totals.minutes} />
+          </TableCell>
+        </TableRow>
+      </TableFooter>
+    </Table>
+  );
+}
+
+/** Телефон: соперник и счёт крупно, стадия, время и минуты подписью (07, 4). */
+function MatchCards({ item, totals, onSelectOpponent }: MatchesProps): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+
+  return (
+    <>
+      <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }} data-result-cards>
+        {item.matches.map((match) => (
+          <Box
+            key={match.matchId}
+            component="li"
+            sx={{
+              px: 2,
+              py: 1.25,
+              borderTop: 1,
+              borderColor: 'divider',
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1fr) auto',
+              columnGap: 2,
+              rowGap: 0.25,
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="body2" color="text.secondary" noWrap>
+              {stageLabel(match, t)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={NUM}>
+              {match.startedAt === null ? null : formatTime(match.startedAt, locale)}
+              {match.startedAt !== null && match.durationMinutes !== null && ' · '}
+              {match.durationMinutes === null ? null : (
+                <Minutes value={match.durationMinutes} withUnit />
+              )}
+            </Typography>
+            <Box sx={{ minWidth: 0 }}>
+              <Opponent match={match} onSelectOpponent={onSelectOpponent} />
+              {match.opponentRating !== null && (
+                <>
+                  {' '}
+                  <RatingValue
+                    value={match.opponentRating}
+                    sx={{ typography: 'body2', color: 'text.secondary' }}
+                  />
+                </>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Score setsFor={match.setsFor} setsAgainst={match.setsAgainst} won={match.won} />
+              {match.delta !== null && <DeltaPill value={match.delta} />}
+            </Box>
+          </Box>
+        ))}
+      </Box>
+      <Box
+        data-result-total
+        sx={{
+          px: 2,
+          py: 1.5,
+          bgcolor: 'var(--paper-sunken)',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) auto',
+          columnGap: 2,
+          rowGap: 0.5,
+          alignItems: 'center',
+          typography: 'body2',
+        }}
+      >
+        <Box sx={{ fontWeight: 600 }}>{t('profile.results.total')}</Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {totals.minutes !== null && (
+            <Box component="span" sx={{ ...NUM, color: 'text.secondary' }}>
+              <Minutes value={totals.minutes} withUnit />
+            </Box>
+          )}
+          {item.delta !== null && <DeltaPill value={item.delta} />}
+        </Box>
+        <Box sx={{ color: 'text.secondary' }}>{record(totals, t)}</Box>
+        {item.ratingAfter !== null && (
+          <Box component="span" sx={{ textAlign: 'right' }}>
+            <Box component="span" sx={{ color: 'text.secondary' }}>
+              {t('profile.results.ratingAfter')}
+            </Box>{' '}
+            <RatingValue value={item.ratingAfter} sx={{ fontWeight: 700 }} />
+          </Box>
+        )}
+      </Box>
+    </>
+  );
+}
+
+function Opponent({
   match,
   onSelectOpponent,
 }: {
@@ -195,61 +425,29 @@ function MatchRow({
   const t = useT();
   const opponent = match.opponent;
 
+  if (opponent === null) {
+    return (
+      <Box component="span" sx={{ color: 'text.secondary' }}>
+        {t('player.matches.noOpponent')}
+      </Box>
+    );
+  }
+
   return (
-    <Box
-      component="li"
-      sx={{
-        px: { xs: 2, sm: 3 },
-        py: 1.25,
-        borderTop: 1,
-        borderColor: 'divider',
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: 'minmax(0, 1fr) auto',
-          sm: 'minmax(140px, 220px) minmax(0, 1fr) auto auto',
-        },
-        columnGap: 2,
-        rowGap: 0.25,
-        alignItems: 'center',
+    <OpponentButton
+      name={playerName(opponent)}
+      onClick={() => {
+        onSelectOpponent(opponent.id);
       }}
-    >
-      <Typography
-        variant="body2"
-        color="text.secondary"
-        noWrap
-        sx={{ gridColumn: { xs: '1 / -1', sm: 'auto' } }}
-      >
-        {stageLabel(match, t)}
-      </Typography>
-      <Box sx={{ minWidth: 0 }}>
-        {opponent === null ? (
-          <Typography variant="body2" color="text.secondary">
-            {t('player.matches.noOpponent')}
-          </Typography>
-        ) : (
-          <OpponentButton
-            name={`${opponent.lastName} ${opponent.firstName}`}
-            onClick={() => {
-              onSelectOpponent(opponent.id);
-            }}
-          />
-        )}
-      </Box>
-      <Typography
-        aria-label={`${t(match.won ? 'player.matches.won' : 'player.matches.lost')} ${String(match.setsFor)}:${String(match.setsAgainst)}`}
-        sx={{
-          fontVariantNumeric: 'tabular-nums',
-          fontWeight: match.won ? 700 : 400,
-          color: match.won ? 'text.primary' : 'text.secondary',
-        }}
-      >
-        {match.setsFor}:{match.setsAgainst}
-      </Typography>
-      <Box sx={{ display: { xs: 'none', sm: 'block' }, minWidth: 64, textAlign: 'right' }}>
-        {match.delta !== null && <DeltaPill value={match.delta} />}
-      </Box>
-    </Box>
+    />
   );
+}
+
+function record(totals: Totals, t: (key: MessageKey) => string): string {
+  return fill(t('profile.results.record'), {
+    wins: String(totals.wins),
+    losses: String(totals.losses),
+  });
 }
 
 /** «Финал · Плей-офф», «Групповой этап · гр. 2», «Матч за 3-е место · Плей-офф». */
@@ -264,3 +462,17 @@ function stageLabel(match: PlayerTournamentMatchView, t: (key: MessageKey) => st
 
   return match.groupLabel === null ? match.stageName : `${match.stageName} · ${match.groupLabel}`;
 }
+
+/**
+ * Уровень турнира словом. Своя карта, а не из `features/tournaments`: фичи
+ * друг друга не импортируют (07, 11), а ключи словаря те же.
+ */
+const LEVEL: Readonly<Record<TournamentLevel, MessageKey>> = {
+  CLUB: 'tournament.level.CLUB',
+  REGIONAL: 'tournament.level.REGIONAL',
+  NATIONAL: 'tournament.level.NATIONAL',
+};
+
+const NUM = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' } as const;
+const EDGE_START = { pl: 3 } as const;
+const EDGE_END = { pr: 3 } as const;

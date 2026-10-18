@@ -696,4 +696,6 @@ export const PLAYER_PROFILE: PlayerProfileView = {
   bio: null,
   coachPlayerId: null,
   coachName: null,
+  lastSeenAt: null,
+  online: false,
 };

@@ -7,8 +7,9 @@ import Typography from '@mui/material/Typography';
 import { Building2, Cake, MapPin, Pencil, Settings, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import PlayerAvatar from '@/common/ui/player-avatar';
+import RatingValue from '@/common/ui/rating-value';
 
 import { gripLabel, handLabel } from './player-labels';
 import { playerName } from './player-name';
@@ -49,7 +50,7 @@ export default function ProfileHeader({
     ['player.form.rubberBackhand', player.rubberBackhand],
     ['player.form.coach', player.coachName],
     ['player.form.bio', player.bio],
-    ['profile.since', formatDate(player.createdAt, locale)],
+    ['profile.since', since(player, locale, t)],
   ];
 
   return (
@@ -74,12 +75,20 @@ export default function ProfileHeader({
             size="xl"
           />
           <Box sx={{ minWidth: 0 }}>
-            <Typography
-              variant="h1"
-              sx={{ fontSize: { xs: 26, sm: 34 }, lineHeight: { xs: '30px', sm: '40px' } }}
+            <Stack
+              direction="row"
+              useFlexGap
+              spacing={1.5}
+              sx={{ alignItems: 'center', flexWrap: 'wrap' }}
             >
-              {playerName(player)}
-            </Typography>
+              <Typography
+                variant="h1"
+                sx={{ fontSize: { xs: 26, sm: 34 }, lineHeight: { xs: '30px', sm: '40px' } }}
+              >
+                {playerName(player)}
+              </Typography>
+              {player.online && <Online />}
+            </Stack>
             <Stack
               direction="row"
               useFlexGap
@@ -149,19 +158,12 @@ export default function ProfileHeader({
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
           {t('ratings.column.rating')}
         </Typography>
-        <Typography
-          variant="h1"
-          component="p"
-          sx={{ fontSize: 48, lineHeight: '52px', fontVariantNumeric: 'tabular-nums' }}
-        >
-          {player.rating}
+        <Typography variant="h1" component="p" sx={{ fontSize: 48, lineHeight: '52px' }}>
+          <RatingValue value={player.rating} />
         </Typography>
         {maxRating !== null && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {t('profile.maxRating')}{' '}
-            <Box component="span" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-              {maxRating}
-            </Box>
+            {t('profile.maxRating')} <RatingValue value={maxRating} sx={{ fontWeight: 600 }} />
           </Typography>
         )}
         <Typography variant="body2" color="text.secondary">
@@ -177,6 +179,58 @@ export default function ProfileHeader({
         </Typography>
       </Box>
     </Paper>
+  );
+}
+
+/**
+ * «На сайте с 12 марта 2025 (последнее посещение: 18 октября)». Посещение —
+ * только у игрока с аккаунтом: у заведённого организатором его нет (ADR-050).
+ */
+function since(
+  player: PlayerProfileView,
+  locale: ReturnType<typeof useLocale>,
+  t: (key: MessageKey) => string,
+): string {
+  const joined = formatDate(player.createdAt, locale);
+
+  return player.lastSeenAt === null
+    ? joined
+    : `${joined} ${fill(t('profile.lastSeen'), { date: formatDate(player.lastSeenAt, locale) })}`;
+}
+
+/**
+ * «В сети» — зелёная точка и слово: цвет не единственный носитель (07, 9).
+ * `--ok` на белом даёт 5.35:1, слово читается и без точки.
+ */
+function Online(): ReactNode {
+  const t = useT();
+
+  return (
+    <Box
+      component="span"
+      data-online
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.75,
+        typography: 'body2',
+        fontWeight: 600,
+        color: 'var(--ok)',
+      }}
+    >
+      <Box
+        component="span"
+        aria-hidden
+        sx={{
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          bgcolor: 'var(--ok)',
+          boxShadow: '0 0 0 3px var(--ok-50)',
+        }}
+      />
+      {t('profile.online')}
+    </Box>
   );
 }
 

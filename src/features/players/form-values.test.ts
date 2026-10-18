@@ -36,6 +36,8 @@ const profile: PlayerProfileView = {
   bio: 'hate tensor, love sticky',
   coachPlayerId: null,
   coachName: 'Сериков Тимур',
+  lastSeenAt: null,
+  online: false,
   birthYearOnly: true,
 };
 

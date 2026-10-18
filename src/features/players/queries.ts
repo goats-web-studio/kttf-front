@@ -4,6 +4,7 @@ import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import {
   fetchHeadToHead,
   fetchPlayer,
+  fetchPlayerBestWins,
   fetchPlayerMatches,
   fetchPlayerSummary,
   fetchPlayerTournaments,
@@ -26,6 +27,8 @@ export const playerKeys = {
   headToHead: (id: string, opponentId: string) =>
     ['players', 'head-to-head', id, opponentId] as const,
   summary: (id: string, period: PlayerStatsPeriod) => ['players', 'summary', id, period] as const,
+  bestWins: (id: string, period: PlayerStatsPeriod) =>
+    ['players', 'best-wins', id, period] as const,
   tournaments: (id: string) => ['players', 'tournaments', id] as const,
 };
 
@@ -84,6 +87,14 @@ export function playerSummaryQuery(id: string, period: PlayerStatsPeriod) {
   return queryOptions({
     queryKey: playerKeys.summary(id, period),
     queryFn: () => fetchPlayerSummary(id, period),
+  });
+}
+
+/** Лучшие победы за период — ADR-050. */
+export function playerBestWinsQuery(id: string, period: PlayerStatsPeriod) {
+  return queryOptions({
+    queryKey: playerKeys.bestWins(id, period),
+    queryFn: () => fetchPlayerBestWins(id, period),
   });
 }
 
