@@ -42,9 +42,6 @@ export const Route = createFileRoute('/_public/')({
   component: HomePage,
 });
 
-/** Внешний канал федерации — тот же, что в подвале. */
-const INSTAGRAM = 'https://www.instagram.com/kttf.kz';
-
 /** Сколько карточек турниров в блоке. Полный список — в календаре. */
 const CARDS = 4;
 
@@ -360,7 +357,9 @@ function ClubsCallout(): ReactNode {
           </Box>
         ))}
       </Box>
-      <Button href={INSTAGRAM} target="_blank" rel="noreferrer" sx={{ mt: 3, minHeight: 44 }}>
+      {/* Заявка клуба — своей страницей с формой (ADR-047): раньше кнопка
+          уводила в Instagram, и заявка терялась в личных сообщениях. */}
+      <Button href="/feedback" sx={{ mt: 3, minHeight: 44 }}>
         {t('home.clubs.action')}
       </Button>
     </Paper>

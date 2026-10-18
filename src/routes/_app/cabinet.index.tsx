@@ -12,13 +12,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 
-import { formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import Surface from '@/common/ui/surface';
 import AccountForm from '@/features/auth/account-form';
 import PasswordForm from '@/features/auth/password-form';
 import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
+import { newClubApplicationsCountQuery } from '@/features/club-applications/queries';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import RoleName from '@/features/clubs/role-name';
 import { usePlaceName } from '@/features/places/place-name';
@@ -328,12 +329,22 @@ function gripLabel(value: string | null, t: (key: MessageKey) => string): string
  */
 function Admin(): ReactNode {
   const t = useT();
+  // Число новых заявок прямо на кнопке: администратор видит, что есть
+  // работа, не открывая раздел (ADR-047).
+  const fresh = useQuery(newClubApplicationsCountQuery).data ?? 0;
 
   return (
     <Surface title={t('cabinet.admin.title')} subtitle={t('cabinet.admin.lead')}>
-      <Button href="/cabinet/places" sx={TOUCH}>
-        {t('page.places.title')}
-      </Button>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <Button href="/cabinet/applications" sx={TOUCH}>
+          {fresh > 0
+            ? fill(t('cabinet.admin.applicationsNew'), { count: String(fresh) })
+            : t('cabinet.admin.applications')}
+        </Button>
+        <Button href="/cabinet/places" sx={TOUCH}>
+          {t('page.places.title')}
+        </Button>
+      </Box>
     </Surface>
   );
 }
