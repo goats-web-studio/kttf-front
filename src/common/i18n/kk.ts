@@ -131,6 +131,8 @@ export const kk: Record<MessageKey, string> = {
   'apply.field.tournaments': 'Сізде турнирлер өте ме',
   'apply.hint.tournaments': 'Егер иә болса — қандай, қаншалықты жиі және қанша қатысушы',
   'apply.field.message': 'Зал туралы немесе сұрағыңыз',
+  'apply.hint.message':
+    'Филиал немесе екінші клуб болса — сайттағы қай клуб сіздікі екенін көрсетіңіз',
   'apply.submit': 'Өтінім жіберу',
   'apply.sent.title': 'Өтінім жіберілді',
   'apply.sent.text': 'Көрсетілген телефон немесе пошта арқылы сізбен байланысамыз.',
@@ -241,14 +243,22 @@ export const kk: Record<MessageKey, string> = {
   'clubs.notFound.title': 'Клубтар табылмады',
   'clubs.notFound.text': 'Басқа атауды немесе басқа қаланы көріңіз.',
   'clubs.emptyState.title': 'Әзірге клубтар жоқ',
-  'clubs.emptyState.text': 'Өз клубыңызды құрып, онда рейтингтік турнирлер өткізіңіз.',
+  'clubs.emptyState.text':
+    'Клубтарды федерация өтінім бойынша ашады. Өтінім қалдырыңыз — және клубыңызда рейтингтік турнирлер өткізіңіз.',
   'clubs.apply': 'Клубқа өтінім беру',
+  'myClubs.more.title': 'Екінші клуб немесе филиал',
+  'myClubs.more.text':
+    'Жаңа клуб, тіпті сіздің клубыңыздың филиалы да, тек өтінім бойынша ашылады: федерация залды тексеріп, сізді иесі етеді. Жаңа өтінім беріңіз және «Зал туралы немесе сұрағыңыз» өрісінде бұл екінші клуб не филиал екенін және сайттағы клубыңыздың атауын көрсетіңіз.',
   'clubs.new.byApplication.title': 'Клубты федерация ашады',
   'clubs.new.byApplication.text':
     'Өтінім қалдырыңыз — әкімші залды тексеріп, клуб ашады және сізді иесі етеді.',
+  'clubs.new.fromApplicationOnly.title': 'Клуб өтінім бойынша ашылады',
+  'clubs.new.fromApplicationOnly.text':
+    'Клуб өтінімін ашып, «Клуб ашу» батырмасын басыңыз: пішін өтінім бойынша толтырылады, ал өтінім жабылады.',
   'clubs.new.adminLead':
     'Сіз клубтың иесі боласыз. Құрғаннан кейін «Ұйымдастырушылар» қойындысында зал өкілін иесі етіп қосыңыз.',
-  'clubs.new.fromApplication': 'Пішін «{club}» өтінімі бойынша толтырылды. Қаланы анықтамалықтан таңдаңыз.',
+  'clubs.new.fromApplication':
+    'Пішін «{club}» өтінімі бойынша толтырылды. Қаланы анықтамалықтан таңдаңыз.',
   'applications.createClub': 'Клуб ашу',
   'myClubs.empty.title': 'Сізде әзірге клуб жоқ',
   'myClubs.empty.text':
@@ -705,7 +715,7 @@ export const kk: Record<MessageKey, string> = {
   // Турнир құру — ТЗ 4.2, схема редакторы — ТЗ 5.2
   'page.newTournament.title': 'Жаңа турнир',
   'tournament.form.create': 'Турнир құру',
-  'tournament.form.noClubs': 'Турнирді клуб ұйымдастырушысы құрады. Сіз бірде-бір клубта жоқсыз —',
+  'tournament.form.noClubs': 'Турнирді клуб ұйымдастырушысы құрады. Сіз бірде-бір клубта жоқсыз.',
   'tournament.form.name': 'Атауы',
   'tournament.form.club': 'Клуб',
   'tournament.form.startsAt': 'Басталуы',

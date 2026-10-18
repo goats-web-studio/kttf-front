@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CardActionArea from '@mui/material/CardActionArea';
 import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
@@ -26,9 +27,10 @@ export const Route = createFileRoute('/_app/cabinet/clubs/')({
  * Мои клубы — вход в рабочее место организатора.
  *
  * Отсюда клуб открывается на управление: турниры клуба по стадиям, данные
- * клуба и состав. Новый клуб заводит администратор платформы по заявке
- * (ADR-049): остальным здесь — «Подать заявку на клуб», ведущая на форму
- * «Напишите нам». Судья видит клуб в списке, но ведёт его на
+ * клуба и состав. Новый клуб заводит администратор платформы из заявки
+ * (ADR-049), ему здесь — ссылка на заявки; остальным — «Подать заявку на клуб», ведущая на форму
+ * «Напишите нам». У кого клуб уже есть, под списком объяснено, что второй
+ * клуб или филиал — тоже новой заявкой. Судья видит клуб в списке, но ведёт его на
  * публичную страницу: управлять клубом его роль не даёт (ADR-014).
  */
 function MyClubsPage(): ReactNode {
@@ -38,10 +40,11 @@ function MyClubsPage(): ReactNode {
   const clubs = useQuery(clubDirectoryQuery);
   const roles = user?.clubRoles ?? [];
   const isAdmin = user?.isAdmin === true;
-  // Администратор заводит клуб сам, остальные — заявкой (ADR-049).
+  // Клуб заводится только из заявки (ADR-049): администратор — разбирая
+  // заявки, остальные — подавая её.
   const newClub = (
-    <Button variant="contained" href={isAdmin ? '/cabinet/clubs/new' : '/feedback'}>
-      {t(isAdmin ? 'club.create' : 'clubs.apply')}
+    <Button variant="contained" href={isAdmin ? '/cabinet/applications' : '/feedback'}>
+      {t(isAdmin ? 'page.applications.title' : 'clubs.apply')}
     </Button>
   );
 
@@ -54,7 +57,7 @@ function MyClubsPage(): ReactNode {
         sx={{ flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}
       >
         <Typography variant="h1">{t('nav.myClubs')}</Typography>
-        {roles.length > 0 && newClub}
+        {roles.length > 0 && isAdmin && newClub}
       </Stack>
 
       <Box sx={{ mt: 3 }}>
@@ -121,6 +124,25 @@ function MyClubsPage(): ReactNode {
           </QueryState>
         )}
       </Box>
+
+      {/* Второй клуб или филиал владелец не заводит сам — та же заявка,
+          что и первый (ADR-049). */}
+      {roles.length > 0 && !isAdmin && (
+        <Paper
+          variant="outlined"
+          component="aside"
+          aria-labelledby="my-clubs-more"
+          sx={{ mt: 4, p: { xs: 3, sm: 4 } }}
+        >
+          <Typography id="my-clubs-more" variant="h3" component="h2">
+            {t('myClubs.more.title')}
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 1, maxWidth: '68ch' }}>
+            {t('myClubs.more.text')}
+          </Typography>
+          <Box sx={{ mt: 2 }}>{newClub}</Box>
+        </Paper>
+      )}
     </Container>
   );
 }

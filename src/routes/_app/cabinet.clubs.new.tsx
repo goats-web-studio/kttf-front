@@ -48,10 +48,14 @@ export const Route = createFileRoute('/_app/cabinet/clubs/new')({
  * владельцем представителя зала.
  *
  * Остальным страница объясняет, как получить клуб, и ведёт на заявку.
+ * Администратору форма открывается только с заявкой: клуб без заявки —
+ * клуб без проверки.
  */
 function NewClubPage(): ReactNode {
   const t = useT();
   const user = useSessionStore((state) => state.user);
+  const search = Route.useSearch();
+  const isAdmin = user?.isAdmin === true;
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
@@ -60,8 +64,20 @@ function NewClubPage(): ReactNode {
         {t('page.newClub.title')}
       </Typography>
 
-      {user?.isAdmin === true ? (
+      {isAdmin && search.application !== undefined ? (
         <AdminForm />
+      ) : isAdmin ? (
+        <Box sx={{ mt: 3 }}>
+          <EmptyState
+            title={t('clubs.new.fromApplicationOnly.title')}
+            text={t('clubs.new.fromApplicationOnly.text')}
+            action={
+              <Button variant="contained" href="/cabinet/applications">
+                {t('page.applications.title')}
+              </Button>
+            }
+          />
+        </Box>
       ) : (
         <Box sx={{ mt: 3 }}>
           <EmptyState

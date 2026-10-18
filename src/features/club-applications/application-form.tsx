@@ -140,7 +140,7 @@ export default function ApplicationForm({
         minRows={3}
         sx={{ mt: 2 }}
         {...register('message')}
-        {...hint(t, undefined)}
+        {...hint(t, undefined, undefined, t('apply.hint.message'))}
       />
 
       <Box aria-hidden sx={TRAP}>

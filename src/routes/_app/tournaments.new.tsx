@@ -67,10 +67,9 @@ function NewTournamentPage(): ReactNode {
 
       {clubIds.length === 0 ? (
         // Клуб-хозяин обязателен (ТЗ 4.2). Показывать форму, которую сервер
-        // отвергнет, — ложное обещание.
+        // отвергнет, — ложное обещание. Клуб — только по заявке (ADR-049).
         <Typography color="text.secondary" sx={{ mt: 3 }}>
-          {t('tournament.form.noClubs')}{' '}
-          <Link href="/cabinet/clubs/new">{t('club.create')}</Link>
+          {t('tournament.form.noClubs')} <Link href="/feedback">{t('clubs.apply')}</Link>
         </Typography>
       ) : (
         <TournamentForm

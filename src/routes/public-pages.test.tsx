@@ -323,6 +323,16 @@ describe('клубы', () => {
     expect(links[0]?.getAttribute('href')).toBe('/clubs');
   });
 
+  it('клуб не заводится со списка — только заявкой', async () => {
+    // Клуб заводит администратор по заявке «Напишите нам» — ADR-049.
+    renderAt('/clubs');
+
+    const apply = await screen.findByRole('link', { name: ru['clubs.apply'] });
+
+    expect(apply.getAttribute('href')).toBe('/feedback');
+    expect(screen.queryByRole('link', { name: ru['club.create'] })).toBeNull();
+  });
+
   it('список ведёт на страницу клуба', async () => {
     renderAt('/clubs');
 

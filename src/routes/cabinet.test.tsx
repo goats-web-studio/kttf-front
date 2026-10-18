@@ -560,3 +560,33 @@ describe('справочник в кабинете', () => {
     expect(screen.queryByRole('link', { name: ru['page.places.title'] })).toBeNull();
   });
 });
+
+/** Клуб — только по заявке, и второй тоже — ADR-049. */
+describe('мои клубы у владельца', () => {
+  it('второй клуб или филиал — новой заявкой, а не своей кнопкой', async () => {
+    renderAt('/cabinet/clubs', USER_WITH_PROFILE);
+
+    expect(await screen.findByRole('heading', { name: ru['myClubs.more.title'] })).toBeDefined();
+    const apply = screen.getAllByRole('link', { name: ru['clubs.apply'] });
+
+    expect(apply.map((link) => link.getAttribute('href'))).toEqual(['/feedback']);
+    expect(screen.queryByRole('link', { name: ru['club.create'] })).toBeNull();
+  });
+
+  it('администратору — заявки клубов, а не создание клуба', async () => {
+    renderAt('/cabinet/clubs', { ...ADMIN_USER, clubRoles: USER_WITH_PROFILE.clubRoles });
+
+    const applications = await screen.findByRole('link', { name: ru['page.applications.title'] });
+
+    expect(applications.getAttribute('href')).toBe('/cabinet/applications');
+    expect(screen.queryByRole('link', { name: ru['club.create'] })).toBeNull();
+    expect(screen.queryByRole('heading', { name: ru['myClubs.more.title'] })).toBeNull();
+  });
+
+  it('администратору форма нового клуба без заявки не открывается', async () => {
+    renderAt('/cabinet/clubs/new', ADMIN_USER);
+
+    expect(await screen.findByText(ru['clubs.new.fromApplicationOnly.title'])).toBeDefined();
+    expect(screen.queryByRole('button', { name: ru['club.create'] })).toBeNull();
+  });
+});

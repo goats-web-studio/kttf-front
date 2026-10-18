@@ -71,6 +71,11 @@ function ClubsPage(): ReactNode {
     [filter],
   );
   const cityLabel = useCityLabel();
+  // Клуб заводится только из заявки «Напишите нам» (ADR-049): со списка
+  // его не создать. Форма заявки открыта и гостю — представитель зала ещё
+  // не пользователь; администратору она ни к чему, он заявки разбирает.
+  const newClub =
+    user?.isAdmin === true ? null : <Button href="/feedback">{t('clubs.apply')}</Button>;
 
   const active: ActiveFilter[] = [];
   if (search.q !== undefined) {
@@ -108,9 +113,7 @@ function ClubsPage(): ReactNode {
         sx={{ flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}
       >
         <Typography variant="h1">{t('page.clubs.title')}</Typography>
-        {/* Клуб заводит любой вошедший — ОВ-13. Гостю кнопка ведёт ко входу
-            через охрану кабинета и возвращает сюда же. */}
-        {user !== null && <Button href="/cabinet/clubs/new">{t('club.create')}</Button>}
+        {newClub}
       </Stack>
 
       <Box
@@ -162,7 +165,7 @@ function ClubsPage(): ReactNode {
             <EmptyState
               title={t('clubs.emptyState.title')}
               text={t('clubs.emptyState.text')}
-              action={<Button href="/cabinet/clubs/new">{t('club.create')}</Button>}
+              action={newClub}
             />
           )}
         </QueryState>
