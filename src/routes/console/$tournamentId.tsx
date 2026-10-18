@@ -370,7 +370,13 @@ function ConsoleScreen(): ReactNode {
                   <Tab value="played" label={t('console.played.title')} />
                 </Tabs>
 
-                <Box sx={{ mt: 2.5, display: 'grid', gap: 3 }}>
+                <Box
+                  // Новый ключ на каждую вкладку — панель монтируется заново и
+                  // проявляется (styles.css, .tab-panel-in).
+                  key={lower}
+                  className="tab-panel-in"
+                  sx={{ mt: 2.5, display: 'grid', gap: 3 }}
+                >
                   {lower === 'standings' ? (
                     <>
                       <TiePanel

@@ -177,6 +177,8 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
       </Tabs>
 
       <Box
+        key={tab}
+        className="tab-panel-in"
         role="tabpanel"
         id={`${id}-panel`}
         aria-labelledby={`${id}-tab-${tab}`}

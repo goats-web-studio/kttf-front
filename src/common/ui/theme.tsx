@@ -281,7 +281,22 @@ function build(tokens: Tokens, locale: Locale): Theme {
                   maxWidth: '100%',
                 }
               : {},
-            indicator: light ? { display: 'none' } : {},
+            // «Таблетка» выбранной вкладки — это индикатор MUI: он сам едет
+            // от вкладки к вкладке, и переключение читается движением, а не
+            // скачком. Анимируются только left и width самого индикатора —
+            // раскладка вокруг не пересчитывается.
+            indicator: light
+              ? {
+                  top: 0,
+                  bottom: 'auto',
+                  height: '100%',
+                  borderRadius: 10,
+                  backgroundColor: tokens.paper,
+                  boxShadow: '0 1px 2px rgb(31 31 29 / 0.08), 0 1px 6px rgb(31 31 29 / 0.06)',
+                  zIndex: 0,
+                  transition: 'left var(--dur-base) var(--ease), width var(--dur-base) var(--ease)',
+                }
+              : {},
             list: light ? { gap: 4 } : {},
           },
         },
@@ -296,14 +311,14 @@ function build(tokens: Tokens, locale: Locale): Theme {
                   fontWeight: 600,
                   textTransform: 'none',
                   color: tokens.ink700,
-                  transition:
-                    'background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease)',
+                  // Текст над едущей «таблеткой» индикатора.
+                  position: 'relative',
+                  zIndex: 1,
+                  transition: 'color var(--dur-base) var(--ease)',
                   '&:hover': { color: tokens.ink900 },
-                  '&.Mui-selected': {
-                    color: tokens.ink900,
-                    backgroundColor: tokens.paper,
-                    boxShadow: '0 1px 2px rgb(31 31 29 / 0.08), 0 1px 6px rgb(31 31 29 / 0.06)',
-                  },
+                  '&.Mui-selected': { color: tokens.ink900 },
+                  // Обводка фокуса внутри пилюли: снаружи она резала дорожку.
+                  '&.Mui-focusVisible': { outlineOffset: -2 },
                 }
               : {},
           },

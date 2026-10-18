@@ -340,3 +340,21 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Смена содержимого вкладки: короткое проявление со сдвигом на 4px. Только
+ * opacity и transform — раскладка не пересчитывается. Глобальный блок
+ * prefers-reduced-motion выше гасит и эту анимацию. */
+@keyframes kttf-tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tab-panel-in {
+  animation: kttf-tab-in var(--dur-base) var(--ease) both;
+}

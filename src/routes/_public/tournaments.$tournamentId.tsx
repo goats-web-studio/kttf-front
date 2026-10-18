@@ -261,6 +261,8 @@ function ResultTabs({ data, names, participants }: ResultTabsProps): ReactNode {
         ))}
       </Tabs>
       <Box
+        key={current}
+        className="tab-panel-in"
         role="tabpanel"
         id={`${id}-panel`}
         aria-labelledby={`${id}-tab-${current}`}
