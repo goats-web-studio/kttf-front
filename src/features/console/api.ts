@@ -3,6 +3,7 @@ import type {
   Page,
   SyncRequest,
   SyncResult,
+  TournamentResultsView,
   TournamentSnapshotView,
   TournamentView,
 } from '@kttf/shared/types';
@@ -46,4 +47,14 @@ export function listTournaments(query: ListTournamentsQuery): Promise<Page<Tourn
  */
 export function finishTournament(tournamentId: string): Promise<TournamentView> {
   return apiRequest<TournamentView>(`/tournaments/${tournamentId}/finish`, { method: 'POST' });
+}
+
+/**
+ * Итоговые места — проверка перед завершением и призёры после него.
+ *
+ * Места считает сервер (ADR-023): второе понимание того, кто выше, в консоли
+ * разошлось бы с публичной страницей результатов при первой же делёжке мест.
+ */
+export function fetchResults(tournamentId: string): Promise<TournamentResultsView> {
+  return apiRequest<TournamentResultsView>(`/tournaments/${tournamentId}/results`);
 }

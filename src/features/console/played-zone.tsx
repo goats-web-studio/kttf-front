@@ -16,7 +16,8 @@ interface PlayedZoneProps {
   readonly matches: readonly MatchView[];
   readonly stages: readonly StageView[];
   readonly names: ReadonlyMap<string, string>;
-  readonly onOpen: (matchId: string) => void;
+  /** Без обработчика строки только показывают счёт: турнир завершён, править нечего. */
+  readonly onOpen?: ((matchId: string) => void) | undefined;
 }
 
 /**
@@ -52,8 +53,9 @@ export default function PlayedZone({ matches, stages, names, onOpen }: PlayedZon
               sx={{ borderTop: index === 0 ? 0 : 1, borderColor: 'divider' }}
             >
               <ButtonBase
+                disabled={onOpen === undefined}
                 onClick={() => {
-                  onOpen(match.id);
+                  onOpen?.(match.id);
                 }}
                 sx={{
                   display: 'block',

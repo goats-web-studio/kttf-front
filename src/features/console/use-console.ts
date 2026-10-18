@@ -6,7 +6,7 @@ import type {
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 
-import { finishTournament } from './api';
+import { fetchResults, finishTournament } from './api';
 import type { OutboxItem } from './db';
 import { applyOperation } from './offline-state';
 import { enqueue, forget, newOperation, pending, rejectedItems, type NewOperation } from './outbox';
@@ -16,6 +16,8 @@ export const consoleKeys = {
   state: (tournamentId: string) => ['console', 'state', tournamentId] as const,
   queue: (tournamentId: string) => ['console', 'queue', tournamentId] as const,
   running: ['console', 'running'] as const,
+  finished: ['console', 'finished'] as const,
+  results: (tournamentId: string) => ['console', 'results', tournamentId] as const,
 };
 
 /** Как часто консоль отправляет очередь при наличии сети — ТС 6.3. */
@@ -36,6 +38,20 @@ export function consoleStateQuery(tournamentId: string) {
     queryKey: consoleKeys.state(tournamentId),
     queryFn: () => loadState(tournamentId),
     staleTime: Infinity,
+  });
+}
+
+/**
+ * Итоговые места турнира — ТЗ 9.4.
+ *
+ * Без кэша: перед завершением судья обязан видеть места по последнему
+ * введённому счёту, а после — уже по закрытому турниру.
+ */
+export function consoleResultsQuery(tournamentId: string) {
+  return queryOptions({
+    queryKey: consoleKeys.results(tournamentId),
+    queryFn: () => fetchResults(tournamentId),
+    staleTime: 0,
   });
 }
 
@@ -167,9 +183,21 @@ export function useConsole(tournamentId: string) {
 
   const finish = useMutation({
     mutationFn: () => finishTournament(tournamentId),
-    onSuccess: () => {
+    onSuccess: (tournament) => {
+      // Ответ завершения — уже закрытый турнир. Консоль переходит в режим
+      // итогов сразу, не дожидаясь синхронизации: иначе на секунду снова
+      // появлялась бы кнопка «Завершить».
+      patch((snapshot) => ({ ...snapshot, tournament }));
       syncNow();
+      // Список консоли держит идущие полминуты: без сброса завершённый
+      // турнир висел бы там среди идущих.
+      void queryClient.invalidateQueries({ queryKey: consoleKeys.running });
+      void queryClient.invalidateQueries({ queryKey: consoleKeys.finished });
+      void queryClient.invalidateQueries({ queryKey: consoleKeys.results(tournamentId) });
     },
+    // Турнир мог закрыться, а рейтинг — не лечь (ТЗ 4.1 разводит эти
+    // переходы). Свежий снимок покажет это, и консоль предложит повторить.
+    onError: syncNow,
   });
 
   const queued = queue.data?.queued ?? 0;

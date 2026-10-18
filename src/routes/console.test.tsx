@@ -9,7 +9,7 @@ import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { db } from '@/features/console/db';
 import { pending } from '@/features/console/outbox';
-import { CONSOLE_SNAPSHOT, PLAYERS, TOURNAMENT_ID } from '@/test/fixtures';
+import { CONSOLE_SNAPSHOT, PLAYERS, RESULTS, TOURNAMENT, TOURNAMENT_ID } from '@/test/fixtures';
 
 /**
  * Консоль судьи — ТЗ 6, офлайн-режим ТЗ 6.4.
@@ -48,6 +48,14 @@ function reply(body: unknown): Response {
 function answer(url: string): Promise<Response> {
   if (url.endsWith('/snapshot')) {
     return Promise.resolve(reply(snapshot));
+  }
+
+  if (url.endsWith('/results')) {
+    return Promise.resolve(reply(RESULTS));
+  }
+
+  if (url.endsWith('/finish')) {
+    return Promise.resolve(reply({ ...TOURNAMENT, status: 'RATED' }));
   }
 
   // Сервер молчит. Для консоли это обычное состояние зала, а не сбой:
@@ -401,5 +409,59 @@ describe('действия в окнах', () => {
       type: 'MATCH_EDIT',
       payload: { setsA: 3, setsB: 2 },
     });
+  });
+});
+
+describe('завершение турнира', () => {
+  const winner = `${PLAYERS.first.lastName} ${PLAYERS.first.firstName}`;
+
+  it('сначала показывает итоговые места, закрывает турнир только подтверждение', async () => {
+    // Всё сыграно, турнир ещё идёт — внизу появляется кнопка завершения.
+    // Несыгранная встреча снята — турнир доигран.
+    snapshot = {
+      ...CONSOLE_SNAPSHOT,
+      stages: RESULTS.stages.map((stage) => ({
+        ...stage,
+        matches: stage.matches.map((match) =>
+          match.status === 'PENDING' ? { ...match, status: 'CANCELLED' as const } : match,
+        ),
+      })),
+    };
+    renderConsole();
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['console.finish'] }));
+
+    const dialog = await screen.findByRole('dialog', { name: ru['console.finish.title'] });
+    expect(await within(dialog).findByText(winner)).toBeDefined();
+    // Окно открылось, а на сервер завершение ещё не ушло.
+    expect(sent.some((url) => url.endsWith('/finish'))).toBe(false);
+
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['console.finish.confirm'] }));
+
+    expect(await screen.findByRole('heading', { name: ru['console.done.title'] })).toBeDefined();
+    expect(sent.some((url) => url.endsWith('/finish'))).toBe(true);
+  });
+
+  it('закрытый турнир — итоги вместо столов, счёт не вводится', async () => {
+    snapshot = {
+      ...CONSOLE_SNAPSHOT,
+      tournament: { ...CONSOLE_SNAPSHOT.tournament, status: 'RATED' },
+    };
+    renderConsole();
+
+    expect(await screen.findByRole('heading', { name: ru['console.done.title'] })).toBeDefined();
+    expect(await screen.findByText(winner)).toBeDefined();
+    expect(screen.queryByText(ru['console.hint.tap'])).toBeNull();
+    expect(screen.queryByRole('heading', { name: ru['console.tables.title'] })).toBeNull();
+    expect(
+      screen.getByRole('link', { name: ru['console.done.results'] }).getAttribute('href'),
+    ).toBe(`/tournaments/${TOURNAMENT_ID}`);
+  });
+
+  it('назад ведёт на страницу турнира, а не в пустой список', async () => {
+    renderConsole();
+
+    const back = await screen.findByRole('link', { name: ru['console.back'] });
+    expect(back.getAttribute('href')).toBe(`/tournaments/${TOURNAMENT_ID}`);
   });
 });

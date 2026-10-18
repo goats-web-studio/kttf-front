@@ -11,11 +11,12 @@ import { createFileRoute } from '@tanstack/react-router';
 import { ChevronLeft, Copy, Tv } from 'lucide-react';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { errorMessageKey } from '@/common/api';
 import { fill, useT } from '@/common/i18n';
 import { hasBracket } from '@/common/ui/bracket-model';
 import QueryState from '@/common/ui/query-state';
 import BracketZone from '@/features/console/bracket-zone';
+import FinishDialog from '@/features/console/finish-dialog';
+import FinishedPanel from '@/features/console/finished-panel';
 import { isPlayedOut, matchesOf } from '@/features/console/group-matches';
 import MatchDialog from '@/features/console/match-dialog';
 import PlayedZone from '@/features/console/played-zone';
@@ -87,8 +88,12 @@ function ConsoleScreen(): ReactNode {
   const [opened, setOpened] = useState<Opened>(null);
   const [lower, setLower] = useState<Lower>('standings');
   const [toast, setToast] = useState<Toast | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const snapshot = state.data;
+  // Счёт принимает только идущий турнир: сервер отклонит любое действие
+  // закрытого (TOURNAMENT_NOT_RUNNING), и консоль не должна его предлагать.
+  const running = snapshot?.tournament.status === 'RUNNING';
 
   const view = useMemo(() => {
     if (snapshot === undefined) {
@@ -130,6 +135,10 @@ function ConsoleScreen(): ReactNode {
       id === null ? t('console.match.pending') : (view?.names.get(id) ?? '');
 
     return `${name(match.playerAId)} — ${name(match.playerBId)}`;
+  }
+
+  function openMatch(matchId: string): void {
+    setOpened({ kind: 'match', matchId });
   }
 
   function notify(message: string, action: Toast['action']): void {
@@ -210,15 +219,17 @@ function ConsoleScreen(): ReactNode {
           }}
         >
           <Box sx={{ minWidth: 0, flex: '1 1 240px' }}>
+            {/* Назад — на страницу турнира, а не в список идущих: после
+                завершения список пуст, и судья упирался в пустую страницу. */}
             <Link
-              href="/console"
+              href={`/tournaments/${tournamentId}`}
               variant="caption"
               color="text.secondary"
               underline="none"
               sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25, fontWeight: 600 }}
             >
               <ChevronLeft size={14} aria-hidden />
-              {t('page.console.title')}
+              {t('console.back')}
             </Link>
             <Typography
               variant="h1"
@@ -301,7 +312,28 @@ function ConsoleScreen(): ReactNode {
         >
           {snapshot === undefined || view === null ? null : (
             <>
-              {view.ties && (
+              {!running &&
+                (snapshot.tournament.status === 'FINISHED' ||
+                snapshot.tournament.status === 'RATED' ? (
+                  <FinishedPanel
+                    tournamentId={tournamentId}
+                    status={snapshot.tournament.status}
+                    played={view.progress.done}
+                    onRate={() => {
+                      finish.mutate();
+                    }}
+                    rating={{ isPending: finish.isPending, error: finish.error }}
+                    onCopied={() => {
+                      notify(t('console.done.copied'), null);
+                    }}
+                  />
+                ) : (
+                  <Alert severity="info" variant="outlined">
+                    {t('console.idle')}
+                  </Alert>
+                ))}
+
+              {running && view.ties && (
                 <Alert
                   severity="warning"
                   variant="outlined"
@@ -323,52 +355,57 @@ function ConsoleScreen(): ReactNode {
                 </Alert>
               )}
 
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                {t('console.hint.tap')}
-              </Typography>
+              {running && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                  {t('console.hint.tap')}
+                </Typography>
+              )}
 
               {/* Сверху — рабочая зона судьи: столы и очередь рядом, как
                   панели «Играется» и «В ожидании» у турнир-менеджера RTTF.
                   Таблицы и сыгранные — ниже вкладками: раньше всё висело
-                  одной лентой, и консоль читалась нагромождением. */}
-              <Box
-                sx={{
-                  display: 'grid',
-                  gap: 3,
-                  alignItems: 'start',
-                  gridTemplateColumns: {
-                    xs: 'minmax(0, 1fr)',
-                    lg: 'minmax(0, 3fr) minmax(0, 2fr)',
-                  },
-                }}
-              >
-                <TablesZone
-                  tables={view.tables}
-                  names={view.names}
-                  labelOf={(match) => matchLabel(snapshot.stages, match, t)}
-                  now={now}
-                  onOpen={(table) => {
-                    setOpened(
-                      table.status === 'PLAYING' && table.match !== null
-                        ? { kind: 'match', matchId: table.match.id }
-                        : { kind: 'table', number: table.number },
-                    );
+                  одной лентой, и консоль читалась нагромождением.
+                  У закрытого турнира звать и записывать некого — зоны нет. */}
+              {running && (
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 3,
+                    alignItems: 'start',
+                    gridTemplateColumns: {
+                      xs: 'minmax(0, 1fr)',
+                      lg: 'minmax(0, 3fr) minmax(0, 2fr)',
+                    },
                   }}
-                />
-                <QueueZone
-                  queue={view.queue}
-                  suggested={view.suggested}
-                  names={view.names}
-                  onAssign={(matchId, tableNumber) => {
-                    const match = findMatch(matchId);
+                >
+                  <TablesZone
+                    tables={view.tables}
+                    names={view.names}
+                    labelOf={(match) => matchLabel(snapshot.stages, match, t)}
+                    now={now}
+                    onOpen={(table) => {
+                      setOpened(
+                        table.status === 'PLAYING' && table.match !== null
+                          ? { kind: 'match', matchId: table.match.id }
+                          : { kind: 'table', number: table.number },
+                      );
+                    }}
+                  />
+                  <QueueZone
+                    queue={view.queue}
+                    suggested={view.suggested}
+                    names={view.names}
+                    onAssign={(matchId, tableNumber) => {
+                      const match = findMatch(matchId);
 
-                    if (match !== undefined) doAssign(match, tableNumber);
-                  }}
-                  onOpen={(matchId) => {
-                    setOpened({ kind: 'match', matchId });
-                  }}
-                />
-              </Box>
+                      if (match !== undefined) doAssign(match, tableNumber);
+                    }}
+                    onOpen={(matchId) => {
+                      setOpened({ kind: 'match', matchId });
+                    }}
+                  />
+                </Box>
+              )}
 
               <Box ref={standingsRef} sx={{ mt: 5, scrollMarginTop: 96 }}>
                 <Tabs
@@ -397,15 +434,17 @@ function ConsoleScreen(): ReactNode {
                 >
                   {shown === 'standings' ? (
                     <>
-                      <TiePanel
-                        groups={snapshot.standings.groups}
-                        stages={snapshot.stages}
-                        names={view.names}
-                        onDecide={(input) => {
-                          tie(input);
-                        }}
-                        isPending={false}
-                      />
+                      {running && (
+                        <TiePanel
+                          groups={snapshot.standings.groups}
+                          stages={snapshot.stages}
+                          names={view.names}
+                          onDecide={(input) => {
+                            tie(input);
+                          }}
+                          isPending={false}
+                        />
+                      )}
                       <StandingsPanel
                         groups={snapshot.standings.groups}
                         stages={snapshot.stages}
@@ -418,18 +457,14 @@ function ConsoleScreen(): ReactNode {
                     <BracketZone
                       stages={snapshot.stages}
                       names={view.names}
-                      onOpen={(matchId) => {
-                        setOpened({ kind: 'match', matchId });
-                      }}
+                      onOpen={running ? openMatch : undefined}
                     />
                   ) : (
                     <PlayedZone
                       matches={view.played}
                       stages={snapshot.stages}
                       names={view.names}
-                      onOpen={(matchId) => {
-                        setOpened({ kind: 'match', matchId });
-                      }}
+                      onOpen={running ? openMatch : undefined}
                     />
                   )}
                 </Box>
@@ -439,7 +474,7 @@ function ConsoleScreen(): ReactNode {
         </QueryState>
       </Box>
 
-      {view?.done === true && snapshot?.tournament.status === 'RUNNING' && (
+      {view?.done === true && running && (
         <Box
           component="section"
           sx={{
@@ -454,14 +489,16 @@ function ConsoleScreen(): ReactNode {
             {/* Завершение — единственное действие консоли, которому нужна
                 сеть: рейтинг считает сервер (ТС 6.2, ADR-022). Пока очередь
                 не ушла, закрывать турнир нечем — сервер не видел половины
-                результатов. */}
+                результатов. Нажатие сначала показывает итоги — окно
+                подтверждения, закрывает турнир уже оно. */}
             <Button
               variant="contained"
               size="large"
               fullWidth
               disabled={finish.isPending || queue.queued > 0 || queue.connection === 'OFFLINE'}
               onClick={() => {
-                finish.mutate();
+                finish.reset();
+                setConfirming(true);
               }}
               sx={{ minHeight: 56, fontWeight: 600, maxWidth: { sm: 480 } }}
             >
@@ -472,16 +509,32 @@ function ConsoleScreen(): ReactNode {
                 {t('console.finish.queueFirst')}
               </Typography>
             )}
-            {finish.error !== null && (
-              <Alert severity="error" sx={{ mt: 1 }}>
-                {t(errorMessageKey(finish.error))}
-              </Alert>
-            )}
           </Box>
         </Box>
       )}
 
-      {openedMatch !== undefined && view !== null && snapshot !== undefined && (
+      {confirming && running && (
+        <FinishDialog
+          tournamentId={tournamentId}
+          isPending={finish.isPending}
+          error={finish.error}
+          onConfirm={() => {
+            finish.mutate(undefined, {
+              onSuccess: () => {
+                setConfirming(false);
+                // Панель «Турнир завершён» — в начале страницы, а судья
+                // нажимал кнопку внизу.
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              },
+            });
+          }}
+          onClose={() => {
+            setConfirming(false);
+          }}
+        />
+      )}
+
+      {openedMatch !== undefined && running && view !== null && (
         <MatchDialog
           key={openedMatch.id}
           match={openedMatch}
@@ -509,7 +562,7 @@ function ConsoleScreen(): ReactNode {
         />
       )}
 
-      {openedTable !== undefined && view !== null && (
+      {openedTable !== undefined && running && view !== null && (
         <TableDialog
           key={openedTable.number}
           table={openedTable}
@@ -554,7 +607,7 @@ function ConsoleScreen(): ReactNode {
           )
         }
         // Над панелью завершения, когда она есть, а не поверх её кнопки.
-        sx={view?.done === true ? { bottom: { xs: 96, sm: 104 } } : undefined}
+        sx={view?.done === true && running ? { bottom: { xs: 96, sm: 104 } } : undefined}
         // Светлая плашка MUI по умолчанию в ночной теме слепит и гасит
         // красную кнопку отмены: плашка в цвет карточки с рамкой.
         slotProps={{

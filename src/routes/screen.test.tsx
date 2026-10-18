@@ -8,7 +8,7 @@ import { createAppRouter } from '@/app/router';
 import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { installFakeEventSource, openStreams } from '@/test/event-source';
-import { PLAYERS, SCREEN_STATE, SCREEN_TOKEN } from '@/test/fixtures';
+import { PLAYERS, RESULTS, SCREEN_STATE, SCREEN_TOKEN } from '@/test/fixtures';
 
 /**
  * Второй экран зала — ТЗ 6.5, ТС 7.7.
@@ -118,6 +118,50 @@ describe('экран зала', () => {
     // пустого экрана. Но зритель обязан знать, что оно перестало обновляться.
     expect(screen.getByText(ru['screen.offline'], { exact: false })).toBeDefined();
     expect(screen.getByRole('heading', { name: SCREEN_STATE.tournament.name })).toBeDefined();
+  });
+});
+
+describe('стена после турнира', () => {
+  const winner = `${PLAYERS.first.lastName} ${PLAYERS.first.firstName}`;
+  const closed = { ...SCREEN_STATE, tournament: { ...SCREEN_STATE.tournament, status: 'RATED' } };
+
+  function serve(state: typeof SCREEN_STATE): void {
+    vi.stubGlobal('fetch', (input: unknown) => {
+      const url = String(input);
+
+      requested.push(url);
+
+      return Promise.resolve(reply(url.endsWith('/results') ? RESULTS : state));
+    });
+  }
+
+  it('закрытый турнир показывает пьедестал и итоговые места', async () => {
+    serve(closed as typeof SCREEN_STATE);
+    renderScreen();
+
+    expect(await screen.findByRole('heading', { name: ru['screen.podium.title'] })).toBeDefined();
+    expect(screen.getByRole('heading', { name: ru['screen.places.title'] })).toBeDefined();
+    expect(screen.getByText(ru['screen.finished'])).toBeDefined();
+    // Места — с публичного маршрута итогов, без входа.
+    expect(
+      requested.some((url) => url.endsWith(`/tournaments/${SCREEN_STATE.tournament.id}/results`)),
+    ).toBe(true);
+    // Открытая после турнира стена заставкой не встречает.
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('турнир, закрытый у зала на глазах, — заставка с победителем', async () => {
+    serve(SCREEN_STATE);
+    renderScreen();
+    await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name });
+
+    act(() => {
+      openStreams[0]?.emit(SCREEN_EVENTS.state, closed);
+    });
+
+    const splash = await screen.findByRole('status');
+    expect(splash.textContent).toContain(ru['screen.finished']);
+    expect(await screen.findByText(winner, { selector: 'span' })).toBeDefined();
   });
 });
 

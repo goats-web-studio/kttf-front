@@ -10,7 +10,8 @@ import Surface from '@/common/ui/surface';
 interface BracketZoneProps {
   readonly stages: readonly StageView[];
   readonly names: ReadonlyMap<string, string>;
-  readonly onOpen: (matchId: string) => void;
+  /** Без обработчика сетка только показывает: турнир завершён, править нечего. */
+  readonly onOpen?: ((matchId: string) => void) | undefined;
 }
 
 /**
@@ -42,9 +43,13 @@ export default function BracketZone({ stages, names, onOpen }: BracketZoneProps)
                 ? sourceLabel(side === 'A' ? match.sourceA : match.sourceB, byId, final, t)
                 : (names.get(id) ?? t('console.match.unknownPlayer'));
             }}
-            onMatchClick={(match) => {
-              onOpen(match.id);
-            }}
+            {...(onOpen === undefined
+              ? {}
+              : {
+                  onMatchClick: (match: MatchView) => {
+                    onOpen(match.id);
+                  },
+                })}
           />
         </Box>
       </Surface>

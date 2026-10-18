@@ -1,11 +1,21 @@
-import type { FormatConfig, GroupStandingsView, MatchView, StageView } from '@kttf/shared/types';
+import type {
+  FormatConfig,
+  GroupStandingsView,
+  MatchView,
+  ParticipantRatingView,
+  ResultParticipantView,
+  StageView,
+  TournamentResultsView,
+  TournamentStatus,
+} from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { isMissingResource } from '@/common/api';
-import { fill, formatDateTime, useLocale, useT } from '@/common/i18n';
+import { fill, formatDateTime, useLocale, useT, type MessageKey } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import ThemeRoot from '@/common/ui/theme';
 import { matchesOf } from '@/features/console/group-matches';
@@ -17,12 +27,21 @@ import {
   progressOf,
 } from '@/features/console/queue';
 import { useNow } from '@/features/console/use-now';
+import { fetchScreenResults } from '@/features/screen/api';
 import BracketBoard from '@/features/screen/bracket-board';
+import {
+  FinishedSplash,
+  PLACES_PER_COLUMN,
+  PlacesBoard,
+  PodiumBoard,
+  RATINGS_SHOWN,
+  RatingsBoard,
+} from '@/features/screen/finale';
 import GroupBoard from '@/features/screen/group-board';
 import { namesOf, ratingsOf } from '@/features/screen/names';
 import QueueBoard from '@/features/screen/queue-board';
 import RecentBoard from '@/features/screen/recent-board';
-import { BOARD_TITLE, DISPLAY, size } from '@/features/screen/scale';
+import { BOARD_TITLE, DISPLAY, size, tint } from '@/features/screen/scale';
 import TablesBoard from '@/features/screen/tables-board';
 import { useScreen } from '@/features/screen/use-screen';
 
@@ -57,10 +76,58 @@ function ScreenRoute(): ReactNode {
 /** Сколько секунд висит одна страница большой доски. */
 const PAGE_SECONDS = 15;
 
-/** Страница большой доски: до двух групп или одна сетка плей-офф. */
+/**
+ * Страница большой доски: до двух групп, одна сетка плей-офф, а у закрытого
+ * турнира ещё итоговые места и рост рейтинга.
+ */
 type Page =
   | { readonly kind: 'groups'; readonly groups: readonly GroupStandingsView[] }
-  | { readonly kind: 'bracket'; readonly stage: StageView };
+  | { readonly kind: 'bracket'; readonly stage: StageView }
+  | { readonly kind: 'places'; readonly participants: readonly ResultParticipantView[] }
+  | { readonly kind: 'ratings'; readonly ratings: readonly ParticipantRatingView[] };
+
+const PAGE_TITLE: Readonly<Record<Page['kind'], MessageKey>> = {
+  groups: 'screen.standings.title',
+  bracket: 'screen.bracket.title',
+  places: 'screen.places.title',
+  ratings: 'screen.ratings.title',
+};
+
+/** Сколько секунд висит заставка «Турнир завершён». */
+const SPLASH_SECONDS = 10;
+
+function isClosed(status: TournamentStatus | undefined): boolean {
+  return status === 'FINISHED' || status === 'RATED';
+}
+
+/**
+ * Страницы итогов идут первыми: после турнира зал ищет места, а таблицы и
+ * сетка остаются следом — по ним разбирают, как к местам пришли.
+ */
+function finalePagesOf(results: TournamentResultsView): Page[] {
+  const pages: Page[] = [];
+  const perPage = PLACES_PER_COLUMN * 2;
+
+  for (let index = 0; index < results.participants.length; index += perPage) {
+    pages.push({
+      kind: 'places',
+      participants: results.participants.slice(index, index + perPage),
+    });
+  }
+
+  return pages;
+}
+
+/** Выросшие сильнее всех — сверху; пока рейтинг не начислен, страницы нет. */
+function ratingsPageOf(results: TournamentResultsView): Page[] {
+  const ratings = results.ratings
+    .filter((rating) => rating.ratingAfter !== null)
+    // Число — только для порядка; на стене дельта остаётся строкой сервера.
+    .sort((left, right) => Number(right.totalDelta) - Number(left.totalDelta))
+    .slice(0, RATINGS_SHOWN);
+
+  return ratings.length === 0 ? [] : [{ kind: 'ratings', ratings }];
+}
 
 function pagesOf(stages: readonly StageView[], groups: readonly GroupStandingsView[]): Page[] {
   const pages: Page[] = [];
@@ -94,6 +161,50 @@ function ScreenPage(): ReactNode {
   // Часы и подсветка вызова: секундная точность стене не нужна.
   const now = useNow(5_000);
   const [page, setPage] = useState(0);
+  const [splash, setSplash] = useState(false);
+
+  const status = view?.tournament.status;
+  const closed = isClosed(status);
+  // Статус в ключе: переход «Завершён» → «Обсчитан» перезапрашивает итоги, и
+  // страница рейтинга появляется сама.
+  const results = useQuery({
+    queryKey: ['screen', 'results', view?.tournament.id, status],
+    queryFn: () => fetchScreenResults(view?.tournament.id ?? ''),
+    enabled: closed && view !== undefined,
+    staleTime: Infinity,
+  });
+  const finale = closed ? results.data : undefined;
+
+  // Заставка — только на переходе, увиденном вживую. Стена, открытая уже
+  // после турнира, сразу показывает итоги: «турнир завершён» на весь экран
+  // при каждом обновлении страницы мешал бы, а не сообщал.
+  const previous = useRef(status);
+  useEffect(() => {
+    const was = previous.current;
+    previous.current = status;
+
+    if (was === 'RUNNING' && isClosed(status)) {
+      setSplash(true);
+      setPage(0);
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (!splash) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSplash(false);
+      // Итоги начинаются с первой страницы — с мест, а не с той, на которой
+      // остановилась ротация под заставкой.
+      setPage(0);
+    }, SPLASH_SECONDS * 1000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [splash]);
 
   const boards = useMemo(() => {
     if (view === undefined) {
@@ -115,15 +226,24 @@ function ScreenPage(): ReactNode {
       progress: progressOf(view.stages),
       names: namesOf(view.players),
       ratings: ratingsOf(view.players),
-      pages: pagesOf(view.stages, view.standings.groups),
+      pages:
+        finale === undefined
+          ? pagesOf(view.stages, view.standings.groups)
+          : [
+              ...finalePagesOf(finale),
+              ...pagesOf(view.stages, view.standings.groups),
+              ...ratingsPageOf(finale),
+            ],
       stageName: stage?.name ?? null,
     };
-  }, [view, t]);
+  }, [view, finale, t]);
 
   const pageCount = boards?.pages.length ?? 0;
 
+  // Под заставкой доска не листается: иначе первая страница итогов
+  // пролистывалась бы невидимой.
   useEffect(() => {
-    if (pageCount <= 1) {
+    if (pageCount <= 1 || splash) {
       return;
     }
 
@@ -134,7 +254,7 @@ function ScreenPage(): ReactNode {
     return () => {
       clearInterval(timer);
     };
-  }, [pageCount]);
+  }, [pageCount, splash]);
 
   // Неизвестный токен — не сбой связи, а неверная ссылка, и висеть на стене
   // с просьбой проверить заполненные поля экран не должен. Отказ приходит
@@ -213,21 +333,38 @@ function ScreenPage(): ReactNode {
                   {view.tournament.name}
                 </Typography>
                 <Box sx={{ mt: '0.6vh', display: 'flex', alignItems: 'center', gap: '1vw' }}>
-                  {boards.stageName !== null && (
+                  {closed ? (
                     <Box
                       component="span"
                       sx={{
                         px: '0.8vw',
                         py: '0.3vh',
                         borderRadius: 999,
-                        bgcolor: 'var(--ink-100)',
-                        color: 'text.primary',
+                        bgcolor: tint('ok', 14),
+                        color: 'success.main',
                         fontSize: size(0.85),
-                        fontWeight: 600,
+                        fontWeight: 700,
                       }}
                     >
-                      {boards.stageName}
+                      {t('screen.finished')}
                     </Box>
+                  ) : (
+                    boards.stageName !== null && (
+                      <Box
+                        component="span"
+                        sx={{
+                          px: '0.8vw',
+                          py: '0.3vh',
+                          borderRadius: 999,
+                          bgcolor: 'var(--ink-100)',
+                          color: 'text.primary',
+                          fontSize: size(0.85),
+                          fontWeight: 600,
+                        }}
+                      >
+                        {boards.stageName}
+                      </Box>
+                    )
                   )}
                   {/* Прогресс — первое, что спрашивают в зале: «долго ещё?». */}
                   <Box
@@ -326,18 +463,27 @@ function ScreenPage(): ReactNode {
                   gap: '2vh',
                 }}
               >
-                <TablesBoard
-                  tables={boards.tables}
-                  names={boards.names}
-                  labelOf={labelOf}
-                  now={now}
-                />
-                <QueueBoard queue={boards.queue} names={boards.names} shown={3} />
+                {/* После турнира столы и очередь пусты и ничего не сообщают —
+                    их место занимает пьедестал. Последние результаты остаются:
+                    там финал, о котором и говорят. */}
+                {finale === undefined ? (
+                  <>
+                    <TablesBoard
+                      tables={boards.tables}
+                      names={boards.names}
+                      labelOf={labelOf}
+                      now={now}
+                    />
+                    <QueueBoard queue={boards.queue} names={boards.names} shown={3} />
+                  </>
+                ) : (
+                  <PodiumBoard participants={finale.participants} />
+                )}
                 <RecentBoard
                   matches={boards.played}
                   names={boards.names}
                   labelOf={labelOf}
-                  shown={3}
+                  shown={finale === undefined ? 3 : 2}
                 />
               </Box>
 
@@ -347,9 +493,7 @@ function ScreenPage(): ReactNode {
                     sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                   >
                     <Typography component="h2" sx={BOARD_TITLE}>
-                      {current.kind === 'bracket'
-                        ? t('screen.bracket.title')
-                        : t('screen.standings.title')}
+                      {t(PAGE_TITLE[current.kind])}
                     </Typography>
                     {pageCount > 1 && (
                       <Box sx={{ display: 'flex', gap: '0.4vw' }}>
@@ -396,9 +540,19 @@ function ScreenPage(): ReactNode {
                   {current?.kind === 'bracket' && (
                     <BracketBoard stage={current.stage} names={boards.names} />
                   )}
+                  {current?.kind === 'places' && (
+                    <PlacesBoard participants={current.participants} />
+                  )}
+                  {current?.kind === 'ratings' && (
+                    <RatingsBoard ratings={current.ratings} names={boards.names} />
+                  )}
                 </Box>
               </Box>
             </Box>
+
+            {splash && (
+              <FinishedSplash name={view.tournament.name} participants={finale?.participants} />
+            )}
           </>
         )}
       </QueryState>

@@ -1,12 +1,12 @@
-import { DEFAULT_PAGE_SIZE } from '@kttf/shared/types';
+import { DEFAULT_PAGE_SIZE, type TournamentView } from '@kttf/shared/types';
 import { queryOptions, useQuery } from '@tanstack/react-query';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import CardActionArea from '@mui/material/CardActionArea';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
-import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { formatDateTime, useLocale, useT } from '@/common/i18n';
@@ -31,10 +31,40 @@ const runningQuery = queryOptions({
   staleTime: 30_000,
 });
 
+/** Сколько дней завершённый турнир остаётся под рукой у судьи. */
+const RECENT_DAYS = 3;
+
+/** Сколько завершённых показывать: список — подсказка, а не архив. */
+const RECENT_SHOWN = 5;
+
+/**
+ * Недавно завершённые — сюда судья возвращается за итогами и ссылкой на них.
+ *
+ * Без них список пустел в ту же секунду, как судья закрывал турнир, и страница
+ * выглядела сломанной. Ведут на публичные итоги: в консоли закрытого турнира
+ * делать уже нечего.
+ */
+const finishedQuery = queryOptions({
+  queryKey: consoleKeys.finished,
+  queryFn: async () => {
+    const from = new Date(Date.now() - RECENT_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const page = await listTournaments({
+      page: 1,
+      limit: DEFAULT_PAGE_SIZE,
+      status: 'RATED',
+      from,
+    });
+
+    // Сервер отдаёт по дате старта от ранних; свежий итог нужен первым.
+    return [...page.items].reverse().slice(0, RECENT_SHOWN);
+  },
+  staleTime: 30_000,
+});
+
 function ConsolePage(): ReactNode {
   const t = useT();
-  const locale = useLocale();
   const running = useQuery(runningQuery);
+  const finished = useQuery(finishedQuery);
 
   return (
     <Box component="section" sx={{ mx: 'auto', width: '100%', maxWidth: 768, px: 2, py: 5 }}>
@@ -50,59 +80,70 @@ function ConsolePage(): ReactNode {
           onRetry={() => void running.refetch()}
         >
           {running.data === undefined ? null : running.data.items.length === 0 ? (
-            <Typography color="text.secondary">{t('console.pick.empty')}</Typography>
+            // Пустой список — не тупик: турнир попадает сюда после старта,
+            // а стартуют его со страницы турнира в кабинете клуба.
+            <Paper variant="outlined" sx={{ p: 3 }}>
+              <Typography sx={{ fontWeight: 600 }}>{t('console.pick.empty')}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {t('console.pick.emptyHint')}
+              </Typography>
+              <Button variant="outlined" href="/cabinet/clubs" sx={{ mt: 2, minHeight: 44 }}>
+                {t('nav.myClubs')}
+              </Button>
+            </Paper>
           ) : (
-            <Stack component="ul" spacing={1} sx={{ m: 0, p: 0, listStyle: 'none' }}>
-              {running.data.items.map((tournament) => (
-                <Paper key={tournament.id} component="li" variant="outlined">
-                  {/* `href` уходит в роутер через `LinkComponent` темы. */}
-                  <CardActionArea
-                    href={`/console/${tournament.id}`}
-                    sx={{
-                      p: 2.5,
-                      minHeight: 72,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      borderRadius: 4,
-                    }}
-                  >
-                    {/* Идёт сейчас — красная точка: единственный цвет в списке. */}
-                    <Box
-                      aria-hidden
-                      sx={{
-                        width: 10,
-                        height: 10,
-                        flexShrink: 0,
-                        borderRadius: '50%',
-                        bgcolor: 'var(--red-600)',
-                        boxShadow: '0 0 0 4px color-mix(in srgb, var(--red-600) 20%, transparent)',
-                      }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        component="span"
-                        sx={{ display: 'block', fontWeight: 700, fontSize: 17 }}
-                      >
-                        {tournament.name}
-                      </Typography>
-                      <Typography
-                        component="span"
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mt: 0.5, display: 'block' }}
-                      >
-                        {formatDateTime(tournament.startsAt, locale)}
-                      </Typography>
-                    </Box>
-                    <ChevronRight size={22} aria-hidden />
-                  </CardActionArea>
-                </Paper>
-              ))}
-            </Stack>
+            <TournamentList
+              tournaments={running.data.items}
+              hrefOf={(tournament) => `/console/${tournament.id}`}
+            />
           )}
         </QueryState>
       </Box>
+
+      {finished.data !== undefined && finished.data.length > 0 && (
+        <Box component="section" sx={{ mt: 5 }}>
+          <Typography component="h2" variant="h3" sx={{ mb: 1.5 }}>
+            {t('console.pick.finished')}
+          </Typography>
+          <TournamentList
+            tournaments={finished.data}
+            hrefOf={(tournament) => `/tournaments/${tournament.id}`}
+          />
+        </Box>
+      )}
     </Box>
+  );
+}
+
+function TournamentList({
+  tournaments,
+  hrefOf,
+}: {
+  readonly tournaments: readonly TournamentView[];
+  readonly hrefOf: (tournament: TournamentView) => string;
+}): ReactNode {
+  const locale = useLocale();
+
+  return (
+    <Stack component="ul" spacing={1} sx={{ m: 0, p: 0, listStyle: 'none' }}>
+      {tournaments.map((tournament) => (
+        <Paper key={tournament.id} component="li" variant="outlined">
+          {/* `href` уходит в роутер через `LinkComponent` темы. */}
+          <CardActionArea href={hrefOf(tournament)} sx={{ p: 2, minHeight: 56 }}>
+            <Typography component="span" sx={{ display: 'block', fontWeight: 600 }}>
+              {tournament.name}
+            </Typography>
+            <Typography
+              component="span"
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 0.5, display: 'block' }}
+            >
+              {formatDateTime(tournament.startsAt, locale)}
+            </Typography>
+          </CardActionArea>
+        </Paper>
+      ))}
+    </Stack>
   );
 }
