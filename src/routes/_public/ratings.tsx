@@ -25,6 +25,7 @@ import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import Pagination from '@/common/ui/pagination';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import RankBadge from '@/common/ui/rank-badge';
+import RatingValue from '@/common/ui/rating-value';
 import QueryState from '@/common/ui/query-state';
 import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
@@ -279,7 +280,7 @@ function RatingsPage(): ReactNode {
                             fontSize: 18,
                           }}
                         >
-                          {player.rating}
+                          <RatingValue value={player.rating} />
                         </TableCell>
                         <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                           {formatCount(player.ratedMatches, locale)}

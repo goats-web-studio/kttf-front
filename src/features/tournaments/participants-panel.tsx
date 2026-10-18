@@ -16,6 +16,7 @@ import type { ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
+import RatingValue from '@/common/ui/rating-value';
 import { useSessionStore } from '@/features/auth/session-store';
 import { isClubStaff } from '@/features/clubs/roles';
 import { playerName } from '@/features/players/player-name';
@@ -180,7 +181,7 @@ function Row({
       </TableCell>
       <TableCell align="right" sx={NUM}>
         {/* Рейтинг на старте, если турнир начат: он и пошёл в расчёт (ТС 5.4). */}
-        {registration.ratingAtStart ?? registration.player.rating}
+        <RatingValue value={registration.ratingAtStart ?? registration.player.rating} />
       </TableCell>
       <TableCell sx={{ color: 'text.secondary' }}>
         {t(REGISTRATION_STATUS_KEYS[registration.status])}
@@ -337,7 +338,7 @@ function Application({
           {playerName(application.player)}
         </Link>
         <Typography component="span" color="text.secondary" sx={{ ml: 1, ...NUM }}>
-          {application.player.rating}
+          <RatingValue value={application.player.rating} />
         </Typography>
         {decide.error !== null && (
           <Typography role="alert" variant="body2" color="error" sx={{ mt: 0.5 }}>

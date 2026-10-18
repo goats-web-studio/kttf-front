@@ -14,6 +14,7 @@ import { formatCount, useLocale, useT } from '@/common/i18n';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import QueryState from '@/common/ui/query-state';
 import RankBadge from '@/common/ui/rank-badge';
+import RatingValue from '@/common/ui/rating-value';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { usePlaceName } from '@/features/places/place-name';
 
@@ -92,7 +93,7 @@ export default function LeadersTable({ query, empty }: LeadersTableProps): React
                         fontSize: 18,
                       }}
                     >
-                      {player.rating}
+                      <RatingValue value={player.rating} />
                     </TableCell>
                   </TableRow>
                 );

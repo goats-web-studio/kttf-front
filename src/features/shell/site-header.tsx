@@ -14,6 +14,7 @@ import { useId, useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 import PlayerAvatar from '@/common/ui/player-avatar';
+import RatingValue from '@/common/ui/rating-value';
 import RouterLink from '@/common/ui/router-link';
 import { signOut } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -189,7 +190,7 @@ function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                {t('nav.ratings')} {player.rating}
+                {t('nav.ratings')} <RatingValue value={player.rating} />
               </Box>
             </Box>
           </>

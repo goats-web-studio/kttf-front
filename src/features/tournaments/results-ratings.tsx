@@ -10,6 +10,7 @@ import type { ReactNode } from 'react';
 
 import { formatDelta, useT } from '@/common/i18n';
 import DeltaPill from '@/common/ui/delta-pill';
+import RatingValue from '@/common/ui/rating-value';
 
 /** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
 const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
@@ -66,13 +67,15 @@ export default function ResultsRatings({ ratings, names }: ResultsRatingsProps):
                 <Events rating={rating} />
               </TableCell>
               <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
-                {rating.ratingAtStart ?? '—'}
+                {rating.ratingAtStart === null ? '—' : <RatingValue value={rating.ratingAtStart} />}
               </TableCell>
               <TableCell align="right" sx={{ ...NUM, fontWeight: 600 }}>
                 <DeltaPill value={rating.totalDelta} />
               </TableCell>
               <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
-                {rating.ratingAfter ?? (
+                {rating.ratingAfter !== null ? (
+                  <RatingValue value={rating.ratingAfter} />
+                ) : (
                   <Box component="span" sx={{ color: 'text.disabled' }}>
                     {t('results.ratings.pending')}
                   </Box>

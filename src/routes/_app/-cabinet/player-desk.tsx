@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 
 import { fill, formatCount, useLocale, useT } from '@/common/i18n';
 import DeltaPill from '@/common/ui/delta-pill';
+import RatingValue from '@/common/ui/rating-value';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
@@ -72,7 +73,7 @@ export default function PlayerDesk({ playerId }: { readonly playerId: string }):
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {player.data?.rating ?? '—'}
+              {player.data === undefined ? '—' : <RatingValue value={player.data.rating} />}
             </Typography>
           </Box>
           {summary.data !== undefined && (

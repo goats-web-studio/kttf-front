@@ -64,11 +64,34 @@ export function formatMoney(amount: number, locale: Locale): string {
  * дописывается, ноль остаётся без знака.
  */
 export function formatDelta(delta: string): string {
-  if (delta.startsWith('-') || /^0(\.0+)?$/.test(delta)) {
-    return delta;
+  const value = formatRating(delta);
+
+  if (value.startsWith('-') || /^0(\.0+)?$/.test(value)) {
+    return value;
   }
 
-  return `+${delta}`;
+  return `+${value}`;
+}
+
+/**
+ * Рейтинг — два знака после точки: «421.20», а не «421.2» (07, 10.2).
+ *
+ * Сервер отдаёт `Decimal` строкой, и ноль на конце в ней теряется. Дописывается
+ * он здесь, работой со строкой, а не через `Number`: разбор в число ради
+ * показа — тот способ потерять сотую долю, от которого рейтинг и передаётся
+ * строкой (ADR-014). Больше двух знаков не обрезается — это уже не наша
+ * сотая, и прятать её нельзя. Неразбираемое значение показывается как есть.
+ */
+export function formatRating(value: string): string {
+  const match = /^(-?\d+)(?:\.(\d*))?$/.exec(value);
+
+  if (match === null) {
+    return value;
+  }
+
+  const [, whole = '', fraction = ''] = match;
+
+  return `${whole}.${fraction.padEnd(2, '0')}`;
 }
 
 /** Число записей: «1 248», с разрядами по языку интерфейса. */
@@ -131,4 +154,33 @@ export function endOfDay(day: string): Date {
  */
 export function fill(template: string, values: Readonly<Record<string, string>>): string {
   return template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match);
+}
+
+/** Время начала встречи: «20:05». День уже стоит в шапке турнира. */
+export function formatTime(iso: string, locale: Locale): string {
+  return new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(
+    new Date(iso),
+  );
+}
+
+/** Шаг делений оси времени на графике рейтинга. */
+export type TimeTickUnit = 'year' | 'month' | 'day';
+
+/**
+ * Подпись деления оси времени: «2026», «мар.», «5 мар.».
+ *
+ * Год — числом, без «г.» и «ж.» от `Intl`: под осью он стоит отдельной
+ * строкой, и хвост сокращения в узкой подписи только мешает.
+ */
+export function formatTimeTick(time: number, unit: TimeTickUnit, locale: Locale): string {
+  const date = new Date(time);
+
+  if (unit === 'year') {
+    return String(date.getFullYear());
+  }
+
+  return new Intl.DateTimeFormat(
+    locale,
+    unit === 'month' ? { month: 'short' } : { day: 'numeric', month: 'short' },
+  ).format(date);
 }
