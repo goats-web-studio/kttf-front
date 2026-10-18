@@ -124,7 +124,7 @@ describe('экран проведения', () => {
       await screen.findByText(fill(ru['console.toast.recorded'], { score: '3:1' })),
     ).toBeDefined();
     // Стол со введённым счётом свободен, а сыгранная пара видна подписью.
-    expect(screen.getByText(new RegExp(`^${ru['console.table.justPlayed']}:`))).toBeDefined();
+    expect(screen.getByText(ru['console.table.justPlayed'])).toBeDefined();
   });
 
   it('введённое ложится в очередь на диск — ТЗ 6.4', async () => {

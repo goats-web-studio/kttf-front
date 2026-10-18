@@ -2,7 +2,8 @@ import { isErrorCode } from '@kttf/shared/errors';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
+import { RefreshCw } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { ERROR_MESSAGE_KEYS } from '@/common/api';
@@ -36,35 +37,64 @@ export default function SyncBadge({ queue }: SyncBadgeProps): ReactNode {
         : t('console.sync.synced');
 
   // Цвет — второй носитель: состояние всегда написано словом (запрет №6).
-  const tone =
+  const color =
     queue.connection === 'OFFLINE'
-      ? 'error'
+      ? 'var(--red-700)'
       : queue.connection === 'SYNCING'
-        ? 'warning'
-        : 'success';
+        ? 'var(--warn-text)'
+        : 'var(--ok)';
 
+  // Состояние и «Отправить сейчас» — одна пилюля: слово слева, кнопка справа.
+  // Раньше это были два контрола рядом, и на телефоне шапка консоли
+  // занимала два ряда кнопок.
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
-      <Chip
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        minHeight: 44,
+        pl: 1.75,
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 999,
+        bgcolor: 'background.paper',
+      }}
+    >
+      <Box
         role="status"
-        variant="outlined"
-        color={tone}
-        label={
-          <>
-            {label}
-            {queue.queued > 0 && (
-              <Box component="span" sx={{ ml: 1, fontVariantNumeric: 'tabular-nums' }}>
-                {t('console.sync.queued')} {queue.queued}
-              </Box>
-            )}
-          </>
-        }
-        sx={{ height: 'auto', minHeight: 40, fontSize: 13, '& .MuiChip-label': { py: 1 } }}
-      />
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          fontSize: 13,
+          fontWeight: 600,
+          color,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <Box
+          aria-hidden
+          component="span"
+          sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'currentColor' }}
+        />
+        {label}
+        {queue.queued > 0 && (
+          <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+            · {t('console.sync.queued')} {queue.queued}
+          </Box>
+        )}
+      </Box>
 
-      <Button onClick={queue.syncNow} sx={{ minHeight: 44, whiteSpace: 'nowrap' }}>
-        {t('console.sync.now')}
-      </Button>
+      {/* Подсказка — нативным title: всплывающая подсказка MUI тянет в чанк
+          консоли поппер ради мыши, которой у планшета нет. */}
+      <IconButton
+        onClick={queue.syncNow}
+        aria-label={t('console.sync.now')}
+        title={t('console.sync.now')}
+        sx={{ ml: 0.5, width: 44, height: 44, color: 'text.secondary' }}
+      >
+        <RefreshCw size={18} aria-hidden />
+      </IconButton>
     </Box>
   );
 }

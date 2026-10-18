@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 
 import { matchesOf } from './group-matches';
 
@@ -48,12 +49,8 @@ export default function StandingsPanel({
 
   return (
     <section>
-      <Typography
-        component="h2"
-        variant="subtitle2"
-        color="text.secondary"
-        sx={{ fontWeight: 600 }}
-      >
+      {/* Глазу заголовок дублирует вкладка над панелью — остаётся диктору. */}
+      <Typography component="h2" sx={VISUALLY_HIDDEN}>
         {t('console.standings.title')}
       </Typography>
       {groups.map((group) => (
@@ -159,7 +156,9 @@ function GroupTable({
             <TableCell scope="col" sx={{ width: 28 }}>
               #
             </TableCell>
-            <TableCell scope="col">{t('console.standings.player')}</TableCell>
+            <TableCell scope="col" sx={STICKY_NAME}>
+              {t('console.standings.player')}
+            </TableCell>
             {order.map((_participant, index) => (
               <TableCell key={index} scope="col" align="center" sx={{ width: 56 }}>
                 {index + 1}
@@ -203,12 +202,21 @@ function GroupTable({
                     </Box>
                   )}
                 </TableCell>
-                <TableCell component="th" scope="row" sx={{ whiteSpace: 'nowrap' }}>
+                <TableCell component="th" scope="row" sx={STICKY_NAME}>
                   <Box component="span" sx={{ fontWeight: 600, fontSize: 15 }}>
                     {names.get(row.participant) ?? row.participant}
                   </Box>{' '}
-                  {/* Рейтинг рядом с фамилией — ТЗ 6.6. */}
-                  <Box component="span" sx={{ color: 'text.secondary', fontSize: 12 }}>
+                  {/* Рейтинг рядом с фамилией — ТЗ 6.6. На телефоне его нет:
+                      там каждая колонка на счету, а рейтинг виден в окне
+                      встречи. */}
+                  <Box
+                    component="span"
+                    sx={{
+                      display: { xs: 'none', sm: 'inline' },
+                      color: 'text.secondary',
+                      fontSize: 12,
+                    }}
+                  >
                     {ratings.get(row.participant) ?? ''}
                   </Box>
                 </TableCell>
@@ -316,6 +324,19 @@ function Cell({
     </Box>
   );
 }
+
+/**
+ * Фамилии стоят на месте, когда матрица листается вбок (раздел 4 дизайн-
+ * системы): на телефоне таблица группы шире экрана, и без этого судья видел
+ * счёт, но не видел, чей он.
+ */
+const STICKY_NAME = {
+  whiteSpace: 'nowrap',
+  position: 'sticky',
+  left: 0,
+  zIndex: 1,
+  bgcolor: 'background.paper',
+} as const;
 
 /**
  * Плотная матрица: ячейки узкие, цифры столбиком. Крупные числа — место и

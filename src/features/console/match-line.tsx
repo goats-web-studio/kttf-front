@@ -82,22 +82,13 @@ function Side({
 
   const rating = ratings?.get(id);
 
-  // Победитель отличается не только цветом: полужирный и линейка слева
-  // (раздел 3.4, запрет №6).
+  // Победитель — полужирный, проигравший приглушён (раздел 3.4). Красное
+  // имя с линейкой слева в каждой строке рябило: в списке из двадцати
+  // встреч красным выходила половина экрана.
   return (
     <Box
       component="span"
-      sx={
-        isWinner
-          ? {
-              fontWeight: 600,
-              color: 'primary.main',
-              borderLeft: '2px solid',
-              borderColor: 'primary.main',
-              pl: 0.5,
-            }
-          : { color: 'text.secondary' }
-      }
+      sx={isWinner ? { fontWeight: 600, color: 'text.primary' } : { color: 'text.secondary' }}
     >
       {names.get(id) ?? t('console.match.unknownPlayer')}
       {rating !== undefined && (

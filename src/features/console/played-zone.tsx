@@ -2,12 +2,12 @@ import type { MatchView, StageView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
 import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 
 import MatchLine from './match-line';
 import { matchLabel } from './queue';
@@ -33,22 +33,24 @@ export default function PlayedZone({ matches, stages, names, onOpen }: PlayedZon
 
   return (
     <section>
-      <Typography
-        component="h2"
-        variant="subtitle2"
-        color="text.secondary"
-        sx={{ fontWeight: 600 }}
-      >
+      {/* Глазу заголовок дублирует вкладка над панелью — остаётся диктору. */}
+      <Typography component="h2" sx={VISUALLY_HIDDEN}>
         {t('console.played.title')}
       </Typography>
       {matches.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        <Typography variant="body2" color="text.secondary">
           {t('console.played.empty')}
         </Typography>
       ) : (
-        <Stack component="ol" spacing={1} sx={{ mt: 1, p: 0, listStyle: 'none' }}>
-          {shown.map((match) => (
-            <Paper key={match.id} component="li" variant="outlined">
+        // Строки в одной карточке, как очередь: карточка на каждую встречу
+        // превращала пять результатов в пять отдельных плиток.
+        <Paper variant="outlined" component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+          {shown.map((match, index) => (
+            <Box
+              key={match.id}
+              component="li"
+              sx={{ borderTop: index === 0 ? 0 : 1, borderColor: 'divider' }}
+            >
               <ButtonBase
                 onClick={() => {
                   onOpen(match.id);
@@ -56,10 +58,10 @@ export default function PlayedZone({ matches, stages, names, onOpen }: PlayedZon
                 sx={{
                   display: 'block',
                   width: '100%',
-                  minHeight: 56,
-                  p: 1.5,
+                  minHeight: 64,
+                  px: 2,
+                  py: 1.25,
                   textAlign: 'left',
-                  borderRadius: 1,
                   typography: 'body2',
                 }}
               >
@@ -76,9 +78,9 @@ export default function PlayedZone({ matches, stages, names, onOpen }: PlayedZon
                 </Typography>
                 <MatchLine match={match} names={names} />
               </ButtonBase>
-            </Paper>
+            </Box>
           ))}
-        </Stack>
+        </Paper>
       )}
       {!all && matches.length > SHOWN && (
         <Button

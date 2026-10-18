@@ -137,7 +137,18 @@ export default function TablesZone({
                     <Pair match={table.match} names={names} />
                   </>
                 ) : table.match !== null ? (
-                  <JustPlayed match={table.match} names={names} />
+                  <>
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      color="text.secondary"
+                      noWrap
+                      sx={{ mt: 0.75, display: 'block', fontWeight: 600 }}
+                    >
+                      {t('console.table.justPlayed')}
+                    </Typography>
+                    <Pair match={table.match} names={names} played />
+                  </>
                 ) : (
                   <Typography
                     component="span"
@@ -191,69 +202,75 @@ function Status({ table, now }: { readonly table: TableState; readonly now: numb
 /**
  * Пара столбиком: фамилия на строку. На карточке шириной в полтелефона
  * «Иванов — Петров» в одну строку не помещается и обрывается посередине.
+ *
+ * `played` — встреча, только что сыгранная на свободном столе: пара
+ * приглушена, счёт справа, победитель полужирный. Та же форма, что у
+ * идущей встречи: раньше это была строка «Сыграли: Фамилия Имя — Фамилия
+ * Имя 3:1», и на телефоне она ломалась в три строки.
  */
 function Pair({
   match,
   names,
+  played = false,
 }: {
   readonly match: MatchView;
   readonly names: ReadonlyMap<string, string>;
+  readonly played?: boolean;
 }): ReactNode {
   const t = useT();
 
   return (
-    <Box component="span" sx={{ mt: 1, display: 'grid', gap: 0.25 }}>
+    <Box component="span" sx={{ mt: played ? 0.5 : 1, display: 'grid', gap: 0.25 }}>
       {(['A', 'B'] as const).map((side) => {
         const id = side === 'A' ? match.playerAId : match.playerBId;
+        const own = side === 'A' ? match.setsA : match.setsB;
+        const other = side === 'A' ? match.setsB : match.setsA;
+        const won = own !== null && other !== null && own > other;
 
         return (
           <Box
             key={side}
             component="span"
             sx={{
+              // Без minWidth строка в сетке не сжимается, и длинная фамилия
+              // выталкивает счёт за край карточки.
+              minWidth: 0,
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: 1,
               typography: 'body2',
-              fontWeight: 500,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              fontWeight: played && !won ? 400 : 500,
+              color: played && !won ? 'text.secondary' : 'text.primary',
             }}
           >
-            {id === null
-              ? t('console.match.pending')
-              : (names.get(id) ?? t('console.match.unknownPlayer'))}
+            <Box
+              component="span"
+              sx={{
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {id === null
+                ? t('console.match.pending')
+                : (names.get(id) ?? t('console.match.unknownPlayer'))}
+            </Box>
+            {played && own !== null && (
+              <Box
+                component="span"
+                sx={{
+                  flexShrink: 0,
+                  fontWeight: won ? 700 : 400,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {own}
+              </Box>
+            )}
           </Box>
         );
       })}
     </Box>
-  );
-}
-
-/** Что сыграли на столе последним — подписью, приглушённо. */
-function JustPlayed({
-  match,
-  names,
-}: {
-  readonly match: MatchView;
-  readonly names: ReadonlyMap<string, string>;
-}): ReactNode {
-  const t = useT();
-  const name = (id: string | null): string =>
-    id === null ? '' : (names.get(id) ?? t('console.match.unknownPlayer'));
-
-  return (
-    <Typography
-      component="span"
-      variant="caption"
-      color="text.secondary"
-      sx={{ mt: 'auto', pt: 1, display: 'block' }}
-    >
-      {t('console.table.justPlayed')}: {name(match.playerAId)} — {name(match.playerBId)}
-      {match.setsA !== null && match.setsB !== null && (
-        <Box component="span" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-          {' '}
-          {match.setsA}:{match.setsB}
-        </Box>
-      )}
-    </Typography>
   );
 }

@@ -390,7 +390,10 @@ function ConsoleScreen(): ReactNode {
                   // проявляется (styles.css, .tab-panel-in).
                   key={shown}
                   className="tab-panel-in"
-                  sx={{ mt: 2.5, display: 'grid', gap: 3 }}
+                  // minmax(0, 1fr): без него колонка грида растягивается по
+                  // самой широкой таблице группы, и на телефоне вбок уезжала
+                  // вся страница, а не таблица внутри своей карточки.
+                  sx={{ mt: 2.5, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 3 }}
                 >
                   {shown === 'standings' ? (
                     <>
