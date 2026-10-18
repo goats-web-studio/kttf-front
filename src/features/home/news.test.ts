@@ -1,4 +1,4 @@
-import type { ListTournamentsQuery, TournamentView } from '@kttf/shared/types';
+import type { ListTournamentsRequest, TournamentView } from '@kttf/shared/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { listTournaments } from '@/features/tournaments/api';
@@ -27,7 +27,7 @@ function tournament(day: number, status: 'RATED' | 'FINISHED'): TournamentView {
 
 /** Список по возрастанию даты, постранично — как отвечает сервер. */
 function serve(all: readonly TournamentView[]): void {
-  vi.mocked(listTournaments).mockImplementation((query: ListTournamentsQuery) => {
+  vi.mocked(listTournaments).mockImplementation((query: ListTournamentsRequest) => {
     const items = all.filter((item) => item.status === query.status);
     const start = (query.page - 1) * query.limit;
     return Promise.resolve({

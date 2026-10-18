@@ -261,6 +261,45 @@ describe('фильтры в адресе', () => {
     ).toBe(true);
   });
 
+  it('«Завершён» находит и обсчитанные турниры; отдельного «Рейтинг начислен» нет', async () => {
+    renderAt('/tournaments');
+
+    await screen.findByRole('link', { name: TOURNAMENT.name });
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['filter.status'] }));
+    // Промежуточный шаг обсчёта зрителю не нужен (ADR-051).
+    expect(screen.queryByRole('option', { name: ru['tournament.status.RATED'] })).toBeNull();
+    fireEvent.click(await screen.findByRole('option', { name: ru['tournament.status.FINISHED'] }));
+
+    await waitFor(() => {
+      expect(
+        requests.some(
+          (url) =>
+            url.includes('/tournaments?') &&
+            decodeURIComponent(url).includes('status=FINISHED,RATED'),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it('старая ссылка с «Рейтинг начислен» открывается как «Завершён»', async () => {
+    renderAt('/tournaments?status=RATED');
+
+    await screen.findByRole('link', { name: TOURNAMENT.name });
+
+    expect(
+      requests.some(
+        (url) =>
+          url.includes('/tournaments?') &&
+          decodeURIComponent(url).includes('status=FINISHED,RATED'),
+      ),
+    ).toBe(true);
+    expect(
+      screen
+        .getAllByText(ru['tournament.status.FINISHED'])
+        .some((node) => node.closest('.MuiChip-root')),
+    ).toBe(true);
+  });
+
   it('пустой ответ по фильтру предлагает снять фильтры, а не «нет данных»', async () => {
     vi.stubGlobal('fetch', (input: unknown) => {
       const url = String(input);

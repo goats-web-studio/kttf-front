@@ -1,5 +1,5 @@
 import type {
-  ListTournamentsQuery,
+  ListTournamentsRequest,
   Page,
   SyncRequest,
   SyncResult,
@@ -34,7 +34,7 @@ export function sendOperations(tournamentId: string, request: SyncRequest): Prom
   });
 }
 
-export function listTournaments(query: ListTournamentsQuery): Promise<Page<TournamentView>> {
+export function listTournaments(query: ListTournamentsRequest): Promise<Page<TournamentView>> {
   return apiRequest<Page<TournamentView>>(`/tournaments${queryString(query)}`);
 }
 

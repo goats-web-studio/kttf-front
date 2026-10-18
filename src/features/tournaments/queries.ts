@@ -1,4 +1,4 @@
-import type { ListTournamentsQuery } from '@kttf/shared/types';
+import type { ListTournamentsRequest } from '@kttf/shared/types';
 import { queryOptions } from '@tanstack/react-query';
 
 import { fetchTournament, fetchTournamentResults, listRegistrations, listTournaments } from './api';
@@ -6,7 +6,7 @@ import { fetchTournament, fetchTournamentResults, listRegistrations, listTournam
 /** Ключи кэша турниров. Фильтры входят в ключ списка целиком. */
 export const tournamentKeys = {
   all: ['tournaments'] as const,
-  list: (query: ListTournamentsQuery) => ['tournaments', 'list', query] as const,
+  list: (query: ListTournamentsRequest) => ['tournaments', 'list', query] as const,
   detail: (id: string) => ['tournaments', 'detail', id] as const,
   results: (id: string) => ['tournaments', 'results', id] as const,
   registrations: (id: string) => ['tournaments', 'registrations', id] as const,
@@ -25,7 +25,7 @@ export function registrationsQuery(id: string) {
   });
 }
 
-export function tournamentsQuery(query: ListTournamentsQuery) {
+export function tournamentsQuery(query: ListTournamentsRequest) {
   return queryOptions({
     queryKey: tournamentKeys.list(query),
     queryFn: () => listTournaments(query),

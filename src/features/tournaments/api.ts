@@ -3,7 +3,7 @@ import type {
   DrawResult,
   DrawSwapInput,
   DuplicateTournamentInput,
-  ListTournamentsQuery,
+  ListTournamentsRequest,
   Page,
   RegisterInput,
   RegistrationView,
@@ -23,7 +23,7 @@ import { apiRequest, queryString } from '@/common/api';
  * `anonymous` здесь отнял бы у вошедшего часть его же турниров.
  */
 
-export function listTournaments(query: ListTournamentsQuery): Promise<Page<TournamentView>> {
+export function listTournaments(query: ListTournamentsRequest): Promise<Page<TournamentView>> {
   return apiRequest<Page<TournamentView>>(`/tournaments${queryString(query)}`);
 }
 

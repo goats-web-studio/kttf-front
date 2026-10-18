@@ -1,7 +1,7 @@
 import {
   DEFAULT_PAGE_SIZE,
   tournamentStatusSchema,
-  type ListTournamentsQuery,
+  type ListTournamentsRequest,
   type TournamentStatus,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
@@ -40,6 +40,10 @@ import TournamentCard from '@/features/tournaments/tournament-card';
  * Черновика здесь нет: организатор видит свои черновики в списке и так, а
  * остальным этот фильтр вернул бы пустую страницу и вопрос, куда делись
  * турниры.
+ *
+ * «Рейтинг начислен» отдельным пунктом тоже нет (ADR-051): для зрителя это
+ * тот же доигранный турнир. «Завершён» находит оба статуса, а метка на
+ * карточке по-прежнему говорит, начислен ли рейтинг.
  */
 const FILTERABLE: readonly TournamentStatus[] = [
   'PUBLISHED',
@@ -47,15 +51,21 @@ const FILTERABLE: readonly TournamentStatus[] = [
   'REG_CLOSED',
   'RUNNING',
   'FINISHED',
-  'RATED',
   'CANCELLED',
 ];
+
+/** Что уходит серверу за пунктом фильтра: «Завершён» — оба статуса доигранного. */
+const STATUSES_OF: Partial<Record<TournamentStatus, readonly TournamentStatus[]>> = {
+  FINISHED: ['FINISHED', 'RATED'],
+};
 
 const searchSchema = z.object({
   /** Город клуба-организатора, по идентификатору справочника (ADR-046). */
   city: searchId,
   club: searchId,
   status: tournamentStatusSchema
+    // Старые ссылки с «Рейтинг начислен» открываются как «Завершён».
+    .transform((status): TournamentStatus => (status === 'RATED' ? 'FINISHED' : status))
     .refine((status) => FILTERABLE.includes(status))
     .optional()
     .catch(undefined),
@@ -372,13 +382,13 @@ function toDay(value: Dayjs | null): string | undefined {
  * в полдень, не попал бы в выборку «по сегодня», а границы по UTC сдвинули
  * бы казахстанские сутки на пять часов.
  */
-function toQuery(search: Search, page: number): ListTournamentsQuery {
+function toQuery(search: Search, page: number): ListTournamentsRequest {
   return {
     page,
     limit: DEFAULT_PAGE_SIZE,
     ...(search.city === undefined ? {} : { cityId: search.city }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
-    ...(search.status === undefined ? {} : { status: search.status }),
+    ...(search.status === undefined ? {} : { status: STATUSES_OF[search.status] ?? search.status }),
     ...(search.from === undefined ? {} : { from: startOfDay(search.from).toISOString() }),
     ...(search.to === undefined ? {} : { to: endOfDay(search.to).toISOString() }),
   };
