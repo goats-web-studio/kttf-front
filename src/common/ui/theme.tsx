@@ -342,7 +342,7 @@ function build(tokens: Tokens, locale: Locale): Theme {
         MuiTableContainer: { defaultProps: { component: 'div' } },
         // У последней строки нет нижней линейки: её роль играет край карточки.
         MuiTableRow: {
-          styleOverrides: { root: { '&:last-child > td': { borderBottom: 0 } } },
+          styleOverrides: { root: { '&:last-child > td, &:last-child > th': { borderBottom: 0 } } },
         },
         MuiAlert: {
           // Ошибка — фон, левая линейка и текст (раздел 3.4), а не цветной блок.

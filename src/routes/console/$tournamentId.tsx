@@ -1,4 +1,4 @@
-import type { MatchResultInput, MatchView } from '@kttf/shared/types';
+import type { FormatConfig, MatchResultInput, MatchView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -393,6 +393,7 @@ function ConsoleScreen(): ReactNode {
                         stages={snapshot.stages}
                         names={view.names}
                         ratings={view.ratings}
+                        advance={advanceOf(snapshot.tournament.formatConfig)}
                       />
                     </>
                   ) : (
@@ -599,4 +600,11 @@ function TvLink({
       </Button>
     </Box>
   );
+}
+
+/** Сколько выходит из группы дальше — зона выхода в таблице, как на экране зала. */
+function advanceOf(config: FormatConfig): number | null {
+  return config.type === 'GROUPS_KNOCKOUT' || config.type === 'GROUPS_FINAL_GROUPS'
+    ? config.advancePerGroup
+    : null;
 }

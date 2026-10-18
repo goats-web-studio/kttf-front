@@ -18,6 +18,8 @@ interface StandingsPanelProps {
   readonly stages: readonly StageView[];
   readonly names: ReadonlyMap<string, string>;
   readonly ratings: ReadonlyMap<string, string>;
+  /** Сколько выходит из группы дальше; `null` — схема без выхода. */
+  readonly advance?: number | null;
 }
 
 /**
@@ -36,6 +38,7 @@ export default function StandingsPanel({
   stages,
   names,
   ratings,
+  advance = null,
 }: StandingsPanelProps): ReactNode {
   const t = useT();
 
@@ -60,142 +63,273 @@ export default function StandingsPanel({
           matches={matchesOf(stages, group)}
           names={names}
           ratings={ratings}
+          advance={advance}
         />
       ))}
     </section>
   );
 }
 
-/** Счёт личной встречи глазами игрока `a`. `null` — ещё не играли. */
-function scoreBetween(matches: readonly MatchView[], a: string, b: string): string | null {
+/** Встреча двух игроков группы, если она есть в расписании. */
+function matchBetween(
+  matches: readonly MatchView[],
+  a: string,
+  b: string,
+): {
+  readonly match: MatchView;
+  readonly mine: number | null;
+  readonly theirs: number | null;
+} | null {
   for (const match of matches) {
-    if (match.setsA === null || match.setsB === null) {
-      continue;
-    }
-
     if (match.playerAId === a && match.playerBId === b) {
-      return `${String(match.setsA)}:${String(match.setsB)}`;
+      return { match, mine: match.setsA, theirs: match.setsB };
     }
 
     if (match.playerAId === b && match.playerBId === a) {
-      return `${String(match.setsB)}:${String(match.setsA)}`;
+      return { match, mine: match.setsB, theirs: match.setsA };
     }
   }
 
   return null;
 }
 
+/** Числа таблицы — дисплейным набором, разряды столбиком. */
+const DISPLAY = "'Oswald', system-ui, sans-serif";
+
 function GroupTable({
   group,
   matches,
   names,
   ratings,
+  advance,
 }: {
   readonly group: GroupStandingsView;
   readonly matches: readonly MatchView[];
   readonly names: ReadonlyMap<string, string>;
   readonly ratings: ReadonlyMap<string, string>;
+  readonly advance: number | null;
 }): ReactNode {
   const t = useT();
   const order = group.rows.map((row) => row.participant);
 
   return (
-    <Paper variant="outlined" sx={{ mt: 1.5, p: 1.5, overflowX: 'auto' }}>
-      <Table size="small" sx={{ '& .MuiTableCell-root': CELL, '& caption': CAPTION }}>
-        <caption>{group.label}</caption>
+    <Paper variant="outlined" sx={{ mt: 1.5, overflowX: 'auto' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 2,
+          px: 2,
+          pt: 1.5,
+          pb: 0.5,
+        }}
+      >
+        <Typography
+          component="h3"
+          sx={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: 22, lineHeight: '28px' }}
+        >
+          {group.label}
+        </Typography>
+        {advance !== null && (
+          <Typography
+            component="span"
+            variant="caption"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              color: 'var(--ok)',
+              fontWeight: 600,
+            }}
+          >
+            <Box
+              component="span"
+              aria-hidden
+              sx={{ width: 4, height: 14, borderRadius: 1, bgcolor: 'var(--ok)' }}
+            />
+            {t('screen.group.advance')}
+          </Typography>
+        )}
+      </Box>
+
+      <Table size="small" sx={{ minWidth: 560, ...MATRIX }}>
         <TableHead>
           <TableRow>
+            <TableCell scope="col" sx={{ width: 28 }}>
+              #
+            </TableCell>
             <TableCell scope="col">{t('console.standings.player')}</TableCell>
             {order.map((_participant, index) => (
-              <TableCell key={index} scope="col" align="center">
+              <TableCell key={index} scope="col" align="center" sx={{ width: 56 }}>
                 {index + 1}
               </TableCell>
             ))}
-            <TableCell scope="col" align="right">
+            <TableCell scope="col" align="center" sx={{ width: 56 }}>
               {t('console.standings.points')}
             </TableCell>
-            <TableCell scope="col" align="right">
+            <TableCell scope="col" align="center" sx={{ width: 56 }}>
               {t('console.standings.sets')}
             </TableCell>
-            <TableCell scope="col" align="right">
+            <TableCell scope="col" align="center" sx={{ width: 56 }}>
               {t('console.standings.balls')}
-            </TableCell>
-            <TableCell scope="col" align="right">
-              {t('console.standings.place')}
             </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {group.rows.map((row, index) => (
-            <TableRow key={row.participant}>
-              <TableCell component="th" scope="row">
-                <Box component="span" sx={{ color: 'text.secondary' }}>
-                  {index + 1}.
-                </Box>{' '}
-                {names.get(row.participant) ?? row.participant}{' '}
-                {/* Рейтинг рядом с фамилией — ТЗ 6.6. */}
-                <Box component="span" sx={{ color: 'text.secondary' }}>
-                  {ratings.get(row.participant) ?? ''}
-                </Box>
-              </TableCell>
+          {group.rows.map((row, index) => {
+            const through = advance !== null && row.place !== null && row.place <= advance;
 
-              {order.map((opponent, column) => (
-                <TableCell key={column} align="center">
-                  {column === index ? (
-                    <Box component="span" sx={{ color: 'text.disabled' }}>
-                      ×
+            return (
+              <TableRow
+                key={row.participant}
+                // Зона выхода — зелёная черта слева и зелёное место: то же,
+                // что на экране зала, судья и зритель видят одно.
+                sx={{ boxShadow: through ? 'inset 4px 0 0 var(--ok)' : 'none' }}
+              >
+                <TableCell
+                  className="big"
+                  sx={{
+                    fontFamily: DISPLAY,
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: through ? 'var(--ok)' : 'text.secondary',
+                  }}
+                >
+                  {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
+                  {row.place ?? (
+                    <Box component="span" sx={{ color: 'var(--warn-text)' }}>
+                      ?
                     </Box>
-                  ) : (
-                    (scoreBetween(matches, row.participant, opponent) ?? (
-                      <Box component="span" sx={{ color: 'text.disabled' }}>
-                        —
-                      </Box>
-                    ))
                   )}
                 </TableCell>
-              ))}
-
-              <TableCell align="right" sx={{ fontWeight: 600 }}>
-                {row.points}
-              </TableCell>
-              <TableCell align="right" sx={{ color: 'text.secondary' }}>
-                {row.setDiff > 0 ? `+${String(row.setDiff)}` : row.setDiff}
-              </TableCell>
-              <TableCell align="right" sx={{ color: 'text.secondary' }}>
-                {row.ballDiff > 0 ? `+${String(row.ballDiff)}` : row.ballDiff}
-              </TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>
-                {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
-                {row.place ?? (
-                  <Box component="span" sx={{ color: 'warning.main' }}>
-                    ?
+                <TableCell component="th" scope="row" sx={{ whiteSpace: 'nowrap' }}>
+                  <Box component="span" sx={{ fontWeight: 600, fontSize: 15 }}>
+                    {names.get(row.participant) ?? row.participant}
+                  </Box>{' '}
+                  {/* Рейтинг рядом с фамилией — ТЗ 6.6. */}
+                  <Box component="span" sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    {ratings.get(row.participant) ?? ''}
                   </Box>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+
+                {order.map((opponent, column) => (
+                  <TableCell key={column} align="center">
+                    <Cell
+                      self={column === index}
+                      found={matchBetween(matches, row.participant, opponent)}
+                    />
+                  </TableCell>
+                ))}
+
+                <TableCell
+                  className="big"
+                  align="center"
+                  sx={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: 700 }}
+                >
+                  {row.points}
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: 14 }}>
+                  {row.setsWon}:{row.setsLost}
+                </TableCell>
+                <TableCell align="center" sx={{ color: 'text.secondary' }}>
+                  {row.ballDiff > 0 ? `+${String(row.ballDiff)}` : row.ballDiff}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </Paper>
   );
 }
 
-/** Название группы над таблицей, а не под ней, как ставит MUI. */
-const CAPTION = {
-  captionSide: 'top',
-  p: 0,
-  pb: 1,
-  textAlign: 'left',
-  typography: 'body2',
-  fontWeight: 600,
-  color: 'text.primary',
-} as const;
+/**
+ * Клетка матрицы — как у экрана зала и у турнир-менеджера RTTF: победа на
+ * зелёной подложке, поражение на красной, своя клетка — серый блок, идущая
+ * встреча — красная точка. Счёт всегда написан цифрами: цвет второй носитель.
+ */
+function Cell({
+  self,
+  found,
+}: {
+  readonly self: boolean;
+  readonly found: ReturnType<typeof matchBetween>;
+}): ReactNode {
+  const t = useT();
 
-/** Плотная матрица: ячейки узкие, цифры столбиком. */
-const CELL = {
-  px: 0.5,
-  py: 0.5,
-  fontSize: 12,
-  lineHeight: '18px',
-  fontVariantNumeric: 'tabular-nums',
+  if (self) {
+    return (
+      <Box
+        aria-hidden
+        sx={{
+          mx: 'auto',
+          width: 44,
+          height: 28,
+          borderRadius: 1.5,
+          bgcolor: 'var(--paper-sunken)',
+        }}
+      />
+    );
+  }
+
+  if (found?.match.status === 'PLAYING') {
+    return (
+      <Box
+        component="span"
+        aria-label={t('screen.group.playing')}
+        sx={{ color: 'var(--red-600)', fontSize: 16, lineHeight: 1 }}
+      >
+        ●
+      </Box>
+    );
+  }
+
+  if (found?.mine == null || found.theirs === null) {
+    return (
+      <Box component="span" sx={{ color: 'text.disabled' }}>
+        ·
+      </Box>
+    );
+  }
+
+  const won = found.mine > found.theirs;
+
+  return (
+    <Box
+      component="span"
+      sx={{
+        display: 'inline-grid',
+        placeItems: 'center',
+        minWidth: 44,
+        height: 28,
+        px: 0.75,
+        borderRadius: 1.5,
+        fontWeight: 700,
+        fontVariantNumeric: 'tabular-nums',
+        ...(won
+          ? { bgcolor: 'var(--ok-50)', color: 'var(--ok-text)' }
+          : { bgcolor: 'var(--red-50)', color: 'var(--red-700)' }),
+      }}
+    >
+      {found.mine}:{found.theirs}
+    </Box>
+  );
+}
+
+/**
+ * Плотная матрица: ячейки узкие, цифры столбиком. Крупные числа — место и
+ * очки — помечены классом `big` и мелкий кегль не наследуют: селектор
+ * таблицы сильнее `sx` ячейки и иначе перебивал бы их.
+ */
+const MATRIX = {
+  '& .MuiTableCell-root': {
+    px: 0.75,
+    py: 0.75,
+    lineHeight: '20px',
+    fontVariantNumeric: 'tabular-nums',
+  },
+  '& .MuiTableCell-root:not(.big)': { fontSize: 13 },
+  '& .MuiTableCell-root:first-of-type': { pl: 2.5 },
+  '& .MuiTableCell-root:last-of-type': { pr: 2 },
 } as const;
