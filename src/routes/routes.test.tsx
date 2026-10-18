@@ -124,13 +124,22 @@ describe('охрана кабинета', () => {
 });
 
 describe('мои клубы', () => {
-  it('без клуба предлагает его создать', async () => {
+  it('без клуба предлагает подать заявку, а не завести его самому', async () => {
+    // Клуб заводит администратор по заявке «Напишите нам» — ADR-049.
     await renderAt('/cabinet/clubs', SIGNED_IN);
 
     expect(screen.getByRole('heading', { name: ru['nav.myClubs'] })).toBeDefined();
-    const create = screen.getAllByRole('link', { name: ru['club.create'] });
+    const apply = screen.getAllByRole('link', { name: ru['clubs.apply'] });
 
-    expect(create[0]?.getAttribute('href')).toBe('/cabinet/clubs/new');
+    expect(apply[0]?.getAttribute('href')).toBe('/feedback');
+    expect(screen.queryByRole('link', { name: ru['club.create'] })).toBeNull();
+  });
+
+  it('форма нового клуба не администратору не открывается', async () => {
+    await renderAt('/cabinet/clubs/new', SIGNED_IN);
+
+    expect(screen.getByText(ru['clubs.new.byApplication.title'])).toBeDefined();
+    expect(screen.queryByRole('button', { name: ru['club.create'] })).toBeNull();
   });
 
   it('управление чужим клубом не открывает, а ведёт на его страницу', async () => {

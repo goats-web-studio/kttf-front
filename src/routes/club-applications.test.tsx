@@ -184,6 +184,13 @@ describe('заявки у администратора', () => {
     expect(await screen.findByText(`${APPLICATION.clubName} · ${APPLICATION.city}`)).toBeDefined();
     expect(sent.some((request) => request.url.includes('status=NEW'))).toBe(true);
 
+    // Клуб заводится из заявки: форма получает её поля (ADR-049).
+    const create = screen.getByRole('link', { name: ru['applications.createClub'] });
+    const href = new URL(create.getAttribute('href') ?? '', 'http://x');
+    expect(href.pathname).toBe('/cabinet/clubs/new');
+    expect(href.searchParams.get('application')).toContain(APPLICATION.id);
+    expect(href.searchParams.get('name')).toContain(APPLICATION.clubName);
+
     fireEvent.click(screen.getByRole('button', { name: ru['applications.markDone'] }));
 
     await waitFor(() => {

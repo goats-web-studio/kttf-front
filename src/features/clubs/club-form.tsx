@@ -14,6 +14,13 @@ import CityPicker from '@/features/places/city-picker';
 interface ClubFormProps {
   /** Клуб для правки. Без него форма заводит новый. */
   readonly club?: ClubView;
+  /** Заполнение нового клуба — из заявки «Напишите нам» (ADR-049). */
+  readonly initial?: {
+    readonly name?: string;
+    readonly address?: string;
+    readonly tableCount?: number;
+    readonly description?: string;
+  };
   readonly isPending: boolean;
   readonly error: unknown;
   readonly submitLabel: string;
@@ -43,6 +50,7 @@ const NUMERIC = { inputMode: 'numeric' } as const;
  */
 export default function ClubForm({
   club,
+  initial,
   isPending,
   error,
   submitLabel,
@@ -53,16 +61,16 @@ export default function ClubForm({
   const form = useForm({
     resolver: zodResolver(createClubSchema),
     defaultValues: {
-      name: club?.name ?? '',
+      name: club?.name ?? initial?.name ?? '',
       cityId: club?.city.id ?? '',
-      tableCount: club?.tableCount ?? 4,
+      tableCount: club?.tableCount ?? initial?.tableCount ?? 4,
       ...defined({
         shortName: club?.shortName,
-        address: club?.address,
+        address: club?.address ?? initial?.address,
         phone: club?.phone,
         whatsapp: club?.whatsapp,
         instagram: club?.instagram,
-        description: club?.description,
+        description: club?.description ?? initial?.description,
       }),
     },
   });

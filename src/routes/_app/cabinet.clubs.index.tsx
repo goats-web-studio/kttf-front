@@ -25,8 +25,10 @@ export const Route = createFileRoute('/_app/cabinet/clubs/')({
 /**
  * Мои клубы — вход в рабочее место организатора.
  *
- * Отсюда клуб заводится и открывается на управление: турниры клуба по
- * стадиям, данные клуба и состав. Судья видит клуб в списке, но ведёт его на
+ * Отсюда клуб открывается на управление: турниры клуба по стадиям, данные
+ * клуба и состав. Новый клуб заводит администратор платформы по заявке
+ * (ADR-049): остальным здесь — «Подать заявку на клуб», ведущая на форму
+ * «Напишите нам». Судья видит клуб в списке, но ведёт его на
  * публичную страницу: управлять клубом его роль не даёт (ADR-014).
  */
 function MyClubsPage(): ReactNode {
@@ -35,6 +37,13 @@ function MyClubsPage(): ReactNode {
   const user = useSessionStore((state) => state.user);
   const clubs = useQuery(clubDirectoryQuery);
   const roles = user?.clubRoles ?? [];
+  const isAdmin = user?.isAdmin === true;
+  // Администратор заводит клуб сам, остальные — заявкой (ADR-049).
+  const newClub = (
+    <Button variant="contained" href={isAdmin ? '/cabinet/clubs/new' : '/feedback'}>
+      {t(isAdmin ? 'club.create' : 'clubs.apply')}
+    </Button>
+  );
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
@@ -45,11 +54,7 @@ function MyClubsPage(): ReactNode {
         sx={{ flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between' }}
       >
         <Typography variant="h1">{t('nav.myClubs')}</Typography>
-        {roles.length > 0 && (
-          <Button variant="contained" href="/cabinet/clubs/new">
-            {t('club.create')}
-          </Button>
-        )}
+        {roles.length > 0 && newClub}
       </Stack>
 
       <Box sx={{ mt: 3 }}>
@@ -57,11 +62,7 @@ function MyClubsPage(): ReactNode {
           <EmptyState
             title={t('myClubs.empty.title')}
             text={t('myClubs.empty.text')}
-            action={
-              <Button variant="contained" href="/cabinet/clubs/new">
-                {t('club.create')}
-              </Button>
-            }
+            action={newClub}
           />
         ) : (
           <QueryState

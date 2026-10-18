@@ -227,8 +227,15 @@ function ApplicationCard({
       )}
 
       <Box sx={{ mt: 2.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+        {/* Клуб заводится отсюда, с полями заявки (ADR-049). Обе кнопки —
+            обводкой: заявок на экране несколько, а главная кнопка одна. */}
+        {fresh && (
+          <Button href={newClubHref(item)} sx={{ minHeight: 44 }}>
+            {t('applications.createClub')}
+          </Button>
+        )}
         <Button
-          variant={fresh ? 'contained' : 'outlined'}
+          variant={fresh ? 'outlined' : 'text'}
           disabled={pending}
           onClick={() => {
             onMark(fresh);
@@ -274,4 +281,15 @@ function Contact({ value }: { readonly value: string }): ReactNode {
       : null;
 
   return href === null ? value : <a href={href}>{value}</a>;
+}
+
+/** Форма нового клуба, заполненная заявкой: название, адрес, столы, описание. */
+function newClubHref(item: ClubApplicationView): string {
+  const search = new URLSearchParams({ application: item.id, name: item.clubName });
+
+  if (item.address !== null) search.set('address', item.address);
+  if (item.tableCount !== null) search.set('tables', String(item.tableCount));
+  if (item.message !== null) search.set('about', item.message);
+
+  return `/cabinet/clubs/new?${search.toString()}`;
 }
