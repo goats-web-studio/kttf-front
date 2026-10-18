@@ -81,6 +81,12 @@ export default function TournamentForm({
   const [draft, setDraft] = useState<FormatDraft>(() =>
     tournament === undefined ? DEFAULT_DRAFT : fromFormatConfig(tournament.formatConfig),
   );
+  // Ограничения и описание нужны редкому турниру, а занимают пол-экрана:
+  // свёрнуты, пока не понадобились. У турнира, где они уже заданы, раскрыты —
+  // иначе заданное спряталось бы при правке.
+  const [limitsOpen, setLimitsOpen] = useState(
+    () => tournament !== undefined && hasLimits(tournament),
+  );
   // Для записанного турнира предпросчёт сразу считается по его составу.
   const [participants, setParticipants] = useState(
     tournament !== undefined && tournament.participantCount > 1 ? tournament.participantCount : 16,
@@ -177,7 +183,6 @@ export default function TournamentForm({
               onChange={field.onChange}
               onBlur={field.onBlur}
               inputRef={field.ref}
-              hint={t('player.form.optional')}
             />
           )}
         />
@@ -189,7 +194,7 @@ export default function TournamentForm({
           {...register('entryFee', {
             setValueAs: (value: string) => (value === '' ? 0 : Number(value)),
           })}
-          {...hint(t, errors.entryFee === undefined ? undefined : 'error.form.entryFee', false, {
+          {...hint(t, errors.entryFee === undefined ? undefined : 'error.form.entryFee', {
             ...NUMERIC,
             min: 0,
           })}
@@ -220,12 +225,10 @@ export default function TournamentForm({
           label={t('tournament.form.tableCount')}
           type="number"
           {...register('tableCount', { valueAsNumber: true })}
-          {...hint(
-            t,
-            errors.tableCount === undefined ? undefined : 'error.form.tableCount',
-            false,
-            { ...NUMERIC, min: 1 },
-          )}
+          {...hint(t, errors.tableCount === undefined ? undefined : 'error.form.tableCount', {
+            ...NUMERIC,
+            min: 1,
+          })}
         />
       </Box>
 
@@ -286,111 +289,126 @@ export default function TournamentForm({
         </Box>
       </Section>
 
-      <Section legend={t('tournament.form.limits')}>
-        <Box sx={GRID}>
-          <TextField
-            label={t('tournament.form.maxParticipants')}
-            type="number"
-            {...register('maxParticipants', optionalNumber)}
-            {...hint(t, undefined, true, { ...NUMERIC, min: 1 })}
-          />
+      {!limitsOpen && (
+        <Button
+          variant="text"
+          aria-expanded={false}
+          onClick={() => {
+            setLimitsOpen(true);
+          }}
+          sx={{ display: 'flex', mt: 3, px: 1, color: 'text.secondary' }}
+        >
+          + {t('tournament.form.limits')}
+        </Button>
+      )}
 
-          <Controller
-            control={form.control}
-            name="genderLimit"
-            render={({ field: { ref, value, onChange, ...field } }) => (
-              <TextField
-                select
-                label={t('tournament.form.genderLimit')}
-                {...field}
-                value={value ?? ''}
-                onChange={(event) => {
-                  onChange(event.target.value === '' ? undefined : event.target.value);
-                }}
-                inputRef={ref}
-                {...hint(t, undefined, true)}
-              >
-                <MenuItem value="">{t('filter.any')}</MenuItem>
-                {genderSchema.options.map((gender) => (
-                  <MenuItem key={gender} value={gender}>
-                    {t(gender === 'FEMALE' ? 'player.gender.FEMALE' : 'player.gender.MALE')}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
-          />
+      {limitsOpen && (
+        <Section legend={t('tournament.form.limits')}>
+          <Box sx={GRID}>
+            <TextField
+              label={t('tournament.form.maxParticipants')}
+              type="number"
+              {...register('maxParticipants', optionalNumber)}
+              {...hint(t, undefined, { ...NUMERIC, min: 1 })}
+            />
 
-          <TextField
-            label={t('tournament.form.ratingCapMin')}
-            type="number"
-            {...register('ratingCapMin', optionalNumber)}
-            {...hint(t, undefined, true, NUMERIC)}
-          />
+            <Controller
+              control={form.control}
+              name="genderLimit"
+              render={({ field: { ref, value, onChange, ...field } }) => (
+                <TextField
+                  select
+                  label={t('tournament.form.genderLimit')}
+                  {...field}
+                  value={value ?? ''}
+                  onChange={(event) => {
+                    onChange(event.target.value === '' ? undefined : event.target.value);
+                  }}
+                  inputRef={ref}
+                  {...hint(t, undefined)}
+                >
+                  <MenuItem value="">{t('filter.any')}</MenuItem>
+                  {genderSchema.options.map((gender) => (
+                    <MenuItem key={gender} value={gender}>
+                      {t(gender === 'FEMALE' ? 'player.gender.FEMALE' : 'player.gender.MALE')}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
 
-          <TextField
-            label={t('tournament.form.ratingCapMax')}
-            type="number"
-            {...register('ratingCapMax', optionalNumber)}
-            {...hint(t, undefined, true, NUMERIC)}
-          />
+            <TextField
+              label={t('tournament.form.ratingCapMin')}
+              type="number"
+              {...register('ratingCapMin', optionalNumber)}
+              {...hint(t, undefined, NUMERIC)}
+            />
 
-          {/* Заявки вне планки — ADR-044. Возраст и пол галочка не трогает:
+            <TextField
+              label={t('tournament.form.ratingCapMax')}
+              type="number"
+              {...register('ratingCapMax', optionalNumber)}
+              {...hint(t, undefined, NUMERIC)}
+            />
+
+            {/* Заявки вне планки — ADR-044. Возраст и пол галочка не трогает:
               это условия турнира, а не уровня игры. */}
-          <Controller
-            control={form.control}
-            name="reviewOutOfRating"
-            render={({ field }) => (
-              <FormControlLabel
-                sx={{ minHeight: 44, gridColumn: { sm: 'span 2' } }}
-                label={t('tournament.form.reviewOutOfRating')}
-                control={
-                  <Checkbox
-                    name={field.name}
-                    checked={field.value === true}
-                    onChange={(event) => {
-                      field.onChange(event.target.checked);
-                    }}
-                    onBlur={field.onBlur}
-                    slotProps={{ input: { ref: field.ref } }}
-                  />
-                }
-              />
-            )}
-          />
+            <Controller
+              control={form.control}
+              name="reviewOutOfRating"
+              render={({ field }) => (
+                <FormControlLabel
+                  sx={{ minHeight: 44, gridColumn: { sm: 'span 2' } }}
+                  label={t('tournament.form.reviewOutOfRating')}
+                  control={
+                    <Checkbox
+                      name={field.name}
+                      checked={field.value === true}
+                      onChange={(event) => {
+                        field.onChange(event.target.checked);
+                      }}
+                      onBlur={field.onBlur}
+                      slotProps={{ input: { ref: field.ref } }}
+                    />
+                  }
+                />
+              )}
+            />
 
-          <TextField
-            label={t('tournament.form.birthYearFrom')}
-            type="number"
-            {...register('birthYearFrom', optionalNumber)}
-            {...hint(t, undefined, true, NUMERIC)}
-          />
+            <TextField
+              label={t('tournament.form.birthYearFrom')}
+              type="number"
+              {...register('birthYearFrom', optionalNumber)}
+              {...hint(t, undefined, NUMERIC)}
+            />
 
-          <TextField
-            label={t('tournament.form.birthYearTo')}
-            type="number"
-            {...register('birthYearTo', optionalNumber)}
-            {...hint(t, undefined, true, NUMERIC)}
-          />
-        </Box>
+            <TextField
+              label={t('tournament.form.birthYearTo')}
+              type="number"
+              {...register('birthYearTo', optionalNumber)}
+              {...hint(t, undefined, NUMERIC)}
+            />
+          </Box>
 
-        <Box sx={{ mt: 2, display: 'grid', gap: 2 }}>
-          <TextField
-            label={t('tournament.form.description')}
-            multiline
-            minRows={3}
-            {...register('description', optionalText)}
-            {...hint(t, undefined, true)}
-          />
+          <Box sx={{ mt: 2, display: 'grid', gap: 2 }}>
+            <TextField
+              label={t('tournament.form.description')}
+              multiline
+              minRows={3}
+              {...register('description', optionalText)}
+              {...hint(t, undefined)}
+            />
 
-          <TextField
-            label={t('tournament.form.prizeInfo')}
-            multiline
-            minRows={2}
-            {...register('prizeInfo', optionalText)}
-            {...hint(t, undefined, true)}
-          />
-        </Box>
-      </Section>
+            <TextField
+              label={t('tournament.form.prizeInfo')}
+              multiline
+              minRows={2}
+              {...register('prizeInfo', optionalText)}
+              {...hint(t, undefined)}
+            />
+          </Box>
+        </Section>
+      )}
 
       {/* Границы, вывернутые наизнанку, отвергает схема целиком, а не поле:
           ошибка принадлежит паре, и показывать её у одного из двух значило бы
@@ -422,15 +440,31 @@ export default function TournamentForm({
   );
 }
 
+/** Задано ли у турнира хоть одно ограничение или описание. */
+function hasLimits(tournament: TournamentView): boolean {
+  return [
+    tournament.maxParticipants,
+    tournament.genderLimit,
+    tournament.ratingCapMin,
+    tournament.ratingCapMax,
+    tournament.birthYearFrom,
+    tournament.birthYearTo,
+    tournament.description,
+    tournament.prizeInfo,
+  ].some((value) => value !== null && value !== '');
+}
+
 /**
- * Подсказка под полем: ошибка — объявляется чтецу экрана сразу, пометка
- * «необязательно» — просто текстом. Подпись поля при этом остаётся ровно
- * названием поля: по нему поле и находят.
+ * Подсказка под полем: ошибка объявляется чтецу экрана сразу.
+ *
+ * Пометки «необязательно» под полями больше нет: она стояла под каждым
+ * вторым полем и превращала форму в столбик серого текста. Обязательных
+ * полей в форме четыре, и все они заполнены умолчаниями, кроме названия и
+ * даты — об их пропуске скажет ошибка.
  */
 function hint(
   t: (key: MessageKey) => string,
   error: MessageKey | undefined,
-  optional = false,
   htmlInput?: Readonly<Record<string, unknown>>,
 ) {
   const input = htmlInput === undefined ? {} : { htmlInput };
@@ -443,10 +477,7 @@ function hint(
     };
   }
 
-  return {
-    ...(optional ? { helperText: t('player.form.optional') } : {}),
-    slotProps: input,
-  };
+  return { slotProps: input };
 }
 
 /**

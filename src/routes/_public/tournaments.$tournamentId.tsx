@@ -1,10 +1,14 @@
+import type { TournamentResultsView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, type ReactNode } from 'react';
+import { z } from 'zod';
 
 import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
@@ -25,9 +29,18 @@ import ResultsMatches from '@/features/tournaments/results-matches';
 import ResultsPlacements from '@/features/tournaments/results-placements';
 import ResultsRatings from '@/features/tournaments/results-ratings';
 import ResultsStandings from '@/features/tournaments/results-standings';
+import {
+  availableResultTabs,
+  RESULT_TAB_LABELS,
+  searchResultTab,
+  type ResultTab,
+} from '@/features/tournaments/results-tabs';
 import TournamentSummary from '@/features/tournaments/tournament-summary';
 
+const searchSchema = z.object({ tab: searchResultTab });
+
 export const Route = createFileRoute('/_public/tournaments/$tournamentId')({
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: TournamentPage,
 });
 
@@ -102,40 +115,56 @@ function TournamentPage(): ReactNode {
                   tournament={data.tournament}
                   registrations={registrations.data ?? []}
                 />
-                <ParticipantsPanel
-                  tournament={data.tournament}
-                  registrations={registrations.data ?? []}
-                />
                 {/* «Повторить прошлый» — ТЗ 4.2. Стоит у турнира, а не в
                     форме создания: копирует настройки сервер, и брать их
                     неоткуда, кроме как у самого турнира. */}
-                {/* Расстановка до старта видна организатору: после старта
-                    менять её уже нечем, а публичные результаты ниже
-                    показываются только у начатого турнира. */}
-                {isClubStaff(user, data.tournament.clubId) &&
-                  data.tournament.startedAt === null && (
-                    <>
-                      <DrawPreview tournamentId={tournamentId} stages={data.stages} names={names} />
-                      <ResultsBracket stages={data.stages} names={names} />
-                    </>
-                  )}
                 <RepeatTournament tournament={data.tournament} />
                 {/* Результаты — у начатого турнира. До старта места «не
                     определены», а изменения рейтинга нулевые у всех: такие
                     таблицы выглядят поломкой, а не пустотой. */}
-                {data.tournament.startedAt !== null && (
+                {data.tournament.startedAt === null ? (
                   <>
-                    <ResultsPlacements
-                      participants={data.participants}
-                      shared={data.shared}
-                      unresolved={data.unresolved}
-                      names={names}
+                    <ParticipantsPanel
+                      tournament={data.tournament}
+                      registrations={registrations.data ?? []}
                     />
-                    <ResultsStandings standings={data.standings} names={names} />
-                    <ResultsBracket stages={data.stages} names={names} />
-                    <ResultsMatches stages={data.stages} names={names} />
-                    <ResultsRatings ratings={data.ratings} names={names} />
+                    {/* Расстановка до старта видна организатору: после
+                        старта менять её уже нечем. */}
+                    {isClubStaff(user, data.tournament.clubId) && (
+                      <>
+                        <DrawPreview
+                          tournamentId={tournamentId}
+                          stages={data.stages}
+                          names={names}
+                        />
+                        <ResultsBracket stages={data.stages} names={names} />
+                      </>
+                    )}
                   </>
+                ) : isClubStaff(user, data.tournament.clubId) &&
+                  data.tournament.finishedAt === null ? (
+                  // Организатору состав нужен под рукой посреди турнира —
+                  // снять участника, принять заявку, — а не во вкладке.
+                  // После завершения менять в нём нечего: он уходит во
+                  // вкладку, как у всех, и не заслоняет итоги.
+                  <>
+                    <ParticipantsPanel
+                      tournament={data.tournament}
+                      registrations={registrations.data ?? []}
+                    />
+                    <ResultTabs data={data} names={names} participants={null} />
+                  </>
+                ) : (
+                  <ResultTabs
+                    data={data}
+                    names={names}
+                    participants={
+                      <ParticipantsPanel
+                        tournament={data.tournament}
+                        registrations={registrations.data ?? []}
+                      />
+                    }
+                  />
                 )}
               </>
             )}
@@ -143,5 +172,125 @@ function TournamentPage(): ReactNode {
         )}
       </Box>
     </Container>
+  );
+}
+
+interface ResultTabsProps {
+  readonly data: TournamentResultsView;
+  readonly names: ReadonlyMap<string, string>;
+  /** Состав во вкладке; `null` — состав показан над вкладками. */
+  readonly participants: ReactNode;
+}
+
+/**
+ * Результаты начатого турнира — по вкладкам, а не одной лентой.
+ *
+ * Вкладка живёт в адресе: «смотри сетку» пересылают ссылкой. Недоступная
+ * вкладка из старой ссылки (у олимпийки нет групп) открывает первую.
+ */
+function ResultTabs({ data, names, participants }: ResultTabsProps): ReactNode {
+  const t = useT();
+  const id = useId();
+  const strip = useRef<HTMLDivElement>(null);
+  const navigate = Route.useNavigate();
+  const { tab: requested } = Route.useSearch();
+
+  const tabs = availableResultTabs(data, { withPlayers: participants !== null });
+  const first = tabs[0] ?? 'places';
+  const current: ResultTab =
+    requested !== undefined && tabs.includes(requested) ? requested : first;
+
+  const select = (tab: ResultTab): void => {
+    void navigate({
+      // Первая вкладка — умолчание и в адрес не пишется (common/search.ts).
+      search: (prev) => ({ ...prev, tab: tab === first ? undefined : tab }),
+      replace: true,
+      resetScroll: false,
+    });
+  };
+
+  // Ссылка «?tab=ratings» на телефоне: вкладка за краем полосы. Tabs
+  // докручивают к ней при монтировании, но до того, как приехал шрифт, — после
+  // подмены ширины вкладок выбранная снова оказывается за краем.
+  useEffect(() => {
+    let cancelled = false;
+
+    // Без FontFaceSet (jsdom, старые WebView) шрифт ждать нечем.
+    const fontsReady = 'fonts' in document ? document.fonts.ready : Promise.resolve();
+
+    void fontsReady.then(() => {
+      const scroller = strip.current?.querySelector<HTMLElement>('.MuiTabs-scroller');
+      const selected = strip.current?.querySelector<HTMLElement>(
+        '[role="tab"][aria-selected="true"]',
+      );
+
+      if (cancelled || scroller == null || selected == null) {
+        return;
+      }
+
+      const left = selected.offsetLeft - (scroller.clientWidth - selected.offsetWidth) / 2;
+      scroller.scrollLeft = Math.max(0, left);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [current]);
+
+  return (
+    <Box ref={strip} sx={{ mt: 5 }}>
+      <Tabs
+        value={current}
+        onChange={(_, tab: ResultTab) => {
+          select(tab);
+        }}
+        aria-label={t('results.tabs.label')}
+        variant="scrollable"
+        // На телефоне шесть вкладок не помещаются: стрелка показывает, что
+        // справа есть ещё, иначе «Рейтинг» и «Участники» никто не найдёт.
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        sx={{ borderBottom: 1, borderColor: 'divider' }}
+      >
+        {tabs.map((tab) => (
+          <Tab
+            key={tab}
+            value={tab}
+            label={t(RESULT_TAB_LABELS[tab])}
+            id={`${id}-tab-${tab}`}
+            aria-controls={`${id}-panel`}
+            sx={{
+              minHeight: 48,
+              minWidth: 0,
+              px: { xs: 1.5, sm: 2 },
+              textTransform: 'none',
+              fontSize: 15,
+            }}
+          />
+        ))}
+      </Tabs>
+      <Box
+        role="tabpanel"
+        id={`${id}-panel`}
+        aria-labelledby={`${id}-tab-${current}`}
+        // Секции рассчитаны на ленту и несут свой отступ сверху; под
+        // вкладками он лишний.
+        sx={{ '& > :first-of-type': { mt: 3 } }}
+      >
+        {current === 'places' && (
+          <ResultsPlacements
+            participants={data.participants}
+            shared={data.shared}
+            unresolved={data.unresolved}
+            names={names}
+          />
+        )}
+        {current === 'groups' && <ResultsStandings standings={data.standings} names={names} />}
+        {current === 'bracket' && <ResultsBracket stages={data.stages} names={names} />}
+        {current === 'matches' && <ResultsMatches stages={data.stages} names={names} />}
+        {current === 'ratings' && <ResultsRatings ratings={data.ratings} names={names} />}
+        {current === 'players' && participants}
+      </Box>
+    </Box>
   );
 }

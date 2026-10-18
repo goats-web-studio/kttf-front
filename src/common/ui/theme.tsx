@@ -48,7 +48,9 @@ interface Tokens {
 const LIGHT: Tokens = {
   mode: 'light',
   paper: 'var(--paper)',
-  page: 'var(--paper)',
+  // Страница на тёплой подложке, белые только поверхности: сплошной белый
+  // экран с таблицами утомляет глаз за пять минут.
+  page: 'var(--paper-sunken)',
   hover: 'var(--paper-hover)',
   line: 'var(--line)',
   lineStrong: 'var(--line-strong)',
@@ -188,7 +190,18 @@ function build(tokens: Tokens, locale: Locale): Theme {
           // переходом, со средней кнопкой мыши и «открыть в новой вкладке».
           defaultProps: { LinkComponent: RouterLink, disableRipple: true },
         },
-        MuiLink: { defaultProps: { component: RouterLink, underline: 'hover' } },
+        MuiLink: {
+          // Ссылка чернильная, красной становится только под курсором.
+          // Красные названия турниров и имена соперников в каждой строке
+          // таблицы съедали правило «красный — меньше 5% экрана» (3.1).
+          defaultProps: { component: RouterLink, underline: 'hover', color: 'text.primary' },
+          styleOverrides: {
+            root: {
+              transition: 'color var(--dur-fast) var(--ease)',
+              '&:hover': { color: tokens.primary },
+            },
+          },
+        },
         MuiButton: {
           // Умолчание нейтральное: главное действие одно на экран и
           // называется явно — `variant="contained"` (запрет №2, ADR-039).
@@ -247,6 +260,9 @@ function build(tokens: Tokens, locale: Locale): Theme {
               '@media (min-width: 640px)': { paddingInline: 16 },
             },
             head: { color: tokens.ink500, fontSize: 13, fontWeight: 400 },
+            // Липкая шапка непрозрачна и обязана совпадать с фоном страницы,
+            // иначе над тёплой подложкой висит белая полоса.
+            stickyHeader: { backgroundColor: tokens.page },
           },
         },
         MuiTableContainer: { defaultProps: { component: 'div' } },

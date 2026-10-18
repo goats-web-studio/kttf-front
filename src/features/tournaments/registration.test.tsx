@@ -55,6 +55,12 @@ function openTournament(): TournamentView {
     ...TOURNAMENT,
     status: 'REG_OPEN',
     startsAt: new Date(Date.now() + 30 * 24 * 60 * 60_000).toISOString(),
+    // Запись открыта — значит, турнир не начинался: метки времени
+    // завершённого `TOURNAMENT` здесь означали бы начатый турнир, и состав
+    // ушёл бы во вкладку результатов.
+    startedAt: null,
+    finishedAt: null,
+    ratedAt: null,
   };
 }
 

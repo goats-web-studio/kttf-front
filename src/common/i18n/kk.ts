@@ -313,6 +313,13 @@ export const kk: Record<MessageKey, string> = {
   'results.ratings.after': 'Турнирден кейін',
   'results.ratings.pending': 'Әлі есептелмеген',
   'results.ratings.events': 'Кездесулер бойынша',
+  'results.tabs.label': 'Турнир бөлімдері',
+  'results.tabs.places': 'Қорытынды',
+  'results.tabs.groups': 'Топтар',
+  'results.tabs.bracket': 'Тор',
+  'results.tabs.matches': 'Кездесулер',
+  'results.tabs.ratings': 'Рейтинг',
+  'results.tabs.players': 'Қатысушылар',
 
   'standings.place': 'Орын',
   'standings.player': 'Ойыншы',

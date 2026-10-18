@@ -100,7 +100,7 @@ export default function ClubForm({
         <TextField
           label={t('club.field.shortName')}
           {...register('shortName', optionalText)}
-          {...hint(t, undefined, true)}
+          {...hint(t, undefined)}
         />
         <Controller
           control={form.control}
@@ -122,7 +122,7 @@ export default function ClubForm({
           label={t('club.field.address')}
           autoComplete="street-address"
           {...register('address', optionalText)}
-          {...hint(t, undefined, true)}
+          {...hint(t, undefined)}
         />
         <TextField
           label={t('club.field.tableCount')}
@@ -131,7 +131,6 @@ export default function ClubForm({
           {...hint(
             t,
             errors.tableCount === undefined ? undefined : 'error.form.tableCount',
-            false,
             NUMERIC,
           )}
         />
@@ -140,18 +139,18 @@ export default function ClubForm({
           type="tel"
           autoComplete="tel"
           {...register('phone', optionalText)}
-          {...hint(t, undefined, true)}
+          {...hint(t, undefined)}
         />
         <TextField
           label={t('club.field.whatsapp')}
           type="tel"
           {...register('whatsapp', optionalText)}
-          {...hint(t, undefined, true)}
+          {...hint(t, undefined)}
         />
         <TextField
           label={t('club.field.instagram')}
           {...register('instagram', optionalText)}
-          {...hint(t, undefined, true)}
+          {...hint(t, undefined)}
         />
       </Box>
 
@@ -161,7 +160,7 @@ export default function ClubForm({
         minRows={3}
         sx={{ mt: 2 }}
         {...register('description', optionalText)}
-        {...hint(t, undefined, true)}
+        {...hint(t, undefined)}
       />
 
       {error !== null && error !== undefined && (
@@ -197,13 +196,12 @@ function defined(
 }
 
 /**
- * Подсказка под полем: ошибка объявляется чтецу экрана сразу, пометка
- * «необязательно» — просто текстом. Так же устроена форма турнира.
+ * Подсказка под полем: ошибка объявляется чтецу экрана сразу. Пометки
+ * «необязательно» нет — так же устроена форма турнира.
  */
 function hint(
   t: (key: MessageKey) => string,
   error: MessageKey | undefined,
-  optional = false,
   htmlInput?: Readonly<Record<string, unknown>>,
 ) {
   const input = htmlInput === undefined ? {} : { htmlInput };
@@ -216,8 +214,5 @@ function hint(
     };
   }
 
-  return {
-    ...(optional ? { helperText: t('player.form.optional') } : {}),
-    slotProps: input,
-  };
+  return { slotProps: input };
 }

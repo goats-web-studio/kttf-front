@@ -308,6 +308,13 @@ export const ru = {
   'results.ratings.after': 'После турнира',
   'results.ratings.pending': 'Ещё не начислен',
   'results.ratings.events': 'По встречам',
+  'results.tabs.label': 'Разделы турнира',
+  'results.tabs.places': 'Итоги',
+  'results.tabs.groups': 'Группы',
+  'results.tabs.bracket': 'Сетка',
+  'results.tabs.matches': 'Встречи',
+  'results.tabs.ratings': 'Рейтинг',
+  'results.tabs.players': 'Участники',
 
   'standings.place': 'Место',
   'standings.player': 'Игрок',

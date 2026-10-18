@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { useT, type MessageKey } from '@/common/i18n';
 
 import { stageTitle } from './labels';
+import { BRACKET_STAGES } from './results-tabs';
 
 interface ResultsBracketProps {
   readonly stages: readonly StageView[];
@@ -14,12 +15,6 @@ interface ResultsBracketProps {
 }
 
 type Translate = (key: MessageKey) => string;
-
-/** Этапы, у которых есть сетка. Круговая и группы рисуются таблицами. */
-const BRACKET_STAGES: ReadonlySet<StageView['type']> = new Set<StageView['type']>([
-  'KNOCKOUT',
-  'CONSOLATION',
-]);
 
 /**
  * Сетки — ТЗ 9.4.

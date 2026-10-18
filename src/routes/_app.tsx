@@ -22,10 +22,10 @@ export const Route = createFileRoute('/_app')({
   component: AppLayout,
 });
 
-/** Кабинет: та же шапка, что у публичной части, на утопленной подложке. */
+/** Кабинет: та же шапка и тот же фон, что у публичной части. */
 function AppLayout(): ReactNode {
   return (
-    <SiteLayout surface="sunken">
+    <SiteLayout>
       <Outlet />
     </SiteLayout>
   );

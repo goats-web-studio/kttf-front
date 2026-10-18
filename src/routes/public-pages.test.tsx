@@ -127,9 +127,14 @@ describe('страница турнира', () => {
     renderAt(`/tournaments/${TOURNAMENT_ID}`);
 
     expect(await screen.findByRole('heading', { name: TOURNAMENT.name })).toBeDefined();
-    // Победитель назван в нескольких разделах сразу: местах, таблице и
-    // журнале рейтинга — это разные части одного ответа.
-    expect((await screen.findAllByText(playerName(PLAYERS.first))).length).toBeGreaterThan(1);
+    // Разделы — вкладками, а не лентой: сначала места, остальное по вкладке.
+    expect(await screen.findByRole('heading', { name: ru['results.places.title'] })).toBeDefined();
+    expect((await screen.findAllByText(playerName(PLAYERS.first))).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('tab', { name: ru['results.tabs.ratings'] }));
+
+    expect(await screen.findByRole('heading', { name: ru['results.ratings.title'] })).toBeDefined();
+    expect(screen.queryByRole('heading', { name: ru['results.places.title'] })).toBeNull();
   });
 
   it('называет клуб, хотя турнир несёт только его идентификатор', async () => {

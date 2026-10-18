@@ -20,7 +20,7 @@ const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
  * Колонка с фамилиями липкая при прокрутке вбок (раздел 6.1): на телефоне
  * таблица шире экрана, и без имени строка цифр ничего не значит.
  */
-const STICKY = { position: 'sticky', left: 0, zIndex: 1, bgcolor: 'background.paper' } as const;
+const STICKY = { position: 'sticky', left: 0, zIndex: 1, bgcolor: 'background.default' } as const;
 
 interface ResultsStandingsProps {
   readonly standings: TournamentStandingsView;

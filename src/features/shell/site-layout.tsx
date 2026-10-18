@@ -10,11 +10,6 @@ import BottomNav, { BOTTOM_NAV_HEIGHT } from './bottom-nav';
 import SiteHeader from './site-header';
 
 interface SiteLayoutProps {
-  /**
-   * Фон под содержимым. Кабинет лежит на утопленной подложке: формы и
-   * карточки в нём — поверхности, и на белом они бы слились с фоном.
-   */
-  readonly surface?: 'paper' | 'sunken';
   readonly children: ReactNode;
 }
 
@@ -29,7 +24,7 @@ interface SiteLayoutProps {
  * Консоль и экран зала сюда не входят намеренно: у них ночная тема, а всё,
  * что попадает в консоль, считается против бюджета 400 КБ (ТС 8.1).
  */
-export default function SiteLayout({ surface = 'paper', children }: SiteLayoutProps): ReactNode {
+export default function SiteLayout({ children }: SiteLayoutProps): ReactNode {
   const t = useT();
 
   return (
@@ -39,7 +34,11 @@ export default function SiteLayout({ surface = 'paper', children }: SiteLayoutPr
           display: 'flex',
           minHeight: '100%',
           flexDirection: 'column',
-          bgcolor: surface === 'sunken' ? 'var(--paper-sunken)' : 'background.paper',
+          // Один фон на публичную часть и кабинет — тёплая подложка. Белыми
+          // остаются поверхности: шапка, карточки, поля. Раньше публичная
+          // часть была на белом, кабинет на сером, и переход между ними
+          // читался как переход на другой сайт.
+          bgcolor: 'background.default',
           // Нижняя панель на телефоне фиксирована и иначе закрыла бы подвал.
           pb: { xs: `${String(BOTTOM_NAV_HEIGHT)}px`, sm: 0 },
         }}

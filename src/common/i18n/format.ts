@@ -9,16 +9,33 @@ import type { Locale } from './locale';
  * локализацию целиком, а не наполовину.
  */
 
-/** Дата без времени: календарь и карточка турнира показывают день. */
-export function formatDate(iso: string, locale: Locale): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(new Date(iso));
+/**
+ * Дата без времени: календарь и карточка турнира показывают день.
+ *
+ * Год — только если не текущий (docs/07-design-system.md, 10.2): «12 марта»,
+ * а не «12 марта 2026 г.» в каждой строке истории встреч.
+ */
+export function formatDate(iso: string, locale: Locale, now: Date = new Date()): string {
+  const date = new Date(iso);
+
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  }).format(date);
 }
 
 /** Дата со временем: начало турнира назначается на час, а не на день. */
-export function formatDateTime(iso: string, locale: Locale): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short' }).format(
-    new Date(iso),
-  );
+export function formatDateTime(iso: string, locale: Locale, now: Date = new Date()): string {
+  const date = new Date(iso);
+
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    ...(date.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
 /**
