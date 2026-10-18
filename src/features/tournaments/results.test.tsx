@@ -146,7 +146,10 @@ describe('сетка', () => {
 
     // Сетка разворачивается целиком при жеребьёвке, поэтому финал существует
     // раньше своих участников (ADR-019). Слоты человеку считают с единицы.
-    expect(screen.getByText(`${ru['results.match.winnerOf']} №1`)).toBeDefined();
+    // Подпись называет круг и номер встречи в нём: «Победитель: 1/4 финала 1».
+    expect(
+      screen.getAllByText(new RegExp(`^${ru['results.match.winnerOf']}: .+ 1$`)).length,
+    ).toBeGreaterThan(0);
   });
 
   it('не рисует сетку для этапа с группами', () => {
