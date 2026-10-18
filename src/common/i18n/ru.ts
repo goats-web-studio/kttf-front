@@ -87,6 +87,8 @@ export const ru = {
   'profile.results.more': 'Показать ещё',
   // Профиль v2 — ADR-050.
   'profile.online': 'В сети',
+  'profile.photo.open': 'Открыть фото: {name}',
+  'profile.photo.close': 'Закрыть фото',
   'profile.lastSeen': '(последнее посещение: {date})',
   'profile.chart.hint': 'График рейтинга. Стрелки влево и вправо — по турнирам',
   'profile.bestWins.period': 'Период лучших побед',

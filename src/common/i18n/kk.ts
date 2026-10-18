@@ -89,6 +89,8 @@ export const kk: Record<MessageKey, string> = {
   'profile.results.more': 'Тағы көрсету',
   // Профиль v2 — ADR-050.
   'profile.online': 'Желіде',
+  'profile.photo.open': 'Фотоны ашу: {name}',
+  'profile.photo.close': 'Фотоны жабу',
   'profile.lastSeen': '(соңғы кіру: {date})',
   'profile.chart.hint': 'Рейтинг графигі. Солға және оңға көрсеткілер — турнирлер бойынша',
   'profile.bestWins.period': 'Үздік жеңістер кезеңі',

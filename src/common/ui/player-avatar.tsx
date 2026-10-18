@@ -3,12 +3,18 @@ import type { ReactNode } from 'react';
 
 const SIZES = { sm: 28, md: 36, lg: 56, xl: 88 } as const;
 
+/**
+ * Фото в шапке профиля — крупно, как у RTTF: это лицо страницы. На телефоне
+ * меньше, чтобы рядом поместилось имя в две строки, а не в пять.
+ */
+const HERO = { xs: 104, sm: 144 } as const;
+
 interface PlayerAvatarProps {
   readonly lastName: string;
   readonly firstName: string;
   /** Фото из профиля; без него — инициалы. */
   readonly photoUrl?: string | null;
-  readonly size?: keyof typeof SIZES;
+  readonly size?: keyof typeof SIZES | 'hero';
   /** Обводка цветом медали — у призёров на пьедестале. */
   readonly ring?: string;
 }
@@ -27,7 +33,10 @@ export default function PlayerAvatar({
   size = 'md',
   ring,
 }: PlayerAvatarProps): ReactNode {
-  const px = SIZES[size];
+  const hero = size === 'hero';
+  const px = hero ? HERO : SIZES[size];
+  // Ширина `img` — для резерва места до загрузки; берётся наибольшая.
+  const imgPx = hero ? HERO.sm : SIZES[size];
   const initials = `${lastName.charAt(0)}${firstName.charAt(0)}`.toUpperCase();
 
   return (
@@ -44,7 +53,9 @@ export default function PlayerAvatar({
         bgcolor: 'var(--ink-100)',
         color: 'var(--ink-700)',
         fontWeight: 600,
-        fontSize: Math.round(px * 0.38),
+        fontSize: hero
+          ? { xs: Math.round(HERO.xs * 0.38), sm: Math.round(HERO.sm * 0.38) }
+          : Math.round(SIZES[size] * 0.38),
         letterSpacing: 0,
         boxShadow: ring === undefined ? 'none' : `0 0 0 3px var(--paper), 0 0 0 6px ${ring}`,
         userSelect: 'none',
@@ -57,9 +68,10 @@ export default function PlayerAvatar({
           component="img"
           src={photoUrl}
           alt=""
-          width={px}
-          height={px}
-          loading="lazy"
+          width={imgPx}
+          height={imgPx}
+          // Фото в шапке профиля видно сразу — ленивая загрузка его бы задержала.
+          loading={hero ? 'eager' : 'lazy'}
           sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       )}

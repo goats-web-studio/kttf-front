@@ -370,6 +370,34 @@ describe('в сети и последнее посещение', () => {
   });
 });
 
+describe('фото в шапке профиля', () => {
+  it('открывается крупно в окне просмотра и закрывается крестиком', async () => {
+    profile = { ...PLAYER_PROFILE, photoUrl: '/files/players/photo.webp' };
+
+    renderProfile();
+
+    const name = playerName(PLAYERS.first);
+    fireEvent.click(await screen.findByRole('button', { name: `Открыть фото: ${name}` }));
+
+    const dialog = await screen.findByRole('dialog', { name });
+    expect(within(dialog).getByRole('img', { name }).getAttribute('src')).toBe(
+      '/files/players/photo.webp',
+    );
+
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['profile.photo.close'] }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
+  it('без фото открывать нечего — кнопки нет, только инициалы', async () => {
+    renderProfile();
+
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(screen.queryByRole('button', { name: /Открыть фото/ })).toBeNull();
+  });
+});
+
 describe('ссылка не ведёт к игроку', () => {
   it('оборванный идентификатор объясняется один раз и без запросов', async () => {
     // Так выглядит скопированная наполовину ссылка. Сервер ответил бы отказом

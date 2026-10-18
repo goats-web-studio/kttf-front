@@ -8,11 +8,11 @@ import { Building2, Cake, MapPin, Pencil, Settings, type LucideIcon } from 'luci
 import type { ReactNode } from 'react';
 
 import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
-import PlayerAvatar from '@/common/ui/player-avatar';
 import RatingValue from '@/common/ui/rating-value';
 
 import { gripLabel, handLabel } from './player-labels';
 import { playerName } from './player-name';
+import ProfilePhoto from './profile-photo';
 
 interface ProfileHeaderProps {
   readonly player: PlayerProfileView;
@@ -67,12 +67,11 @@ export default function ProfileHeader({
       }}
     >
       <Box sx={{ minWidth: 0 }}>
-        <Stack direction="row" spacing={2.5} sx={{ alignItems: 'center' }}>
-          <PlayerAvatar
+        <Stack direction="row" spacing={{ xs: 2, sm: 3 }} sx={{ alignItems: 'center' }}>
+          <ProfilePhoto
             lastName={player.lastName}
             firstName={player.firstName}
             photoUrl={player.photoUrl}
-            size="xl"
           />
           <Box sx={{ minWidth: 0 }}>
             <Stack
