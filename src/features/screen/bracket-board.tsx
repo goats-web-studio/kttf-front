@@ -111,7 +111,7 @@ function MatchBox({
   return (
     <Box
       sx={{
-        borderRadius: 1.5,
+        borderRadius: 3,
         border: '0.12vw solid',
         borderColor: playing ? 'success.main' : 'divider',
         bgcolor: 'background.paper',

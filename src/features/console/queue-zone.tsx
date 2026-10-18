@@ -53,7 +53,18 @@ export default function QueueZone({
       >
         {t('console.queue.title')}
         {queue.length > 0 && (
-          <Box component="span" sx={{ ml: 1, fontVariantNumeric: 'tabular-nums' }}>
+          <Box
+            component="span"
+            sx={{
+              ml: 1,
+              px: 1,
+              py: 0.25,
+              borderRadius: 999,
+              bgcolor: 'var(--night-line)',
+              color: 'var(--night-ink-900)',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
             {queue.length}
           </Box>
         )}
@@ -73,12 +84,42 @@ export default function QueueZone({
               sx={{
                 display: 'flex',
                 alignItems: 'stretch',
+                position: 'relative',
+                overflow: 'hidden',
                 opacity: item.busyTable === null ? 1 : 0.75,
+                // Первая в очереди — дольше всех ждёт: жёлтая полоса слева
+                // и подпись словом (Hints), цвет не единственный носитель.
                 ...(index === 0 && item.busyTable === null
-                  ? { borderColor: 'warning.main', borderWidth: 2 }
+                  ? {
+                      borderColor: 'color-mix(in srgb, var(--night-warn) 55%, var(--night-line))',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        insetBlock: 0,
+                        left: 0,
+                        width: 4,
+                        bgcolor: 'var(--night-warn)',
+                      },
+                    }
                   : {}),
               }}
             >
+              <Box
+                aria-hidden
+                sx={{
+                  display: 'grid',
+                  placeItems: 'center',
+                  width: 48,
+                  flexShrink: 0,
+                  fontFamily: "'Oswald', system-ui, sans-serif",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: index === 0 ? 'var(--night-warn)' : 'var(--night-ink-500)',
+                }}
+              >
+                {index + 1}
+              </Box>
               <ButtonBase
                 onClick={() => {
                   onOpen(item.match.id);
@@ -87,8 +128,9 @@ export default function QueueZone({
                   display: 'block',
                   flexGrow: 1,
                   minWidth: 0,
-                  minHeight: 64,
-                  p: 1.5,
+                  minHeight: 72,
+                  py: 1.5,
+                  pr: 1.5,
                   textAlign: 'left',
                   borderRadius: 1,
                   typography: 'body2',
@@ -114,12 +156,15 @@ export default function QueueZone({
 
               {suggested !== null && item.busyTable === null && (
                 <Box sx={{ display: 'flex', alignItems: 'center', pr: 1.5, flexShrink: 0 }}>
+                  {/* Главное действие очереди — у первой пары: залитая
+                      кнопка одна на экран (запрет №2). */}
                   <Button
                     size="large"
+                    variant={index === 0 ? 'contained' : 'outlined'}
                     onClick={() => {
                       onAssign(item.match.id, suggested);
                     }}
-                    sx={{ minHeight: 56, fontWeight: 600, whiteSpace: 'nowrap' }}
+                    sx={{ minHeight: 56, minWidth: 128, fontWeight: 700, whiteSpace: 'nowrap' }}
                   >
                     {t('console.queue.assign')} {suggested}
                   </Button>

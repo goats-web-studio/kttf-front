@@ -519,6 +519,7 @@ export const ru = {
   'screen.standings.page': '{page} из {pages}',
   'screen.now.title': 'Сейчас на столах',
   'screen.free': 'Свободны: {list}',
+  'screen.free.label': 'Свободны',
   'screen.minutes': '{minutes} мин',
   'screen.next.title': 'Следующие',
   'screen.busy': 'ждёт, игрок на столе {number}',

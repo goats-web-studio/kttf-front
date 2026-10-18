@@ -54,10 +54,10 @@ export default function QueueBoard({ queue, names, shown }: QueueBoardProps): Re
                   gap: '0.6vw',
                   px: '0.6vw',
                   py: '0.4vh',
-                  borderRadius: 1,
+                  borderRadius: 3,
                   border: 1,
                   borderColor: first ? 'warning.main' : 'divider',
-                  bgcolor: first ? 'background.paper' : 'transparent',
+                  bgcolor: 'background.paper',
                   opacity: item.busyTable === null ? 1 : 0.7,
                 }}
               >

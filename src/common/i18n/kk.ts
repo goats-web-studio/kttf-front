@@ -524,6 +524,7 @@ export const kk: Record<MessageKey, string> = {
   'screen.standings.page': '{pages} ішінен {page}',
   'screen.now.title': 'Қазір үстелдерде',
   'screen.free': 'Бос: {list}',
+  'screen.free.label': 'Бос',
   'screen.minutes': '{minutes} мин',
   'screen.next.title': 'Келесілер',
   'screen.busy': 'күтеді, ойыншы {number}-үстелде',

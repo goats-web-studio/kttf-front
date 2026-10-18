@@ -43,7 +43,7 @@ export default function GroupBoard({
     <Box
       sx={{
         minHeight: 0,
-        borderRadius: 2,
+        borderRadius: 4,
         border: 1,
         borderColor: 'divider',
         bgcolor: 'background.paper',

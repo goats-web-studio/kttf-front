@@ -6,6 +6,7 @@ import Link from '@mui/material/Link';
 import Snackbar from '@mui/material/Snackbar';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
+import { ChevronLeft, Copy, Tv } from 'lucide-react';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
@@ -190,7 +191,14 @@ function ConsoleScreen(): ReactNode {
           }}
         >
           <Box sx={{ minWidth: 0, flex: '1 1 240px' }}>
-            <Link href="/console" variant="caption" color="text.secondary" underline="always">
+            <Link
+              href="/console"
+              variant="caption"
+              color="text.secondary"
+              underline="none"
+              sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25, fontWeight: 600 }}
+            >
+              <ChevronLeft size={14} aria-hidden />
               {t('page.console.title')}
             </Link>
             <Typography
@@ -206,16 +214,44 @@ function ConsoleScreen(): ReactNode {
               {snapshot?.tournament.name ?? ''}
             </Typography>
             {view !== null && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontVariantNumeric: 'tabular-nums' }}
-              >
-                {fill(t('console.progress'), {
-                  done: String(view.progress.done),
-                  total: String(view.progress.total),
-                })}
-              </Typography>
+              // Прогресс полосой и словами: сколько сыграно видно с вытянутой
+              // руки, а число остаётся для точности.
+              <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  aria-hidden
+                  sx={{
+                    flex: '0 1 220px',
+                    height: 6,
+                    borderRadius: 999,
+                    bgcolor: 'var(--night-line)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      height: '100%',
+                      width: `${String(
+                        view.progress.total === 0
+                          ? 0
+                          : Math.round((view.progress.done / view.progress.total) * 100),
+                      )}%`,
+                      bgcolor: 'var(--night-red)',
+                      borderRadius: 999,
+                      transition: 'width var(--dur-slow) var(--ease)',
+                    }}
+                  />
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}
+                >
+                  {fill(t('console.progress'), {
+                    done: String(view.progress.done),
+                    total: String(view.progress.total),
+                  })}
+                </Typography>
+              </Box>
             )}
           </Box>
 
@@ -523,13 +559,25 @@ function TvLink({
   const url = `${window.location.origin}/screen/${token}`;
 
   return (
-    <Box sx={{ display: 'flex', gap: 0.5 }}>
+    // Экран для зала — не главное действие консоли: главное — вызвать пару
+    // и ввести счёт. Поэтому обе кнопки обводкой, залитая остаётся очереди.
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 0.5,
+        width: { xs: '100%', sm: 'auto' },
+        // На телефоне кнопки делят строку поровну и без иконок: с иконкой
+        // «Скопировать ссылку» вылезала за край экрана в 360px.
+        '& .MuiButton-root': { flex: { xs: '1 1 0', sm: '0 0 auto' }, minWidth: 0 },
+        '& .MuiButton-startIcon': { display: { xs: 'none', sm: 'inherit' } },
+      }}
+    >
       <Button
-        variant="contained"
         component="a"
         href={url}
         target="_blank"
         rel="noopener"
+        startIcon={<Tv size={18} aria-hidden />}
         sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
       >
         {t('console.tv')}
@@ -538,6 +586,7 @@ function TvLink({
         onClick={() => {
           void navigator.clipboard.writeText(url).then(onCopied);
         }}
+        startIcon={<Copy size={18} aria-hidden />}
         sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
       >
         {t('console.tv.copy')}

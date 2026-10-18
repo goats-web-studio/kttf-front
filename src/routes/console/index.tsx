@@ -6,6 +6,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
+import { ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { formatDateTime, useLocale, useT } from '@/common/i18n';
@@ -55,18 +56,47 @@ function ConsolePage(): ReactNode {
               {running.data.items.map((tournament) => (
                 <Paper key={tournament.id} component="li" variant="outlined">
                   {/* `href` уходит в роутер через `LinkComponent` темы. */}
-                  <CardActionArea href={`/console/${tournament.id}`} sx={{ p: 2, minHeight: 56 }}>
-                    <Typography component="span" sx={{ display: 'block', fontWeight: 600 }}>
-                      {tournament.name}
-                    </Typography>
-                    <Typography
-                      component="span"
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 0.5, display: 'block' }}
-                    >
-                      {formatDateTime(tournament.startsAt, locale)}
-                    </Typography>
+                  <CardActionArea
+                    href={`/console/${tournament.id}`}
+                    sx={{
+                      p: 2.5,
+                      minHeight: 72,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      borderRadius: 4,
+                    }}
+                  >
+                    {/* Идёт сейчас — красная точка: единственный цвет в списке. */}
+                    <Box
+                      aria-hidden
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        flexShrink: 0,
+                        borderRadius: '50%',
+                        bgcolor: 'var(--night-red)',
+                        boxShadow:
+                          '0 0 0 4px color-mix(in srgb, var(--night-red) 20%, transparent)',
+                      }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        component="span"
+                        sx={{ display: 'block', fontWeight: 700, fontSize: 17 }}
+                      >
+                        {tournament.name}
+                      </Typography>
+                      <Typography
+                        component="span"
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 0.5, display: 'block' }}
+                      >
+                        {formatDateTime(tournament.startsAt, locale)}
+                      </Typography>
+                    </Box>
+                    <ChevronRight size={22} aria-hidden />
                   </CardActionArea>
                 </Paper>
               ))}

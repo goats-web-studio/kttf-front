@@ -56,9 +56,13 @@ export default function RecentBoard({
                   gridTemplateColumns: 'minmax(0, 1fr) auto',
                   alignItems: 'center',
                   gap: '0.8vw',
-                  py: '0.45vh',
-                  borderBottom: 1,
+                  px: '0.8vw',
+                  py: '0.6vh',
+                  mb: '0.6vh',
+                  borderRadius: 3,
+                  border: 1,
                   borderColor: 'divider',
+                  bgcolor: 'background.paper',
                 }}
               >
                 <Box sx={{ minWidth: 0 }}>

@@ -16,6 +16,16 @@ interface TablesBoardProps {
   readonly now: number;
 }
 
+/** Скрыто от глаза, видно чтецу экрана. */
+const HIDDEN = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const;
+
 /** Сколько секунд после назначения стол подсвечен как «Вызов». */
 const CALL_SECONDS = 120;
 
@@ -73,7 +83,7 @@ export default function TablesBoard({ tables, names, labelOf, now }: TablesBoard
               sx={{
                 display: 'grid',
                 gridTemplateColumns: `${size(3)} minmax(0, 1fr)`,
-                borderRadius: 2,
+                borderRadius: 3,
                 overflow: 'hidden',
                 border: '0.15vw solid',
                 borderColor: calling
@@ -160,16 +170,57 @@ export default function TablesBoard({ tables, names, labelOf, now }: TablesBoard
       </Box>
 
       {free.length > 0 && (
-        <Typography
-          sx={{
-            mt: '0.8vh',
-            fontSize: size(0.95),
-            color: 'text.secondary',
-            fontVariantNumeric: 'tabular-nums',
-          }}
+        // Свободные столы — пилюлями с зелёной точкой: зритель ищет «куда
+        // идти» глазами, а не читает строку через запятую. Подпись словом
+        // остаётся для чтеца экрана.
+        <Box
+          sx={{ mt: '1vh', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5vw' }}
         >
-          {fill(t('screen.free'), { list: free.join(', ') })}
-        </Typography>
+          {/* Чтецу экрана — фраза целиком, глазу — пилюли. */}
+          <Box component="span" sx={HIDDEN}>
+            {fill(t('screen.free'), { list: free.join(', ') })}
+          </Box>
+          <Typography
+            component="span"
+            aria-hidden
+            sx={{ fontSize: size(0.95), color: 'text.secondary', mr: '0.3vw' }}
+          >
+            {t('screen.free.label')}
+          </Typography>
+          {free.map((number) => (
+            <Box
+              key={number}
+              component="span"
+              aria-hidden
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35vw',
+                px: '0.7vw',
+                py: '0.25vh',
+                borderRadius: 999,
+                bgcolor: 'color-mix(in srgb, var(--night-ok) 16%, transparent)',
+                color: 'var(--night-ok)',
+                fontFamily: "'Oswald', system-ui, sans-serif",
+                fontWeight: 700,
+                fontSize: size(1),
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              <Box
+                component="span"
+                aria-hidden
+                sx={{
+                  width: '0.4vw',
+                  height: '0.4vw',
+                  borderRadius: '50%',
+                  bgcolor: 'currentColor',
+                }}
+              />
+              {number}
+            </Box>
+          ))}
+        </Box>
       )}
     </Box>
   );
