@@ -1,4 +1,4 @@
-import type { AuthUserView, PlayerProfileView } from '@kttf/shared/types';
+import type { AuthUserView, PlayerProfileView, TournamentView } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -16,17 +16,19 @@ import {
   placesReply,
   PLAYER_PROFILE,
   PLAYERS,
+  RATING_HISTORY,
+  TOURNAMENT,
   USER_WITH_PROFILE,
   USER_WITHOUT_PROFILE,
 } from '@/test/fixtures';
 
 /**
- * Кабинет: заведение профиля после регистрации — ТЗ 2.2.
+ * Кабинет и настройки — ТЗ 2.1, 2.2, ADR-048.
  *
- * Проверяется то, ради чего страница существует: после входа `playerId` пуст,
- * и заполнить его во фронтенде было нечем. Стережётся связка целиком — форма,
- * тело запроса по контракту ТС 7.2 и появление профиля в сессии без
- * повторного входа.
+ * Кабинет — рабочий стол по ролям; анкета игрока и аккаунт — в «Настройках»,
+ * каждый на своём адресе. Стережётся связка целиком: форма, тело запроса по
+ * контракту ТС 7.2, появление профиля в сессии без повторного входа и то,
+ * что каждой роли кабинет показывает своё.
  */
 
 interface Sent {
@@ -40,6 +42,24 @@ let sent: Sent[] = [];
 let me: AuthUserView = USER_WITH_PROFILE;
 /** Профиль, которым отвечает `/players`. */
 let profile: PlayerProfileView = PLAYER_PROFILE;
+/** Турниры клуба — по `clubId`; турниры, куда записан игрок, — по `playerId`. */
+let clubTournaments: TournamentView[] = [];
+let myTournaments: TournamentView[] = [];
+
+const SUMMARY = {
+  playerId: PLAYERS.first.id,
+  rank: 3,
+  rankedPlayers: 40,
+  maxRating: PLAYERS.first.rating,
+  period: 'ALL',
+  tournaments: 1,
+  wins: 2,
+  losses: 1,
+  firstTournament: null,
+  favoriteClub: null,
+  bestWins: [],
+  awards: [],
+};
 
 function reply(body: unknown): Response {
   return {
@@ -72,6 +92,26 @@ function answer(url: string, init: RequestInit | undefined): Response {
     return reply(me);
   }
 
+  if (url.includes('/tournaments?')) {
+    return reply(pageOf(url.includes('playerId=') ? myTournaments : clubTournaments));
+  }
+
+  if (url.includes('/admin/club-applications')) {
+    return reply(pageOf([]));
+  }
+
+  if (url.includes('/rating-history')) {
+    return reply(RATING_HISTORY);
+  }
+
+  if (url.includes('/summary')) {
+    return reply(SUMMARY);
+  }
+
+  if (url.includes('/players/') && url.includes('/tournaments')) {
+    return reply(pageOf([]));
+  }
+
   if (url.includes('/clubs')) {
     return reply(pageOf([CLUB]));
   }
@@ -84,9 +124,14 @@ function answer(url: string, init: RequestInit | undefined): Response {
   throw new Error(`Неожидаемый запрос: ${url}`);
 }
 
-function renderCabinet(user: AuthUserView): void {
+/** Страницы под проверкой: кабинет и два раздела настроек. */
+const CABINET = '/cabinet';
+const PROFILE = '/settings/profile';
+const ACCOUNT = '/settings/account';
+
+function renderAt(path: string, user: AuthUserView): void {
   useSessionStore.setState({ user, accessToken: 'access-token', isRestoring: false });
-  window.history.pushState({}, '', '/cabinet');
+  window.history.pushState({}, '', path);
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createAppRouter({ queryClient, session: user });
@@ -141,6 +186,8 @@ beforeEach(() => {
   sent = [];
   me = USER_WITH_PROFILE;
   profile = PLAYER_PROFILE;
+  clubTournaments = [];
+  myTournaments = [];
   vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) =>
     Promise.resolve(answer(String(input), init)),
   );
@@ -152,15 +199,15 @@ afterEach(() => {
 });
 
 describe('профиль при регистрации', () => {
-  it('без профиля кабинет предлагает его завести', async () => {
-    renderCabinet(USER_WITHOUT_PROFILE);
+  it('без профиля настройки предлагают его завести', async () => {
+    renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
     expect(await screen.findByText(ru['cabinet.profile.lead'])).toBeDefined();
     expect(screen.getByLabelText(ru['player.form.lastName'])).toBeDefined();
   });
 
   it('отправляет профиль телом по контракту', async () => {
-    renderCabinet(USER_WITHOUT_PROFILE);
+    renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
     await fillRequired();
@@ -186,7 +233,7 @@ describe('профиль при регистрации', () => {
   });
 
   it('незаполненное обязательное поле не уходит на сервер', async () => {
-    renderCabinet(USER_WITHOUT_PROFILE);
+    renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
     submit(ru['cabinet.profile.create']);
@@ -197,7 +244,7 @@ describe('профиль при регистрации', () => {
   });
 
   it('после заведения профиль появляется без повторного входа', async () => {
-    renderCabinet(USER_WITHOUT_PROFILE);
+    renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
     await fillRequired();
@@ -205,26 +252,50 @@ describe('профиль при регистрации', () => {
 
     // `playerId` пришёл перечитанным пользователем, а не выведен из ответа:
     // состав сессии задаёт ТС 7.1, и собирать его на клиенте нельзя.
-    expect(await screen.findByText(playerName(PLAYERS.first))).toBeDefined();
+    // После заведения — на свой публичный профиль.
+    expect(
+      await screen.findByRole(
+        'heading',
+        { name: playerName(PLAYERS.first), level: 1 },
+        { timeout: 5000 },
+      ),
+    ).toBeDefined();
     expect(sent.some((request) => request.url.includes('/auth/me'))).toBe(true);
   });
 });
 
-describe('свой профиль', () => {
-  it('показывает карточку и ведёт на публичный профиль', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+describe('шапка вошедшего — ADR-048', () => {
+  it('имя и рейтинг вместо слова «Кабинет», меню ведёт на публичный профиль', async () => {
+    renderAt(CABINET, USER_WITH_PROFILE);
 
-    expect(await screen.findByText(playerName(PLAYERS.first))).toBeDefined();
+    const account = await screen.findByRole('button', { name: ru['nav.account'] });
+    await waitFor(() => {
+      expect(account.textContent).toContain(PLAYERS.first.rating);
+    });
 
-    const link = screen.getByRole('link', { name: ru['cabinet.profile.public'] });
+    fireEvent.click(account);
 
-    expect(link.getAttribute('href')).toBe(`/players/${PLAYERS.first.id}`);
+    const profile = await screen.findByRole('menuitem', { name: ru['nav.myProfile'] });
+    expect(profile.getAttribute('href')).toBe(`/players/${PLAYERS.first.id}`);
+    // Роль в клубе есть — «Мои клубы» в меню.
+    expect(screen.getByRole('menuitem', { name: ru['nav.myClubs'] })).toBeDefined();
+    expect(screen.getByRole('menuitem', { name: ru['nav.settings'] })).toBeDefined();
   });
 
-  it('правка уходит методом PATCH заполненной формой', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+  it('без профиля — создать его, без клубов — пункта «Мои клубы» нет', async () => {
+    renderAt(CABINET, USER_WITHOUT_PROFILE);
 
-    fireEvent.click(await screen.findByRole('button', { name: ru['cabinet.profile.edit'] }));
+    fireEvent.click(await screen.findByRole('button', { name: ru['nav.account'] }));
+
+    expect(await screen.findByRole('menuitem', { name: ru['nav.createProfile'] })).toBeDefined();
+    expect(screen.queryByRole('menuitem', { name: ru['nav.myClubs'] })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: ru['nav.admin'] })).toBeNull();
+  });
+});
+
+describe('свой профиль в настройках', () => {
+  it('форма открывается сразу заполненной, правка уходит методом PATCH', async () => {
+    renderAt(PROFILE, USER_WITH_PROFILE);
 
     const city = await screen.findByRole('combobox', { name: ru['player.form.city'] });
 
@@ -245,14 +316,17 @@ describe('свой профиль', () => {
       cityId: CITIES.astana.id,
       lastName: PLAYERS.first.lastName,
     });
+    // После сохранения — на свой публичный профиль: результат так, как его
+    // увидят другие.
+    expect(
+      await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 }),
+    ).toBeDefined();
   });
 
   it('скрытый город профиля остаётся выбранным, хотя в списке его нет', async () => {
     const hidden = { id: '00000000-0000-4000-8000-0000000000c9', name: 'Байконур', nameKk: null };
     profile = { ...PLAYER_PROFILE, city: hidden };
-    renderCabinet(USER_WITH_PROFILE);
-
-    fireEvent.click(await screen.findByRole('button', { name: ru['cabinet.profile.edit'] }));
+    renderAt(PROFILE, USER_WITH_PROFILE);
 
     const city = await screen.findByRole('combobox', { name: ru['player.form.city'] });
 
@@ -267,22 +341,67 @@ describe('свой профиль', () => {
     expect(requests('PATCH')[0]?.body).toMatchObject({ cityId: hidden.id });
   });
 
-  it('называет роль в клубе словом, а не значением из базы', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+  it('аккаунта на странице профиля нет — он в своём разделе', async () => {
+    renderAt(PROFILE, USER_WITH_PROFILE);
 
-    expect(await screen.findByText(new RegExp(ru['club.role.OWNER']))).toBeDefined();
+    await screen.findByRole('combobox', { name: ru['player.form.city'] });
+
+    expect(screen.queryByLabelText(ru['account.form.login'])).toBeNull();
+    expect(screen.queryByLabelText(ru['account.password.current'])).toBeNull();
   });
 });
 
-/**
- * Настройки аккаунта — ТЗ 2.1, ADR-035.
- *
- * Отдельный раздел и отдельный маршрут: аккаунт и профиль игрока — разные
- * сущности, и правятся они порознь.
- */
+describe('кабинет — рабочий стол', () => {
+  it('без профиля первым делом предлагает его создать', async () => {
+    renderAt(CABINET, USER_WITHOUT_PROFILE);
+
+    const create = await screen.findByRole('link', { name: ru['cabinet.noProfile.action'] });
+
+    expect(create.getAttribute('href')).toBe(PROFILE);
+  });
+
+  it('владельцу — клуб с ролью словом и созданием турнира', async () => {
+    renderAt(CABINET, USER_WITH_PROFILE);
+
+    expect(await screen.findByText(new RegExp(ru['club.role.OWNER']))).toBeDefined();
+
+    const create = await screen.findByRole('link', { name: ru['tournament.form.create'] });
+    expect(create.getAttribute('href')).toContain(`club=${CLUB.id}`);
+  });
+
+  it('идущий турнир клуба — с кнопкой консоли', async () => {
+    clubTournaments = [{ ...TOURNAMENT, status: 'RUNNING' }];
+
+    renderAt(CABINET, USER_WITH_PROFILE);
+
+    const console = await screen.findByRole('link', { name: ru['manage.console'] });
+    expect(console.getAttribute('href')).toBe(`/console/${TOURNAMENT.id}`);
+  });
+
+  it('игроку — рейтинг с местом и турниры, куда он записан', async () => {
+    myTournaments = [{ ...TOURNAMENT, status: 'REG_OPEN' }];
+
+    renderAt(CABINET, USER_WITH_PROFILE);
+
+    expect(await screen.findByText(/3 место в стране из 40/)).toBeDefined();
+    // Название турнира есть и в «Моих турнирах», и у последнего изменения рейтинга.
+    expect((await screen.findAllByText(TOURNAMENT.name)).length).toBeGreaterThan(1);
+    expect(sent.some((request) => request.url.includes(`playerId=${PLAYERS.first.id}`))).toBe(true);
+  });
+
+  it('анкеты и аккаунта в кабинете нет', async () => {
+    renderAt(CABINET, USER_WITH_PROFILE);
+
+    await screen.findByText(ru['cabinet.player.title']);
+
+    expect(screen.queryByLabelText(ru['account.form.login'])).toBeNull();
+    expect(screen.queryByLabelText(ru['player.form.lastName'])).toBeNull();
+  });
+});
+
 describe('настройки аккаунта', () => {
   it('логин и почта уходят на /auth/me, а не в профиль игрока', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+    renderAt(ACCOUNT, USER_WITH_PROFILE);
 
     fireEvent.change(await screen.findByLabelText(ru['account.form.login']), {
       target: { value: 'znewk' },
@@ -304,7 +423,7 @@ describe('настройки аккаунта', () => {
 
   it('стёртая почта уходит как null, иначе убрать её было бы нечем', async () => {
     me = { ...USER_WITH_PROFILE, email: 'zane@example.kz' };
-    renderCabinet(me);
+    renderAt(ACCOUNT, me);
 
     fireEvent.change(await screen.findByLabelText(new RegExp(ru['account.form.email'])), {
       target: { value: '' },
@@ -319,7 +438,7 @@ describe('настройки аккаунта', () => {
   });
 
   it('телефон в форму не выведен: он меняется через поддержку', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+    renderAt(ACCOUNT, USER_WITH_PROFILE);
 
     await screen.findByLabelText(ru['account.form.login']);
 
@@ -330,7 +449,7 @@ describe('настройки аккаунта', () => {
 
 describe('смена пароля', () => {
   it('уходит отдельным маршрутом и заменяет токены', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+    renderAt(ACCOUNT, USER_WITH_PROFILE);
 
     fireEvent.change(await screen.findByLabelText(ru['account.password.current']), {
       target: { value: 'staryj-parol' },
@@ -351,7 +470,7 @@ describe('смена пароля', () => {
   });
 
   it('короткий новый пароль на сервер не уходит', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+    renderAt(ACCOUNT, USER_WITH_PROFILE);
 
     fireEvent.change(await screen.findByLabelText(ru['account.password.current']), {
       target: { value: 'staryj-parol' },
@@ -374,7 +493,7 @@ describe('смена пароля', () => {
  */
 describe('дата рождения', () => {
   it('отдельного поля года в форме нет', async () => {
-    renderCabinet(USER_WITHOUT_PROFILE);
+    renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
 
@@ -385,7 +504,7 @@ describe('дата рождения', () => {
   });
 
   it('год уходит на сервер выведенным из даты', async () => {
-    renderCabinet(USER_WITHOUT_PROFILE);
+    renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
     await fillRequired();
@@ -399,7 +518,7 @@ describe('дата рождения', () => {
   });
 
   it('без даты профиль не отправляется', async () => {
-    renderCabinet(USER_WITHOUT_PROFILE);
+    renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
     await screen.findByText(ru['cabinet.profile.lead']);
     submit(ru['cabinet.profile.create']);
@@ -409,9 +528,8 @@ describe('дата рождения', () => {
   });
 
   it('галочка приватности уходит вместе с профилем', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+    renderAt(PROFILE, USER_WITH_PROFILE);
 
-    fireEvent.click(await screen.findByRole('button', { name: ru['cabinet.profile.edit'] }));
     fireEvent.click(await screen.findByLabelText(ru['player.form.birthYearOnly']));
     submit(ru['cabinet.profile.save']);
 
@@ -427,7 +545,7 @@ describe('дата рождения', () => {
 /** Раздел администратора — ADR-046. */
 describe('справочник в кабинете', () => {
   it('администратору — ссылка на страны и города', async () => {
-    renderCabinet(ADMIN_USER);
+    renderAt(CABINET, ADMIN_USER);
 
     const link = await screen.findByRole('link', { name: ru['page.places.title'] });
 
@@ -435,9 +553,9 @@ describe('справочник в кабинете', () => {
   });
 
   it('остальным ссылки нет', async () => {
-    renderCabinet(USER_WITH_PROFILE);
+    renderAt(CABINET, USER_WITH_PROFILE);
 
-    await screen.findByText(playerName(PLAYERS.first));
+    await screen.findByText(ru['cabinet.player.title']);
 
     expect(screen.queryByRole('link', { name: ru['page.places.title'] })).toBeNull();
   });

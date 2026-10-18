@@ -6,6 +6,10 @@ import type {
   PlayerMatchesQuery,
   PlayerMatchView,
   PlayerProfileView,
+  PlayerStatsPeriod,
+  PlayerSummaryView,
+  PlayerTournamentsQuery,
+  PlayerTournamentView,
   PlayerView,
   RatingHistoryQuery,
   RatingHistoryView,
@@ -86,4 +90,20 @@ export function fetchPlayerMatches(
 /** Личный счёт считает сервер: по одной странице истории он был бы неверным. */
 export function fetchHeadToHead(id: string, opponentId: string): Promise<HeadToHeadView> {
   return apiRequest<HeadToHeadView>(`/players/${id}/head-to-head/${opponentId}`);
+}
+
+/** Общая статистика, лучшие победы и награды — ADR-048. Считает сервер. */
+export function fetchPlayerSummary(
+  id: string,
+  period: PlayerStatsPeriod,
+): Promise<PlayerSummaryView> {
+  return apiRequest<PlayerSummaryView>(`/players/${id}/summary${queryString({ period })}`);
+}
+
+/** «Результаты»: турниры с местом и встречами, свежие сверху — ADR-048. */
+export function fetchPlayerTournaments(
+  id: string,
+  query: PlayerTournamentsQuery,
+): Promise<Page<PlayerTournamentView>> {
+  return apiRequest<Page<PlayerTournamentView>>(`/players/${id}/tournaments${queryString(query)}`);
 }

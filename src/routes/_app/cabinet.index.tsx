@@ -1,396 +1,78 @@
-import type { AuthUserView, CreatePlayerInput, PlayerProfileView } from '@kttf/shared/types';
-import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Container from '@mui/material/Container';
-import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, type ReactNode } from 'react';
+import { Settings } from 'lucide-react';
+import type { ReactNode } from 'react';
 
-import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
-import QueryState from '@/common/ui/query-state';
+import { useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
-import AccountForm from '@/features/auth/account-form';
-import PasswordForm from '@/features/auth/password-form';
-import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
-import { newClubApplicationsCountQuery } from '@/features/club-applications/queries';
-import { clubDirectoryQuery } from '@/features/clubs/queries';
-import RoleName from '@/features/clubs/role-name';
-import { usePlaceName } from '@/features/places/place-name';
-import { createPlayer, updatePlayer } from '@/features/players/api';
-import { toFormValues, toPlayerPatch } from '@/features/players/form-values';
-import PlayerForm from '@/features/players/player-form';
-import { playerName } from '@/features/players/player-name';
-import { playerKeys, playerQuery } from '@/features/players/queries';
+
+import AdminDesk from './-cabinet/admin-desk';
+import ClubDesk from './-cabinet/club-desk';
+import PlayerDesk from './-cabinet/player-desk';
 
 export const Route = createFileRoute('/_app/cabinet/')({
   component: CabinetPage,
 });
 
-/** Список «подпись — значение»: столбиком на телефоне, в две колонки с 640px. */
-const PAIRS = {
-  display: 'grid',
-  columnGap: 2,
-  rowGap: 0.5,
-  gridTemplateColumns: { xs: '1fr', sm: 'max-content 1fr' },
-  m: 0,
-  '& dd': { m: 0 },
-} as const;
-
-/** Кнопка на телефоне не ниже 44px — зона нажатия (раздел 9). */
-const TOUCH = { minHeight: { xs: 44, sm: 40 } } as const;
-
 /**
- * Кабинет — ТЗ 2.1 и 2.2.
+ * Кабинет — рабочий стол, ADR-048.
  *
- * Две разные вещи и потому два раздела: **профиль игрока** — то, что о
- * человеке знает спорт (анкета, инвентарь, клуб, тренер), и **настройки
- * аккаунта** — то, чем он входит и как с ним связаться. Сущности в модели
- * тоже разные: у судьи есть аккаунт без профиля, у игрока, заведённого
- * тренером, — профиль без аккаунта. ADR-035.
+ * Отвечает на вопрос «что мне сейчас делать», а не «как меня зовут»: анкета
+ * игрока и настройки аккаунта уехали в «Настройки». Состав зависит от ролей
+ * и складывается: владелец клуба, который сам играет, видит оба набора.
  *
- * Права проверяет сервер (ТС 8.3): правка чужого профиля закрыта там же,
- * а не тем, что кнопки нет.
+ * Порядок — от ежедневного к редкому: клубы и их турниры, свой рейтинг и
+ * записи, в самом конце администрирование платформы.
  */
 function CabinetPage(): ReactNode {
   const t = useT();
-  // Сессия берётся из хранилища, а не из контекста роутера: контекст —
-  // копия для `beforeLoad`, где хуков нет, и он не обновится от того, что
-  // человек завёл себе профиль. Так же читает сессию публичная оболочка.
+  // Сессия — из хранилища: она обновляется, когда человек заводит профиль
+  // или получает роль в клубе.
   const user = useSessionStore((state) => state.user);
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Typography variant="h1">{t('page.cabinet.title')}</Typography>
+      <Stack
+        direction="row"
+        useFlexGap
+        spacing={2}
+        sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}
+      >
+        <Typography variant="h1">{t('page.cabinet.title')}</Typography>
+        <Button
+          variant="text"
+          href="/settings"
+          startIcon={<Settings size={16} aria-hidden />}
+          sx={{ color: 'text.secondary' }}
+        >
+          {t('nav.settings')}
+        </Button>
+      </Stack>
 
       {/* Охрана оболочки `_app` без сессии сюда не пускает: ветка нужна типу. */}
       {user !== null && (
-        <>
-          <Typography variant="h2" sx={{ mt: 5 }}>
-            {t('cabinet.profile.title')}
-          </Typography>
-          {user.playerId === null ? <NewProfile /> : <Profile playerId={user.playerId} />}
-
-          <Box sx={{ mt: 6, display: 'grid', gap: 2 }}>
-            <Surface title={t('cabinet.account.title')} subtitle={t('cabinet.account.lead')}>
-              <Box component="dl" sx={{ ...PAIRS, mt: 0 }}>
-                <Typography component="dt" variant="body2" color="text.secondary">
-                  {t('cabinet.account.phone')}
-                </Typography>
-                <Typography component="dd" variant="body2">
-                  {user.phone}
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ ml: 1 }}
-                  >
-                    {t('cabinet.account.phoneFixed')}
-                  </Typography>
-                </Typography>
-              </Box>
-              <AccountForm user={user} />
+        <Stack spacing={3} sx={{ mt: 4 }}>
+          {user.playerId === null && (
+            // Без профиля игрока нельзя записаться на турнир и получить
+            // рейтинг — это первое, что стоит сделать.
+            <Surface title={t('cabinet.noProfile.title')} subtitle={t('cabinet.noProfile.text')}>
+              <Button variant="contained" href="/settings/profile">
+                {t('cabinet.noProfile.action')}
+              </Button>
             </Surface>
+          )}
 
-            <Box
-              sx={{
-                display: 'grid',
-                gap: 2,
-                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                alignItems: 'start',
-              }}
-            >
-              <Surface title={t('account.password.title')}>
-                <PasswordForm />
-              </Surface>
+          {user.clubRoles.length > 0 && <ClubDesk user={user} />}
 
-              <Roles user={user} />
-            </Box>
+          {user.playerId !== null && <PlayerDesk playerId={user.playerId} />}
 
-            {user.isAdmin && <Admin />}
-          </Box>
-        </>
+          {user.isAdmin && <AdminDesk />}
+        </Stack>
       )}
     </Container>
-  );
-}
-
-/**
- * Заведение профиля после регистрации.
- *
- * Тот же маршрут, что и заведение игрока организатором: какой из двух
- * случаев — решает сервер по наличию профиля у вошедшего (ADR-014).
- */
-function NewProfile(): ReactNode {
-  const t = useT();
-
-  const create = useMutation({
-    mutationFn: (values: CreatePlayerInput) => createPlayer(values),
-    // Профиль заведён — в сессии обязан появиться `playerId`, иначе кабинет
-    // продолжит предлагать завести его заново.
-    onSuccess: () => reloadUser(),
-  });
-
-  return (
-    <>
-      <Typography color="text.secondary" sx={{ mt: 1 }}>
-        {t('cabinet.profile.lead')}
-      </Typography>
-      <PlayerForm
-        submitLabel="cabinet.profile.create"
-        isPending={create.isPending}
-        error={create.error}
-        onSubmit={(values) => {
-          create.mutate(values);
-        }}
-      />
-    </>
-  );
-}
-
-/** Свой профиль: карточка, правка и ссылка на публичную страницу. */
-function Profile({ playerId }: { readonly playerId: string }): ReactNode {
-  const queryClient = useQueryClient();
-  const [isEditing, setEditing] = useState(false);
-
-  const player = useQuery(playerQuery(playerId));
-
-  const update = useMutation({
-    // Пустое поле формы означает «стереть», а не «оставить как было»:
-    // форма отдаёт профиль целиком (см. `toPlayerPatch`).
-    mutationFn: (values: CreatePlayerInput) => updatePlayer(playerId, toPlayerPatch(values)),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(playerKeys.detail(playerId), updated);
-      setEditing(false);
-      // Списки и история показывают имя и клуб: после правки они устарели.
-      // Ждать их обновления незачем — карточка уже показывает новое.
-      void queryClient.invalidateQueries({ queryKey: playerKeys.all });
-    },
-  });
-
-  return (
-    <QueryState
-      isPending={player.isPending}
-      error={player.error}
-      onRetry={() => void player.refetch()}
-    >
-      {player.data === undefined ? null : isEditing ? (
-        <PlayerForm
-          defaultValues={toFormValues(player.data)}
-          city={player.data.city}
-          submitLabel="cabinet.profile.save"
-          isPending={update.isPending}
-          error={update.error}
-          onSubmit={(values) => {
-            update.mutate(values);
-          }}
-          onCancel={() => {
-            setEditing(false);
-          }}
-        />
-      ) : (
-        <ProfileCard
-          player={player.data}
-          onEdit={() => {
-            setEditing(true);
-          }}
-        />
-      )}
-    </QueryState>
-  );
-}
-
-function ProfileCard({
-  player,
-  onEdit,
-}: {
-  readonly player: PlayerProfileView;
-  readonly onEdit: () => void;
-}): ReactNode {
-  const t = useT();
-  const locale = useLocale();
-  const placeName = usePlaceName();
-  const clubs = useQuery(clubDirectoryQuery);
-
-  return (
-    <Card sx={{ mt: 3 }}>
-      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
-          {player.photoUrl !== null && (
-            <Avatar src={player.photoUrl} alt="" sx={{ width: 80, height: 80 }} />
-          )}
-          <Box>
-            <Typography variant="subtitle1" component="p">
-              {playerName(player)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {placeName(player.city)}
-              {player.clubId !== null && ` · ${clubs.data?.get(player.clubId)?.name ?? ''}`}
-              {/* Своя карточка показывает дату целиком, если она известна:
-                  прячут её от посторонних, а не от себя (ADR-037). */}
-              {` · ${player.birthDate === null ? String(player.birthYear) : formatDate(player.birthDate, locale)}`}
-              {player.birthYearOnly && (
-                <Typography component="span" variant="caption" sx={{ ml: 1 }}>
-                  {t('cabinet.profile.yearOnly')}
-                </Typography>
-              )}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-              {t('cabinet.profile.rating')}{' '}
-              <Box
-                component="span"
-                sx={{ color: 'text.primary', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
-              >
-                {player.rating}
-              </Box>
-            </Typography>
-          </Box>
-        </Stack>
-
-        {/* Анкета показывается только заполненной: пустые строки «не указано»
-            на десять полей — это шум, а не сведения. */}
-        <Box component="dl" sx={{ ...PAIRS, mt: 2 }}>
-          <Row label="player.form.playingHand" value={handLabel(player.playingHand, t)} />
-          <Row label="player.form.grip" value={gripLabel(player.grip, t)} />
-          <Row label="player.form.blade" value={player.blade} />
-          <Row label="player.form.rubberForehand" value={player.rubberForehand} />
-          <Row label="player.form.rubberBackhand" value={player.rubberBackhand} />
-          <Row label="player.form.coach" value={player.coachName} />
-          <Row label="player.form.bio" value={player.bio} />
-        </Box>
-
-        <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap' }}>
-          <Button onClick={onEdit} sx={TOUCH}>
-            {t('cabinet.profile.edit')}
-          </Button>
-          <Button variant="text" href={`/players/${player.id}`} sx={TOUCH}>
-            {t('cabinet.profile.public')}
-          </Button>
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Row({
-  label,
-  value,
-}: {
-  readonly label: MessageKey;
-  readonly value: string | null;
-}): ReactNode {
-  const t = useT();
-
-  if (value === null || value === '') return null;
-
-  return (
-    <>
-      <Typography component="dt" variant="body2" color="text.secondary">
-        {t(label)}
-      </Typography>
-      <Typography component="dd" variant="body2">
-        {value}
-      </Typography>
-    </>
-  );
-}
-
-/**
- * Рука и хват — в текст.
- *
- * В ответе это строка, а не перечень (ТС 7.2): незнакомое значение
- * показывается как есть, а не подменяется молча ближайшим известным.
- */
-function handLabel(value: string | null, t: (key: MessageKey) => string): string | null {
-  if (value === 'RIGHT') return t('player.hand.RIGHT');
-  if (value === 'LEFT') return t('player.hand.LEFT');
-
-  return value;
-}
-
-function gripLabel(value: string | null, t: (key: MessageKey) => string): string | null {
-  if (value === 'SHAKEHAND') return t('player.grip.SHAKEHAND');
-  if (value === 'PENHOLD') return t('player.grip.PENHOLD');
-
-  return value;
-}
-
-/**
- * Раздел администратора платформы — ADR-046.
- *
- * Ссылка видна только администратору; сама страница справочника тоже
- * проверяет признак, а права на запись — сервер (ТС 8.3).
- */
-function Admin(): ReactNode {
-  const t = useT();
-  // Число новых заявок прямо на кнопке: администратор видит, что есть
-  // работа, не открывая раздел (ADR-047).
-  const fresh = useQuery(newClubApplicationsCountQuery).data ?? 0;
-
-  return (
-    <Surface title={t('cabinet.admin.title')} subtitle={t('cabinet.admin.lead')}>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        <Button href="/cabinet/applications" sx={TOUCH}>
-          {fresh > 0
-            ? fill(t('cabinet.admin.applicationsNew'), { count: String(fresh) })
-            : t('cabinet.admin.applications')}
-        </Button>
-        <Button href="/cabinet/places" sx={TOUCH}>
-          {t('page.places.title')}
-        </Button>
-      </Box>
-    </Surface>
-  );
-}
-
-/**
- * Роли в клубах — ссылками на управление клубом.
- *
- * По ним человек узнаёт, где он вправе действовать. Полный список клубов с
- * созданием нового — в «Моих клубах».
- */
-function Roles({ user }: { readonly user: AuthUserView }): ReactNode {
-  const t = useT();
-  const clubs = useQuery(clubDirectoryQuery);
-
-  return (
-    <Surface title={t('cabinet.roles.title')}>
-      {user.clubRoles.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {t('cabinet.roles.empty')}
-        </Typography>
-      ) : (
-        <Stack component="ul" spacing={0.5} sx={{ m: 0, p: 0, listStyle: 'none' }}>
-          {user.clubRoles.map((role) => (
-            <Typography
-              key={`${role.clubId}-${role.role}`}
-              component="li"
-              variant="body2"
-              color="text.secondary"
-            >
-              {/* Судья клубом не управляет (ADR-014): ему — страница клуба. */}
-              <Link
-                href={
-                  role.role === 'REFEREE' ? `/clubs/${role.clubId}` : `/cabinet/club/${role.clubId}`
-                }
-              >
-                {clubs.data?.get(role.clubId)?.name ?? role.clubId}
-              </Link>
-              {' · '}
-              <RoleName role={role.role} />
-            </Typography>
-          ))}
-        </Stack>
-      )}
-      <Button href="/cabinet/clubs" sx={{ mt: 2 }}>
-        {t('nav.myClubs')}
-      </Button>
-    </Surface>
   );
 }

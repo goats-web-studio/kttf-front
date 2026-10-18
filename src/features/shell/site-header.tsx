@@ -1,18 +1,23 @@
+import type { AuthUserView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import ButtonBase from '@mui/material/ButtonBase';
 import Container from '@mui/material/Container';
 import Divider from '@mui/material/Divider';
 import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
+import { useQuery } from '@tanstack/react-query';
 import { useMatchRoute, useNavigate } from '@tanstack/react-router';
 import { useId, useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import PlayerAvatar from '@/common/ui/player-avatar';
 import RouterLink from '@/common/ui/router-link';
 import { signOut } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
+import { playerQuery } from '@/features/players/queries';
 
 import { SECTIONS } from './sections';
 
@@ -46,7 +51,11 @@ export default function SiteHeader(): ReactNode {
           {/* Знак, а не набранное слово: у логотипа свои пропорции и
               наклон 9°, повторить их шрифтом нельзя. */}
           <Link href="/" sx={{ display: 'flex', mr: 2, flexShrink: 0 }}>
-            <img src="/logo-wordmark.png" alt={t('app.logo')} style={{ height: 20, width: 'auto' }} />
+            <img
+              src="/logo-wordmark.png"
+              alt={t('app.logo')}
+              style={{ height: 20, width: 'auto' }}
+            />
           </Link>
           <Stack
             component="nav"
@@ -62,7 +71,11 @@ export default function SiteHeader(): ReactNode {
             ))}
           </Stack>
           <Box sx={{ flexGrow: 1 }} />
-          {user === null ? <NavButton to="/login">{t('page.login.title')}</NavButton> : <AccountMenu />}
+          {user === null ? (
+            <NavButton to="/login">{t('page.login.title')}</NavButton>
+          ) : (
+            <AccountMenu user={user} />
+          )}
         </Stack>
       </Container>
     </Box>
@@ -94,39 +107,94 @@ function NavButton({
 }
 
 /**
- * Кабинет вошедшего: профиль, клубы, выход.
+ * Вошедший: аватарка, имя и рейтинг вместо слова «Кабинет» — ADR-048.
  *
- * Меню, а не три кнопки в ряд: на телефоне шапке и так тесно, а клубы есть
- * не у каждого. Выход ведёт на главную — оставаться на странице кабинета,
- * которую уже не открыть, бессмысленно.
+ * Человек узнаёт себя в шапке и видит свой рейтинг с любой страницы, как
+ * в RTTF. Имя и фото приходят тем же запросом, что открывает профиль, —
+ * кэш общий, второго запроса на страницу профиля нет.
+ *
+ * Меню, а не кнопки в ряд: на телефоне шапке тесно, и там остаётся одна
+ * аватарка. «Мой профиль» ведёт на публичную страницу — себя смотрят так
+ * же, как других; «Кабинет» — рабочий стол, «Настройки» — анкета и
+ * аккаунт. «Мои клубы» и администрирование — только тем, у кого они есть.
  */
-function AccountMenu(): ReactNode {
+function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
   const t = useT();
   const navigate = useNavigate();
-  const matchRoute = useMatchRoute();
   const menuId = useId();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const active = matchRoute({ to: '/cabinet', fuzzy: true }) !== false;
+  const player = useQuery({
+    ...playerQuery(user.playerId ?? ''),
+    enabled: user.playerId !== null,
+  }).data;
 
   const close = (): void => {
     setAnchor(null);
   };
 
+  const item = { onClick: close, sx: { minHeight: 44 } } as const;
+
   return (
     <>
-      <Button
-        variant="text"
-        color={active ? 'primary' : 'secondary'}
+      <ButtonBase
         aria-haspopup="menu"
         aria-expanded={anchor !== null}
         aria-controls={anchor === null ? undefined : menuId}
+        aria-label={t('nav.account')}
         onClick={(event) => {
           setAnchor(event.currentTarget);
         }}
-        sx={{ minHeight: 44, fontWeight: active ? 600 : 500 }}
+        sx={{
+          minHeight: 44,
+          pl: 0.5,
+          pr: { xs: 0.5, sm: 1.5 },
+          gap: 1.25,
+          borderRadius: 999,
+          transition: 'background-color var(--dur-fast) var(--ease)',
+          '@media (hover: hover)': { '&:hover': { bgcolor: 'var(--paper-hover)' } },
+          '&.Mui-focusVisible': { outline: '2px solid var(--red-600)', outlineOffset: '2px' },
+        }}
       >
-        {t('page.cabinet.title')}
-      </Button>
+        {player === undefined ? (
+          <Box component="span" sx={{ px: 1, typography: 'body2', fontWeight: 600 }}>
+            {user.login ?? t('nav.account')}
+          </Box>
+        ) : (
+          <>
+            <PlayerAvatar
+              lastName={player.lastName}
+              firstName={player.firstName}
+              photoUrl={player.photoUrl}
+              size="md"
+            />
+            {/* Имя и рейтинг — с планшета: на телефоне шапке хватает аватарки. */}
+            <Box
+              component="span"
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                lineHeight: 1.2,
+                textAlign: 'left',
+              }}
+            >
+              <Box component="span" sx={{ typography: 'body2', fontWeight: 600 }}>
+                {player.lastName} {player.firstName}
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  typography: 'caption',
+                  color: 'text.secondary',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {t('nav.ratings')} {player.rating}
+              </Box>
+            </Box>
+          </>
+        )}
+      </ButtonBase>
       <Menu
         id={menuId}
         anchorEl={anchor}
@@ -135,16 +203,30 @@ function AccountMenu(): ReactNode {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem component={RouterLink} href="/cabinet" onClick={close} sx={{ minHeight: 44 }}>
-          {t('nav.profile')}
+        {user.playerId === null ? (
+          <MenuItem component={RouterLink} href="/settings/profile" {...item}>
+            {t('nav.createProfile')}
+          </MenuItem>
+        ) : (
+          <MenuItem component={RouterLink} href={`/players/${user.playerId}`} {...item}>
+            {t('nav.myProfile')}
+          </MenuItem>
+        )}
+        <MenuItem component={RouterLink} href="/cabinet" {...item}>
+          {t('page.cabinet.title')}
         </MenuItem>
-        <MenuItem
-          component={RouterLink}
-          href="/cabinet/clubs"
-          onClick={close}
-          sx={{ minHeight: 44 }}
-        >
-          {t('nav.myClubs')}
+        {user.clubRoles.length > 0 && (
+          <MenuItem component={RouterLink} href="/cabinet/clubs" {...item}>
+            {t('nav.myClubs')}
+          </MenuItem>
+        )}
+        {user.isAdmin && (
+          <MenuItem component={RouterLink} href="/cabinet/applications" {...item}>
+            {t('nav.admin')}
+          </MenuItem>
+        )}
+        <MenuItem component={RouterLink} href="/settings" {...item}>
+          {t('nav.settings')}
         </MenuItem>
         <Divider />
         <MenuItem

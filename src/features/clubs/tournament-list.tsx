@@ -7,6 +7,8 @@ import TournamentCard from '@/features/tournaments/tournament-card';
 interface TournamentListProps {
   readonly tournaments: readonly TournamentView[];
   readonly club: ClubView | undefined;
+  /** Клуб своего турнира — когда в списке турниры разных клубов (кабинет). */
+  readonly clubOf?: (tournament: TournamentView) => ClubView | undefined;
   /**
    * Действие рядом с карточкой — консоль у идущего турнира в кабинете.
    * Стоит отдельно, а не внутри: карточка целиком ссылка, и вложенная в
@@ -19,6 +21,7 @@ interface TournamentListProps {
 export default function TournamentList({
   tournaments,
   club,
+  clubOf,
   action,
 }: TournamentListProps): ReactNode {
   return (
@@ -33,7 +36,7 @@ export default function TournamentList({
             sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <TournamentCard tournament={tournament} club={club} />
+              <TournamentCard tournament={tournament} club={clubOf?.(tournament) ?? club} />
             </Box>
             {extra !== undefined && extra !== null && <Box sx={{ flexShrink: 0 }}>{extra}</Box>}
           </Box>

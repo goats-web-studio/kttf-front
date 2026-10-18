@@ -155,3 +155,21 @@ function horizontal(
 function pick(entries: readonly Entry[], value: number): string {
   return entries.find((entry) => entry.value === value)?.point.ratingAfter ?? '';
 }
+
+/** Период графика: последние 10 турниров, полгода, год, всё время (ADR-048). */
+export type Span = 'last10' | 'half' | 'year' | 'all';
+
+/** Точки периода. Месяцы — календарные, считаются от сегодняшнего дня. */
+export function pointsOf(
+  points: readonly RatingPointView[],
+  span: Span,
+  now: Date,
+): readonly RatingPointView[] {
+  if (span === 'all') return points;
+  if (span === 'last10') return points.slice(-10);
+
+  const from = new Date(now);
+  from.setMonth(from.getMonth() - (span === 'half' ? 6 : 12));
+
+  return points.filter((point) => Date.parse(point.playedAt) >= from.getTime());
+}

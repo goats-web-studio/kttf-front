@@ -23,6 +23,9 @@ import { Route as ScreenPublicTokenRouteImport } from './routes/screen.$publicTo
 import { Route as AppCabinetIndexRouteImport } from './routes/_app/cabinet.index'
 import { Route as AppCabinetApplicationsRouteImport } from './routes/_app/cabinet.applications'
 import { Route as AppCabinetPlacesRouteImport } from './routes/_app/cabinet.places'
+import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings.index'
+import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings.account'
+import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.profile'
 import { Route as AppTournamentsNewRouteImport } from './routes/_app/tournaments.new'
 import { Route as PublicClubsIndexRouteImport } from './routes/_public/clubs.index'
 import { Route as PublicClubsClubIdRouteImport } from './routes/_public/clubs.$clubId'
@@ -102,6 +105,21 @@ const AppCabinetPlacesRoute = AppCabinetPlacesRouteImport.update({
   path: '/cabinet/places',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
+  id: '/settings/account',
+  path: '/settings/account',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
+  id: '/settings/profile',
+  path: '/settings/profile',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTournamentsNewRoute = AppTournamentsNewRouteImport.update({
   id: '/tournaments/new',
   path: '/tournaments/new',
@@ -167,11 +185,14 @@ export interface FileRoutesByFullPath {
   '/console/': typeof ConsoleIndexRoute
   '/cabinet/applications': typeof AppCabinetApplicationsRoute
   '/cabinet/places': typeof AppCabinetPlacesRoute
+  '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
   '/tournaments/new': typeof AppTournamentsNewRoute
   '/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/cabinet/': typeof AppCabinetIndexRoute
+  '/settings/': typeof AppSettingsIndexRoute
   '/clubs/': typeof PublicClubsIndexRoute
   '/tournaments/': typeof PublicTournamentsIndexRoute
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
@@ -190,11 +211,14 @@ export interface FileRoutesByTo {
   '/console': typeof ConsoleIndexRoute
   '/cabinet/applications': typeof AppCabinetApplicationsRoute
   '/cabinet/places': typeof AppCabinetPlacesRoute
+  '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
   '/tournaments/new': typeof AppTournamentsNewRoute
   '/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/cabinet': typeof AppCabinetIndexRoute
+  '/settings': typeof AppSettingsIndexRoute
   '/clubs': typeof PublicClubsIndexRoute
   '/tournaments': typeof PublicTournamentsIndexRoute
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
@@ -217,11 +241,14 @@ export interface FileRoutesById {
   '/console/': typeof ConsoleIndexRoute
   '/_app/cabinet/applications': typeof AppCabinetApplicationsRoute
   '/_app/cabinet/places': typeof AppCabinetPlacesRoute
+  '/_app/settings/account': typeof AppSettingsAccountRoute
+  '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/tournaments/new': typeof AppTournamentsNewRoute
   '/_public/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/_public/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/_app/cabinet/': typeof AppCabinetIndexRoute
+  '/_app/settings/': typeof AppSettingsIndexRoute
   '/_public/clubs/': typeof PublicClubsIndexRoute
   '/_public/tournaments/': typeof PublicTournamentsIndexRoute
   '/_app/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
@@ -243,11 +270,14 @@ export interface FileRouteTypes {
     | '/console/'
     | '/cabinet/applications'
     | '/cabinet/places'
+    | '/settings/account'
+    | '/settings/profile'
     | '/tournaments/new'
     | '/clubs/$clubId'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/cabinet/'
+    | '/settings/'
     | '/clubs/'
     | '/tournaments/'
     | '/cabinet/club/$clubId'
@@ -266,11 +296,14 @@ export interface FileRouteTypes {
     | '/console'
     | '/cabinet/applications'
     | '/cabinet/places'
+    | '/settings/account'
+    | '/settings/profile'
     | '/tournaments/new'
     | '/clubs/$clubId'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/cabinet'
+    | '/settings'
     | '/clubs'
     | '/tournaments'
     | '/cabinet/club/$clubId'
@@ -292,11 +325,14 @@ export interface FileRouteTypes {
     | '/console/'
     | '/_app/cabinet/applications'
     | '/_app/cabinet/places'
+    | '/_app/settings/account'
+    | '/_app/settings/profile'
     | '/_app/tournaments/new'
     | '/_public/clubs/$clubId'
     | '/_public/players/$playerId'
     | '/_public/tournaments/$tournamentId'
     | '/_app/cabinet/'
+    | '/_app/settings/'
     | '/_public/clubs/'
     | '/_public/tournaments/'
     | '/_app/cabinet/club/$clubId'
@@ -412,6 +448,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCabinetPlacesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/': {
+      id: '/_app/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/account': {
+      id: '/_app/settings/account'
+      path: '/settings/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof AppSettingsAccountRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/profile': {
+      id: '/_app/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AppSettingsProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/tournaments/new': {
       id: '/_app/tournaments/new'
       path: '/tournaments/new'
@@ -488,8 +545,11 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppCabinetApplicationsRoute: typeof AppCabinetApplicationsRoute
   AppCabinetPlacesRoute: typeof AppCabinetPlacesRoute
+  AppSettingsAccountRoute: typeof AppSettingsAccountRoute
+  AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppTournamentsNewRoute: typeof AppTournamentsNewRoute
   AppCabinetIndexRoute: typeof AppCabinetIndexRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
   AppCabinetClubClubIdRoute: typeof AppCabinetClubClubIdRoute
   AppCabinetClubsNewRoute: typeof AppCabinetClubsNewRoute
   AppTournamentsTournamentIdEditRoute: typeof AppTournamentsTournamentIdEditRoute
@@ -499,8 +559,11 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppCabinetApplicationsRoute: AppCabinetApplicationsRoute,
   AppCabinetPlacesRoute: AppCabinetPlacesRoute,
+  AppSettingsAccountRoute: AppSettingsAccountRoute,
+  AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppTournamentsNewRoute: AppTournamentsNewRoute,
   AppCabinetIndexRoute: AppCabinetIndexRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
   AppCabinetClubClubIdRoute: AppCabinetClubClubIdRoute,
   AppCabinetClubsNewRoute: AppCabinetClubsNewRoute,
   AppTournamentsTournamentIdEditRoute: AppTournamentsTournamentIdEditRoute,

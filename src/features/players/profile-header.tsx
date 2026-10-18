@@ -1,0 +1,197 @@
+import type { PlayerProfileView } from '@kttf/shared/types';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import { Building2, Cake, MapPin, Pencil, Settings, type LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import { formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
+import PlayerAvatar from '@/common/ui/player-avatar';
+
+import { gripLabel, handLabel } from './player-labels';
+import { playerName } from './player-name';
+
+interface ProfileHeaderProps {
+  readonly player: PlayerProfileView;
+  readonly clubName: string | null;
+  readonly cityName: string;
+  /** Максимальный рейтинг из сводки; пока она не пришла — не показывается. */
+  readonly maxRating: string | null;
+  /** Свой профиль: кнопки правки и кабинета. */
+  readonly isOwn: boolean;
+}
+
+/**
+ * Шапка профиля в структуре RTTF — ADR-048.
+ *
+ * Слева человек: фото, имя, город, клуб, год рождения и анкета — рука,
+ * хват, основание, накладки, «о себе». Справа рейтинг крупно и максимальный:
+ * ради этого числа страницу и открывают. Анкета показывается только
+ * заполненная — десять строк «не указано» это шум.
+ */
+export default function ProfileHeader({
+  player,
+  clubName,
+  cityName,
+  maxRating,
+  isOwn,
+}: ProfileHeaderProps): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+
+  const details: readonly (readonly [MessageKey, string | null])[] = [
+    ['player.form.playingHand', handLabel(player.playingHand, t)],
+    ['player.form.grip', gripLabel(player.grip, t)],
+    ['player.form.blade', player.blade],
+    ['player.form.rubberForehand', player.rubberForehand],
+    ['player.form.rubberBackhand', player.rubberBackhand],
+    ['player.form.coach', player.coachName],
+    ['player.form.bio', player.bio],
+    ['profile.since', formatDate(player.createdAt, locale)],
+  ];
+
+  return (
+    <Paper
+      variant="outlined"
+      component="header"
+      sx={{
+        p: { xs: 2.5, sm: 4 },
+        display: 'grid',
+        gap: { xs: 3, md: 4 },
+        gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) auto' },
+        alignItems: 'start',
+        backgroundImage: 'radial-gradient(circle at 100% 0%, var(--red-50) 0, transparent 38%)',
+      }}
+    >
+      <Box sx={{ minWidth: 0 }}>
+        <Stack direction="row" spacing={2.5} sx={{ alignItems: 'center' }}>
+          <PlayerAvatar
+            lastName={player.lastName}
+            firstName={player.firstName}
+            photoUrl={player.photoUrl}
+            size="xl"
+          />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="h1"
+              sx={{ fontSize: { xs: 26, sm: 34 }, lineHeight: { xs: '30px', sm: '40px' } }}
+            >
+              {playerName(player)}
+            </Typography>
+            <Stack
+              direction="row"
+              useFlexGap
+              spacing={2}
+              sx={{ mt: 1, flexWrap: 'wrap', color: 'text.secondary', typography: 'body2' }}
+            >
+              <Meta icon={MapPin}>{cityName}</Meta>
+              {clubName !== null && <Meta icon={Building2}>{clubName}</Meta>}
+              <Meta icon={Cake}>{String(player.birthYear)}</Meta>
+            </Stack>
+          </Box>
+        </Stack>
+
+        <Box
+          component="dl"
+          sx={{
+            mt: 3,
+            mb: 0,
+            display: 'grid',
+            gridTemplateColumns: 'max-content minmax(0, 1fr)',
+            columnGap: 3,
+            rowGap: 0.75,
+            typography: 'body2',
+            '& dt': { color: 'text.secondary' },
+            '& dd': { m: 0, overflowWrap: 'anywhere' },
+          }}
+        >
+          {details.map(([label, value]) =>
+            value === null || value === '' ? null : (
+              <Box key={label} sx={{ display: 'contents' }}>
+                <dt>{t(label)}</dt>
+                <dd>{value}</dd>
+              </Box>
+            ),
+          )}
+        </Box>
+
+        {isOwn && (
+          // Правка анкеты — в «Настройках», рабочий стол — в кабинете.
+          <Stack direction="row" useFlexGap spacing={1} sx={{ mt: 3, flexWrap: 'wrap' }}>
+            <Button href="/settings/profile" startIcon={<Pencil size={16} aria-hidden />}>
+              {t('profile.edit')}
+            </Button>
+            <Button
+              variant="text"
+              href="/cabinet"
+              startIcon={<Settings size={16} aria-hidden />}
+              sx={{ color: 'text.secondary' }}
+            >
+              {t('profile.settings')}
+            </Button>
+          </Stack>
+        )}
+      </Box>
+
+      {/* Рейтинг — главное число профиля, дисплейный набор (07, 3.5). */}
+      <Box
+        sx={{
+          px: 3,
+          py: 2.5,
+          borderRadius: 4,
+          bgcolor: 'var(--paper-sunken)',
+          textAlign: { md: 'right' },
+          minWidth: { md: 200 },
+        }}
+      >
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+          {t('ratings.column.rating')}
+        </Typography>
+        <Typography
+          variant="h1"
+          component="p"
+          sx={{ fontSize: 48, lineHeight: '52px', fontVariantNumeric: 'tabular-nums' }}
+        >
+          {player.rating}
+        </Typography>
+        {maxRating !== null && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {t('profile.maxRating')}{' '}
+            <Box component="span" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+              {maxRating}
+            </Box>
+          </Typography>
+        )}
+        <Typography variant="body2" color="text.secondary">
+          {t('player.rating.matches')}{' '}
+          <Box component="span" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+            {player.ratedMatches}
+          </Box>
+          {player.isProvisional && (
+            // Провизорный рейтинг двигается быстрее: сыграно меньше
+            // двадцати рейтинговых встреч (ТЗ 7.1).
+            <> · {t('ratings.provisional')}</>
+          )}
+        </Typography>
+      </Box>
+    </Paper>
+  );
+}
+
+/** Факт о человеке с иконкой: город, клуб, год рождения. */
+function Meta({
+  icon: Icon,
+  children,
+}: {
+  readonly icon: LucideIcon;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+      <Icon size={15} aria-hidden />
+      {children}
+    </Box>
+  );
+}
