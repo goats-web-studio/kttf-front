@@ -7,8 +7,10 @@ import type { SxProps, Theme } from '@mui/material/styles';
  */
 export const VISUALLY_HIDDEN: SxProps<Theme> = {
   position: 'absolute',
-  width: 1,
-  height: 1,
+  // Строкой, а не числом: в `sx` MUI `width: 1` — это 100%, а не пиксель.
+  // Невидимая подпись шириной во весь экран раздвигала страницу вбок.
+  width: '1px',
+  height: '1px',
   padding: 0,
   margin: '-1px',
   overflow: 'hidden',
