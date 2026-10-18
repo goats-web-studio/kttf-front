@@ -36,7 +36,7 @@ function EditTournamentPage(): ReactNode {
   const tournament = useQuery(tournamentQuery(tournamentId));
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <BackLink
         href={`/tournaments/${tournamentId}`}
         label={tournament.data?.name ?? t('nav.tournaments')}

@@ -24,8 +24,14 @@ import RouterLink from './router-link';
  * `--night-*` с контрастом AAA (раздел 3.3, запрет №7).
  */
 
-const FONT_UI = "'Inter', system-ui, sans-serif";
-const FONT_DISPLAY = "'Oswald', system-ui, sans-serif";
+const FONT_UI = "'Geologica', system-ui, sans-serif";
+
+/**
+ * Ширина содержимого страниц. Колонка в 900px на широком экране оставляла
+ * по краям пустоту шире самой страницы; 1280 — двенадцать колонок рейтинга
+ * и календаря рядом, а строка текста всё ещё читается.
+ */
+export const CONTENT_WIDTH = 1280;
 
 interface Tokens {
   readonly mode: 'light' | 'dark';
@@ -144,13 +150,14 @@ function build(tokens: Tokens, locale: Locale): Theme {
       // числе в консоли и на экране зала. Скругления «Спорт-модерн» заданы
       // явно ниже: поля и кнопки — 10, карточки — 16, чипы и вкладки — пилюлей.
       shape: { borderRadius: 4 },
-      // Раздел 3.5: Inter для интерфейса, Oswald для заголовков и крупных чисел.
+      // Раздел 3.5: Geologica для всего текста, заголовки — насыщенностью и
+      // плотной разрядкой. Числа набираются JetBrains Mono (--font-mono) по месту.
       typography: {
         fontFamily: FONT_UI,
         fontSize: 15,
         htmlFontSize: 16,
-        h1: { fontFamily: FONT_DISPLAY, fontWeight: 700, fontSize: 30, lineHeight: '32px' },
-        h2: { fontFamily: FONT_DISPLAY, fontWeight: 600, fontSize: 22, lineHeight: '26px' },
+        h1: { fontWeight: 700, fontSize: 30, lineHeight: '36px', letterSpacing: '-0.02em' },
+        h2: { fontWeight: 600, fontSize: 22, lineHeight: '28px', letterSpacing: '-0.01em' },
         h3: { fontWeight: 600, fontSize: 17, lineHeight: '26px' },
         h4: { fontWeight: 600, fontSize: 15, lineHeight: '24px' },
         h5: { fontWeight: 600, fontSize: 15, lineHeight: '24px' },
@@ -248,6 +255,13 @@ function build(tokens: Tokens, locale: Locale): Theme {
           },
         },
         MuiInputLabel: { styleOverrides: { root: { color: tokens.ink700 } } },
+        MuiContainer: {
+          // Все страницы на `maxWidth="lg"`: одна ширина на сайт, шапка и
+          // содержимое стоят по одной вертикали.
+          styleOverrides: {
+            maxWidthLg: { '@media (min-width: 1200px)': { maxWidth: CONTENT_WIDTH } },
+          },
+        },
         MuiPaper: {
           defaultProps: { elevation: 0 },
           // Карточка-поверхность: белая, скруглённая, с мягкой тенью. На

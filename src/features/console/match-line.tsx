@@ -32,7 +32,7 @@ export default function MatchLine({ match, names, ratings }: MatchLineProps): Re
         <Box
           component="span"
           sx={{
-            fontFamily: "'Oswald', system-ui, sans-serif",
+            fontFamily: 'var(--font-mono)',
             fontVariantNumeric: 'tabular-nums',
             fontSize: 22,
             lineHeight: '26px',

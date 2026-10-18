@@ -13,7 +13,7 @@ export function size(units: number): string {
   return `clamp(${String(Math.round(units * 12))}px, ${String(units)}vw, ${String(Math.round(units * 40))}px)`;
 }
 
-export const DISPLAY = "'Oswald', system-ui, sans-serif";
+export const DISPLAY = 'var(--font-mono)';
 
 /**
  * Подложка в цвет статуса: сам цвет из токенов, прозрачность — здесь.

@@ -82,7 +82,7 @@ export default function TournamentCard({ tournament, club }: TournamentCardProps
           <Typography
             component="span"
             sx={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: 'var(--font-mono)',
               fontWeight: 700,
               fontSize: 28,
               lineHeight: '30px',

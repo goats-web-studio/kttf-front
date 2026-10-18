@@ -192,7 +192,7 @@ export default function TablesBoard({ tables, names, labelOf, now }: TablesBoard
                 borderRadius: 999,
                 bgcolor: 'color-mix(in srgb, var(--ok) 16%, transparent)',
                 color: 'var(--ok)',
-                fontFamily: "'Oswald', system-ui, sans-serif",
+                fontFamily: 'var(--font-mono)',
                 fontWeight: 700,
                 fontSize: size(1),
                 fontVariantNumeric: 'tabular-nums',

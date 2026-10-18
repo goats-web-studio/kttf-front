@@ -4,7 +4,8 @@
 
 @import 'tailwindcss';
 
-/* Гарнитуры — docs/07-design-system.md, раздел 3.5.
+/* Гарнитуры — docs/07-design-system.md, раздел 3.5: Geologica для текста
+ * и заголовков, JetBrains Mono для чисел.
  *
  * Файлы свои, из npm, а не ссылка на Google Fonts: судья открывает консоль
  * в зале без сети, и набор, ждущий чужой сервер, там просто не приедет.
@@ -20,11 +21,11 @@
  * браузер скачает файл ради символа, которого в нём нет. */
 
 @font-face {
-  font-family: 'Inter';
+  font-family: 'Geologica';
   font-style: normal;
   font-display: swap;
   font-weight: 100 900;
-  src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+  src: url('@fontsource-variable/geologica/files/geologica-latin-wght-normal.woff2')
     format('woff2-variations');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
@@ -32,31 +33,31 @@
 }
 
 @font-face {
-  font-family: 'Inter';
+  font-family: 'Geologica';
   font-style: normal;
   font-display: swap;
   font-weight: 100 900;
-  src: url('@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2')
+  src: url('@fontsource-variable/geologica/files/geologica-cyrillic-wght-normal.woff2')
     format('woff2-variations');
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
 @font-face {
-  font-family: 'Inter';
+  font-family: 'Geologica';
   font-style: normal;
   font-display: swap;
   font-weight: 100 900;
-  src: url('@fontsource-variable/inter/files/inter-cyrillic-ext-wght-normal.woff2')
+  src: url('@fontsource-variable/geologica/files/geologica-cyrillic-ext-wght-normal.woff2')
     format('woff2-variations');
   unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
 }
 
 @font-face {
-  font-family: 'Oswald';
+  font-family: 'JetBrains Mono';
   font-style: normal;
   font-display: swap;
-  font-weight: 200 700;
-  src: url('@fontsource-variable/oswald/files/oswald-latin-wght-normal.woff2')
+  font-weight: 100 800;
+  src: url('@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')
     format('woff2-variations');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
@@ -64,23 +65,35 @@
 }
 
 @font-face {
-  font-family: 'Oswald';
+  font-family: 'JetBrains Mono';
   font-style: normal;
   font-display: swap;
-  font-weight: 200 700;
-  src: url('@fontsource-variable/oswald/files/oswald-cyrillic-wght-normal.woff2')
+  font-weight: 100 800;
+  src: url('@fontsource-variable/jetbrains-mono/files/jetbrains-mono-cyrillic-wght-normal.woff2')
     format('woff2-variations');
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
 @font-face {
-  font-family: 'Oswald';
+  font-family: 'JetBrains Mono';
   font-style: normal;
   font-display: swap;
-  font-weight: 200 700;
-  src: url('@fontsource-variable/oswald/files/oswald-cyrillic-ext-wght-normal.woff2')
+  font-weight: 100 800;
+  src: url('@fontsource-variable/jetbrains-mono/files/jetbrains-mono-cyrillic-ext-wght-normal.woff2')
     format('woff2-variations');
   unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+/* Знак тенге ₸ лежит в latin-ext. Целиком подмножество не нужно: с узким
+ * диапазоном браузер скачает файл, только когда на странице есть сумма. */
+@font-face {
+  font-family: 'Geologica';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('@fontsource-variable/geologica/files/geologica-latin-ext-wght-normal.woff2')
+    format('woff2-variations');
+  unicode-range: U+20B8;
 }
 
 /* Дизайн-система KTTF — docs/07-design-system.md, раздел 3.
@@ -259,12 +272,14 @@
   --color-input: var(--line-strong);
   --color-ring: var(--red-600);
 
-  /* Набор. Oswald — дисплей, Inter — интерфейс, роли не пересекаются.
-   * Файлы подключены выше, свои. Системный запасной оставлен на случай,
-   * когда woff2 ещё не приехал: текст показывается сразу (font-display:
-   * swap), а не ждёт набор — принцип 1.4. */
-  --font-display: 'Oswald', system-ui, sans-serif;
-  --font-ui: 'Inter', system-ui, sans-serif;
+  /* Набор. Geologica — и интерфейс, и заголовки: роли разводит насыщенность,
+   * а не вторая гарнитура. JetBrains Mono — числа, где столбик должен
+   * стоять ровно: рейтинг, счёт, даты в календаре, взносы. Файлы подключены
+   * выше, свои. Системный запасной оставлен на случай, когда woff2 ещё не
+   * приехал: текст показывается сразу (font-display: swap) — принцип 1.4. */
+  --font-display: 'Geologica', system-ui, sans-serif;
+  --font-ui: 'Geologica', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /* Шкала компактная: таблицы плотные, а рейтинг читают столбиком */
   --text-2xs: 11px;

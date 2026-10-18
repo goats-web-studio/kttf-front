@@ -90,7 +90,7 @@ function HomePage(): ReactNode {
     <>
       <Hero />
 
-      <Container maxWidth="md" sx={{ pb: { xs: 6, sm: 10 } }}>
+      <Container maxWidth="lg" sx={{ pb: { xs: 6, sm: 10 } }}>
         <Stack spacing={{ xs: 6, sm: 8 }}>
           {(running.data?.items.length ?? 0) > 0 && (
             <Section title={t('home.running.title')}>
@@ -166,7 +166,7 @@ function Hero(): ReactNode {
   };
 
   return (
-    <Container maxWidth="md" sx={{ pt: { xs: 3, sm: 5 }, mb: { xs: 5, sm: 7 } }}>
+    <Container maxWidth="lg" sx={{ pt: { xs: 3, sm: 5 }, mb: { xs: 5, sm: 7 } }}>
       <Paper
         variant="outlined"
         sx={{

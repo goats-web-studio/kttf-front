@@ -65,7 +65,7 @@ function CabinetPage(): ReactNode {
   const user = useSessionStore((state) => state.user);
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <Typography variant="h1">{t('page.cabinet.title')}</Typography>
 
       {/* Охрана оболочки `_app` без сессии сюда не пускает: ветка нужна типу. */}

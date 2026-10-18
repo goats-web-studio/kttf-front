@@ -62,7 +62,7 @@ function NewTournamentPage(): ReactNode {
   });
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <Typography variant="h1">{t('page.newTournament.title')}</Typography>
 
       {clubIds.length === 0 ? (

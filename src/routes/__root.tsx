@@ -42,7 +42,7 @@ function NotFound(): ReactNode {
 
   return (
     <ThemeRoot>
-      <Container maxWidth="md" component="section" sx={EXCEPTION}>
+      <Container maxWidth="lg" component="section" sx={EXCEPTION}>
         <Typography variant="h1">{t('error.notFound.title')}</Typography>
         <Button variant="contained" href="/" sx={{ mt: 3 }}>
           {t('error.notFound.action')}
@@ -57,7 +57,7 @@ function UnexpectedError({ reset }: ErrorComponentProps): ReactNode {
 
   return (
     <ThemeRoot>
-      <Container maxWidth="md" component="section" sx={EXCEPTION}>
+      <Container maxWidth="lg" component="section" sx={EXCEPTION}>
         <Typography variant="h1">{t('error.unexpected.title')}</Typography>
         <Button variant="contained" onClick={reset} sx={{ mt: 3 }}>
           {t('error.unexpected.action')}

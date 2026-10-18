@@ -120,7 +120,7 @@ export default function Podium({
                 <Typography
                   component="span"
                   sx={{
-                    fontFamily: 'var(--font-display)',
+                    fontFamily: 'var(--font-mono)',
                     fontWeight: 700,
                     fontSize: medal === 1 ? 40 : 30,
                     lineHeight: 1,

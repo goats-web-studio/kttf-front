@@ -67,7 +67,7 @@ function PlayerPage(): ReactNode {
 
   if (!isKnownId || isMissingResource(player.error)) {
     return (
-      <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
         <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
           {t('player.notFound')}
         </Typography>
@@ -76,7 +76,7 @@ function PlayerPage(): ReactNode {
   }
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <QueryState
         isPending={player.isPending}
         error={player.error}

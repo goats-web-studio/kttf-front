@@ -83,7 +83,7 @@ function ClubManagementPage(): ReactNode {
 
   if (!isClubStaff(user, clubId)) {
     return (
-      <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+      <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
         <Typography variant="h1" sx={{ mb: 3 }}>
           {t('club.manage')}
         </Typography>
@@ -97,7 +97,7 @@ function ClubManagementPage(): ReactNode {
   }
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <BackLink href="/cabinet/clubs" label={t('nav.myClubs')} />
       {isMissingResource(club.error) ? (
         <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>

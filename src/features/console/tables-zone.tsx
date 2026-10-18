@@ -109,7 +109,7 @@ export default function TablesZone({
                   <Box
                     component="span"
                     sx={{
-                      fontFamily: "'Oswald', system-ui, sans-serif",
+                      fontFamily: 'var(--font-mono)',
                       fontSize: 30,
                       lineHeight: '32px',
                       fontWeight: 700,

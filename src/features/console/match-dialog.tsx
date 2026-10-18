@@ -126,7 +126,7 @@ function Pair({
                 component="span"
                 sx={{
                   ml: 'auto',
-                  fontFamily: "'Oswald', system-ui, sans-serif",
+                  fontFamily: 'var(--font-mono)',
                   fontSize: 22,
                   lineHeight: '26px',
                   fontVariantNumeric: 'tabular-nums',

@@ -19,7 +19,7 @@ export default function PagePlaceholder({ title, children }: PagePlaceholderProp
   const t = useT();
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <Typography variant="h1">{title}</Typography>
       <Typography color="text.secondary" sx={{ mt: 1 }}>
         {t('common.soon')}

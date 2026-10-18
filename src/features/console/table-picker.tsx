@@ -77,7 +77,7 @@ export default function TablePicker({
             <Box
               component="span"
               sx={{
-                fontFamily: "'Oswald', system-ui, sans-serif",
+                fontFamily: 'var(--font-mono)',
                 fontSize: 22,
                 lineHeight: '26px',
                 fontWeight: 600,

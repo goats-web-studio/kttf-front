@@ -185,7 +185,7 @@ function TournamentsPage(): ReactNode {
       : Math.max(1, Math.ceil(tournaments.data.total / tournaments.data.limit));
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <Stack
         direction="row"
         useFlexGap

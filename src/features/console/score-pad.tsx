@@ -172,7 +172,7 @@ function ScoreButton({ children, onClick, filled, small, label }: ScoreButtonPro
         minHeight: 64,
         minWidth: 0,
         px: 1,
-        fontFamily: "'Oswald', system-ui, sans-serif",
+        fontFamily: 'var(--font-mono)',
         fontSize: small === true ? 15 : 22,
         lineHeight: small === true ? '20px' : '26px',
         fontWeight: 600,

@@ -47,7 +47,7 @@ function PlacesPage(): ReactNode {
   const user = useSessionStore((state) => state.user);
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <BackLink href="/cabinet" label={t('page.cabinet.title')} />
       <Typography variant="h1" sx={{ mt: 1 }}>
         {t('page.places.title')}

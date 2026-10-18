@@ -41,7 +41,7 @@ export default function SiteHeader(): ReactNode {
         bgcolor: 'background.paper',
       }}
     >
-      <Container maxWidth="md">
+      <Container maxWidth="lg">
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minHeight: 56 }}>
           {/* Знак, а не набранное слово: у логотипа свои пропорции и
               наклон 9°, повторить их шрифтом нельзя. */}

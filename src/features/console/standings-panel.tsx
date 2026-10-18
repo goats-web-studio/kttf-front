@@ -94,7 +94,7 @@ function matchBetween(
 }
 
 /** Числа таблицы — дисплейным набором, разряды столбиком. */
-const DISPLAY = "'Oswald', system-ui, sans-serif";
+const DISPLAY = 'var(--font-mono)';
 
 function GroupTable({
   group,

@@ -140,7 +140,7 @@ function RatingsPage(): ReactNode {
       : Math.max(1, Math.ceil(players.data.total / players.data.limit));
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <Typography variant="h1">{t('page.ratings.title')}</Typography>
 
       <Box
@@ -274,7 +274,7 @@ function RatingsPage(): ReactNode {
                           align="right"
                           sx={{
                             ...NUM,
-                            fontFamily: 'var(--font-display)',
+                            fontFamily: 'var(--font-mono)',
                             fontWeight: 600,
                             fontSize: 18,
                           }}

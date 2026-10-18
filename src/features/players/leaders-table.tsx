@@ -87,7 +87,7 @@ export default function LeadersTable({ query, empty }: LeadersTableProps): React
                       align="right"
                       sx={{
                         ...NUM,
-                        fontFamily: 'var(--font-display)',
+                        fontFamily: 'var(--font-mono)',
                         fontWeight: 600,
                         fontSize: 18,
                       }}

@@ -39,7 +39,7 @@ function NewClubPage(): ReactNode {
   });
 
   return (
-    <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <BackLink href="/cabinet/clubs" label={t('nav.myClubs')} />
       <Typography variant="h1" sx={{ mt: 1 }}>
         {t('page.newClub.title')}
