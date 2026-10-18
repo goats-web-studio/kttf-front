@@ -1,23 +1,20 @@
-import type { BracketSourceView, MatchView, StageView } from '@kttf/shared/types';
+import type { StageView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { useT, type MessageKey } from '@/common/i18n';
+import { useT } from '@/common/i18n';
 
 import Bracket from '@/common/ui/bracket';
-import { finalRound, roundName } from '@/common/ui/bracket-model';
+import { BRACKET_STAGES, finalRound, sourceLabel } from '@/common/ui/bracket-model';
 import Surface from '@/common/ui/surface';
 
 import { stageTitle } from './labels';
-import { BRACKET_STAGES } from './results-tabs';
 
 interface ResultsBracketProps {
   readonly stages: readonly StageView[];
   readonly names: ReadonlyMap<string, string>;
 }
-
-type Translate = (key: MessageKey) => string;
 
 /**
  * Сетки — ТЗ 9.4.
@@ -75,29 +72,4 @@ function StageBracket({
       </Box>
     </Surface>
   );
-}
-
-/** «Победитель встречи №2» вместо пустого места: встреча ждёт именно его. */
-function sourceLabel(
-  source: BracketSourceView | null,
-  byId: ReadonlyMap<string, MatchView>,
-  final: number,
-  t: Translate,
-): string {
-  if (source === null) {
-    return t('results.match.pending');
-  }
-
-  const kind = t(source.kind === 'WINNER' ? 'results.match.winnerOf' : 'results.match.loserOf');
-  const from = byId.get(source.matchId);
-
-  if (from?.bracketSlot == null) {
-    return kind;
-  }
-
-  // Номер внутри круга и сам круг: «№1» без круга повторялся в полуфинале и
-  // в финале и путал. Слот считается с нуля, человек — с единицы.
-  const round = roundName(final - (from.bracketRound ?? 1), t).toLocaleLowerCase();
-
-  return `${kind}: ${round} ${String(from.bracketSlot + 1)}`;
 }

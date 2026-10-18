@@ -2,12 +2,7 @@ import type { StageView } from '@kttf/shared/types';
 import { z } from 'zod';
 
 import type { MessageKey } from '@/common/i18n';
-
-/** Этапы, у которых есть сетка. Круговая и группы рисуются таблицами. */
-export const BRACKET_STAGES: ReadonlySet<StageView['type']> = new Set<StageView['type']>([
-  'KNOCKOUT',
-  'CONSOLATION',
-]);
+import { BRACKET_STAGES } from '@/common/ui/bracket-model';
 
 /**
  * Вкладки страницы начатого турнира.

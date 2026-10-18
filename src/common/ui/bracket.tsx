@@ -1,5 +1,6 @@
 import type { MatchView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -11,6 +12,11 @@ interface BracketProps {
   /** Что написано на стороне встречи: имя или кого встреча ждёт. */
   readonly sideLabel: (match: MatchView, side: 'A' | 'B') => string;
   readonly size?: BracketSize;
+  /**
+   * Касание встречи — в консоли открывает окно встречи. Без него сетка
+   * только показывает: на сайте и на стене нажимать нечего.
+   */
+  readonly onMatchClick?: (match: MatchView) => void;
 }
 
 /**
@@ -31,6 +37,7 @@ export default function Bracket({
   matches,
   sideLabel,
   size = BRACKET_PAGE,
+  onMatchClick,
 }: BracketProps): ReactNode {
   const t = useT();
   const main = matches.filter((match) => !isPlacement(match));
@@ -88,7 +95,12 @@ export default function Bracket({
                       }}
                     >
                       {match !== undefined && (
-                        <MatchBox match={match} sideLabel={sideLabel} size={size} />
+                        <MatchBox
+                          match={match}
+                          sideLabel={sideLabel}
+                          size={size}
+                          onClick={onMatchClick}
+                        />
                       )}
                       {into && <Line size={size} kind="in" />}
                       {out && <Line size={size} kind="out" />}
@@ -114,7 +126,12 @@ export default function Bracket({
                           ? t('results.bracket.thirdPlace')
                           : t('results.bracket.placement')}
                       </Box>
-                      <MatchBox match={match} sideLabel={sideLabel} size={size} />
+                      <MatchBox
+                        match={match}
+                        sideLabel={sideLabel}
+                        size={size}
+                        onClick={onMatchClick}
+                      />
                     </Box>
                   ))}
                 </Box>
@@ -171,16 +188,37 @@ function MatchBox({
   match,
   sideLabel,
   size,
+  onClick,
 }: {
   readonly match: MatchView;
   readonly sideLabel: (match: MatchView, side: 'A' | 'B') => string;
   readonly size: BracketSize;
+  readonly onClick: ((match: MatchView) => void) | undefined;
 }): ReactNode {
   const live = match.status === 'PLAYING';
+  // Нажимается только встреча, где известны оба: с «победителем встречи»
+  // вместо соперника судье в окне делать нечего.
+  const clickable =
+    onClick !== undefined &&
+    match.playerAId !== null &&
+    match.playerBId !== null &&
+    match.status !== 'CANCELLED';
 
   return (
     <Box
+      {...(clickable
+        ? {
+            component: ButtonBase,
+            onClick: () => {
+              onClick(match);
+            },
+          }
+        : {})}
       sx={{
+        display: 'block',
+        textAlign: 'left',
+        font: 'inherit',
+        color: 'inherit',
         width: '100%',
         position: 'relative',
         zIndex: 1,
@@ -191,10 +229,17 @@ function MatchBox({
         borderColor: live ? 'var(--red-600)' : 'divider',
         bgcolor: 'background.paper',
         overflow: 'hidden',
+        ...(clickable && {
+          transition: 'border-color var(--dur-fast) var(--ease)',
+          '@media (hover: hover)': {
+            '&:hover': { borderColor: live ? 'var(--red-600)' : 'var(--line-strong)' },
+          },
+          '&.Mui-focusVisible': { outline: '2px solid var(--red-600)', outlineOffset: '2px' },
+        }),
       }}
     >
       <Side match={match} side="A" sideLabel={sideLabel} size={size} />
-      <Box sx={{ height: '1px', bgcolor: 'divider' }} />
+      <Box component="span" sx={{ display: 'block', height: '1px', bgcolor: 'divider' }} />
       <Side match={match} side="B" sideLabel={sideLabel} size={size} />
     </Box>
   );
@@ -219,9 +264,11 @@ function Side({
 
   // Победитель — полужирное имя и залитый счёт, проигравший приглушён
   // (раздел 3.4): цвет не единственный носитель.
+  // Строка — span, а не p: в нажимаемой встрече она лежит внутри кнопки,
+  // а там допустимо только строчное содержимое.
   return (
     <Box
-      component="p"
+      component="span"
       sx={{
         m: 0,
         height: size.row,

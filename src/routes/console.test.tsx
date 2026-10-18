@@ -233,6 +233,70 @@ describe('разрешение равенства', () => {
   });
 });
 
+describe('сетка плей-офф', () => {
+  /** Снимок с плей-офф из одной сыгранной встречи, вне столов. */
+  function withBracket(): TournamentSnapshotView {
+    const stage = CONSOLE_SNAPSHOT.stages[0];
+    const match = stage?.matches[0];
+    if (stage === undefined || match === undefined) throw new Error('фикстура без встречи');
+
+    const knockoutId = '00000000-0000-4000-8000-0000000000f1';
+
+    return {
+      ...CONSOLE_SNAPSHOT,
+      stages: [
+        ...CONSOLE_SNAPSHOT.stages,
+        {
+          ...stage,
+          id: knockoutId,
+          type: 'KNOCKOUT',
+          name: 'Плей-офф',
+          groups: [],
+          matches: [
+            {
+              ...match,
+              id: '00000000-0000-4000-8000-0000000000f2',
+              stageId: knockoutId,
+              groupId: null,
+              bracketRound: 1,
+              bracketSlot: 0,
+              sourceA: null,
+              sourceB: null,
+              status: 'FINISHED',
+              tableNumber: null,
+              setsA: 3,
+              setsB: 1,
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  it('без плей-офф вкладки «Сетка» нет', async () => {
+    renderConsole();
+
+    expect(await screen.findByRole('tab', { name: ru['console.standings.title'] })).toBeDefined();
+    expect(screen.queryByRole('tab', { name: ru['console.bracket.title'] })).toBeNull();
+  });
+
+  it('касание встречи в сетке открывает её окно', async () => {
+    snapshot = withBracket();
+
+    renderConsole();
+
+    fireEvent.click(await screen.findByRole('tab', { name: ru['console.bracket.title'] }));
+    fireEvent.click(
+      await screen.findByRole('button', { name: new RegExp(`${PLAYERS.first.lastName}.*3`) }),
+    );
+
+    // Встреча сыграна — в окне исправление результата, как из списка сыгранных.
+    expect(
+      await screen.findByRole('button', { name: ru['console.dialog.editResult'] }),
+    ).toBeDefined();
+  });
+});
+
 /** Последняя операция в очереди на диске — то, что судья только что сделал. */
 async function lastQueued(count: number): Promise<unknown> {
   await waitFor(async () => {

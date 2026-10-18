@@ -13,7 +13,9 @@ import { useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { fill, useT } from '@/common/i18n';
+import { hasBracket } from '@/common/ui/bracket-model';
 import QueryState from '@/common/ui/query-state';
+import BracketZone from '@/features/console/bracket-zone';
 import { isPlayedOut, matchesOf } from '@/features/console/group-matches';
 import MatchDialog from '@/features/console/match-dialog';
 import PlayedZone from '@/features/console/played-zone';
@@ -41,10 +43,13 @@ export const Route = createFileRoute('/console/$tournamentId')({
   component: ConsoleScreen,
 });
 
-/** Что открыто поверх зала: окно встречи или окно свободного стола. */
-/** Нижняя часть консоли — вкладками: таблицы групп и сыгранные встречи. */
-type Lower = 'standings' | 'played';
+/**
+ * Нижняя часть консоли — вкладками: таблицы групп, сетка плей-офф и
+ * сыгранные встречи.
+ */
+type Lower = 'standings' | 'bracket' | 'played';
 
+/** Что открыто поверх зала: окно встречи или окно свободного стола. */
 type Opened =
   | { readonly kind: 'match'; readonly matchId: string }
   | { readonly kind: 'table'; readonly number: number }
@@ -101,6 +106,7 @@ function ConsoleScreen(): ReactNode {
       ratings: ratingsOf(snapshot),
       progress: progressOf(snapshot.stages),
       done: allPlayed(snapshot.stages),
+      bracket: hasBracket(snapshot.stages),
       ties: snapshot.standings.groups.some(
         (group) => group.unresolved.length > 0 && isPlayedOut(matchesOf(snapshot.stages, group)),
       ),
@@ -165,6 +171,9 @@ function ConsoleScreen(): ReactNode {
       },
     );
   }
+
+  // Вкладки «Сетка» нет у турнира без плей-офф — выбранной она тоже не бывает.
+  const shown: Lower = lower === 'bracket' && view?.bracket !== true ? 'standings' : lower;
 
   const openedMatch = opened?.kind === 'match' ? findMatch(opened.matchId) : undefined;
   const openedTable =
@@ -363,7 +372,7 @@ function ConsoleScreen(): ReactNode {
 
               <Box ref={standingsRef} sx={{ mt: 5, scrollMarginTop: 96 }}>
                 <Tabs
-                  value={lower}
+                  value={shown}
                   onChange={(_, next: Lower) => {
                     setLower(next);
                   }}
@@ -372,17 +381,18 @@ function ConsoleScreen(): ReactNode {
                   scrollButtons={false}
                 >
                   <Tab value="standings" label={t('console.standings.title')} />
+                  {view.bracket && <Tab value="bracket" label={t('console.bracket.title')} />}
                   <Tab value="played" label={t('console.played.title')} />
                 </Tabs>
 
                 <Box
                   // Новый ключ на каждую вкладку — панель монтируется заново и
                   // проявляется (styles.css, .tab-panel-in).
-                  key={lower}
+                  key={shown}
                   className="tab-panel-in"
                   sx={{ mt: 2.5, display: 'grid', gap: 3 }}
                 >
-                  {lower === 'standings' ? (
+                  {shown === 'standings' ? (
                     <>
                       <TiePanel
                         groups={snapshot.standings.groups}
@@ -401,6 +411,14 @@ function ConsoleScreen(): ReactNode {
                         advance={advanceOf(snapshot.tournament.formatConfig)}
                       />
                     </>
+                  ) : shown === 'bracket' ? (
+                    <BracketZone
+                      stages={snapshot.stages}
+                      names={view.names}
+                      onOpen={(matchId) => {
+                        setOpened({ kind: 'match', matchId });
+                      }}
+                    />
                   ) : (
                     <PlayedZone
                       matches={view.played}
@@ -552,7 +570,6 @@ function ConsoleScreen(): ReactNode {
   );
 }
 
-/** Колонка широкого экрана; на телефоне растворяется в общую ленту. */
 /**
  * Ссылка на экран зала — в шапке консоли, где судья её и ищет перед турниром.
  *
