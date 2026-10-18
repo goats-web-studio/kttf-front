@@ -64,7 +64,7 @@ export default function PlayedZone({ matches, stages, names, onOpen }: PlayedZon
                 }}
               >
                 <Typography component="span" variant="caption" color="text.secondary">
-                  {matchLabel(stages, match)}
+                  {matchLabel(stages, match, t)}
                   {match.tableNumber !== null &&
                     ` · ${t('console.table.number')} ${String(match.tableNumber)}`}
                   {match.resultType === 'WALKOVER' && (

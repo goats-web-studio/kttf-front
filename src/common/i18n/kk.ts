@@ -497,7 +497,7 @@ export const kk: Record<MessageKey, string> = {
   'console.score.walkover': 'Келмеді',
   'console.played.empty': 'Ойналған кездесулер әзірге жоқ.',
   'console.played.walkover': 'келмеді',
-  'console.toast.assigned': '{number}-үстел: {pair}',
+  'console.toast.assigned': '{number}-үстел · {stage}: {pair}',
   'console.toast.recorded': '{score} жазылды',
   'console.toast.undo': 'Болдырмау',
   'console.toast.edit': 'Түзету',

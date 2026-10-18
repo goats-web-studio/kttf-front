@@ -1,5 +1,8 @@
 import type { MatchView, StageView } from '@kttf/shared/types';
 
+import type { MessageKey } from '@/common/i18n';
+import { finalRound, isPlacement, roundName } from '@/common/ui/bracket-model';
+
 /**
  * Очередь и столы — ТЗ 6.1.
  *
@@ -107,7 +110,10 @@ function remaining(matches: readonly MatchView[]): ReadonlyMap<string, number> {
  * Внутри равенства порядок задаёт расписание — этап, круг, слот. Иначе
  * встречи одного круга перемешивались бы между обновлениями экрана.
  */
-export function buildQueue(stages: readonly StageView[]): readonly QueuedMatch[] {
+export function buildQueue(
+  stages: readonly StageView[],
+  t?: (key: MessageKey) => string,
+): readonly QueuedMatch[] {
   const matches = allMatches(stages);
   const last = lastPlayed(matches);
   const left = remaining(matches);
@@ -131,7 +137,7 @@ export function buildQueue(stages: readonly StageView[]): readonly QueuedMatch[]
         match,
         stageName: stage.name,
         groupLabel: stage.groups.find((group) => group.id === match.groupId)?.label ?? null,
-        label: matchLabel(stages, match),
+        label: matchLabel(stages, match, t),
         // Пара свободна не раньше, чем закончил позднейший из двоих.
         waitingSince: times.length === 2 ? maxOf(times) : null,
         lastForBoth: [a, b].every((playerId) => playerId !== null && left.get(playerId) === 1),
@@ -252,7 +258,11 @@ export function suggestedTable(tables: readonly TableState[]): number | null {
  * «Круговая · Круговая» не пишется: у круговой схемы единственная группа
  * названа как этап, и повторять её незачем.
  */
-export function matchLabel(stages: readonly StageView[], match: MatchView): string {
+export function matchLabel(
+  stages: readonly StageView[],
+  match: MatchView,
+  t?: (key: MessageKey) => string,
+): string {
   const stage = stages.find((current) => current.id === match.stageId);
 
   if (stage === undefined) {
@@ -260,8 +270,22 @@ export function matchLabel(stages: readonly StageView[], match: MatchView): stri
   }
 
   const group = stage.groups.find((current) => current.id === match.groupId)?.label ?? null;
+  const base = group === null || group === stage.name ? stage.name : `${stage.name} · ${group}`;
 
-  return group === null || group === stage.name ? stage.name : `${stage.name} · ${group}`;
+  // В сетке — ещё и круг: «Плей-офф · Полуфинал», «… · Матч за 3-е место».
+  // Ведущий объявляет вызов по этой строке, и «Плей-офф» без круга ему
+  // ничего не говорит.
+  if (t === undefined || match.bracketRound === null || stage.groups.length > 0) {
+    return base;
+  }
+
+  const round = isPlacement(match)
+    ? t('results.bracket.thirdPlace')
+    : roundName(finalRound(stage.matches) - match.bracketRound, t);
+
+  // Круг первым: на узкой карточке стола обрезается хвост, а «Финал» и
+  // «Матч за 3-е место» остаются видны.
+  return `${round} · ${base}`;
 }
 
 /** Сыгранные встречи, свежие сверху: правят обычно только что введённое. */

@@ -1,7 +1,16 @@
 import type { MatchView, StageView } from '@kttf/shared/types';
 import { describe, expect, it } from 'vitest';
 
-import { allPlayed, buildQueue, buildTables, playingMatches, suggestedTable } from './queue';
+import { ru } from '@/common/i18n/ru';
+
+import {
+  allPlayed,
+  buildQueue,
+  buildTables,
+  matchLabel,
+  playingMatches,
+  suggestedTable,
+} from './queue';
 
 /**
  * Очередь — то, на что судья смотрит весь турнир. Ошибка здесь не рушит
@@ -293,5 +302,41 @@ describe('готовность к завершению', () => {
 
   it('одна незакрытая встреча означает, что турнир идёт', () => {
     expect(allPlayed([stage([match({ id: 'm1', status: 'PLAYING' })])])).toBe(false);
+  });
+});
+
+describe('подпись встречи', () => {
+  // Ведущий объявляет вызов по подписи: «Плей-офф» без круга ему ничего не
+  // говорит, нужны «Финал» и «Матч за 3-е место».
+  const t = (key: keyof typeof ru): string => ru[key];
+  const semi1 = match({ id: 's1', bracketRound: 1, bracketSlot: 0 });
+  const semi2 = match({ id: 's2', bracketRound: 1, bracketSlot: 1 });
+  const final = match({
+    id: 'f',
+    bracketRound: 2,
+    bracketSlot: 0,
+    sourceA: { kind: 'WINNER', matchId: 's1' },
+    sourceB: { kind: 'WINNER', matchId: 's2' },
+  });
+  const third = match({
+    id: 'b',
+    bracketRound: 2,
+    bracketSlot: 1,
+    sourceA: { kind: 'LOSER', matchId: 's1' },
+    sourceB: { kind: 'LOSER', matchId: 's2' },
+  });
+  const stages = [stage([semi1, semi2, final, third], { type: 'KNOCKOUT', name: 'Плей-офф' })];
+
+  it('называет круг сетки первым, этап — следом', () => {
+    expect(matchLabel(stages, final, t)).toBe(`${ru['results.bracket.final']} · Плей-офф`);
+    expect(matchLabel(stages, semi1, t)).toBe(`${ru['results.bracket.semifinal']} · Плей-офф`);
+  });
+
+  it('матч за 3-е место — не второй финал', () => {
+    expect(matchLabel(stages, third, t)).toBe(`${ru['results.bracket.thirdPlace']} · Плей-офф`);
+  });
+
+  it('без словаря подпись прежняя — этап и группа', () => {
+    expect(matchLabel(stages, final)).toBe('Плей-офф');
   });
 });

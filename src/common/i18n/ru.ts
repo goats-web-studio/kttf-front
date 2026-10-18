@@ -489,7 +489,7 @@ export const ru = {
   'console.score.walkover': 'Неявка',
   'console.played.empty': 'Сыгранных встреч пока нет.',
   'console.played.walkover': 'неявка',
-  'console.toast.assigned': 'Стол {number}: {pair}',
+  'console.toast.assigned': 'Стол {number} · {stage}: {pair}',
   'console.toast.recorded': 'Записано {score}',
   'console.toast.undo': 'Отменить',
   'console.toast.edit': 'Исправить',

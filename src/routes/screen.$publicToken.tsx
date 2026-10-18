@@ -110,7 +110,7 @@ function ScreenPage(): ReactNode {
 
     return {
       tables: buildTables(view.tournament.tableCount, view.stages),
-      queue: buildQueue(view.stages),
+      queue: buildQueue(view.stages, t),
       played: playedMatches(view.stages),
       progress: progressOf(view.stages),
       names: namesOf(view.players),
@@ -118,7 +118,7 @@ function ScreenPage(): ReactNode {
       pages: pagesOf(view.stages, view.standings.groups),
       stageName: stage?.name ?? null,
     };
-  }, [view]);
+  }, [view, t]);
 
   const pageCount = boards?.pages.length ?? 0;
 
@@ -163,7 +163,7 @@ function ScreenPage(): ReactNode {
   const current =
     boards === null || pageCount === 0 ? null : (boards.pages[page % pageCount] ?? null);
   const labelOf = (match: MatchView): string =>
-    view === undefined ? '' : matchLabel(view.stages, match);
+    view === undefined ? '' : matchLabel(view.stages, match, t);
   const percent =
     boards === null || boards.progress.total === 0
       ? 0

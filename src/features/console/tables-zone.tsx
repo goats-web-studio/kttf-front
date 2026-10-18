@@ -13,6 +13,8 @@ import { minutesSince } from './use-now';
 interface TablesZoneProps {
   readonly tables: readonly TableState[];
   readonly names: ReadonlyMap<string, string>;
+  /** Этап и круг встречи — «Финал · Плей-офф»: ведущий объявляет по ней. */
+  readonly labelOf?: (match: MatchView) => string;
   readonly now: number;
   readonly onOpen: (table: TableState) => void;
 }
@@ -36,7 +38,13 @@ const LONG_MATCH_MINUTES = 30;
  * Карточка нарочно простая: номер, слово состояния, пара. Цвет один —
  * красная полоса у идущих встреч; свободный стол — просто белый.
  */
-export default function TablesZone({ tables, names, now, onOpen }: TablesZoneProps): ReactNode {
+export default function TablesZone({
+  tables,
+  names,
+  labelOf,
+  now,
+  onOpen,
+}: TablesZoneProps): ReactNode {
   const t = useT();
 
   return (
@@ -114,7 +122,20 @@ export default function TablesZone({ tables, names, now, onOpen }: TablesZonePro
                 </Box>
 
                 {playing && table.match !== null ? (
-                  <Pair match={table.match} names={names} />
+                  <>
+                    {labelOf !== undefined && (
+                      <Typography
+                        component="span"
+                        variant="caption"
+                        color="text.secondary"
+                        noWrap
+                        sx={{ mt: 0.75, display: 'block', fontWeight: 600 }}
+                      >
+                        {labelOf(table.match)}
+                      </Typography>
+                    )}
+                    <Pair match={table.match} names={names} />
+                  </>
                 ) : table.match !== null ? (
                   <JustPlayed match={table.match} names={names} />
                 ) : (

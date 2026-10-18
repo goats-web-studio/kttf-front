@@ -94,7 +94,7 @@ function ConsoleScreen(): ReactNode {
 
     return {
       tables,
-      queue: buildQueue(snapshot.stages),
+      queue: buildQueue(snapshot.stages, t),
       played: playedMatches(snapshot.stages),
       suggested: suggestedTable(tables),
       names: namesOf(snapshot),
@@ -105,7 +105,7 @@ function ConsoleScreen(): ReactNode {
         (group) => group.unresolved.length > 0 && isPlayedOut(matchesOf(snapshot.stages, group)),
       ),
     };
-  }, [snapshot]);
+  }, [snapshot, t]);
 
   function setsToWinOf(match: MatchView): number {
     const stage = snapshot?.stages.find((current) => current.id === match.stageId);
@@ -134,7 +134,11 @@ function ConsoleScreen(): ReactNode {
     setOpened(null);
     assign(match.id, tableNumber);
     notify(
-      fill(t('console.toast.assigned'), { number: String(tableNumber), pair: pairOf(match) }),
+      fill(t('console.toast.assigned'), {
+        number: String(tableNumber),
+        pair: pairOf(match),
+        stage: snapshot === undefined ? '' : matchLabel(snapshot.stages, match, t),
+      }),
       {
         label: t('console.toast.undo'),
         run: () => {
@@ -332,6 +336,7 @@ function ConsoleScreen(): ReactNode {
                 <TablesZone
                   tables={view.tables}
                   names={view.names}
+                  labelOf={(match) => matchLabel(snapshot.stages, match, t)}
                   now={now}
                   onOpen={(table) => {
                     setOpened(
@@ -459,7 +464,7 @@ function ConsoleScreen(): ReactNode {
         <MatchDialog
           key={openedMatch.id}
           match={openedMatch}
-          label={matchLabel(snapshot.stages, openedMatch)}
+          label={matchLabel(snapshot.stages, openedMatch, t)}
           names={view.names}
           ratings={view.ratings}
           tables={view.tables}
