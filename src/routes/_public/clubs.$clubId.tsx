@@ -3,16 +3,20 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { AtSign, LayoutGrid, MapPin, MessageCircle, Phone, Settings } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 
 import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
+import { BackLink } from '@/common/ui/page-header';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
+import StatTile from '@/common/ui/stat-tile';
 import { useSessionStore } from '@/features/auth/session-store';
 import ClubMark from '@/features/clubs/club-mark';
 import { groupClubTournaments } from '@/features/clubs/club-tournaments';
@@ -34,15 +38,6 @@ export const Route = createFileRoute('/_public/clubs/$clubId')({
 const PAST = 5;
 const PLAYERS = 10;
 
-const PAIRS = {
-  display: 'grid',
-  columnGap: 2,
-  rowGap: 0.5,
-  gridTemplateColumns: { xs: '1fr', sm: 'max-content 1fr' },
-  m: 0,
-  '& dd': { m: 0 },
-} as const;
-
 /**
  * Публичная страница клуба — ТЗ 3.2: расписание турниров, история, участники.
  *
@@ -56,9 +51,7 @@ function ClubPage(): ReactNode {
 
   return (
     <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Link href="/clubs" variant="body2" sx={{ display: 'inline-block', py: 1.5 }}>
-        {t('nav.clubs')}
-      </Link>
+      <BackLink href="/clubs" label={t('nav.clubs')} />
 
       <Box sx={{ mt: 1 }}>
         {isMissingResource(club.error) ? (
@@ -87,35 +80,58 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
 
   return (
     <>
-      <Stack
-        direction="row"
-        useFlexGap
-        spacing={2}
-        sx={{ alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}
+      <Paper
+        variant="outlined"
+        component="header"
+        sx={{
+          p: { xs: 2.5, sm: 4 },
+          backgroundImage: 'radial-gradient(circle at 100% 0%, var(--red-50) 0, transparent 36%)',
+        }}
       >
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', minWidth: 0 }}>
-          <ClubMark club={club} size={64} />
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h1">{club.name}</Typography>
-            <Typography color="text.secondary">
-              {club.address === null
-                ? placeName(club.city)
-                : `${placeName(club.city)} · ${club.address}`}
-            </Typography>
-          </Box>
+        <Stack
+          direction="row"
+          useFlexGap
+          spacing={2}
+          sx={{ alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}
+        >
+          <Stack direction="row" spacing={2.5} sx={{ alignItems: 'center', minWidth: 0 }}>
+            <ClubMark club={club} size={72} />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="h1"
+                sx={{ fontSize: { xs: 28, sm: 36 }, lineHeight: { xs: '32px', sm: '40px' } }}
+              >
+                {club.name}
+              </Typography>
+              <Typography
+                color="text.secondary"
+                sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.75 }}
+              >
+                <MapPin size={16} aria-hidden style={{ flexShrink: 0 }} />
+                {club.address === null
+                  ? placeName(club.city)
+                  : `${placeName(club.city)} · ${club.address}`}
+              </Typography>
+            </Box>
+          </Stack>
+          {isClubStaff(user, club.id) && (
+            <Button
+              href={`/cabinet/club/${club.id}`}
+              startIcon={<Settings size={16} aria-hidden />}
+            >
+              {t('club.manage')}
+            </Button>
+          )}
         </Stack>
-        {isClubStaff(user, club.id) && (
-          <Button href={`/cabinet/club/${club.id}`}>{t('club.manage')}</Button>
+
+        <Facts club={club} />
+
+        {club.description !== null && (
+          <Typography sx={{ mt: 3, whiteSpace: 'pre-line', maxWidth: 640 }}>
+            {club.description}
+          </Typography>
         )}
-      </Stack>
-
-      <Facts club={club} />
-
-      {club.description !== null && (
-        <Typography sx={{ mt: 3, whiteSpace: 'pre-line', maxWidth: 640 }}>
-          {club.description}
-        </Typography>
-      )}
+      </Paper>
 
       <Tournaments club={club} />
 
@@ -145,47 +161,45 @@ function Facts({ club }: { readonly club: ClubView }): ReactNode {
   const t = useT();
 
   return (
-    <Box component="dl" sx={{ ...PAIRS, mt: 3 }}>
-      <Fact label={t('club.field.tableCount')}>{club.tableCount}</Fact>
+    <Box
+      sx={{
+        mt: 3,
+        display: 'grid',
+        gap: 1.5,
+        gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
+      }}
+    >
+      <StatTile icon={LayoutGrid} label={t('club.field.tableCount')} value={club.tableCount} />
       {club.phone !== null && (
-        <Fact label={t('club.field.phone')}>
-          <Link href={phoneHref(club.phone)}>{club.phone}</Link>
-        </Fact>
+        <StatTile
+          icon={Phone}
+          label={t('club.field.phone')}
+          value={<Link href={phoneHref(club.phone)}>{club.phone}</Link>}
+        />
       )}
       {club.whatsapp !== null && (
-        <Fact label={t('club.field.whatsapp')}>
-          <Link href={whatsappHref(club.whatsapp)} target="_blank" rel="noreferrer">
-            {club.whatsapp}
-          </Link>
-        </Fact>
+        <StatTile
+          icon={MessageCircle}
+          label={t('club.field.whatsapp')}
+          value={
+            <Link href={whatsappHref(club.whatsapp)} target="_blank" rel="noreferrer">
+              {club.whatsapp}
+            </Link>
+          }
+        />
       )}
       {club.instagram !== null && (
-        <Fact label={t('club.field.instagram')}>
-          <Link href={instagramHref(club.instagram)} target="_blank" rel="noreferrer">
-            @{instagramHandle(club.instagram)}
-          </Link>
-        </Fact>
+        <StatTile
+          icon={AtSign}
+          label={t('club.field.instagram')}
+          value={
+            <Link href={instagramHref(club.instagram)} target="_blank" rel="noreferrer">
+              @{instagramHandle(club.instagram)}
+            </Link>
+          }
+        />
       )}
     </Box>
-  );
-}
-
-function Fact({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}): ReactNode {
-  return (
-    <>
-      <Typography component="dt" variant="body2" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography component="dd" variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-        {children}
-      </Typography>
-    </>
   );
 }
 
@@ -260,17 +274,45 @@ function Staff({ clubId }: { readonly clubId: string }): ReactNode {
         onRetry={() => void members.refetch()}
         loading={<RowsSkeleton rows={2} />}
       >
-        <Stack component="ul" spacing={1} sx={{ m: 0, p: 0, listStyle: 'none' }}>
+        <Paper variant="outlined" component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
           {(members.data ?? []).map((member) => (
-            <Typography key={member.userId} component="li">
-              <MemberName member={member} />
-              <Typography component="span" color="text.secondary">
-                {' · '}
-                <RoleName role={member.role} />
+            <Box
+              key={member.userId}
+              component="li"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                px: { xs: 2, sm: 3 },
+                py: 1.75,
+                borderTop: 1,
+                borderColor: 'divider',
+                '&:first-of-type': { borderTop: 0 },
+              }}
+            >
+              <Typography sx={{ fontWeight: 500 }}>
+                <MemberName member={member} />
               </Typography>
-            </Typography>
+              <Box
+                component="span"
+                sx={{
+                  px: 1.25,
+                  height: 24,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  borderRadius: 999,
+                  bgcolor: 'var(--ink-100)',
+                  color: 'var(--ink-700)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                }}
+              >
+                <RoleName role={member.role} />
+              </Box>
+            </Box>
           ))}
-        </Stack>
+        </Paper>
       </QueryState>
     </Box>
   );

@@ -1,6 +1,7 @@
 import type { PlayerMatchView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -9,7 +10,8 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { formatDate, formatDelta, useLocale, useT } from '@/common/i18n';
+import { formatDate, useLocale, useT } from '@/common/i18n';
+import DeltaPill from '@/common/ui/delta-pill';
 import { RESULT_TYPE_KEYS } from '@/features/tournaments/labels';
 
 import { playerName } from './player-name';
@@ -45,23 +47,25 @@ export default function MatchesTable({ matches, onSelectOpponent }: MatchesTable
   const t = useT();
 
   return (
-    <Table stickyHeader size="small" sx={{ mt: 2 }}>
-      <TableHead>
-        <TableRow>
-          <TableCell sx={WIDE}>{t('player.matches.date')}</TableCell>
-          <TableCell sx={WIDE}>{t('player.matches.tournament')}</TableCell>
-          <TableCell>{t('player.matches.opponent')}</TableCell>
-          <TableCell align="right">{t('player.matches.score')}</TableCell>
-          <TableCell>{t('player.matches.outcome')}</TableCell>
-          <TableCell align="right">{t('player.matches.delta')}</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {matches.map((match) => (
-          <Row key={match.matchId} match={match} onSelectOpponent={onSelectOpponent} />
-        ))}
-      </TableBody>
-    </Table>
+    <Paper variant="outlined" sx={{ mt: 2 }}>
+      <Table stickyHeader size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell sx={WIDE}>{t('player.matches.date')}</TableCell>
+            <TableCell sx={WIDE}>{t('player.matches.tournament')}</TableCell>
+            <TableCell>{t('player.matches.opponent')}</TableCell>
+            <TableCell align="right">{t('player.matches.score')}</TableCell>
+            <TableCell>{t('player.matches.outcome')}</TableCell>
+            <TableCell align="right">{t('player.matches.delta')}</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {matches.map((match) => (
+            <Row key={match.matchId} match={match} onSelectOpponent={onSelectOpponent} />
+          ))}
+        </TableBody>
+      </Table>
+    </Paper>
   );
 }
 
@@ -126,7 +130,7 @@ function Row({
             {t('player.matches.notRated')}
           </Typography>
         ) : (
-          formatDelta(match.delta)
+          <DeltaPill value={match.delta} />
         )}
       </TableCell>
     </TableRow>

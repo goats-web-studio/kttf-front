@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import { ru } from '@/common/i18n/ru';
@@ -26,7 +26,14 @@ const NAMES = new Map(
 );
 
 function row(text: string): HTMLElement {
-  const cell = screen.getByText(text);
+  // Имя ищется в таблице мест: призёры названы ещё и на пьедестале над ней.
+  const [table] = screen.getAllByRole('table');
+
+  if (table === undefined) {
+    throw new Error('Таблица мест не найдена');
+  }
+
+  const cell = within(table).getByText(text);
   const found = cell.closest('tr');
 
   if (found === null) {

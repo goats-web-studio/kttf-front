@@ -95,6 +95,7 @@ const MUI_LOCALES = {
 
 function build(tokens: Tokens, locale: Locale): Theme {
   const onPrimary = tokens.mode === 'light' ? '#ffffff' : 'var(--night)';
+  const light = tokens.mode === 'light';
 
   return createTheme(
     {
@@ -139,6 +140,9 @@ function build(tokens: Tokens, locale: Locale): Theme {
         divider: tokens.line,
         action: { hover: tokens.hover, selected: tokens.hover },
       },
+      // База — 4px: на ней считаются `borderRadius: n` в sx (n × 4px), в том
+      // числе в консоли и на экране зала. Скругления «Спорт-модерн» заданы
+      // явно ниже: поля и кнопки — 10, карточки — 16, чипы и вкладки — пилюлей.
       shape: { borderRadius: 4 },
       // Раздел 3.5: Inter для интерфейса, Oswald для заголовков и крупных чисел.
       typography: {
@@ -160,7 +164,8 @@ function build(tokens: Tokens, locale: Locale): Theme {
         // Заголовки капслоком запрещены (запрет №10), кнопки — тоже.
         button: { fontWeight: 500, fontSize: 15, textTransform: 'none', letterSpacing: 0 },
       },
-      // У карточек теней нет, иерархию держат линейки (запрет №13).
+      // Тени уровней MUI — для всплывающего. Тень карточки своя, мягкая,
+      // задана у Paper ниже.
       shadows: [
         'none',
         ...Array.from({ length: 7 }, () => 'var(--shadow-pop)'),
@@ -207,9 +212,9 @@ function build(tokens: Tokens, locale: Locale): Theme {
           // называется явно — `variant="contained"` (запрет №2, ADR-039).
           defaultProps: { variant: 'outlined', color: 'secondary', disableElevation: true },
           styleOverrides: {
-            root: { minHeight: 40, paddingInline: 16 },
-            sizeSmall: { minHeight: 32, paddingInline: 12, fontSize: 13 },
-            sizeLarge: { minHeight: 48, paddingInline: 20 },
+            root: { minHeight: 40, paddingInline: 16, borderRadius: 10, fontWeight: 600 },
+            sizeSmall: { minHeight: 32, paddingInline: 12, fontSize: 13, borderRadius: 8 },
+            sizeLarge: { minHeight: 48, paddingInline: 22, borderRadius: 12 },
             // Залитая кнопка — главное действие, и она всегда фирменного цвета:
             // нейтральное умолчание иначе красило бы её в чёрный.
             contained: ({ ownerState }) =>
@@ -217,6 +222,10 @@ function build(tokens: Tokens, locale: Locale): Theme {
                 ? {
                     backgroundColor: tokens.primary,
                     color: onPrimary,
+                    // Лёгкая цветная тень: главная кнопка «стоит» над карточкой.
+                    boxShadow: light
+                      ? '0 1px 2px rgb(196 35 28 / 0.25), 0 4px 12px rgb(196 35 28 / 0.18)'
+                      : 'none',
                     '&:hover': { backgroundColor: tokens.primaryDark },
                   }
                 : {},
@@ -233,6 +242,7 @@ function build(tokens: Tokens, locale: Locale): Theme {
             root: {
               backgroundColor: tokens.paper,
               minHeight: 40,
+              borderRadius: 10,
               '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.lineStrong },
             },
           },
@@ -240,13 +250,62 @@ function build(tokens: Tokens, locale: Locale): Theme {
         MuiInputLabel: { styleOverrides: { root: { color: tokens.ink700 } } },
         MuiPaper: {
           defaultProps: { elevation: 0 },
-          styleOverrides: { outlined: { borderColor: tokens.line } },
+          // Карточка-поверхность: белая, скруглённая, с мягкой тенью. На
+          // тёплой подложке она отделяет блок без жирной рамки.
+          styleOverrides: {
+            outlined: {
+              borderColor: tokens.line,
+              borderRadius: 16,
+              ...(light ? { boxShadow: 'var(--shadow-card)' } : {}),
+            },
+          },
         },
         MuiCard: { defaultProps: { variant: 'outlined' } },
         MuiChip: {
           styleOverrides: {
-            root: { borderRadius: 2, fontWeight: 500 },
+            root: { borderRadius: 999, fontWeight: 500 },
             outlined: { borderColor: tokens.lineStrong },
+          },
+        },
+        // Вкладки — переключатель-пилюля: дорожка и белая «таблетка» на
+        // выбранной. Читается как управление, а не как подчёркнутый текст.
+        MuiTabs: {
+          styleOverrides: {
+            root: light
+              ? {
+                  minHeight: 44,
+                  padding: 4,
+                  borderRadius: 14,
+                  backgroundColor: 'var(--ink-100)',
+                  width: 'fit-content',
+                  maxWidth: '100%',
+                }
+              : {},
+            indicator: light ? { display: 'none' } : {},
+            list: light ? { gap: 4 } : {},
+          },
+        },
+        MuiTab: {
+          styleOverrides: {
+            root: light
+              ? {
+                  minHeight: 36,
+                  minWidth: 0,
+                  padding: '6px 16px',
+                  borderRadius: 10,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  color: tokens.ink700,
+                  transition:
+                    'background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease)',
+                  '&:hover': { color: tokens.ink900 },
+                  '&.Mui-selected': {
+                    color: tokens.ink900,
+                    backgroundColor: tokens.paper,
+                    boxShadow: '0 1px 2px rgb(31 31 29 / 0.08), 0 1px 6px rgb(31 31 29 / 0.06)',
+                  },
+                }
+              : {},
           },
         },
         MuiTableCell: {
@@ -259,17 +318,21 @@ function build(tokens: Tokens, locale: Locale): Theme {
               paddingInline: 8,
               '@media (min-width: 640px)': { paddingInline: 16 },
             },
-            head: { color: tokens.ink500, fontSize: 13, fontWeight: 400 },
-            // Липкая шапка непрозрачна и обязана совпадать с фоном страницы,
-            // иначе над тёплой подложкой висит белая полоса.
-            stickyHeader: { backgroundColor: tokens.page },
+            head: { color: tokens.ink500, fontSize: 12, fontWeight: 500 },
+            // Таблицы живут в карточках: липкая шапка непрозрачна и белая,
+            // как сама карточка.
+            stickyHeader: { backgroundColor: tokens.paper },
           },
         },
         MuiTableContainer: { defaultProps: { component: 'div' } },
+        // У последней строки нет нижней линейки: её роль играет край карточки.
+        MuiTableRow: {
+          styleOverrides: { root: { '&:last-child > td': { borderBottom: 0 } } },
+        },
         MuiAlert: {
           // Ошибка — фон, левая линейка и текст (раздел 3.4), а не цветной блок.
           styleOverrides: {
-            root: { borderLeft: '3px solid', borderRadius: 4 },
+            root: { borderLeft: '3px solid', borderRadius: 10 },
             colorError: { borderColor: tokens.error, color: tokens.error },
             colorSuccess: { borderColor: tokens.ok },
             colorWarning: { borderColor: tokens.warn },
@@ -281,9 +344,9 @@ function build(tokens: Tokens, locale: Locale): Theme {
           },
         },
         MuiTooltip: { defaultProps: { arrow: true } },
-        MuiDialog: { styleOverrides: { paper: { borderRadius: 14 } } },
-        MuiMenu: { styleOverrides: { paper: { borderRadius: 8 } } },
-        MuiPopover: { styleOverrides: { paper: { borderRadius: 8 } } },
+        MuiDialog: { styleOverrides: { paper: { borderRadius: 20 } } },
+        MuiMenu: { styleOverrides: { paper: { borderRadius: 12 } } },
+        MuiPopover: { styleOverrides: { paper: { borderRadius: 12 } } },
         MuiSkeleton: { defaultProps: { animation: 'pulse' } },
       },
     },

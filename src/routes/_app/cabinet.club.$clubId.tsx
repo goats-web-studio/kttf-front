@@ -3,16 +3,21 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { ExternalLink } from 'lucide-react';
+import { useId, useMemo, useState, type ReactNode } from 'react';
+import { z } from 'zod';
 
 import { isMissingResource } from '@/common/api';
 import { formatCount, useLocale, useT, type MessageKey } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
+import { BackLink } from '@/common/ui/page-header';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -32,7 +37,25 @@ import TournamentList from '@/features/clubs/tournament-list';
 import { usePlaceName } from '@/features/places/place-name';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 
+/**
+ * Разделы управления — вкладками. Раньше турниры, форма данных клуба и
+ * состав шли одной лентой: организатор, пришедший открыть консоль, листал
+ * мимо формы с девятью полями. Вкладка живёт в адресе.
+ */
+const MANAGE_TABS = ['tournaments', 'settings', 'staff'] as const;
+
+type ManageTab = (typeof MANAGE_TABS)[number];
+
+const MANAGE_TAB_LABELS: Readonly<Record<ManageTab, MessageKey>> = {
+  tournaments: 'club.tournaments.title',
+  settings: 'manage.settings.title',
+  staff: 'club.staff.title',
+};
+
+const searchSchema = z.object({ tab: z.enum(MANAGE_TABS).optional().catch(undefined) });
+
 export const Route = createFileRoute('/_app/cabinet/club/$clubId')({
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: ClubManagementPage,
 });
 
@@ -75,9 +98,7 @@ function ClubManagementPage(): ReactNode {
 
   return (
     <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Link href="/cabinet/clubs" variant="body2" sx={{ display: 'inline-block', py: 1.5 }}>
-        {t('nav.myClubs')}
-      </Link>
+      <BackLink href="/cabinet/clubs" label={t('nav.myClubs')} />
       {isMissingResource(club.error) ? (
         <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
           {t('club.notFound')}
@@ -99,28 +120,73 @@ function ClubManagementPage(): ReactNode {
 function Management({ club }: { readonly club: ClubView }): ReactNode {
   const t = useT();
   const placeName = usePlaceName();
+  const id = useId();
+  const navigate = Route.useNavigate();
+  const tab = Route.useSearch().tab ?? 'tournaments';
 
   return (
     <>
-      <Stack
-        direction="row"
-        useFlexGap
-        spacing={2}
-        sx={{ mt: 1, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}
-      >
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', minWidth: 0 }}>
-          <ClubMark club={club} size={56} />
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h1">{club.name}</Typography>
-            <Typography color="text.secondary">{placeName(club.city)}</Typography>
-          </Box>
+      <Paper variant="outlined" component="header" sx={{ p: { xs: 2.5, sm: 3 } }}>
+        <Stack
+          direction="row"
+          useFlexGap
+          spacing={2}
+          sx={{ alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between' }}
+        >
+          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', minWidth: 0 }}>
+            <ClubMark club={club} size={56} />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                variant="h1"
+                sx={{ fontSize: { xs: 26, sm: 32 }, lineHeight: { xs: '30px', sm: '36px' } }}
+              >
+                {club.name}
+              </Typography>
+              <Typography color="text.secondary">{placeName(club.city)}</Typography>
+            </Box>
+          </Stack>
+          <Button href={`/clubs/${club.id}`} endIcon={<ExternalLink size={16} aria-hidden />}>
+            {t('manage.publicPage')}
+          </Button>
         </Stack>
-        <Button href={`/clubs/${club.id}`}>{t('manage.publicPage')}</Button>
-      </Stack>
+      </Paper>
 
-      <ClubTournaments club={club} />
-      <ClubSettings club={club} />
-      <StaffPanel clubId={club.id} />
+      <Tabs
+        value={tab}
+        onChange={(_, next: ManageTab) => {
+          void navigate({
+            search: { tab: next === 'tournaments' ? undefined : next },
+            replace: true,
+            resetScroll: false,
+          });
+        }}
+        aria-label={t('club.manage')}
+        variant="scrollable"
+        scrollButtons={false}
+        sx={{ mt: 4 }}
+      >
+        {MANAGE_TABS.map((value) => (
+          <Tab
+            key={value}
+            value={value}
+            label={t(MANAGE_TAB_LABELS[value])}
+            id={`${id}-tab-${value}`}
+            aria-controls={`${id}-panel`}
+          />
+        ))}
+      </Tabs>
+
+      <Box
+        role="tabpanel"
+        id={`${id}-panel`}
+        aria-labelledby={`${id}-tab-${tab}`}
+        // Разделы рассчитаны на ленту и несут свой отступ сверху.
+        sx={{ '& > :first-of-type': { mt: 3 } }}
+      >
+        {tab === 'tournaments' && <ClubTournaments club={club} />}
+        {tab === 'settings' && <ClubSettings club={club} />}
+        {tab === 'staff' && <StaffPanel clubId={club.id} />}
+      </Box>
     </>
   );
 }
@@ -225,7 +291,7 @@ function ClubSettings({ club }: { readonly club: ClubView }): ReactNode {
   });
 
   return (
-    <Box component="section" sx={{ mt: 6 }}>
+    <Paper variant="outlined" component="section" sx={{ mt: 6, p: { xs: 2.5, sm: 4 } }}>
       <Typography variant="h2">{t('manage.settings.title')}</Typography>
       {saved && !save.isPending && (
         <Alert severity="success" sx={{ mt: 2 }}>
@@ -244,6 +310,6 @@ function ClubSettings({ club }: { readonly club: ClubView }): ReactNode {
           save.mutate(values);
         }}
       />
-    </Box>
+    </Paper>
   );
 }

@@ -1,7 +1,6 @@
 import type { CreateTournamentInput, TournamentView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Container from '@mui/material/Container';
-import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -9,6 +8,7 @@ import type { ReactNode } from 'react';
 
 import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
+import { BackLink } from '@/common/ui/page-header';
 import EmptyState from '@/common/ui/empty-state';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
@@ -37,13 +37,10 @@ function EditTournamentPage(): ReactNode {
 
   return (
     <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Link
+      <BackLink
         href={`/tournaments/${tournamentId}`}
-        variant="body2"
-        sx={{ display: 'inline-block', py: 1.5 }}
-      >
-        {tournament.data?.name ?? t('nav.tournaments')}
-      </Link>
+        label={tournament.data?.name ?? t('nav.tournaments')}
+      />
       <Typography variant="h1" sx={{ mt: 1 }}>
         {t('page.editTournament.title')}
       </Typography>

@@ -3,7 +3,6 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -14,6 +13,7 @@ import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
+import { BackLink } from '@/common/ui/page-header';
 import EmptyState from '@/common/ui/empty-state';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
@@ -48,9 +48,7 @@ function PlacesPage(): ReactNode {
 
   return (
     <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Link href="/cabinet" variant="body2" sx={{ display: 'inline-block', py: 1.5 }}>
-        {t('page.cabinet.title')}
-      </Link>
+      <BackLink href="/cabinet" label={t('page.cabinet.title')} />
       <Typography variant="h1" sx={{ mt: 1 }}>
         {t('page.places.title')}
       </Typography>

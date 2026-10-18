@@ -3,6 +3,8 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import MenuItem from '@mui/material/MenuItem';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -21,6 +23,8 @@ import { orUndefined, searchId, searchPage, searchText } from '@/common/search';
 import EmptyState from '@/common/ui/empty-state';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import Pagination from '@/common/ui/pagination';
+import PlayerAvatar from '@/common/ui/player-avatar';
+import RankBadge from '@/common/ui/rank-badge';
 import QueryState from '@/common/ui/query-state';
 import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
@@ -195,77 +199,97 @@ function RatingsPage(): ReactNode {
             // подписью под фамилию (docs/08-ux-draft.md, 3.3): место и
             // рейтинг остаются крупными, горизонтальной прокрутки нет.
             // Шапка липкая (раздел 6.1).
-            <Table stickyHeader size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell align="right" sx={{ width: 48 }}>
-                    {t('ratings.column.rank')}
-                  </TableCell>
-                  <TableCell>{t('ratings.column.player')}</TableCell>
-                  <TableCell sx={WIDE}>{t('ratings.column.city')}</TableCell>
-                  <TableCell align="right">{t('ratings.column.rating')}</TableCell>
-                  <TableCell align="right" sx={WIDE}>
-                    {t('ratings.column.matches')}
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {players.data.items.map((player, index) => (
-                  <TableRow key={player.id} hover sx={{ height: { xs: 64, sm: 48 } }}>
-                    <TableCell align="right" sx={{ color: 'text.secondary', ...NUM }}>
-                      {formatCount((page - 1) * players.data.limit + index + 1, locale)}
+            <Paper variant="outlined">
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center" sx={{ width: 56 }}>
+                      {t('ratings.column.rank')}
                     </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/players/${player.id}`}
-                        color="text.primary"
-                        sx={{ fontWeight: 500, display: 'inline-block', py: 1 }}
-                      >
-                        {playerName(player)}
-                      </Link>
-                      {player.isProvisional && (
-                        // Провизорный рейтинг двигается быстрее и означает, что
-                        // игрок сыграл меньше 20 рейтинговых встреч (ТЗ 7.1).
-                        // Подписью, а не плашкой в рамке: в новом рейтинге
-                        // провизорны почти все, и рамки в каждой строке
-                        // рябили сильнее самих фамилий.
-                        <Typography
-                          component="span"
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ ml: 1, whiteSpace: 'nowrap' }}
-                        >
-                          {t('ratings.provisional')}
-                        </Typography>
-                      )}
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ display: { sm: 'none' }, mt: -0.5 }}
-                      >
-                        {placeName(player.city)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>
-                      {placeName(player.city)}
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{
-                        ...NUM,
-                        fontWeight: 600,
-                        fontSize: { xs: 17, sm: 15 },
-                      }}
-                    >
-                      {player.rating}
-                    </TableCell>
-                    <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
-                      {formatCount(player.ratedMatches, locale)}
+                    <TableCell>{t('ratings.column.player')}</TableCell>
+                    <TableCell sx={WIDE}>{t('ratings.column.city')}</TableCell>
+                    <TableCell align="right">{t('ratings.column.rating')}</TableCell>
+                    <TableCell align="right" sx={WIDE}>
+                      {t('ratings.column.matches')}
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {players.data.items.map((player, index) => {
+                    const rank = (page - 1) * players.data.limit + index + 1;
+
+                    return (
+                      <TableRow key={player.id} hover sx={{ height: { xs: 68, sm: 60 } }}>
+                        <TableCell align="center" sx={NUM}>
+                          <RankBadge rank={rank} label={formatCount(rank, locale)} />
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                            <PlayerAvatar
+                              lastName={player.lastName}
+                              firstName={player.firstName}
+                              photoUrl={player.photoUrl}
+                            />
+                            <Box sx={{ minWidth: 0 }}>
+                              <Link
+                                href={`/players/${player.id}`}
+                                color="text.primary"
+                                sx={{ fontWeight: 600, display: 'inline-block', py: 0.5 }}
+                              >
+                                {playerName(player)}
+                              </Link>
+                              {player.isProvisional && (
+                                // Провизорный рейтинг двигается быстрее и означает, что
+                                // игрок сыграл меньше 20 рейтинговых встреч (ТЗ 7.1).
+                                // Подписью, а не плашкой в рамке: в новом рейтинге
+                                // провизорны почти все, и рамки в каждой строке
+                                // рябили сильнее самих фамилий.
+                                <Typography
+                                  component="span"
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{
+                                    ml: { xs: 0, sm: 1 },
+                                    display: { xs: 'block', sm: 'inline' },
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {t('ratings.provisional')}
+                                </Typography>
+                              )}
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ display: { sm: 'none' }, mt: -0.5 }}
+                              >
+                                {placeName(player.city)}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+                        <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>
+                          {placeName(player.city)}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{
+                            ...NUM,
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 600,
+                            fontSize: 18,
+                          }}
+                        >
+                          {player.rating}
+                        </TableCell>
+                        <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
+                          {formatCount(player.ratedMatches, locale)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Paper>
           ) : active.length > 0 ? (
             <EmptyState
               title={t('ratings.notFound.title')}

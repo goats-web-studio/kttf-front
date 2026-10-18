@@ -22,7 +22,7 @@ export default function TournamentList({
   action,
 }: TournamentListProps): ReactNode {
   return (
-    <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, borderTop: 1, borderColor: 'divider' }}>
+    <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 1.5 }}>
       {tournaments.map((tournament) => {
         const extra = action?.(tournament);
 
@@ -30,13 +30,7 @@ export default function TournamentList({
           <Box
             component="li"
             key={tournament.id}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              borderBottom: 1,
-              borderColor: 'divider',
-            }}
+            sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <TournamentCard tournament={tournament} club={club} />

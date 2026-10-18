@@ -24,10 +24,14 @@ export default function ClubMark({
         width: size,
         height: size,
         flexShrink: 0,
-        bgcolor: 'var(--paper-sunken)',
-        color: 'text.secondary',
+        borderRadius: '28%',
+        // Знак без логотипа — буква в фирменном тоне: клубы различимы в
+        // списке, а красного по-прежнему меньше, чем текста.
+        bgcolor: 'var(--red-50)',
+        color: 'var(--red-700)',
         fontFamily: 'var(--font-display)',
-        fontWeight: 600,
+        fontWeight: 700,
+        fontSize: Math.round(size * 0.42),
       }}
     >
       {club.name.trim().charAt(0).toUpperCase()}

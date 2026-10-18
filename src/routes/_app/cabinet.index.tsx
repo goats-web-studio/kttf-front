@@ -14,6 +14,7 @@ import { useState, type ReactNode } from 'react';
 
 import { formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
+import Surface from '@/common/ui/surface';
 import AccountForm from '@/features/auth/account-form';
 import PasswordForm from '@/features/auth/password-form';
 import { reloadUser } from '@/features/auth/session';
@@ -75,33 +76,44 @@ function CabinetPage(): ReactNode {
           </Typography>
           {user.playerId === null ? <NewProfile /> : <Profile playerId={user.playerId} />}
 
-          <Typography variant="h2" sx={{ mt: 6 }}>
-            {t('cabinet.account.title')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {t('cabinet.account.lead')}
-          </Typography>
-          <Box component="dl" sx={{ ...PAIRS, mt: 2 }}>
-            <Typography component="dt" variant="body2" color="text.secondary">
-              {t('cabinet.account.phone')}
-            </Typography>
-            <Typography component="dd" variant="body2">
-              {user.phone}
-              <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                {t('cabinet.account.phoneFixed')}
-              </Typography>
-            </Typography>
+          <Box sx={{ mt: 6, display: 'grid', gap: 2 }}>
+            <Surface title={t('cabinet.account.title')} subtitle={t('cabinet.account.lead')}>
+              <Box component="dl" sx={{ ...PAIRS, mt: 0 }}>
+                <Typography component="dt" variant="body2" color="text.secondary">
+                  {t('cabinet.account.phone')}
+                </Typography>
+                <Typography component="dd" variant="body2">
+                  {user.phone}
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ ml: 1 }}
+                  >
+                    {t('cabinet.account.phoneFixed')}
+                  </Typography>
+                </Typography>
+              </Box>
+              <AccountForm user={user} />
+            </Surface>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                alignItems: 'start',
+              }}
+            >
+              <Surface title={t('account.password.title')}>
+                <PasswordForm />
+              </Surface>
+
+              <Roles user={user} />
+            </Box>
+
+            {user.isAdmin && <Admin />}
           </Box>
-          <AccountForm user={user} />
-
-          <Typography variant="h3" sx={{ mt: 5 }}>
-            {t('account.password.title')}
-          </Typography>
-          <PasswordForm />
-
-          <Roles user={user} />
-
-          {user.isAdmin && <Admin />}
         </>
       )}
     </Container>
@@ -318,15 +330,11 @@ function Admin(): ReactNode {
   const t = useT();
 
   return (
-    <Box component="section" sx={{ mt: 5 }}>
-      <Typography variant="h3">{t('cabinet.admin.title')}</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-        {t('cabinet.admin.lead')}
-      </Typography>
-      <Button href="/cabinet/places" sx={{ mt: 2, ...TOUCH }}>
+    <Surface title={t('cabinet.admin.title')} subtitle={t('cabinet.admin.lead')}>
+      <Button href="/cabinet/places" sx={TOUCH}>
         {t('page.places.title')}
       </Button>
-    </Box>
+    </Surface>
   );
 }
 
@@ -341,14 +349,13 @@ function Roles({ user }: { readonly user: AuthUserView }): ReactNode {
   const clubs = useQuery(clubDirectoryQuery);
 
   return (
-    <Box component="section" sx={{ mt: 5 }}>
-      <Typography variant="h3">{t('cabinet.roles.title')}</Typography>
+    <Surface title={t('cabinet.roles.title')}>
       {user.clubRoles.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+        <Typography variant="body2" color="text.secondary">
           {t('cabinet.roles.empty')}
         </Typography>
       ) : (
-        <Stack component="ul" spacing={0.5} sx={{ mt: 0.5, mb: 0, p: 0, listStyle: 'none' }}>
+        <Stack component="ul" spacing={0.5} sx={{ m: 0, p: 0, listStyle: 'none' }}>
           {user.clubRoles.map((role) => (
             <Typography
               key={`${role.clubId}-${role.role}`}
@@ -373,6 +380,6 @@ function Roles({ user }: { readonly user: AuthUserView }): ReactNode {
       <Button href="/cabinet/clubs" sx={{ mt: 2 }}>
         {t('nav.myClubs')}
       </Button>
-    </Box>
+    </Surface>
   );
 }

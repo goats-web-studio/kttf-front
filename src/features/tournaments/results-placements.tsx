@@ -1,17 +1,20 @@
 import type { RegistrationStatus, ResultParticipantView, TieGroupView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import PlayerAvatar from '@/common/ui/player-avatar';
+import Surface from '@/common/ui/surface';
 import { playerName } from '@/features/players/player-name';
 
 import { PLACEMENT_REASON_KEYS, REGISTRATION_STATUS_KEYS } from './labels';
+import Podium from './podium';
 import ResultsTies from './results-ties';
 
 interface ResultsPlacementsProps {
@@ -56,43 +59,68 @@ export default function ResultsPlacements({
   const t = useT();
 
   return (
-    <Box component="section" sx={{ mt: 6 }}>
-      <Typography variant="h2">{t('results.places.title')}</Typography>
-
-      <Table size="small" stickyHeader={participants.length > 20} sx={{ mt: 2 }}>
-        <TableHead>
-          <TableRow>
-            <TableCell align="right" sx={{ width: 48 }}>
-              {t('results.places.place')}
-            </TableCell>
-            <TableCell>{t('results.places.player')}</TableCell>
-            <TableCell align="right" sx={WIDE}>
-              {t('results.places.seed')}
-            </TableCell>
-            <TableCell>{t('results.places.note')}</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {participants.map((participant) => (
-            <TableRow key={participant.player.id}>
-              <TableCell align="right" sx={{ fontWeight: 600, ...NUM }}>
-                {participant.place ?? (
-                  <Box component="span" sx={{ color: 'text.disabled' }}>
-                    —
-                  </Box>
-                )}
+    <Box sx={{ mt: 6 }}>
+      <Surface title={t('results.places.title')} flush>
+        <Podium participants={participants} />
+        <Table size="small" stickyHeader={participants.length > 20} sx={{ mt: 2 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell align="right" sx={{ width: 48 }}>
+                {t('results.places.place')}
               </TableCell>
-              <TableCell sx={{ fontWeight: 500 }}>{playerName(participant.player)}</TableCell>
-              <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
-                {participant.seed ?? ''}
+              <TableCell>{t('results.places.player')}</TableCell>
+              <TableCell align="right" sx={WIDE}>
+                {t('results.places.seed')}
               </TableCell>
-              <TableCell sx={{ color: 'text.secondary' }}>
-                <Notes participant={participant} />
-              </TableCell>
+              <TableCell sx={WIDE}>{t('results.places.note')}</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHead>
+          <TableBody>
+            {participants.map((participant) => (
+              <TableRow key={participant.player.id}>
+                <TableCell align="right" sx={{ fontWeight: 600, ...NUM }}>
+                  {participant.place ?? (
+                    <Box component="span" sx={{ color: 'text.disabled' }}>
+                      —
+                    </Box>
+                  )}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+                    <PlayerAvatar
+                      lastName={participant.player.lastName}
+                      firstName={participant.player.firstName}
+                      photoUrl={participant.player.photoUrl}
+                      size="sm"
+                    />
+                    <Box sx={{ minWidth: 0 }}>
+                      {playerName(participant.player)}
+                      {/* На телефоне примечание — подписью под именем: третья
+                          колонка мяла фамилии в две строки. */}
+                      <Box
+                        sx={{
+                          display: { sm: 'none' },
+                          typography: 'caption',
+                          color: 'text.secondary',
+                          fontWeight: 400,
+                        }}
+                      >
+                        <Notes participant={participant} />
+                      </Box>
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
+                  {participant.seed ?? ''}
+                </TableCell>
+                <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>
+                  <Notes participant={participant} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Surface>
 
       <ResultsTies title={t('results.shared.title')} ties={shared} names={names} />
       <ResultsTies title={t('results.unresolved.title')} ties={unresolved} names={names} />

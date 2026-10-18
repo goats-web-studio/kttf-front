@@ -1,9 +1,8 @@
-import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import AuthCard from '@/common/ui/auth-card';
 import SignUpForm from '@/features/auth/sign-up-form';
 
 export const Route = createFileRoute('/_public/sign-up')({
@@ -21,10 +20,7 @@ function SignUpPage(): ReactNode {
   const navigate = useNavigate();
 
   return (
-    <Container maxWidth="xs" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Typography variant="h1" sx={{ mb: 3 }}>
-        {t('page.signUp.title')}
-      </Typography>
+    <AuthCard title={t('page.signUp.title')}>
       <SignUpForm
         onSignedUp={() => {
           // После регистрации человек попадает в кабинет: там он дозаполняет
@@ -32,6 +28,6 @@ function SignUpPage(): ReactNode {
           void navigate({ to: '/cabinet' });
         }}
       />
-    </Container>
+    </AuthCard>
   );
 }

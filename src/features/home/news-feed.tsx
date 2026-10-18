@@ -1,8 +1,10 @@
 import Box from '@mui/material/Box';
 import CardActionArea from '@mui/material/CardActionArea';
+import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
+import { Newspaper, Trophy, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { fill, formatDate, useLocale, useT } from '@/common/i18n';
@@ -19,27 +21,30 @@ import type { NewsItem } from './news';
  */
 export default function NewsFeed({ items }: { readonly items: readonly NewsItem[] }): ReactNode {
   return (
-    <Box
-      component="ul"
-      sx={{ listStyle: 'none', m: 0, p: 0, borderTop: 1, borderColor: 'divider' }}
-    >
+    <Paper variant="outlined" component="ul" sx={{ listStyle: 'none', m: 0, p: 0 }}>
       {items.map((item) => (
-        <Box component="li" key={item.id} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box
+          component="li"
+          key={item.id}
+          sx={{ borderTop: 1, borderColor: 'divider', '&:first-of-type': { borderTop: 0 } }}
+        >
           {item.kind === 'result' ? <ResultEntry item={item} /> : <ArticleEntry item={item} />}
         </Box>
       ))}
-    </Box>
+    </Paper>
   );
 }
 
 function Entry({
   href,
+  icon: Icon,
   kicker,
   date,
   title,
   children,
 }: {
   readonly href: string;
+  readonly icon: LucideIcon;
   readonly kicker: string;
   readonly date: string;
   readonly title: string;
@@ -48,16 +53,36 @@ function Entry({
   const locale = useLocale();
 
   return (
-    <CardActionArea href={href} sx={{ py: 2, px: { sm: 1.5 } }}>
-      <Typography variant="caption" color="text.secondary">
-        {kicker} · <time dateTime={date}>{formatDate(date, locale)}</time>
-      </Typography>
-      <Typography variant="h3" component="h3" sx={{ mt: 0.25 }}>
-        {title}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" component="div" sx={{ mt: 0.5 }}>
-        {children}
-      </Typography>
+    <CardActionArea
+      href={href}
+      sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, p: { xs: 2, sm: 2.5 } }}
+    >
+      <Box
+        aria-hidden
+        sx={{
+          width: 40,
+          height: 40,
+          flexShrink: 0,
+          borderRadius: 3,
+          display: 'grid',
+          placeItems: 'center',
+          bgcolor: 'var(--gold-50)',
+          color: 'var(--gold-text)',
+        }}
+      >
+        <Icon size={20} />
+      </Box>
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+          {kicker} · <time dateTime={date}>{formatDate(date, locale)}</time>
+        </Typography>
+        <Typography variant="h3" component="h3" sx={{ mt: 0.25, lineHeight: '24px' }}>
+          {title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" component="div" sx={{ mt: 0.5 }}>
+          {children}
+        </Typography>
+      </Box>
     </CardActionArea>
   );
 }
@@ -79,6 +104,7 @@ function ResultEntry({
   return (
     <Entry
       href={`/tournaments/${item.tournament.id}`}
+      icon={Trophy}
       kicker={t('home.news.kind.result')}
       date={item.date}
       title={fill(t('home.news.result.title'), { name: item.tournament.name })}
@@ -105,6 +131,7 @@ function ArticleEntry({
   return (
     <Entry
       href={item.href}
+      icon={Newspaper}
       kicker={t('home.news.kind.article')}
       date={item.date}
       title={item.title}

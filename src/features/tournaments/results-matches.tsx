@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import Surface from '@/common/ui/surface';
 
 import { MATCH_STATUS_KEYS, RESULT_TYPE_KEYS, stageTitle } from './labels';
 
@@ -31,21 +32,34 @@ export default function ResultsMatches({ stages, names }: ResultsMatchesProps): 
       <Typography variant="h2">{t('results.matches.title')}</Typography>
       {stages.map((stage) => (
         <Box key={stage.id} sx={{ mt: 3 }}>
-          <Typography variant="h3">{stageTitle(stage, t)}</Typography>
-          {partition(stage).map((part) => (
-            <Box key={part.label} sx={{ mt: 1.5 }}>
-              {part.label !== '' && (
-                <Typography variant="caption" color="text.secondary" component="p">
-                  {part.label}
-                </Typography>
-              )}
-              <Box component="ul" sx={{ listStyle: 'none', m: 0, mt: 0.5, p: 0 }}>
-                {part.matches.map((match) => (
-                  <Row key={match.id} match={match} names={names} />
-                ))}
-              </Box>
-            </Box>
-          ))}
+          <Typography variant="h3" sx={{ mb: 1.5 }}>
+            {stageTitle(stage, t)}
+          </Typography>
+          {/* Группы — карточками в две колонки: встречи группы читаются
+              вместе, а не сплошным списком на весь этап. */}
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', md: stage.groups.length > 0 ? '1fr 1fr' : '1fr' },
+              alignItems: 'start',
+            }}
+          >
+            {partition(stage).map((part) => (
+              <Surface
+                key={part.label}
+                component="div"
+                flush
+                {...(part.label === '' ? {} : { title: part.label })}
+              >
+                <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, pb: 1 }}>
+                  {part.matches.map((match) => (
+                    <Row key={match.id} match={match} names={names} />
+                  ))}
+                </Box>
+              </Surface>
+            ))}
+          </Box>
         </Box>
       ))}
     </Box>
@@ -97,39 +111,72 @@ function Row({
     match.status === 'FINISHED' ? null : t(MATCH_STATUS_KEYS[match.status]),
   ].filter((value) => value !== null);
 
+  const wonA = played && (match.setsA ?? 0) > (match.setsB ?? 0);
+  const wonB = played && (match.setsB ?? 0) > (match.setsA ?? 0);
+
+  // Строка встречи как в спортивном табло: игрок — счёт — игрок. Победитель
+  // набран полужирным, проигравший приглушён (раздел 3.4).
   return (
     <Box
       component="li"
       sx={{
-        display: 'flex',
-        alignItems: 'baseline',
-        justifyContent: 'space-between',
-        gap: 1.5,
-        py: 1,
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+        alignItems: 'center',
+        columnGap: 1.5,
+        px: { xs: 2, sm: 3 },
+        py: 1.25,
         typography: 'body2',
-        borderBottom: 1,
+        borderTop: 1,
         borderColor: 'divider',
-        '&:last-of-type': { borderBottom: 0 },
       }}
     >
-      <span>
-        <Name id={match.playerAId} names={names} /> — <Name id={match.playerBId} names={names} />
-      </span>
-      <Box component="span" sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5 }}>
-        {note.length > 0 && (
-          <Typography component="span" variant="caption" color="text.secondary">
-            {note.join(' · ')}
-          </Typography>
-        )}
-        <Box
-          component="span"
-          sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, whiteSpace: 'nowrap' }}
-        >
-          {played ? `${String(match.setsA)} : ${String(match.setsB)}` : '—'}
-        </Box>
+      <Box component="span" sx={side(wonA, played)}>
+        <Name id={match.playerAId} names={names} />
       </Box>
+      <Box
+        component="span"
+        sx={{
+          px: 1.25,
+          minWidth: 56,
+          height: 28,
+          borderRadius: 2,
+          display: 'grid',
+          placeItems: 'center',
+          bgcolor: played ? 'var(--ink-100)' : 'transparent',
+          fontVariantNumeric: 'tabular-nums',
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+          color: played ? 'text.primary' : 'text.disabled',
+        }}
+      >
+        {played ? `${String(match.setsA)} : ${String(match.setsB)}` : '—'}
+      </Box>
+      <Box component="span" sx={{ ...side(wonB, played), textAlign: 'right' }}>
+        <Name id={match.playerBId} names={names} />
+      </Box>
+      {note.length > 0 && (
+        <Typography
+          component="span"
+          variant="caption"
+          color="text.secondary"
+          sx={{ gridColumn: '1 / -1', textAlign: 'center', mt: 0.5 }}
+        >
+          {note.join(' · ')}
+        </Typography>
+      )}
     </Box>
   );
+}
+
+/** Сторона встречи: победитель полужирный, проигравший приглушён. */
+function side(won: boolean, played: boolean) {
+  return {
+    minWidth: 0,
+    overflowWrap: 'anywhere',
+    fontWeight: won ? 600 : 400,
+    color: played && !won ? 'text.secondary' : 'text.primary',
+  } as const;
 }
 
 function Name({

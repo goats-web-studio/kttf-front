@@ -1,10 +1,14 @@
 import type { TournamentView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { CalendarDays, Trophy, Users, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { formatDateTime, formatMoney, useLocale, useT } from '@/common/i18n';
+import StatTile from '@/common/ui/stat-tile';
 
 import { TOURNAMENT_LEVEL_KEYS } from './labels';
 import StatusBadge from './status-badge';
@@ -15,7 +19,13 @@ interface TournamentSummaryProps {
   readonly clubName: string | null;
 }
 
-/** Шапка страницы турнира: то, что человек ищет глазами первым (ТЗ 4.2). */
+/**
+ * Шапка страницы турнира: то, что человек ищет глазами первым (ТЗ 4.2).
+ *
+ * Карточка, а не строчки «Подпись — значение»: состояние пилюлей над
+ * названием, а «когда, сколько, какой, почём» — плитками, которые читаются
+ * с одного взгляда и на телефоне, и на экране зала.
+ */
 export default function TournamentSummary({
   tournament,
   clubName,
@@ -24,64 +34,56 @@ export default function TournamentSummary({
   const locale = useLocale();
 
   return (
-    <header>
-      <Typography variant="h1">{tournament.name}</Typography>
+    <Paper variant="outlined" component="header" sx={{ p: { xs: 2.5, sm: 4 } }}>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+        <StatusBadge status={tournament.status} />
+        {clubName !== null && (
+          <Link href={`/clubs/${tournament.clubId}`} variant="body2" sx={{ fontWeight: 500 }}>
+            {clubName}
+          </Link>
+        )}
+      </Stack>
+
+      <Typography
+        variant="h1"
+        sx={{ mt: 1.5, fontSize: { xs: 30, sm: 40 }, lineHeight: { xs: '34px', sm: '44px' } }}
+      >
+        {tournament.name}
+      </Typography>
 
       <Box
-        component="dl"
         sx={{
-          mt: 2,
-          mb: 0,
+          mt: 3,
           display: 'grid',
-          columnGap: 3,
-          rowGap: 1,
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+          gap: 1.5,
+          gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
         }}
       >
-        <Field label={t('tournament.status')}>
-          <StatusBadge status={tournament.status} />
-        </Field>
-        <Field label={t('tournament.startsAt')}>
-          {formatDateTime(tournament.startsAt, locale)}
-        </Field>
-        <Field label={t('tournament.level')}>{t(TOURNAMENT_LEVEL_KEYS[tournament.level])}</Field>
-        {clubName !== null && (
-          <Field label={t('tournament.club')}>
-            <Link href={`/clubs/${tournament.clubId}`}>{clubName}</Link>
-          </Field>
-        )}
-        <Field label={t('tournament.participants')}>
-          <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-            {tournament.participantCount}
-          </Box>
-        </Field>
-        <Field label={t('tournament.entryFee')}>
-          <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-            {tournament.entryFee === 0
+        <StatTile
+          icon={CalendarDays}
+          label={t('tournament.startsAt')}
+          value={formatDateTime(tournament.startsAt, locale)}
+        />
+        <StatTile
+          icon={Users}
+          label={t('tournament.participants')}
+          value={tournament.participantCount}
+        />
+        <StatTile
+          icon={Trophy}
+          label={t('tournament.level')}
+          value={t(TOURNAMENT_LEVEL_KEYS[tournament.level])}
+        />
+        <StatTile
+          icon={Wallet}
+          label={t('tournament.entryFee')}
+          value={
+            tournament.entryFee === 0
               ? t('tournament.entryFee.free')
-              : formatMoney(tournament.entryFee, locale)}
-          </Box>
-        </Field>
+              : formatMoney(tournament.entryFee, locale)
+          }
+        />
       </Box>
-    </header>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  readonly label: string;
-  readonly children: ReactNode;
-}): ReactNode {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, typography: 'body2' }}>
-      <Box component="dt" sx={{ color: 'text.secondary' }}>
-        {label}
-      </Box>
-      <Box component="dd" sx={{ m: 0, color: 'text.primary' }}>
-        {children}
-      </Box>
-    </Box>
+    </Paper>
   );
 }

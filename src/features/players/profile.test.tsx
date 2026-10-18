@@ -159,7 +159,10 @@ describe('кривая рейтинга', () => {
 
     await screen.findByText(ru['player.history.title']);
 
-    expect(container.querySelectorAll('circle')).toHaveLength(RATING_HISTORY.points.length);
+    // Только точки графика: иконки страницы — тоже svg с кружками.
+    expect(container.querySelectorAll('[data-rating-chart] circle')).toHaveLength(
+      RATING_HISTORY.points.length,
+    );
   });
 
   it('ведёт со строки истории на результаты турнира', async () => {
@@ -190,7 +193,7 @@ describe('кривая рейтинга', () => {
     const { container } = renderProfile();
 
     expect(await screen.findByText(ru['player.history.empty'])).toBeDefined();
-    expect(container.querySelector('svg')).toBeNull();
+    expect(container.querySelector('[data-rating-chart]')).toBeNull();
   });
 });
 

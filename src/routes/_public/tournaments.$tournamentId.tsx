@@ -1,7 +1,6 @@
 import type { TournamentResultsView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import Link from '@mui/material/Link';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
@@ -12,6 +11,7 @@ import { z } from 'zod';
 
 import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
+import { BackLink } from '@/common/ui/page-header';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -80,9 +80,7 @@ function TournamentPage(): ReactNode {
 
   return (
     <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Link href="/tournaments" variant="body2" sx={{ display: 'inline-block', py: 1.5 }}>
-        {t('nav.tournaments')}
-      </Link>
+      <BackLink href="/tournaments" label={t('nav.tournaments')} />
 
       <Box sx={{ mt: 1 }}>
         {/* Ссылку на результаты пересылают в чат клуба, и обрывается она там
@@ -250,7 +248,6 @@ function ResultTabs({ data, names, participants }: ResultTabsProps): ReactNode {
         // справа есть ещё, иначе «Рейтинг» и «Участники» никто не найдёт.
         scrollButtons="auto"
         allowScrollButtonsMobile
-        sx={{ borderBottom: 1, borderColor: 'divider' }}
       >
         {tabs.map((tab) => (
           <Tab
@@ -259,13 +256,7 @@ function ResultTabs({ data, names, participants }: ResultTabsProps): ReactNode {
             label={t(RESULT_TAB_LABELS[tab])}
             id={`${id}-tab-${tab}`}
             aria-controls={`${id}-panel`}
-            sx={{
-              minHeight: 48,
-              minWidth: 0,
-              px: { xs: 1.5, sm: 2 },
-              textTransform: 'none',
-              fontSize: 15,
-            }}
+            sx={{ px: { xs: 1.5, sm: 2 } }}
           />
         ))}
       </Tabs>

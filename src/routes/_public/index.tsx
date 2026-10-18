@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import InputAdornment from '@mui/material/InputAdornment';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -9,6 +10,16 @@ import Typography from '@mui/material/Typography';
 import type { ClubView, TournamentView } from '@kttf/shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import {
+  ArrowRight,
+  CalendarDays,
+  MonitorPlay,
+  Search,
+  TrendingUp,
+  Trophy,
+  WifiOff,
+  type LucideIcon,
+} from 'lucide-react';
 import { useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { z } from 'zod';
 
@@ -155,54 +166,81 @@ function Hero(): ReactNode {
   };
 
   return (
-    <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: { xs: 5, sm: 8 } }}>
-      <Container maxWidth="md" sx={{ py: { xs: 6, sm: 10 } }}>
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: { xs: 44, sm: 64 },
-            lineHeight: { xs: '44px', sm: '60px' },
-            maxWidth: 640,
-          }}
-        >
-          {t('page.home.title')}
-        </Typography>
-        <Typography color="text.secondary" sx={{ mt: 2, fontSize: 17, maxWidth: 520 }}>
-          {t('page.home.lead')}
-        </Typography>
-
-        <Box
-          component="form"
-          role="search"
-          onSubmit={submit}
-          sx={{
-            mt: 4,
-            display: 'flex',
-            gap: 1.5,
-            maxWidth: 560,
-            flexDirection: { xs: 'column', sm: 'row' },
-          }}
-        >
-          <TextField
-            type="search"
-            label={t('ratings.search')}
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
+    <Container maxWidth="md" sx={{ pt: { xs: 3, sm: 5 }, mb: { xs: 5, sm: 7 } }}>
+      <Paper
+        variant="outlined"
+        sx={{
+          position: 'relative',
+          overflow: 'hidden',
+          px: { xs: 3, sm: 6 },
+          py: { xs: 4, sm: 7 },
+          // Мягкое тёплое пятно справа: глубина без картинки и без красной
+          // заливки на пол-экрана.
+          backgroundImage:
+            'radial-gradient(circle at 92% 8%, var(--red-50) 0, transparent 42%), radial-gradient(circle at 70% 110%, var(--gold-50) 0, transparent 40%)',
+        }}
+      >
+        <HeroBall />
+        <Box sx={{ position: 'relative', maxWidth: 600 }}>
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: 40, sm: 60 },
+              lineHeight: { xs: '42px', sm: '60px' },
             }}
-            autoComplete="off"
-          />
-          <Button type="submit" variant="contained" sx={{ minHeight: 44, flexShrink: 0 }}>
-            {t('home.hero.find')}
-          </Button>
-        </Box>
+          >
+            {t('page.home.title')}
+          </Typography>
+          <Typography color="text.secondary" sx={{ mt: 2, fontSize: 17, maxWidth: 480 }}>
+            {t('page.home.lead')}
+          </Typography>
 
-        <Stack direction="row" spacing={3} sx={{ mt: 3 }}>
-          <Link href="/tournaments">{t('home.hero.calendar')}</Link>
-          <Link href="/ratings">{t('home.hero.ratings')}</Link>
-        </Stack>
-      </Container>
-    </Box>
+          <Box
+            component="form"
+            role="search"
+            onSubmit={submit}
+            sx={{
+              mt: 4,
+              display: 'flex',
+              gap: 1.5,
+              flexDirection: { xs: 'column', sm: 'row' },
+            }}
+          >
+            <TextField
+              type="search"
+              label={t('ratings.search')}
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+              }}
+              autoComplete="off"
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={18} aria-hidden />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ '& .MuiOutlinedInput-root': { minHeight: 48 } }}
+            />
+            <Button type="submit" variant="contained" size="large" sx={{ flexShrink: 0 }}>
+              {t('home.hero.find')}
+            </Button>
+          </Box>
+
+          <Stack direction="row" useFlexGap spacing={1} sx={{ mt: 3, flexWrap: 'wrap' }}>
+            <QuickLink href="/tournaments" icon={CalendarDays}>
+              {t('home.hero.calendar')}
+            </QuickLink>
+            <QuickLink href="/ratings" icon={TrendingUp}>
+              {t('home.hero.ratings')}
+            </QuickLink>
+          </Stack>
+        </Box>
+      </Paper>
+    </Container>
   );
 }
 
@@ -223,8 +261,21 @@ function Section({
       >
         <Typography variant="h2">{title}</Typography>
         {more !== undefined && (
-          <Link href={more.href} variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+          <Link
+            href={more.href}
+            variant="body2"
+            underline="none"
+            sx={{
+              whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.5,
+              fontWeight: 600,
+              color: 'text.secondary',
+            }}
+          >
             {more.label}
+            <ArrowRight size={16} aria-hidden />
           </Link>
         )}
       </Stack>
@@ -243,10 +294,17 @@ function TournamentList({
   return (
     <Box
       component="ul"
-      sx={{ listStyle: 'none', m: 0, p: 0, borderTop: 1, borderColor: 'divider' }}
+      sx={{
+        listStyle: 'none',
+        m: 0,
+        p: 0,
+        display: 'grid',
+        gap: 1.5,
+        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+      }}
     >
       {items.map((tournament) => (
-        <Box component="li" key={tournament.id} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box component="li" key={tournament.id}>
           <TournamentCard tournament={tournament} club={clubs?.get(tournament.clubId)} />
         </Box>
       ))}
@@ -264,7 +322,10 @@ function ClubsCallout(): ReactNode {
 
   return (
     <Paper variant="outlined" sx={{ p: { xs: 3, sm: 5 } }}>
-      <Typography variant="h2">{t('home.clubs.title')}</Typography>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+        <IconTile icon={Trophy} />
+        <Typography variant="h2">{t('home.clubs.title')}</Typography>
+      </Stack>
       <Box
         component="ul"
         sx={{
@@ -273,22 +334,144 @@ function ClubsCallout(): ReactNode {
           p: 0,
           listStyle: 'none',
           display: 'grid',
-          gap: 3,
+          gap: 1.5,
           gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
         }}
       >
-        {(['offline', 'rating', 'screen'] as const).map((point) => (
-          <Box component="li" key={point}>
-            <Typography variant="h3">{t(`home.clubs.${point}.title`)}</Typography>
+        {(
+          [
+            ['offline', WifiOff],
+            ['rating', TrendingUp],
+            ['screen', MonitorPlay],
+          ] as const
+        ).map(([point, icon]) => (
+          <Box
+            component="li"
+            key={point}
+            sx={{ p: 2.5, borderRadius: 3, bgcolor: 'var(--paper-sunken)' }}
+          >
+            <IconTile icon={icon} />
+            <Typography variant="h3" sx={{ mt: 1.5 }}>
+              {t(`home.clubs.${point}.title`)}
+            </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
               {t(`home.clubs.${point}.text`)}
             </Typography>
           </Box>
         ))}
       </Box>
-      <Button href={INSTAGRAM} target="_blank" rel="noreferrer" sx={{ mt: 4, minHeight: 44 }}>
+      <Button href={INSTAGRAM} target="_blank" rel="noreferrer" sx={{ mt: 3, minHeight: 44 }}>
         {t('home.clubs.action')}
       </Button>
     </Paper>
+  );
+}
+
+/** Иконка в белой плашке — довод в блоке для клубов. Декоративна. */
+function IconTile({ icon: Icon }: { readonly icon: LucideIcon }): ReactNode {
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        width: 40,
+        height: 40,
+        flexShrink: 0,
+        borderRadius: 3,
+        display: 'grid',
+        placeItems: 'center',
+        bgcolor: 'var(--paper)',
+        color: 'var(--red-600)',
+        boxShadow: '0 1px 2px rgb(31 31 29 / 0.08), 0 2px 8px rgb(31 31 29 / 0.06)',
+      }}
+    >
+      <Icon size={20} strokeWidth={2} />
+    </Box>
+  );
+}
+
+/** Быстрый переход под поиском: пилюля с иконкой. */
+function QuickLink({
+  href,
+  icon: Icon,
+  children,
+}: {
+  readonly href: string;
+  readonly icon: LucideIcon;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <Button
+      href={href}
+      variant="text"
+      startIcon={<Icon size={16} aria-hidden />}
+      sx={{
+        minHeight: 40,
+        px: 2,
+        borderRadius: 999,
+        bgcolor: 'var(--paper)',
+        border: 1,
+        borderColor: 'divider',
+        fontWeight: 500,
+        '&:hover': { bgcolor: 'var(--paper-hover)' },
+      }}
+    >
+      {children}
+    </Button>
+  );
+}
+
+/**
+ * Мяч на первом экране: белый шар с тенью и кольца вокруг — фирменный
+ * жест без фотографии. Только на широком экране: на телефоне место нужно
+ * поиску.
+ */
+function HeroBall(): ReactNode {
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        display: { xs: 'none', md: 'block' },
+        position: 'absolute',
+        right: 56,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: 220,
+        height: 220,
+        borderRadius: '50%',
+        border: '1px dashed var(--line-strong)',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 36,
+          borderRadius: '50%',
+          border: '1px solid var(--line)',
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          width: 64,
+          height: 64,
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle at 35% 30%, #ffffff 0, #fbfbf9 40%, #e7e5df 100%)',
+          boxShadow: '0 12px 28px rgb(31 31 29 / 0.16), 0 2px 6px rgb(31 31 29 / 0.08)',
+        },
+      }}
+    >
+      <Box
+        sx={{
+          position: 'absolute',
+          width: 14,
+          height: 14,
+          borderRadius: '50%',
+          bgcolor: 'var(--red-500)',
+          top: 18,
+          right: 38,
+          boxShadow: '0 0 0 6px var(--red-50)',
+        }}
+      />
+    </Box>
   );
 }

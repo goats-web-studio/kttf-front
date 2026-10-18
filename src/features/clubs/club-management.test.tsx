@@ -73,7 +73,8 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
 function renderManagement(user: AuthUserView): void {
   useSessionStore.setState({ user, accessToken: 'token', isRestoring: false });
-  window.history.pushState({}, '', `/cabinet/club/${CLUB.id}`);
+  // Состав — своя вкладка управления клубом.
+  window.history.pushState({}, '', `/cabinet/club/${CLUB.id}?tab=staff`);
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createAppRouter({ queryClient, session: user });

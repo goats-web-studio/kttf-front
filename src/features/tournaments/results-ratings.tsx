@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { formatDelta, useT } from '@/common/i18n';
+import DeltaPill from '@/common/ui/delta-pill';
 
 /** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
 const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
@@ -68,7 +69,7 @@ export default function ResultsRatings({ ratings, names }: ResultsRatingsProps):
                 {rating.ratingAtStart ?? '—'}
               </TableCell>
               <TableCell align="right" sx={{ ...NUM, fontWeight: 600 }}>
-                {formatDelta(rating.totalDelta)}
+                <DeltaPill value={rating.totalDelta} />
               </TableCell>
               <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                 {rating.ratingAfter ?? (

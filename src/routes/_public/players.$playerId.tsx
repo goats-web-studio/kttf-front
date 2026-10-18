@@ -1,16 +1,18 @@
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { Building2, Cake, MapPin, type LucideIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { isMissingResource } from '@/common/api';
 import { useT } from '@/common/i18n';
+import PlayerAvatar from '@/common/ui/player-avatar';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
@@ -82,48 +84,87 @@ function PlayerPage(): ReactNode {
         loading={<HeaderSkeleton />}
       >
         {player.data === undefined ? null : (
-          <header>
-            <Typography variant="h1">{playerName(player.data)}</Typography>
-            <Typography color="text.secondary" sx={{ mt: 0.5 }}>
-              {placeName(player.data.city)}
-              {player.data.clubId !== null &&
-                ` · ${clubs.data?.get(player.data.clubId)?.name ?? ''}`}
-              {` · ${String(player.data.birthYear)}`}
-            </Typography>
-
+          <Paper
+            variant="outlined"
+            component="header"
+            sx={{
+              p: { xs: 2.5, sm: 4 },
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { sm: 'center' },
+              gap: { xs: 2.5, sm: 4 },
+              backgroundImage:
+                'radial-gradient(circle at 100% 0%, var(--red-50) 0, transparent 38%)',
+            }}
+          >
             <Stack
               direction="row"
-              spacing={1.5}
-              useFlexGap
-              sx={{ mt: 2, alignItems: 'baseline', flexWrap: 'wrap' }}
+              spacing={2.5}
+              sx={{ alignItems: 'center', flex: 1, minWidth: 0 }}
             >
-              {/* Рейтинг — главное число профиля, дисплейный набор 44px
-                  (07-design-system.md, 3.5). Ради него страницу и открывают. */}
+              <PlayerAvatar
+                lastName={player.data.lastName}
+                firstName={player.data.firstName}
+                photoUrl={player.data.photoUrl}
+                size="xl"
+              />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  variant="h1"
+                  sx={{ fontSize: { xs: 28, sm: 36 }, lineHeight: { xs: '32px', sm: '40px' } }}
+                >
+                  {playerName(player.data)}
+                </Typography>
+                <Stack
+                  direction="row"
+                  useFlexGap
+                  spacing={2}
+                  sx={{ mt: 1, flexWrap: 'wrap', color: 'text.secondary', typography: 'body2' }}
+                >
+                  <Meta icon={MapPin}>{placeName(player.data.city)}</Meta>
+                  {player.data.clubId !== null && (
+                    <Meta icon={Building2}>{clubs.data?.get(player.data.clubId)?.name ?? ''}</Meta>
+                  )}
+                  <Meta icon={Cake}>{String(player.data.birthYear)}</Meta>
+                </Stack>
+              </Box>
+            </Stack>
+
+            {/* Рейтинг — главное число профиля, дисплейный набор 44px
+                (07-design-system.md, 3.5). Ради него страницу и открывают. */}
+            <Box
+              sx={{
+                flexShrink: 0,
+                px: 3,
+                py: 2,
+                borderRadius: 4,
+                bgcolor: 'var(--paper-sunken)',
+                textAlign: { sm: 'right' },
+              }}
+            >
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                {t('ratings.column.rating')}
+              </Typography>
               <Typography
                 variant="h1"
                 component="p"
-                sx={{ fontSize: 44, lineHeight: '44px', fontVariantNumeric: 'tabular-nums' }}
+                sx={{ fontSize: 48, lineHeight: '48px', fontVariantNumeric: 'tabular-nums' }}
               >
                 {player.data.rating}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                 {t('player.rating.matches')}{' '}
-                <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
                   {player.data.ratedMatches}
                 </Box>
+                {player.data.isProvisional && (
+                  // Провизорный рейтинг двигается быстрее: сыграно меньше
+                  // двадцати рейтинговых встреч (ТЗ 7.1).
+                  <> · {t('ratings.provisional')}</>
+                )}
               </Typography>
-              {player.data.isProvisional && (
-                // Провизорный рейтинг двигается быстрее: сыграно меньше
-                // двадцати рейтинговых встреч (ТЗ 7.1).
-                <Chip
-                  label={t('ratings.provisional')}
-                  size="small"
-                  variant="outlined"
-                  sx={{ color: 'text.secondary' }}
-                />
-              )}
-            </Stack>
-          </header>
+            </Box>
+          </Paper>
         )}
       </QueryState>
 
@@ -168,6 +209,22 @@ function HeaderSkeleton(): ReactNode {
       <Skeleton variant="text" width="60%" sx={{ fontSize: 30 }} />
       <Skeleton variant="text" width="40%" />
       <Skeleton variant="rounded" width={120} height={44} sx={{ mt: 2 }} />
+    </Box>
+  );
+}
+
+/** Факт о человеке с иконкой: город, клуб, год рождения. */
+function Meta({
+  icon: Icon,
+  children,
+}: {
+  readonly icon: LucideIcon;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+      <Icon size={15} aria-hidden />
+      {children}
     </Box>
   );
 }

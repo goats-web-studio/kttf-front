@@ -1,10 +1,9 @@
-import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { z } from 'zod';
 
 import { useT } from '@/common/i18n';
+import AuthCard from '@/common/ui/auth-card';
 import SignInForm from '@/features/auth/sign-in-form';
 
 /** Куда вернуться после входа. Кладёт сюда охрана кабинета. */
@@ -21,15 +20,12 @@ function LoginPage(): ReactNode {
   const { redirect } = Route.useSearch();
 
   return (
-    <Container maxWidth="xs" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Typography variant="h1" sx={{ mb: 3 }}>
-        {t('page.login.title')}
-      </Typography>
+    <AuthCard title={t('page.login.title')}>
       <SignInForm
         onSignedIn={() => {
           void navigate({ href: redirect ?? '/' });
         }}
       />
-    </Container>
+    </AuthCard>
   );
 }

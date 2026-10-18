@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import Surface from '@/common/ui/surface';
 
 import ResultsTies from './results-ties';
 
@@ -20,7 +21,7 @@ const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
  * Колонка с фамилиями липкая при прокрутке вбок (раздел 6.1): на телефоне
  * таблица шире экрана, и без имени строка цифр ничего не значит.
  */
-const STICKY = { position: 'sticky', left: 0, zIndex: 1, bgcolor: 'background.default' } as const;
+const STICKY = { position: 'sticky', left: 0, zIndex: 1, bgcolor: 'background.paper' } as const;
 
 interface ResultsStandingsProps {
   readonly standings: TournamentStandingsView;
@@ -45,8 +46,10 @@ export default function ResultsStandings({ standings, names }: ResultsStandingsP
   }
 
   return (
-    <Box component="section" sx={{ mt: 6 }}>
-      <Typography variant="h2">{t('results.standings.title')}</Typography>
+    <Box component="section" sx={{ mt: 6, display: 'grid', gap: 2 }}>
+      <Typography variant="h2" sx={{ mb: 1 }}>
+        {t('results.standings.title')}
+      </Typography>
       {standings.groups.map((group) => (
         <GroupTable
           key={`${group.stageId}:${group.groupId ?? 'single'}`}
@@ -68,9 +71,8 @@ function GroupTable({
   const t = useT();
 
   return (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h3">{group.label}</Typography>
-      <TableContainer sx={{ mt: 1 }}>
+    <Surface title={group.label} component="div" flush>
+      <TableContainer>
         <Table size="small" sx={{ minWidth: 512 }}>
           <TableHead>
             <TableRow>
@@ -88,7 +90,7 @@ function GroupTable({
           </TableHead>
           <TableBody>
             {group.rows.map((row) => (
-              <TableRow key={row.participant}>
+              <TableRow key={row.participant} sx={{ height: 48 }}>
                 <TableCell align="right" sx={{ fontWeight: 600, ...NUM }}>
                   {/* Пусто, пока равенство не разрешил судья — ADR-008. */}
                   {row.place ?? (
@@ -130,8 +132,16 @@ function GroupTable({
         </Table>
       </TableContainer>
 
-      <ResultsTies title={t('results.unresolved.title')} ties={group.unresolved} names={names} />
-    </Box>
+      {group.unresolved.length > 0 && (
+        <Box sx={{ px: { xs: 2, sm: 3 }, pb: 2 }}>
+          <ResultsTies
+            title={t('results.unresolved.title')}
+            ties={group.unresolved}
+            names={names}
+          />
+        </Box>
+      )}
+    </Surface>
   );
 }
 

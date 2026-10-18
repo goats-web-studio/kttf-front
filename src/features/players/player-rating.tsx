@@ -1,6 +1,7 @@
 import type { RatingHistoryView, RatingPointView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -9,7 +10,8 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { formatDate, formatDelta, useLocale, useT } from '@/common/i18n';
+import { formatDate, useLocale, useT } from '@/common/i18n';
+import DeltaPill from '@/common/ui/delta-pill';
 import EmptyState from '@/common/ui/empty-state';
 
 import RatingChart from './rating-chart';
@@ -45,28 +47,32 @@ export default function PlayerRating({ history }: PlayerRatingProps): ReactNode 
         </Box>
       ) : (
         <>
-          <RatingChart scale={scale} />
+          <Paper variant="outlined" sx={{ mt: 2, px: { xs: 2, sm: 3 }, pb: 2 }}>
+            <RatingChart scale={scale} />
+          </Paper>
 
-          <Table stickyHeader size="small" sx={{ mt: 3 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={WIDE}>{t('player.history.date')}</TableCell>
-                <TableCell>{t('player.history.tournament')}</TableCell>
-                <TableCell align="right" sx={WIDE}>
-                  {t('player.history.matches')}
-                </TableCell>
-                <TableCell align="right">{t('player.history.delta')}</TableCell>
-                <TableCell align="right">{t('player.history.after')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {/* Кривая идёт слева направо, список — от свежего к старому:
+          <Paper variant="outlined" sx={{ mt: 2 }}>
+            <Table stickyHeader size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={WIDE}>{t('player.history.date')}</TableCell>
+                  <TableCell>{t('player.history.tournament')}</TableCell>
+                  <TableCell align="right" sx={WIDE}>
+                    {t('player.history.matches')}
+                  </TableCell>
+                  <TableCell align="right">{t('player.history.delta')}</TableCell>
+                  <TableCell align="right">{t('player.history.after')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {/* Кривая идёт слева направо, список — от свежего к старому:
                   человек открывает историю ради последнего турнира. */}
-              {[...history.points].reverse().map((point, index) => (
-                <Row key={point.tournamentId ?? `adjustment-${String(index)}`} point={point} />
-              ))}
-            </TableBody>
-          </Table>
+                {[...history.points].reverse().map((point, index) => (
+                  <Row key={point.tournamentId ?? `adjustment-${String(index)}`} point={point} />
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
         </>
       )}
     </Box>
@@ -109,8 +115,8 @@ function Row({ point }: { readonly point: RatingPointView }): ReactNode {
       <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
         {point.matches}
       </TableCell>
-      <TableCell align="right" sx={{ ...NUM, fontWeight: 500 }}>
-        {formatDelta(point.delta)}
+      <TableCell align="right" sx={NUM}>
+        <DeltaPill value={point.delta} />
       </TableCell>
       <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
         {point.ratingAfter}

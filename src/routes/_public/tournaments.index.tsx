@@ -320,16 +320,9 @@ function TournamentsPage(): ReactNode {
           loading={<RowsSkeleton />}
         >
           {tournaments.data === undefined ? null : tournaments.data.items.length > 0 ? (
-            <Box
-              component="ul"
-              sx={{ listStyle: 'none', m: 0, p: 0, borderTop: 1, borderColor: 'divider' }}
-            >
+            <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'grid', gap: 1.5 }}>
               {tournaments.data.items.map((tournament) => (
-                <Box
-                  component="li"
-                  key={tournament.id}
-                  sx={{ borderBottom: 1, borderColor: 'divider' }}
-                >
+                <Box component="li" key={tournament.id}>
                   <TournamentCard
                     tournament={tournament}
                     club={clubs.data?.get(tournament.clubId)}

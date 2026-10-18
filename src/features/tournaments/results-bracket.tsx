@@ -6,6 +6,8 @@ import type { ReactNode } from 'react';
 
 import { useT, type MessageKey } from '@/common/i18n';
 
+import Surface from '@/common/ui/surface';
+
 import { stageTitle } from './labels';
 import { BRACKET_STAGES } from './results-tabs';
 
@@ -32,8 +34,10 @@ export default function ResultsBracket({ stages, names }: ResultsBracketProps): 
   }
 
   return (
-    <Box component="section" sx={{ mt: 6 }}>
-      <Typography variant="h2">{t('results.bracket.title')}</Typography>
+    <Box component="section" sx={{ mt: 6, display: 'grid', gap: 2 }}>
+      <Typography variant="h2" sx={{ mb: 1 }}>
+        {t('results.bracket.title')}
+      </Typography>
       {bracketed.map((stage) => (
         <StageBracket key={stage.id} stage={stage} names={names} />
       ))}
@@ -50,34 +54,67 @@ function StageBracket({
 }): ReactNode {
   const t = useT();
   const byId = new Map(stage.matches.map((match) => [match.id, match]));
+  const columns = rounds(stage.matches);
 
   return (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="h3">{stageTitle(stage, t)}</Typography>
-
+    <Surface title={stageTitle(stage, t)} component="div" flush>
       {/* На телефоне круги листаются свайпом вбок, каждый прилипает к краю
           (раздел 5.2, BracketView): сетка целиком шире экрана. */}
       <Box
         sx={{
-          mt: 1.5,
-          pb: 1,
+          px: { xs: 2, sm: 3 },
+          pb: { xs: 2, sm: 3 },
           display: 'flex',
-          gap: 3,
+          gap: { xs: 2, sm: 3 },
           overflowX: 'auto',
           scrollSnapType: 'x mandatory',
         }}
       >
-        {rounds(stage.matches).map(([round, matches]) => (
-          <Box key={round} sx={{ minWidth: 224, flexShrink: 0, scrollSnapAlign: 'start' }}>
-            <Typography variant="caption" color="text.secondary" component="p">
-              {t('results.bracket.round')} {round}
+        {columns.map(([round, matches], index) => (
+          <Box
+            key={round}
+            sx={{
+              minWidth: 232,
+              flexShrink: 0,
+              scrollSnapAlign: 'start',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Typography
+              variant="caption"
+              component="p"
+              sx={{ color: 'text.secondary', fontWeight: 600, mb: 1 }}
+            >
+              {roundTitle(round, columns.length - 1 - index, t)}
             </Typography>
+            {/* Встречи круга разнесены по высоте: полуфинал стоит между своими
+                четвертьфиналами, и сетка читается как сетка, а не как столбик. */}
             <Box
               component="ul"
-              sx={{ listStyle: 'none', m: 0, mt: 1, p: 0, display: 'grid', gap: 1 }}
+              sx={{
+                listStyle: 'none',
+                m: 0,
+                p: 0,
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-around',
+                gap: 1.5,
+              }}
             >
               {matches.map((match) => (
-                <Paper key={match.id} component="li" variant="outlined" sx={{ py: 0.5 }}>
+                <Paper
+                  key={match.id}
+                  component="li"
+                  variant="outlined"
+                  sx={{
+                    py: 0.5,
+                    borderRadius: 3,
+                    boxShadow: 'none',
+                    bgcolor: 'var(--paper-sunken)',
+                  }}
+                >
                   <Side match={match} side="A" names={names} byId={byId} t={t} />
                   <Side match={match} side="B" names={names} byId={byId} t={t} />
                 </Paper>
@@ -86,7 +123,7 @@ function StageBracket({
           </Box>
         ))}
       </Box>
-    </Box>
+    </Surface>
   );
 }
 
@@ -138,20 +175,19 @@ function Side({
   const won = own !== null && other !== null && own > other;
 
   return (
-    // Победитель — насыщенность, цвет счёта и линейка слева сразу: цвет не
+    // Победитель — насыщенность имени и залитый счёт сразу: цвет не
     // единственный носитель (раздел 3.4, запрет №6).
     <Box
       component="p"
       sx={{
         m: 0,
-        px: 1,
-        py: 0.5,
+        px: 1.5,
+        py: 0.75,
         display: 'flex',
+        alignItems: 'center',
         justifyContent: 'space-between',
         gap: 1,
         typography: 'body2',
-        borderLeft: 2,
-        borderColor: won ? 'var(--red-500)' : 'transparent',
       }}
     >
       <Box
@@ -162,17 +198,46 @@ function Side({
           ? sourceLabel(source, byId, t)
           : (names.get(playerId) ?? t('results.match.unknownPlayer'))}
       </Box>
-      <Box
-        component="span"
-        sx={{
-          fontVariantNumeric: 'tabular-nums',
-          ...(won ? { fontWeight: 600, color: 'primary.main' } : { color: 'var(--ink-400)' }),
-        }}
-      >
-        {own ?? ''}
-      </Box>
+      {own !== null && (
+        <Box
+          component="span"
+          sx={{
+            minWidth: 24,
+            height: 24,
+            px: 0.75,
+            borderRadius: 1.5,
+            display: 'grid',
+            placeItems: 'center',
+            fontVariantNumeric: 'tabular-nums',
+            fontWeight: 700,
+            ...(won
+              ? { bgcolor: 'var(--red-600)', color: '#ffffff' }
+              : { bgcolor: 'var(--paper)', color: 'var(--ink-500)' }),
+          }}
+        >
+          {own}
+        </Box>
+      )}
     </Box>
   );
+}
+
+/**
+ * Название круга по расстоянию до финала: «Финал», «Полуфинал», «1/4
+ * финала». Дальше — «Круг N»: 1/16 никто так не называет.
+ */
+function roundTitle(round: number, fromFinal: number, t: Translate): string {
+  if (fromFinal === 0) {
+    return t('results.bracket.final');
+  }
+  if (fromFinal === 1) {
+    return t('results.bracket.semifinal');
+  }
+  if (fromFinal === 2) {
+    return t('results.bracket.quarterfinal');
+  }
+
+  return `${t('results.bracket.round')} ${String(round)}`;
 }
 
 /** «Победитель встречи №2» вместо пустого места: встреча ждёт именно его. */

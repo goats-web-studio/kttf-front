@@ -44,7 +44,11 @@ export default function RatingChart({ scale }: RatingChartProps): ReactNode {
           '& > svg': { display: 'block', width: '100%', height: 'auto' },
         }}
       >
-        <svg viewBox={`0 0 ${String(scale.width)} ${String(scale.height)}`} aria-hidden="true">
+        <svg
+          viewBox={`0 0 ${String(scale.width)} ${String(scale.height)}`}
+          aria-hidden="true"
+          data-rating-chart
+        >
           {/* Границы размаха: без них глаз не понимает, крутая кривая или ровная. */}
           <line
             x1={0}
