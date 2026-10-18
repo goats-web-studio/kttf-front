@@ -44,8 +44,6 @@ export default function BracketBoard({ stage, names }: BracketBoardProps): React
           sx={{
             fontSize: size(0.85),
             fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
             color: matches.length === 1 ? 'primary.main' : 'text.secondary',
           }}
         >
@@ -150,7 +148,7 @@ function Line({
         py: '0.35vh',
         fontSize: size(1),
         lineHeight: 1.3,
-        bgcolor: won ? tint('night-red', 14) : 'transparent',
+        bgcolor: won ? tint('red-600', 14) : 'transparent',
       }}
     >
       <Box

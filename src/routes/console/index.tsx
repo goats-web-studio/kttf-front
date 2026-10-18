@@ -75,9 +75,8 @@ function ConsolePage(): ReactNode {
                         height: 10,
                         flexShrink: 0,
                         borderRadius: '50%',
-                        bgcolor: 'var(--night-red)',
-                        boxShadow:
-                          '0 0 0 4px color-mix(in srgb, var(--night-red) 20%, transparent)',
+                        bgcolor: 'var(--red-600)',
+                        boxShadow: '0 0 0 4px color-mix(in srgb, var(--red-600) 20%, transparent)',
                       }}
                     />
                     <Box sx={{ flex: 1, minWidth: 0 }}>

@@ -2,7 +2,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonBase from '@mui/material/ButtonBase';
 import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useState, type ReactNode } from 'react';
 
@@ -10,7 +9,6 @@ import { fill, useT } from '@/common/i18n';
 
 import MatchLine from './match-line';
 import type { QueuedMatch } from './queue';
-import { Hints } from './table-dialog';
 
 interface QueueZoneProps {
   readonly queue: readonly QueuedMatch[];
@@ -22,15 +20,17 @@ interface QueueZoneProps {
 }
 
 /** Сколько пар видно без раскрытия: судье нужны ближайшие, а не весь вечер. */
-const SHOWN = 5;
+const SHOWN = 6;
 
 /**
  * Зона «В ожидании» — ТЗ 6.1 и 6.2.
  *
- * Порядок задан очередью: первым идёт тот, кто дольше не играл. Обычный
- * случай — одно касание: кнопка справа ставит пару на предложенный стол.
- * Всё остальное — другой стол, счёт без стола — в окне встречи, которое
- * открывается касанием самой строки.
+ * Список строк в одной карточке, как панель «В ожидании» у турнир-менеджера
+ * RTTF: этап и группа мелко, пара крупно, справа — «На стол N». Залитая
+ * кнопка одна — у первой пары, которую и нужно звать; у остальных та же
+ * кнопка текстом. Пара, где кто-то ещё за столом, приглушена и без кнопки.
+ *
+ * Касание самой строки открывает окно встречи: другой стол, счёт без стола.
  */
 export default function QueueZone({
   queue,
@@ -45,23 +45,15 @@ export default function QueueZone({
 
   return (
     <section>
-      <Typography
-        component="h2"
-        variant="subtitle2"
-        color="text.secondary"
-        sx={{ fontWeight: 600 }}
-      >
+      <Typography component="h2" variant="h3">
         {t('console.queue.title')}
         {queue.length > 0 && (
           <Box
             component="span"
             sx={{
               ml: 1,
-              px: 1,
-              py: 0.25,
-              borderRadius: 999,
-              bgcolor: 'var(--night-line)',
-              color: 'var(--night-ink-900)',
+              color: 'text.secondary',
+              fontWeight: 500,
               fontVariantNumeric: 'tabular-nums',
             }}
           >
@@ -71,108 +63,72 @@ export default function QueueZone({
       </Typography>
 
       {queue.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
           {t('console.queue.empty')}
         </Typography>
       ) : (
-        <Stack component="ol" spacing={1} sx={{ mt: 1, p: 0, listStyle: 'none' }}>
-          {shown.map((item, index) => (
-            <Paper
-              key={item.match.id}
-              component="li"
-              variant="outlined"
-              sx={{
-                display: 'flex',
-                alignItems: 'stretch',
-                position: 'relative',
-                overflow: 'hidden',
-                opacity: item.busyTable === null ? 1 : 0.75,
-                // Первая в очереди — дольше всех ждёт: жёлтая полоса слева
-                // и подпись словом (Hints), цвет не единственный носитель.
-                ...(index === 0 && item.busyTable === null
-                  ? {
-                      borderColor: 'color-mix(in srgb, var(--night-warn) 55%, var(--night-line))',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        insetBlock: 0,
-                        left: 0,
-                        width: 4,
-                        bgcolor: 'var(--night-warn)',
-                      },
-                    }
-                  : {}),
-              }}
-            >
-              <Box
-                aria-hidden
-                sx={{
-                  display: 'grid',
-                  placeItems: 'center',
-                  width: 48,
-                  flexShrink: 0,
-                  fontFamily: "'Oswald', system-ui, sans-serif",
-                  fontSize: 22,
-                  fontWeight: 700,
-                  fontVariantNumeric: 'tabular-nums',
-                  color: index === 0 ? 'var(--night-warn)' : 'var(--night-ink-500)',
-                }}
-              >
-                {index + 1}
-              </Box>
-              <ButtonBase
-                onClick={() => {
-                  onOpen(item.match.id);
-                }}
-                sx={{
-                  display: 'block',
-                  flexGrow: 1,
-                  minWidth: 0,
-                  minHeight: 72,
-                  py: 1.5,
-                  pr: 1.5,
-                  textAlign: 'left',
-                  borderRadius: 1,
-                  typography: 'body2',
-                }}
-              >
-                <Typography component="span" variant="caption" color="text.secondary">
-                  {item.label}
-                </Typography>
-                <MatchLine match={item.match} names={names} />
-                {item.busyTable === null ? (
-                  <Hints first={index === 0} lastForBoth={item.lastForBoth} />
-                ) : (
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    color="warning.main"
-                    sx={{ display: 'block', mt: 0.5 }}
-                  >
-                    {fill(t('console.queue.busy'), { number: String(item.busyTable) })}
-                  </Typography>
-                )}
-              </ButtonBase>
+        <Paper variant="outlined" component="ol" sx={{ mt: 1.5, mb: 0, p: 0, listStyle: 'none' }}>
+          {shown.map((item, index) => {
+            const free = item.busyTable === null;
+            const first = index === 0 && free;
 
-              {suggested !== null && item.busyTable === null && (
-                <Box sx={{ display: 'flex', alignItems: 'center', pr: 1.5, flexShrink: 0 }}>
-                  {/* Главное действие очереди — у первой пары: залитая
-                      кнопка одна на экран (запрет №2). */}
+            return (
+              <Box
+                key={item.match.id}
+                component="li"
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  pr: 1.5,
+                  borderTop: index === 0 ? 0 : 1,
+                  borderColor: 'divider',
+                  opacity: free ? 1 : 0.6,
+                }}
+              >
+                <ButtonBase
+                  onClick={() => {
+                    onOpen(item.match.id);
+                  }}
+                  sx={{
+                    display: 'block',
+                    flexGrow: 1,
+                    minWidth: 0,
+                    minHeight: 64,
+                    px: 2,
+                    py: 1.25,
+                    textAlign: 'left',
+                    typography: 'body1',
+                  }}
+                >
+                  <Typography component="span" variant="caption" color="text.secondary">
+                    {item.label}
+                  </Typography>
+                  <MatchLine match={item.match} names={names} />
+                  <Note item={item} first={first} />
+                </ButtonBase>
+
+                {suggested !== null && free && (
                   <Button
                     size="large"
-                    variant={index === 0 ? 'contained' : 'outlined'}
+                    variant={first ? 'contained' : 'text'}
                     onClick={() => {
                       onAssign(item.match.id, suggested);
                     }}
-                    sx={{ minHeight: 56, minWidth: 128, fontWeight: 700, whiteSpace: 'nowrap' }}
+                    sx={{
+                      minHeight: 48,
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                      ...(first ? {} : { color: 'text.primary' }),
+                    }}
                   >
                     {t('console.queue.assign')} {suggested}
                   </Button>
-                </Box>
-              )}
-            </Paper>
-          ))}
-        </Stack>
+                )}
+              </Box>
+            );
+          })}
+        </Paper>
       )}
 
       {!all && queue.length > SHOWN && (
@@ -188,10 +144,40 @@ export default function QueueZone({
       )}
 
       {queue.length > 0 && suggested === null && (
-        <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 1 }}>
+        <Typography variant="body2" color="text.secondary" component="p" sx={{ mt: 1 }}>
           {t('console.queue.noFreeTable')}
         </Typography>
       )}
     </section>
+  );
+}
+
+/**
+ * Подсказки ТЗ 6.3 — одной строкой мелко, а не плашками: судья решает по
+ * ним, но они не должны спорить с фамилиями.
+ */
+function Note({ item, first }: { readonly item: QueuedMatch; readonly first: boolean }): ReactNode {
+  const t = useT();
+
+  const notes = [
+    item.busyTable === null
+      ? null
+      : fill(t('console.queue.busy'), { number: String(item.busyTable) }),
+    first ? t('console.hint.waiting') : null,
+    item.lastForBoth ? t('console.hint.lastForBoth') : null,
+  ].filter((note) => note !== null);
+
+  if (notes.length === 0) {
+    return null;
+  }
+
+  return (
+    <Typography
+      component="span"
+      variant="caption"
+      sx={{ display: 'block', mt: 0.25, color: 'var(--warn-text)', fontWeight: 500 }}
+    >
+      {notes.join(' · ')}
+    </Typography>
   );
 }

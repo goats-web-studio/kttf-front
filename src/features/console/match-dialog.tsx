@@ -20,6 +20,11 @@ interface MatchDialogProps {
   readonly ratings: ReadonlyMap<string, string>;
   readonly tables: readonly TableState[];
   readonly suggested: number | null;
+  /**
+   * Стол, за которым ещё играет кто-то из этой пары. Пока он занят, звать
+   * пару на другой стол нельзя: один человек оказался бы на двух столах.
+   */
+  readonly busyTable?: number | null;
   readonly setsToWin: number;
   readonly now: number;
   readonly onClose: () => void;
@@ -146,6 +151,7 @@ function QueuedBody({
   names,
   tables,
   suggested,
+  busyTable = null,
   setsToWin,
   onAssign,
   onResult,
@@ -156,7 +162,15 @@ function QueuedBody({
   return (
     <>
       <DialogSection title={t('console.dialog.pickTable')}>
-        <TablePicker tables={tables} suggested={suggested} onPick={onAssign} />
+        {busyTable === null ? (
+          <TablePicker tables={tables} suggested={suggested} onPick={onAssign} />
+        ) : (
+          // Раньше выбор стола здесь не смотрел на занятость игроков, и пару
+          // можно было поставить, пока один из них ещё играл за другим.
+          <Typography role="status" variant="body2" color="warning.main">
+            {fill(t('console.queue.busy'), { number: String(busyTable) })}
+          </Typography>
+        )}
       </DialogSection>
 
       <Box sx={{ mt: 3 }}>

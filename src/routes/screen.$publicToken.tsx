@@ -46,7 +46,9 @@ export const Route = createFileRoute('/screen/$publicToken')({
  */
 function ScreenRoute(): ReactNode {
   return (
-    <ThemeRoot theme="night">
+    // Светлый, как и весь продукт (октябрь 2026): на экране зала белый фон
+    // с чёрным текстом читается издалека не хуже, а выглядит своим.
+    <ThemeRoot>
       <ScreenPage />
     </ThemeRoot>
   );
@@ -215,15 +217,13 @@ function ScreenPage(): ReactNode {
                     <Box
                       component="span"
                       sx={{
-                        px: '0.6vw',
-                        py: '0.2vh',
-                        borderRadius: 1,
-                        bgcolor: 'primary.main',
-                        color: 'background.default',
-                        fontSize: size(0.8),
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
+                        px: '0.8vw',
+                        py: '0.3vh',
+                        borderRadius: 999,
+                        bgcolor: 'var(--ink-100)',
+                        color: 'text.primary',
+                        fontSize: size(0.85),
+                        fontWeight: 600,
                       }}
                     >
                       {boards.stageName}
@@ -337,7 +337,7 @@ function ScreenPage(): ReactNode {
                   matches={boards.played}
                   names={boards.names}
                   labelOf={labelOf}
-                  shown={4}
+                  shown={3}
                 />
               </Box>
 

@@ -32,10 +32,11 @@ export const Route = createFileRoute('/console')({
  */
 function ConsoleLayout(): ReactNode {
   return (
-    <ThemeRoot theme="night">
-      {/* on-night — обводка фокуса в ночном цвете (styles.css). */}
+    // Светлая тема, как во всём продукте: владелец продукта счёл тёмную
+    // консоль чужеродной (октябрь 2026). Зал обычно освещён, и белый экран
+    // планшета читается не хуже тёмного.
+    <ThemeRoot>
       <Box
-        className="on-night"
         sx={{
           display: 'flex',
           // Не height: лента консоли длиннее экрана, и ниже первого экрана

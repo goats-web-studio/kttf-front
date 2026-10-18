@@ -131,7 +131,7 @@ export default function GroupBoard({
                 py: '0.35vh',
                 borderTop: 1,
                 borderColor: 'divider',
-                boxShadow: through ? 'inset 0.3vw 0 0 var(--night-ok)' : 'none',
+                boxShadow: through ? 'inset 0.3vw 0 0 var(--ok)' : 'none',
                 fontSize: size(1.15),
                 lineHeight: 1.3,
               }}
@@ -234,15 +234,12 @@ function Cell({
     return (
       <Box
         role="cell"
-        sx={{
-          ...base,
-          fontSize: size(0.7),
-          color: 'primary.main',
-          border: 1,
-          borderColor: 'primary.main',
-        }}
+        // Идущая встреча — красная точка, а не плашка «идёт» в рамке: на
+        // матрице их по нескольку, и рамки рябили сильнее результатов.
+        aria-label={t('screen.group.playing')}
+        sx={{ ...base, color: 'primary.main', fontSize: size(1.2), lineHeight: 1 }}
       >
-        {t('screen.group.playing')}
+        ●
       </Box>
     );
   }
@@ -264,7 +261,7 @@ function Cell({
       role="cell"
       sx={{
         ...base,
-        bgcolor: won ? tint('night-ok', 24) : tint('night-red', 18),
+        bgcolor: won ? tint('ok', 24) : tint('red-600', 18),
         color: won ? 'success.main' : 'primary.main',
       }}
     >

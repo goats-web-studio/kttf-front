@@ -48,10 +48,11 @@ export default defineConfig({
         scope: '/',
         display: 'standalone',
         orientation: 'any',
-        background_color: '#151515',
-        // Цвета манифеста — токены --night: установленное приложение открывается
-        // тёмным экраном консоли, а не синим из прототипной палитры.
-        theme_color: '#151515',
+        // Цвета манифеста — светлые токены (--paper-sunken, --paper): консоль
+        // и экран зала светлые, как весь продукт (октябрь 2026), и заставка
+        // установленного приложения не должна вспыхивать тёмным.
+        background_color: '#f4f4f0',
+        theme_color: '#ffffff',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },

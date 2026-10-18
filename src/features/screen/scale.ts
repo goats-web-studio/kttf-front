@@ -20,7 +20,7 @@ export const DISPLAY = "'Oswald', system-ui, sans-serif";
  * Сплошная заливка зелёным или красным на всю ячейку спорит с цифрами,
  * подложка оставляет их главными.
  */
-export function tint(token: 'night-ok' | 'night-red' | 'night-warn', percent: number): string {
+export function tint(token: 'ok' | 'red-600' | 'warn', percent: number): string {
   return `color-mix(in srgb, var(--${token}) ${String(percent)}%, transparent)`;
 }
 
@@ -29,17 +29,10 @@ export const BOARD_TITLE = {
   display: 'flex',
   alignItems: 'center',
   gap: '0.6vw',
-  fontSize: size(1.15),
+  fontSize: size(1.3),
   lineHeight: 1.2,
   fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.06em',
-  color: 'text.secondary',
-  '&::before': {
-    content: '""',
-    width: '0.35vw',
-    height: '1.1em',
-    borderRadius: 1,
-    bgcolor: 'primary.main',
-  },
+  // Без капслока и цветной черты: заголовок блока — подпись к данным, а не
+  // ещё один яркий элемент на стене (жалоба владельца, октябрь 2026).
+  color: 'text.primary',
 } as const;

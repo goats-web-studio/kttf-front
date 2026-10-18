@@ -85,12 +85,10 @@ export default function TablesBoard({ tables, names, labelOf, now }: TablesBoard
                 gridTemplateColumns: `${size(3)} minmax(0, 1fr)`,
                 borderRadius: 3,
                 overflow: 'hidden',
-                border: '0.15vw solid',
-                borderColor: calling
-                  ? 'warning.main'
-                  : table.status === 'PLAYING'
-                    ? 'primary.main'
-                    : 'divider',
+                border: '0.1vw solid',
+                // Выделяется только вызов — ради него игрок и смотрит на стену.
+                // Идущая встреча — обычная карточка: их на стене большинство.
+                borderColor: calling ? 'var(--warn)' : 'divider',
                 bgcolor: 'background.paper',
                 ...(calling ? { animation: 'kttf-call 1.6s ease-in-out 4' } : {}),
                 '@keyframes kttf-call': {
@@ -109,10 +107,8 @@ export default function TablesBoard({ tables, names, labelOf, now }: TablesBoard
                   fontWeight: 700,
                   fontVariantNumeric: 'tabular-nums',
                   ...(calling
-                    ? { bgcolor: 'warning.main', color: 'background.default' }
-                    : table.status === 'PLAYING'
-                      ? { bgcolor: 'primary.main', color: 'background.default' }
-                      : { bgcolor: 'background.default', color: 'text.secondary' }),
+                    ? { bgcolor: 'var(--warn)', color: '#ffffff' }
+                    : { bgcolor: 'var(--paper-sunken)', color: 'text.primary' }),
                 }}
               >
                 {table.number}
@@ -143,13 +139,8 @@ export default function TablesBoard({ tables, names, labelOf, now }: TablesBoard
                     component="span"
                     sx={{
                       flexShrink: 0,
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      color: calling
-                        ? 'warning.main'
-                        : table.status === 'PLAYING'
-                          ? 'success.main'
-                          : 'text.secondary',
+                      fontWeight: 600,
+                      color: calling ? 'var(--warn-text)' : 'text.secondary',
                     }}
                   >
                     {calling
@@ -199,8 +190,8 @@ export default function TablesBoard({ tables, names, labelOf, now }: TablesBoard
                 px: '0.7vw',
                 py: '0.25vh',
                 borderRadius: 999,
-                bgcolor: 'color-mix(in srgb, var(--night-ok) 16%, transparent)',
-                color: 'var(--night-ok)',
+                bgcolor: 'color-mix(in srgb, var(--ok) 16%, transparent)',
+                color: 'var(--ok)',
                 fontFamily: "'Oswald', system-ui, sans-serif",
                 fontWeight: 700,
                 fontSize: size(1),
@@ -279,7 +270,7 @@ function Side({
             fontFamily: DISPLAY,
             fontWeight: 700,
             fontVariantNumeric: 'tabular-nums',
-            ...(won ? { bgcolor: tint('night-red', 22), color: 'primary.main' } : {}),
+            ...(won ? { bgcolor: tint('red-600', 22), color: 'primary.main' } : {}),
           }}
         >
           {sets}

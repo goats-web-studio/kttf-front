@@ -92,7 +92,8 @@ describe('экран проведения', () => {
 
     expect(await screen.findByText(ru['console.tables.title'])).toBeDefined();
     // Первый в очереди отмечен как ждущий дольше всех — ТЗ 6.1.
-    expect(await screen.findByText(ru['console.hint.waiting'])).toBeDefined();
+    // Подсказки — одной строкой через точку, поэтому ищется вхождение.
+    expect(await screen.findByText(new RegExp(ru['console.hint.waiting']))).toBeDefined();
   });
 
   it('предлагает свободный стол, а не занятый', async () => {
@@ -122,7 +123,8 @@ describe('экран проведения', () => {
     expect(
       await screen.findByText(fill(ru['console.toast.recorded'], { score: '3:1' })),
     ).toBeDefined();
-    expect(screen.getByText(ru['console.table.awaiting'])).toBeDefined();
+    // Стол со введённым счётом свободен, а сыгранная пара видна подписью.
+    expect(screen.getByText(new RegExp(`^${ru['console.table.justPlayed']}:`))).toBeDefined();
   });
 
   it('введённое ложится в очередь на диск — ТЗ 6.4', async () => {
@@ -316,6 +318,9 @@ describe('действия в окнах', () => {
     );
     fireEvent.click(await screen.findByRole('button', { name: '3:1' }));
     await lastQueued(1);
+
+    // Сыгранные — своя вкладка под столами и очередью.
+    fireEvent.click(screen.getByRole('tab', { name: ru['console.played.title'] }));
 
     const played = screen
       .getByRole('heading', { name: ru['console.played.title'] })

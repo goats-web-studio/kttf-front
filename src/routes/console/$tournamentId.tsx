@@ -4,6 +4,8 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Snackbar from '@mui/material/Snackbar';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
 import { ChevronLeft, Copy, Tv } from 'lucide-react';
@@ -40,6 +42,9 @@ export const Route = createFileRoute('/console/$tournamentId')({
 });
 
 /** Что открыто поверх зала: окно встречи или окно свободного стола. */
+/** Нижняя часть консоли — вкладками: таблицы групп и сыгранные встречи. */
+type Lower = 'standings' | 'played';
+
 type Opened =
   | { readonly kind: 'match'; readonly matchId: string }
   | { readonly kind: 'table'; readonly number: number }
@@ -75,6 +80,7 @@ function ConsoleScreen(): ReactNode {
 
   const standingsRef = useRef<HTMLElement>(null);
   const [opened, setOpened] = useState<Opened>(null);
+  const [lower, setLower] = useState<Lower>('standings');
   const [toast, setToast] = useState<Toast | null>(null);
 
   const snapshot = state.data;
@@ -172,7 +178,7 @@ function ConsoleScreen(): ReactNode {
           position: { xs: 'static', lg: 'sticky' },
           top: 0,
           zIndex: 'appBar',
-          bgcolor: 'background.default',
+          bgcolor: 'background.paper',
           borderBottom: 1,
           borderColor: 'divider',
         }}
@@ -223,7 +229,7 @@ function ConsoleScreen(): ReactNode {
                     flex: '0 1 220px',
                     height: 6,
                     borderRadius: 999,
-                    bgcolor: 'var(--night-line)',
+                    bgcolor: 'var(--line)',
                     overflow: 'hidden',
                   }}
                 >
@@ -235,7 +241,7 @@ function ConsoleScreen(): ReactNode {
                           ? 0
                           : Math.round((view.progress.done / view.progress.total) * 100),
                       )}%`,
-                      bgcolor: 'var(--night-red)',
+                      bgcolor: 'var(--red-600)',
                       borderRadius: 999,
                       transition: 'width var(--dur-slow) var(--ease)',
                     }}
@@ -290,6 +296,7 @@ function ConsoleScreen(): ReactNode {
                     <Button
                       color="warning"
                       onClick={() => {
+                        setLower('standings');
                         standingsRef.current?.scrollIntoView({ behavior: 'smooth' });
                       }}
                       sx={{ minHeight: 44 }}
@@ -307,9 +314,10 @@ function ConsoleScreen(): ReactNode {
                 {t('console.hint.tap')}
               </Typography>
 
-              {/* Одна страница, а не вкладки: судья видит зал, очередь и
-                  таблицы разом и не ищет, где спрятано нужное. На широком
-                  экране — две колонки, на телефоне — одна лента. */}
+              {/* Сверху — рабочая зона судьи: столы и очередь рядом, как
+                  панели «Играется» и «В ожидании» у турнир-менеджера RTTF.
+                  Таблицы и сыгранные — ниже вкладками: раньше всё висело
+                  одной лентой, и консоль читалась нагромождением. */}
               <Box
                 sx={{
                   display: 'grid',
@@ -317,74 +325,71 @@ function ConsoleScreen(): ReactNode {
                   alignItems: 'start',
                   gridTemplateColumns: {
                     xs: 'minmax(0, 1fr)',
-                    lg: 'minmax(0, 2fr) minmax(0, 1fr)',
+                    lg: 'minmax(0, 3fr) minmax(0, 2fr)',
                   },
                 }}
               >
-                {/* На телефоне обёртки колонок растворяются (`contents`), и
-                    порядок задают сами блоки: столы, очередь, таблицы,
-                    сыгранные — в том порядке, в каком судья к ним обращается. */}
-                <Box sx={COLUMN}>
-                  <Box sx={{ order: 1 }}>
-                    <TablesZone
-                      tables={view.tables}
-                      names={view.names}
-                      now={now}
-                      onOpen={(table) => {
-                        setOpened(
-                          table.status === 'PLAYING' && table.match !== null
-                            ? { kind: 'match', matchId: table.match.id }
-                            : { kind: 'table', number: table.number },
-                        );
-                      }}
-                    />
-                  </Box>
+                <TablesZone
+                  tables={view.tables}
+                  names={view.names}
+                  now={now}
+                  onOpen={(table) => {
+                    setOpened(
+                      table.status === 'PLAYING' && table.match !== null
+                        ? { kind: 'match', matchId: table.match.id }
+                        : { kind: 'table', number: table.number },
+                    );
+                  }}
+                />
+                <QueueZone
+                  queue={view.queue}
+                  suggested={view.suggested}
+                  names={view.names}
+                  onAssign={(matchId, tableNumber) => {
+                    const match = findMatch(matchId);
 
-                  <Box
-                    ref={standingsRef}
-                    sx={{
-                      order: 3,
-                      display: 'grid',
-                      gap: 3,
-                      gridTemplateColumns: 'minmax(0, 1fr)',
-                      scrollMarginTop: 96,
-                    }}
-                  >
-                    <TiePanel
-                      groups={snapshot.standings.groups}
-                      stages={snapshot.stages}
-                      names={view.names}
-                      onDecide={(input) => {
-                        tie(input);
-                      }}
-                      isPending={false}
-                    />
-                    <StandingsPanel
-                      groups={snapshot.standings.groups}
-                      stages={snapshot.stages}
-                      names={view.names}
-                      ratings={view.ratings}
-                    />
-                  </Box>
-                </Box>
+                    if (match !== undefined) doAssign(match, tableNumber);
+                  }}
+                  onOpen={(matchId) => {
+                    setOpened({ kind: 'match', matchId });
+                  }}
+                />
+              </Box>
 
-                <Box sx={COLUMN}>
-                  <Box sx={{ order: 2 }}>
-                    <QueueZone
-                      queue={view.queue}
-                      suggested={view.suggested}
-                      names={view.names}
-                      onAssign={(matchId, tableNumber) => {
-                        const match = findMatch(matchId);
+              <Box ref={standingsRef} sx={{ mt: 5, scrollMarginTop: 96 }}>
+                <Tabs
+                  value={lower}
+                  onChange={(_, next: Lower) => {
+                    setLower(next);
+                  }}
+                  aria-label={t('console.lower.label')}
+                  variant="scrollable"
+                  scrollButtons={false}
+                >
+                  <Tab value="standings" label={t('console.standings.title')} />
+                  <Tab value="played" label={t('console.played.title')} />
+                </Tabs>
 
-                        if (match !== undefined) doAssign(match, tableNumber);
-                      }}
-                      onOpen={(matchId) => {
-                        setOpened({ kind: 'match', matchId });
-                      }}
-                    />
-                  </Box>
-                  <Box sx={{ order: 4 }}>
+                <Box sx={{ mt: 2.5, display: 'grid', gap: 3 }}>
+                  {lower === 'standings' ? (
+                    <>
+                      <TiePanel
+                        groups={snapshot.standings.groups}
+                        stages={snapshot.stages}
+                        names={view.names}
+                        onDecide={(input) => {
+                          tie(input);
+                        }}
+                        isPending={false}
+                      />
+                      <StandingsPanel
+                        groups={snapshot.standings.groups}
+                        stages={snapshot.stages}
+                        names={view.names}
+                        ratings={view.ratings}
+                      />
+                    </>
+                  ) : (
                     <PlayedZone
                       matches={view.played}
                       stages={snapshot.stages}
@@ -393,7 +398,7 @@ function ConsoleScreen(): ReactNode {
                         setOpened({ kind: 'match', matchId });
                       }}
                     />
-                  </Box>
+                  )}
                 </Box>
               </Box>
             </>
@@ -452,6 +457,7 @@ function ConsoleScreen(): ReactNode {
           ratings={view.ratings}
           tables={view.tables}
           suggested={view.suggested}
+          busyTable={view.queue.find((item) => item.match.id === openedMatch.id)?.busyTable ?? null}
           setsToWin={setsToWinOf(openedMatch)}
           now={now}
           onClose={() => {
@@ -535,12 +541,6 @@ function ConsoleScreen(): ReactNode {
 }
 
 /** Колонка широкого экрана; на телефоне растворяется в общую ленту. */
-const COLUMN = {
-  display: { xs: 'contents', lg: 'grid' },
-  gap: 3,
-  gridTemplateColumns: 'minmax(0, 1fr)',
-} as const;
-
 /**
  * Ссылка на экран зала — в шапке консоли, где судья её и ищет перед турниром.
  *
