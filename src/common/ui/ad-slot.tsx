@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 
 /**
- * Место под рекламу — ADR-055, решение 7, `docs/09` 5.5.
+ * Место под рекламу — ADR-055, решение 7, `docs/09` 5.5; маркет — ADR-058,
+ * `docs/10` 5.9: `market-inline` карточкой в списке товаров после восьмой,
+ * `product-aside` в правой колонке товара.
  *
  * Слоты заложены в макет с первого дня, чтобы появление рекламы не
  * переставляло страницы. Пока продаваемой рекламы нет, слот ничего не
@@ -11,7 +13,8 @@ import type { ReactNode } from 'react';
  * Когда реклама появится, слот получит заранее заданный размер (чтобы
  * вёрстка не прыгала при загрузке) и метку «Реклама» — `ad.label`.
  */
-export type AdPlacement = 'list-inline' | 'club-aside' | 'home-feed';
+export type AdPlacement =
+  'list-inline' | 'club-aside' | 'home-feed' | 'market-inline' | 'product-aside';
 
 /** Реклама по местам. Пока пусто: продаваемой рекламы ещё нет. */
 const ADS: Partial<Record<AdPlacement, ReactNode>> = {};

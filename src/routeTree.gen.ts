@@ -22,6 +22,7 @@ import { Route as ConsoleTournamentIdRouteImport } from './routes/console/$tourn
 import { Route as ScreenPublicTokenRouteImport } from './routes/screen.$publicToken'
 import { Route as AppCabinetIndexRouteImport } from './routes/_app/cabinet.index'
 import { Route as AppCabinetApplicationsRouteImport } from './routes/_app/cabinet.applications'
+import { Route as AppCabinetCatalogRouteImport } from './routes/_app/cabinet.catalog'
 import { Route as AppCabinetContentRouteImport } from './routes/_app/cabinet.content'
 import { Route as AppCabinetPlacesRouteImport } from './routes/_app/cabinet.places'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings.index'
@@ -30,6 +31,8 @@ import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.p
 import { Route as AppTournamentsNewRouteImport } from './routes/_app/tournaments.new'
 import { Route as PublicClubsIndexRouteImport } from './routes/_public/clubs.index'
 import { Route as PublicClubsClubIdRouteImport } from './routes/_public/clubs.$clubId'
+import { Route as PublicMarketIndexRouteImport } from './routes/_public/market.index'
+import { Route as PublicMarketCategoryRouteImport } from './routes/_public/market.$category'
 import { Route as PublicPlayersIndexRouteImport } from './routes/_public/players.index'
 import { Route as PublicPlayersPlayerIdRouteImport } from './routes/_public/players.$playerId'
 import { Route as PublicTournamentsIndexRouteImport } from './routes/_public/tournaments.index'
@@ -38,6 +41,9 @@ import { Route as AppCabinetClubClubIdRouteImport } from './routes/_app/cabinet.
 import { Route as AppCabinetClubsIndexRouteImport } from './routes/_app/cabinet.clubs.index'
 import { Route as AppCabinetClubsNewRouteImport } from './routes/_app/cabinet.clubs.new'
 import { Route as AppTournamentsTournamentIdEditRouteImport } from './routes/_app/tournaments.$tournamentId.edit'
+import { Route as PublicMarketBrandsIndexRouteImport } from './routes/_public/market.brands.index'
+import { Route as PublicMarketBrandsSlugRouteImport } from './routes/_public/market.brands.$slug'
+import { Route as PublicMarketItemsSlugRouteImport } from './routes/_public/market.items.$slug'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -102,6 +108,11 @@ const AppCabinetApplicationsRoute = AppCabinetApplicationsRouteImport.update({
   path: '/cabinet/applications',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCabinetCatalogRoute = AppCabinetCatalogRouteImport.update({
+  id: '/cabinet/catalog',
+  path: '/cabinet/catalog',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCabinetContentRoute = AppCabinetContentRouteImport.update({
   id: '/cabinet/content',
   path: '/cabinet/content',
@@ -140,6 +151,16 @@ const PublicClubsIndexRoute = PublicClubsIndexRouteImport.update({
 const PublicClubsClubIdRoute = PublicClubsClubIdRouteImport.update({
   id: '/clubs/$clubId',
   path: '/clubs/$clubId',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicMarketIndexRoute = PublicMarketIndexRouteImport.update({
+  id: '/market/',
+  path: '/market/',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicMarketCategoryRoute = PublicMarketCategoryRouteImport.update({
+  id: '/market/$category',
+  path: '/market/$category',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicPlayersIndexRoute = PublicPlayersIndexRouteImport.update({
@@ -184,6 +205,21 @@ const AppTournamentsTournamentIdEditRoute =
     path: '/tournaments/$tournamentId/edit',
     getParentRoute: () => AppRoute,
   } as any)
+const PublicMarketBrandsIndexRoute = PublicMarketBrandsIndexRouteImport.update({
+  id: '/market/brands/',
+  path: '/market/brands/',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicMarketBrandsSlugRoute = PublicMarketBrandsSlugRouteImport.update({
+  id: '/market/brands/$slug',
+  path: '/market/brands/$slug',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicMarketItemsSlugRoute = PublicMarketItemsSlugRouteImport.update({
+  id: '/market/items/$slug',
+  path: '/market/items/$slug',
+  getParentRoute: () => PublicRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -196,23 +232,29 @@ export interface FileRoutesByFullPath {
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console/': typeof ConsoleIndexRoute
   '/cabinet/applications': typeof AppCabinetApplicationsRoute
+  '/cabinet/catalog': typeof AppCabinetCatalogRoute
   '/cabinet/content': typeof AppCabinetContentRoute
   '/cabinet/places': typeof AppCabinetPlacesRoute
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/tournaments/new': typeof AppTournamentsNewRoute
   '/clubs/$clubId': typeof PublicClubsClubIdRoute
+  '/market/$category': typeof PublicMarketCategoryRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/cabinet/': typeof AppCabinetIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/clubs/': typeof PublicClubsIndexRoute
+  '/market/': typeof PublicMarketIndexRoute
   '/players/': typeof PublicPlayersIndexRoute
   '/tournaments/': typeof PublicTournamentsIndexRoute
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
   '/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
+  '/market/brands/$slug': typeof PublicMarketBrandsSlugRoute
+  '/market/items/$slug': typeof PublicMarketItemsSlugRoute
   '/cabinet/clubs/': typeof AppCabinetClubsIndexRoute
+  '/market/brands/': typeof PublicMarketBrandsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
@@ -224,23 +266,29 @@ export interface FileRoutesByTo {
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console': typeof ConsoleIndexRoute
   '/cabinet/applications': typeof AppCabinetApplicationsRoute
+  '/cabinet/catalog': typeof AppCabinetCatalogRoute
   '/cabinet/content': typeof AppCabinetContentRoute
   '/cabinet/places': typeof AppCabinetPlacesRoute
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/tournaments/new': typeof AppTournamentsNewRoute
   '/clubs/$clubId': typeof PublicClubsClubIdRoute
+  '/market/$category': typeof PublicMarketCategoryRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/cabinet': typeof AppCabinetIndexRoute
   '/settings': typeof AppSettingsIndexRoute
   '/clubs': typeof PublicClubsIndexRoute
+  '/market': typeof PublicMarketIndexRoute
   '/players': typeof PublicPlayersIndexRoute
   '/tournaments': typeof PublicTournamentsIndexRoute
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
   '/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
+  '/market/brands/$slug': typeof PublicMarketBrandsSlugRoute
+  '/market/items/$slug': typeof PublicMarketItemsSlugRoute
   '/cabinet/clubs': typeof AppCabinetClubsIndexRoute
+  '/market/brands': typeof PublicMarketBrandsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -256,23 +304,29 @@ export interface FileRoutesById {
   '/_public/': typeof PublicIndexRoute
   '/console/': typeof ConsoleIndexRoute
   '/_app/cabinet/applications': typeof AppCabinetApplicationsRoute
+  '/_app/cabinet/catalog': typeof AppCabinetCatalogRoute
   '/_app/cabinet/content': typeof AppCabinetContentRoute
   '/_app/cabinet/places': typeof AppCabinetPlacesRoute
   '/_app/settings/account': typeof AppSettingsAccountRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/tournaments/new': typeof AppTournamentsNewRoute
   '/_public/clubs/$clubId': typeof PublicClubsClubIdRoute
+  '/_public/market/$category': typeof PublicMarketCategoryRoute
   '/_public/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
   '/_app/cabinet/': typeof AppCabinetIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_public/clubs/': typeof PublicClubsIndexRoute
+  '/_public/market/': typeof PublicMarketIndexRoute
   '/_public/players/': typeof PublicPlayersIndexRoute
   '/_public/tournaments/': typeof PublicTournamentsIndexRoute
   '/_app/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/_app/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
   '/_app/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
+  '/_public/market/brands/$slug': typeof PublicMarketBrandsSlugRoute
+  '/_public/market/items/$slug': typeof PublicMarketItemsSlugRoute
   '/_app/cabinet/clubs/': typeof AppCabinetClubsIndexRoute
+  '/_public/market/brands/': typeof PublicMarketBrandsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -287,23 +341,29 @@ export interface FileRouteTypes {
     | '/screen/$publicToken'
     | '/console/'
     | '/cabinet/applications'
+    | '/cabinet/catalog'
     | '/cabinet/content'
     | '/cabinet/places'
     | '/settings/account'
     | '/settings/profile'
     | '/tournaments/new'
     | '/clubs/$clubId'
+    | '/market/$category'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/cabinet/'
     | '/settings/'
     | '/clubs/'
+    | '/market/'
     | '/players/'
     | '/tournaments/'
     | '/cabinet/club/$clubId'
     | '/cabinet/clubs/new'
     | '/tournaments/$tournamentId/edit'
+    | '/market/brands/$slug'
+    | '/market/items/$slug'
     | '/cabinet/clubs/'
+    | '/market/brands/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -315,23 +375,29 @@ export interface FileRouteTypes {
     | '/screen/$publicToken'
     | '/console'
     | '/cabinet/applications'
+    | '/cabinet/catalog'
     | '/cabinet/content'
     | '/cabinet/places'
     | '/settings/account'
     | '/settings/profile'
     | '/tournaments/new'
     | '/clubs/$clubId'
+    | '/market/$category'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
     | '/cabinet'
     | '/settings'
     | '/clubs'
+    | '/market'
     | '/players'
     | '/tournaments'
     | '/cabinet/club/$clubId'
     | '/cabinet/clubs/new'
     | '/tournaments/$tournamentId/edit'
+    | '/market/brands/$slug'
+    | '/market/items/$slug'
     | '/cabinet/clubs'
+    | '/market/brands'
   id:
     | '__root__'
     | '/_app'
@@ -346,23 +412,29 @@ export interface FileRouteTypes {
     | '/_public/'
     | '/console/'
     | '/_app/cabinet/applications'
+    | '/_app/cabinet/catalog'
     | '/_app/cabinet/content'
     | '/_app/cabinet/places'
     | '/_app/settings/account'
     | '/_app/settings/profile'
     | '/_app/tournaments/new'
     | '/_public/clubs/$clubId'
+    | '/_public/market/$category'
     | '/_public/players/$playerId'
     | '/_public/tournaments/$tournamentId'
     | '/_app/cabinet/'
     | '/_app/settings/'
     | '/_public/clubs/'
+    | '/_public/market/'
     | '/_public/players/'
     | '/_public/tournaments/'
     | '/_app/cabinet/club/$clubId'
     | '/_app/cabinet/clubs/new'
     | '/_app/tournaments/$tournamentId/edit'
+    | '/_public/market/brands/$slug'
+    | '/_public/market/items/$slug'
     | '/_app/cabinet/clubs/'
+    | '/_public/market/brands/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -465,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCabinetApplicationsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/cabinet/catalog': {
+      id: '/_app/cabinet/catalog'
+      path: '/cabinet/catalog'
+      fullPath: '/cabinet/catalog'
+      preLoaderRoute: typeof AppCabinetCatalogRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/cabinet/content': {
       id: '/_app/cabinet/content'
       path: '/cabinet/content'
@@ -519,6 +598,20 @@ declare module '@tanstack/react-router' {
       path: '/clubs/$clubId'
       fullPath: '/clubs/$clubId'
       preLoaderRoute: typeof PublicClubsClubIdRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/market/': {
+      id: '/_public/market/'
+      path: '/market'
+      fullPath: '/market/'
+      preLoaderRoute: typeof PublicMarketIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/market/$category': {
+      id: '/_public/market/$category'
+      path: '/market/$category'
+      fullPath: '/market/$category'
+      preLoaderRoute: typeof PublicMarketCategoryRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/players/': {
@@ -577,11 +670,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTournamentsTournamentIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_public/market/brands/': {
+      id: '/_public/market/brands/'
+      path: '/market/brands'
+      fullPath: '/market/brands/'
+      preLoaderRoute: typeof PublicMarketBrandsIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/market/brands/$slug': {
+      id: '/_public/market/brands/$slug'
+      path: '/market/brands/$slug'
+      fullPath: '/market/brands/$slug'
+      preLoaderRoute: typeof PublicMarketBrandsSlugRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/market/items/$slug': {
+      id: '/_public/market/items/$slug'
+      path: '/market/items/$slug'
+      fullPath: '/market/items/$slug'
+      preLoaderRoute: typeof PublicMarketItemsSlugRouteImport
+      parentRoute: typeof PublicRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppCabinetApplicationsRoute: typeof AppCabinetApplicationsRoute
+  AppCabinetCatalogRoute: typeof AppCabinetCatalogRoute
   AppCabinetContentRoute: typeof AppCabinetContentRoute
   AppCabinetPlacesRoute: typeof AppCabinetPlacesRoute
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
@@ -597,6 +712,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCabinetApplicationsRoute: AppCabinetApplicationsRoute,
+  AppCabinetCatalogRoute: AppCabinetCatalogRoute,
   AppCabinetContentRoute: AppCabinetContentRoute,
   AppCabinetPlacesRoute: AppCabinetPlacesRoute,
   AppSettingsAccountRoute: AppSettingsAccountRoute,
@@ -619,11 +735,16 @@ interface PublicRouteChildren {
   PublicSignUpRoute: typeof PublicSignUpRoute
   PublicIndexRoute: typeof PublicIndexRoute
   PublicClubsClubIdRoute: typeof PublicClubsClubIdRoute
+  PublicMarketCategoryRoute: typeof PublicMarketCategoryRoute
   PublicPlayersPlayerIdRoute: typeof PublicPlayersPlayerIdRoute
   PublicTournamentsTournamentIdRoute: typeof PublicTournamentsTournamentIdRoute
   PublicClubsIndexRoute: typeof PublicClubsIndexRoute
+  PublicMarketIndexRoute: typeof PublicMarketIndexRoute
   PublicPlayersIndexRoute: typeof PublicPlayersIndexRoute
   PublicTournamentsIndexRoute: typeof PublicTournamentsIndexRoute
+  PublicMarketBrandsSlugRoute: typeof PublicMarketBrandsSlugRoute
+  PublicMarketItemsSlugRoute: typeof PublicMarketItemsSlugRoute
+  PublicMarketBrandsIndexRoute: typeof PublicMarketBrandsIndexRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
@@ -633,11 +754,16 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicSignUpRoute: PublicSignUpRoute,
   PublicIndexRoute: PublicIndexRoute,
   PublicClubsClubIdRoute: PublicClubsClubIdRoute,
+  PublicMarketCategoryRoute: PublicMarketCategoryRoute,
   PublicPlayersPlayerIdRoute: PublicPlayersPlayerIdRoute,
   PublicTournamentsTournamentIdRoute: PublicTournamentsTournamentIdRoute,
   PublicClubsIndexRoute: PublicClubsIndexRoute,
+  PublicMarketIndexRoute: PublicMarketIndexRoute,
   PublicPlayersIndexRoute: PublicPlayersIndexRoute,
   PublicTournamentsIndexRoute: PublicTournamentsIndexRoute,
+  PublicMarketBrandsSlugRoute: PublicMarketBrandsSlugRoute,
+  PublicMarketItemsSlugRoute: PublicMarketItemsSlugRoute,
+  PublicMarketBrandsIndexRoute: PublicMarketBrandsIndexRoute,
 }
 
 const PublicRouteWithChildren =

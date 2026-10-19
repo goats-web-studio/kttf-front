@@ -2,7 +2,7 @@ import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Paper from '@mui/material/Paper';
 import { useMatchRoute } from '@tanstack/react-router';
-import { Building2, CalendarDays, Users, type LucideIcon } from 'lucide-react';
+import { Building2, CalendarDays, ShoppingBag, Users, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -18,6 +18,7 @@ const ICONS: Readonly<Record<string, LucideIcon>> = {
   '/players': Users,
   '/tournaments': CalendarDays,
   '/clubs': Building2,
+  '/market': ShoppingBag,
 };
 
 /**

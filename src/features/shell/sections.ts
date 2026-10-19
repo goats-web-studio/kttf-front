@@ -10,4 +10,6 @@ export const SECTIONS: readonly { readonly to: string; readonly label: MessageKe
   { to: '/players', label: 'nav.players' },
   { to: '/tournaments', label: 'nav.tournaments' },
   { to: '/clubs', label: 'nav.clubs' },
+  // Четвёртым после клубов — ADR-058, `docs/10` 2.
+  { to: '/market', label: 'nav.market' },
 ];

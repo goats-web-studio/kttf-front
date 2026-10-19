@@ -148,7 +148,7 @@ function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
         sx={{
           minHeight: 44,
           pl: 0.5,
-          pr: { xs: 0.5, sm: 1.5 },
+          pr: { xs: 0.5, md: 1.5 },
           gap: 1.25,
           borderRadius: 999,
           transition: 'background-color var(--dur-fast) var(--ease)',
@@ -168,11 +168,12 @@ function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
               photoUrl={player.photoUrl}
               size="md"
             />
-            {/* Имя и рейтинг — с планшета: на телефоне шапке хватает аватарки. */}
+            {/* Имя и рейтинг — с 900px: на телефоне шапке хватает аватарки, а на
+                планшете рядом стоят четыре раздела (ADR-058). */}
             <Box
               component="span"
               sx={{
-                display: { xs: 'none', sm: 'flex' },
+                display: { xs: 'none', md: 'flex' },
                 flexDirection: 'column',
                 alignItems: 'flex-start',
                 lineHeight: 1.2,

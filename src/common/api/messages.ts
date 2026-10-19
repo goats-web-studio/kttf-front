@@ -40,6 +40,9 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   CLUB_PLAN_LIMIT: 'error.api.CLUB_PLAN_LIMIT',
   VIDEO_NOT_FOUND: 'error.api.VIDEO_NOT_FOUND',
   PLACE_ALREADY_EXISTS: 'error.api.PLACE_ALREADY_EXISTS',
+
+  // Каталог маркета — ADR-058.
+  BRAND_ALREADY_EXISTS: 'error.api.BRAND_ALREADY_EXISTS',
 };
 
 /**

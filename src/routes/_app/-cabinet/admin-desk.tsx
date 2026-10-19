@@ -34,6 +34,9 @@ export default function AdminDesk(): ReactNode {
         <Button href="/cabinet/places" sx={{ minHeight: 44 }}>
           {t('page.places.title')}
         </Button>
+        <Button href="/cabinet/catalog" sx={{ minHeight: 44 }}>
+          {t('page.catalog.title')}
+        </Button>
       </Box>
     </Surface>
   );
