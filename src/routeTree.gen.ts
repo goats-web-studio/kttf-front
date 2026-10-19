@@ -29,6 +29,7 @@ import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.p
 import { Route as AppTournamentsNewRouteImport } from './routes/_app/tournaments.new'
 import { Route as PublicClubsIndexRouteImport } from './routes/_public/clubs.index'
 import { Route as PublicClubsClubIdRouteImport } from './routes/_public/clubs.$clubId'
+import { Route as PublicPlayersIndexRouteImport } from './routes/_public/players.index'
 import { Route as PublicPlayersPlayerIdRouteImport } from './routes/_public/players.$playerId'
 import { Route as PublicTournamentsIndexRouteImport } from './routes/_public/tournaments.index'
 import { Route as PublicTournamentsTournamentIdRouteImport } from './routes/_public/tournaments.$tournamentId'
@@ -135,6 +136,11 @@ const PublicClubsClubIdRoute = PublicClubsClubIdRouteImport.update({
   path: '/clubs/$clubId',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicPlayersIndexRoute = PublicPlayersIndexRouteImport.update({
+  id: '/players/',
+  path: '/players/',
+  getParentRoute: () => PublicRoute,
+} as any)
 const PublicPlayersPlayerIdRoute = PublicPlayersPlayerIdRouteImport.update({
   id: '/players/$playerId',
   path: '/players/$playerId',
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/cabinet/': typeof AppCabinetIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/clubs/': typeof PublicClubsIndexRoute
+  '/players/': typeof PublicPlayersIndexRoute
   '/tournaments/': typeof PublicTournamentsIndexRoute
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/cabinet': typeof AppCabinetIndexRoute
   '/settings': typeof AppSettingsIndexRoute
   '/clubs': typeof PublicClubsIndexRoute
+  '/players': typeof PublicPlayersIndexRoute
   '/tournaments': typeof PublicTournamentsIndexRoute
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/_app/cabinet/': typeof AppCabinetIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_public/clubs/': typeof PublicClubsIndexRoute
+  '/_public/players/': typeof PublicPlayersIndexRoute
   '/_public/tournaments/': typeof PublicTournamentsIndexRoute
   '/_app/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/_app/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/cabinet/'
     | '/settings/'
     | '/clubs/'
+    | '/players/'
     | '/tournaments/'
     | '/cabinet/club/$clubId'
     | '/cabinet/clubs/new'
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/settings'
     | '/clubs'
+    | '/players'
     | '/tournaments'
     | '/cabinet/club/$clubId'
     | '/cabinet/clubs/new'
@@ -334,6 +345,7 @@ export interface FileRouteTypes {
     | '/_app/cabinet/'
     | '/_app/settings/'
     | '/_public/clubs/'
+    | '/_public/players/'
     | '/_public/tournaments/'
     | '/_app/cabinet/club/$clubId'
     | '/_app/cabinet/clubs/new'
@@ -490,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicClubsClubIdRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/players/': {
+      id: '/_public/players/'
+      path: '/players'
+      fullPath: '/players/'
+      preLoaderRoute: typeof PublicPlayersIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/players/$playerId': {
       id: '/_public/players/$playerId'
       path: '/players/$playerId'
@@ -582,6 +601,7 @@ interface PublicRouteChildren {
   PublicPlayersPlayerIdRoute: typeof PublicPlayersPlayerIdRoute
   PublicTournamentsTournamentIdRoute: typeof PublicTournamentsTournamentIdRoute
   PublicClubsIndexRoute: typeof PublicClubsIndexRoute
+  PublicPlayersIndexRoute: typeof PublicPlayersIndexRoute
   PublicTournamentsIndexRoute: typeof PublicTournamentsIndexRoute
 }
 
@@ -595,6 +615,7 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicPlayersPlayerIdRoute: PublicPlayersPlayerIdRoute,
   PublicTournamentsTournamentIdRoute: PublicTournamentsTournamentIdRoute,
   PublicClubsIndexRoute: PublicClubsIndexRoute,
+  PublicPlayersIndexRoute: PublicPlayersIndexRoute,
   PublicTournamentsIndexRoute: PublicTournamentsIndexRoute,
 }
 

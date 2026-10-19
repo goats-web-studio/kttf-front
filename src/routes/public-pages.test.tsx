@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
-import { fill } from '@/common/i18n';
+import { fill, formatDate } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { playerName } from '@/features/players/player-name';
 import {
@@ -68,11 +68,20 @@ function answer(url: string): Response {
   }
 
   if (url.includes('/players')) {
-    return reply(pageOf([PLAYERS.first, PLAYERS.second]));
+    // Строка списка — краткий вид и дата обновления рейтинга (ADR-054).
+    return reply(
+      pageOf([
+        { ...PLAYERS.first, ratingUpdatedAt: UPDATED_AT },
+        { ...PLAYERS.second, ratingUpdatedAt: null },
+      ]),
+    );
   }
 
   throw new Error(`Неожидаемый запрос: ${url}`);
 }
+
+/** Последнее изменение рейтинга первого игрока — колонка «Обновлён». */
+const UPDATED_AT = '2026-03-14T12:00:00.000Z';
 
 /** Владелец клуба с профилем игрока — состав на странице клуба. */
 const OWNER = {
@@ -237,9 +246,9 @@ describe('страница турнира', () => {
   });
 });
 
-describe('рейтинг', () => {
+describe('игроки — ADR-054', () => {
   it('показывает игроков в порядке, который задал сервер', async () => {
-    renderAt('/ratings');
+    renderAt('/players');
 
     const rows = await screen.findAllByRole('row');
     // Первая строка — заголовки таблицы.
@@ -247,6 +256,108 @@ describe('рейтинг', () => {
 
     expect(players[0]).toContain(PLAYERS.first.lastName);
     expect(players[1]).toContain(PLAYERS.second.lastName);
+  });
+
+  it('«Обновлён» — дата последнего изменения рейтинга, без событий — прочерк', async () => {
+    renderAt('/players');
+
+    const rows = (await screen.findAllByRole('row')).slice(1);
+
+    expect(rows[0]?.textContent).toContain(formatDate(UPDATED_AT, 'ru'));
+    expect(rows[1]?.textContent).toContain('—');
+  });
+
+  it('раздел в шапке — «Игроки», ведёт на /players', async () => {
+    renderAt('/players');
+
+    const [link] = await screen.findAllByRole('link', { name: ru['nav.players'] });
+
+    expect(link?.getAttribute('href')).toBe('/players');
+  });
+
+  it('старая ссылка на рейтинг города открывает игроков этого города', async () => {
+    renderAt(`/ratings?city=${CITIES.almaty.id}`);
+
+    await screen.findAllByRole('row');
+
+    expect(window.location.pathname).toBe('/players');
+    expect(window.location.search).toContain(`city=${CITIES.almaty.id}`);
+  });
+
+  it('несколько городов из ссылки — одним запросом и чипом на каждый', async () => {
+    renderAt(`/players?city=${CITIES.almaty.id},${CITIES.astana.id}`);
+
+    await screen.findAllByRole('row');
+
+    expect(
+      requests.some(
+        (url) =>
+          url.includes('/players?') &&
+          decodeURIComponent(url).includes(`cityId=${CITIES.almaty.id},${CITIES.astana.id}`),
+      ),
+    ).toBe(true);
+    expect(await screen.findByText(`${ru['filter.city']}: ${CITIES.almaty.name}`)).toBeDefined();
+    expect(await screen.findByText(`${ru['filter.city']}: ${CITIES.astana.name}`)).toBeDefined();
+  });
+
+  it('фильтры применяются по «Найти»: имя, рейтинг от и до, пол', async () => {
+    renderAt('/players');
+
+    await screen.findAllByRole('row');
+    fireEvent.change(screen.getByRole('searchbox', { name: ru['players.filter.name'] }), {
+      target: { value: 'Ким' },
+    });
+    // «От 400 до 300» — это «от 300 до 400»; буквы в поле не попадают.
+    fireEvent.change(screen.getByRole('textbox', { name: ru['players.filter.ratingFrom'] }), {
+      target: { value: '400' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: ru['players.filter.ratingTo'] }), {
+      target: { value: '3a00' },
+    });
+    fireEvent.click(screen.getByRole('radio', { name: ru['players.filter.FEMALE'] }));
+
+    // До «Найти» запроса с условиями нет.
+    expect(requests.some((url) => url.includes('ratingFrom'))).toBe(false);
+
+    const [find] = screen.getAllByRole('button', { name: ru['players.filter.submit'] });
+    if (find === undefined) throw new Error('Нет кнопки «Найти»');
+    fireEvent.click(find);
+
+    await waitFor(() => {
+      expect(
+        requests.some(
+          (url) =>
+            url.includes('/players?') &&
+            url.includes('ratingFrom=300') &&
+            url.includes('ratingTo=400') &&
+            url.includes('gender=FEMALE') &&
+            decodeURIComponent(url).includes('search=Ким'),
+        ),
+      ).toBe(true);
+    });
+    expect(window.location.search).toContain('from=300');
+    expect(
+      await screen.findByText(`${ru['players.filter.gender']}: ${ru['players.filter.FEMALE']}`),
+    ).toBeDefined();
+  });
+
+  it('заголовок «Рейтинг» переворачивает порядок, места считаются от конца', async () => {
+    renderAt('/players');
+
+    await screen.findAllByRole('row');
+    fireEvent.click(screen.getByRole('button', { name: ru['ratings.column.rating'] }));
+
+    await waitFor(() => {
+      expect(requests.some((url) => url.includes('/players?') && url.includes('order=asc'))).toBe(
+        true,
+      );
+    });
+    expect(window.location.search).toContain('order=asc');
+    // Двое в списке: при «слабые первыми» первая строка — второе место.
+    await waitFor(() => {
+      const [, first] = screen.getAllByRole('row');
+      expect(first?.querySelector('td')?.textContent).toBe('2');
+    });
   });
 });
 
@@ -281,7 +392,7 @@ describe('неверная ссылка на турнир', () => {
 describe('фильтры в адресе', () => {
   it('ссылка с городом открывает рейтинг этого города', async () => {
     // Город в адресе — идентификатор записи справочника (ADR-046).
-    renderAt(`/ratings?city=${CITIES.almaty.id}`);
+    renderAt(`/players?city=${CITIES.almaty.id}`);
 
     await screen.findAllByRole('row');
 
@@ -326,12 +437,15 @@ describe('фильтры в адресе', () => {
   });
 
   it('кривая ссылка отбрасывает фильтр, а не показывает ошибку', async () => {
-    renderAt('/ratings?club=abc&page=zero');
+    renderAt('/players?club=abc&page=zero&from=abc&gender=X&city=abc');
 
     await screen.findAllByRole('row');
 
     const players = requests.find((url) => url.includes('/players'));
     expect(players).not.toContain('clubId');
+    expect(players).not.toContain('ratingFrom');
+    expect(players).not.toContain('gender');
+    expect(players).not.toContain('cityId');
     expect(players).toContain('page=1');
   });
 
@@ -399,7 +513,7 @@ describe('фильтры в адресе', () => {
       return Promise.resolve(url.includes('/players') ? reply(pageOf([])) : answer(url));
     });
 
-    renderAt('/ratings?search=Нетакого');
+    renderAt('/players?search=Нетакого');
 
     expect(await screen.findByText(ru['ratings.notFound.title'])).toBeDefined();
     const [resetAll] = screen.getAllByRole('button', { name: ru['filter.resetAll'] });
@@ -440,7 +554,7 @@ describe('главная', () => {
     fireEvent.click(screen.getByRole('button', { name: ru['home.hero.find'] }));
 
     await waitFor(() => {
-      expect(window.location.pathname).toBe('/ratings');
+      expect(window.location.pathname).toBe('/players');
     });
     expect(decodeURIComponent(window.location.search)).toContain('Иванов');
   });
@@ -448,7 +562,7 @@ describe('главная', () => {
 
 describe('клубы', () => {
   it('раздел есть в шапке на любой публичной странице', async () => {
-    renderAt('/ratings');
+    renderAt('/players');
 
     const links = await screen.findAllByRole('link', { name: ru['nav.clubs'] });
 

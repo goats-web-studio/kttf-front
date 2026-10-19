@@ -141,7 +141,7 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
           sx={{ alignItems: 'baseline', justifyContent: 'space-between', mb: 2 }}
         >
           <Typography variant="h2">{t('club.players.title')}</Typography>
-          <Link href={`/ratings?club=${club.id}`} variant="body2">
+          <Link href={`/players?club=${club.id}`} variant="body2">
             {t('club.players.all')}
           </Link>
         </Stack>

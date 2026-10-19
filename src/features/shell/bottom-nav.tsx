@@ -2,7 +2,7 @@ import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Paper from '@mui/material/Paper';
 import { useMatchRoute } from '@tanstack/react-router';
-import { Building2, CalendarDays, TrendingUp, type LucideIcon } from 'lucide-react';
+import { Building2, CalendarDays, Users, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -15,7 +15,7 @@ export const BOTTOM_NAV_HEIGHT = 64;
 
 /** Иконки разделов. Только вместе с подписью — запрет №11. */
 const ICONS: Readonly<Record<string, LucideIcon>> = {
-  '/ratings': TrendingUp,
+  '/players': Users,
   '/tournaments': CalendarDays,
   '/clubs': Building2,
 };

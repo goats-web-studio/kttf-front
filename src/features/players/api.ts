@@ -1,9 +1,10 @@
 import type {
   CreatePlayerInput,
   HeadToHeadView,
-  ListPlayersQuery,
+  ListPlayersRequest,
   Page,
   PlayerBestWinsView,
+  PlayerListItemView,
   PlayerMatchesQuery,
   PlayerMatchView,
   PlayerProfileView,
@@ -11,7 +12,6 @@ import type {
   PlayerSummaryView,
   PlayerTournamentsQuery,
   PlayerTournamentView,
-  PlayerView,
   RatingHistoryQuery,
   RatingHistoryView,
   UpdatePlayerInput,
@@ -28,8 +28,8 @@ import { apiRequest, queryString } from '@/common/api';
  * в котором «9.50» больше «100.00».
  */
 
-export function listPlayers(query: ListPlayersQuery): Promise<Page<PlayerView>> {
-  return apiRequest<Page<PlayerView>>(`/players${queryString(query)}`);
+export function listPlayers(query: ListPlayersRequest): Promise<Page<PlayerListItemView>> {
+  return apiRequest<Page<PlayerListItemView>>(`/players${queryString(query)}`);
 }
 
 /** Страница игрока — полный профиль вместе с анкетой ТЗ 2.2. */

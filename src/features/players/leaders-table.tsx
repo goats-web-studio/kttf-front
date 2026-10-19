@@ -1,4 +1,4 @@
-import type { ListPlayersQuery } from '@kttf/shared/types';
+import type { ListPlayersRequest } from '@kttf/shared/types';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -25,7 +25,7 @@ const NUM = { fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' } as cons
 
 interface LeadersTableProps {
   /** Срез рейтинга: страна, город или клуб. Порядок задаёт сервер. */
-  readonly query: ListPlayersQuery;
+  readonly query: ListPlayersRequest;
   /** Текст на случай пустого среза. */
   readonly empty: string;
 }

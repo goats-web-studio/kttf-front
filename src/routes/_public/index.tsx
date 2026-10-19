@@ -124,8 +124,8 @@ function HomePage(): ReactNode {
             more={{
               href:
                 search.city === undefined
-                  ? '/ratings'
-                  : `/ratings?${new URLSearchParams({ city: search.city }).toString()}`,
+                  ? '/players'
+                  : `/players?${new URLSearchParams({ city: search.city }).toString()}`,
               label: t('home.top.all'),
             }}
           >
@@ -159,7 +159,7 @@ function Hero(): ReactNode {
   const submit = (event: SyntheticEvent): void => {
     event.preventDefault();
     const value = orUndefined(query);
-    void navigate({ to: '/ratings', search: value === undefined ? {} : { search: value } });
+    void navigate({ to: '/players', search: value === undefined ? {} : { search: value } });
   };
 
   return (
@@ -231,7 +231,7 @@ function Hero(): ReactNode {
             <QuickLink href="/tournaments" icon={CalendarDays}>
               {t('home.hero.calendar')}
             </QuickLink>
-            <QuickLink href="/ratings" icon={TrendingUp}>
+            <QuickLink href="/players" icon={TrendingUp}>
               {t('home.hero.ratings')}
             </QuickLink>
           </Stack>

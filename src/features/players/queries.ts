@@ -1,4 +1,4 @@
-import type { ListPlayersQuery, PlayerMatchesQuery, PlayerStatsPeriod } from '@kttf/shared/types';
+import type { ListPlayersRequest, PlayerMatchesQuery, PlayerStatsPeriod } from '@kttf/shared/types';
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 
 import {
@@ -20,7 +20,7 @@ import {
  */
 export const playerKeys = {
   all: ['players'] as const,
-  list: (query: ListPlayersQuery) => ['players', 'list', query] as const,
+  list: (query: ListPlayersRequest) => ['players', 'list', query] as const,
   detail: (id: string) => ['players', 'detail', id] as const,
   ratingHistory: (id: string) => ['players', 'rating-history', id] as const,
   matches: (id: string, query: PlayerMatchesQuery) => ['players', 'matches', id, query] as const,
@@ -32,7 +32,7 @@ export const playerKeys = {
   tournaments: (id: string) => ['players', 'tournaments', id] as const,
 };
 
-export function playersQuery(query: ListPlayersQuery) {
+export function playersQuery(query: ListPlayersRequest) {
   return queryOptions({
     queryKey: playerKeys.list(query),
     queryFn: () => listPlayers(query),
