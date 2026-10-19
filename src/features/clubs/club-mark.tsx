@@ -1,4 +1,4 @@
-import type { ClubView } from '@kttf/shared/types';
+import { clubImageVariant, type ClubView } from '@kttf/shared/types';
 import Avatar from '@mui/material/Avatar';
 import type { ReactNode } from 'react';
 
@@ -6,7 +6,8 @@ import type { ReactNode } from 'react';
  * Знак клуба: логотип, а без него — первая буква названия.
  *
  * Пустое место вместо логотипа ломает ряд в списке, а у большинства клубов
- * логотипа поначалу не будет: загрузки файлов для клуба ещё нет.
+ * логотипа поначалу не будет. Загруженный логотип берётся узким вариантом
+ * (ADR-055): знак не шире 72 точек, и тянуть ради него 1600 незачем.
  */
 export default function ClubMark({
   club,
@@ -18,7 +19,7 @@ export default function ClubMark({
   return (
     <Avatar
       variant="rounded"
-      src={club.logoUrl ?? undefined}
+      src={club.logoUrl === null ? undefined : clubImageVariant(club.logoUrl, 480)}
       alt=""
       sx={{
         width: size,

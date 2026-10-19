@@ -12,6 +12,10 @@ const OPTIONAL = [
   'whatsapp',
   'instagram',
   'description',
+  'telegram',
+  'website',
+  'twoGisUrl',
+  'primaryContact',
 ] as const satisfies readonly (keyof CreateClubInput & keyof ClubView)[];
 
 /**

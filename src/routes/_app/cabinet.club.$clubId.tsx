@@ -30,6 +30,12 @@ import {
   groupClubTournaments,
   type ClubTournamentGroup,
 } from '@/features/clubs/club-tournaments';
+import FreshnessPanel from '@/features/clubs/page-editor/freshness-panel';
+import HallEditor from '@/features/clubs/page-editor/hall-editor';
+import HoursEditor from '@/features/clubs/page-editor/hours-editor';
+import ImagesEditor from '@/features/clubs/page-editor/images-editor';
+import PricesEditor from '@/features/clubs/page-editor/prices-editor';
+import StatsPanel from '@/features/clubs/page-editor/stats-panel';
 import { clubKeys, clubQuery } from '@/features/clubs/queries';
 import { isClubStaff } from '@/features/clubs/roles';
 import StaffPanel from '@/features/clubs/staff-panel';
@@ -42,12 +48,14 @@ import { tournamentsQuery } from '@/features/tournaments/queries';
  * состав шли одной лентой: организатор, пришедший открыть консоль, листал
  * мимо формы с девятью полями. Вкладка живёт в адресе.
  */
-const MANAGE_TABS = ['tournaments', 'settings', 'staff'] as const;
+const MANAGE_TABS = ['tournaments', 'page', 'stats', 'settings', 'staff'] as const;
 
 type ManageTab = (typeof MANAGE_TABS)[number];
 
 const MANAGE_TAB_LABELS: Readonly<Record<ManageTab, MessageKey>> = {
   tournaments: 'club.tournaments.title',
+  page: 'manage.page.title',
+  stats: 'manage.stats.title',
   settings: 'manage.settings.title',
   staff: 'club.staff.title',
 };
@@ -186,6 +194,8 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
         sx={{ '& > :first-of-type': { mt: 3 } }}
       >
         {tab === 'tournaments' && <ClubTournaments club={club} />}
+        {tab === 'page' && <ClubPage club={club} />}
+        {tab === 'stats' && <StatsPanel club={club} />}
         {tab === 'settings' && <ClubSettings club={club} />}
         {tab === 'staff' && <StaffPanel clubId={club.id} />}
       </Box>
@@ -271,6 +281,29 @@ function ClubTournaments({ club }: { readonly club: ClubView }): ReactNode {
           )}
         </QueryState>
       </Box>
+    </Box>
+  );
+}
+
+/**
+ * Страница клуба — ADR-055: то, что видит игрок. Свежесть сверху — с неё
+ * клуб начинает, когда приходит «проверить, всё ли верно». Разделы
+ * сохраняются каждый сам и держат свою форму: после сохранения она уже
+ * совпадает с ответом сервера, и пересобирать её незачем.
+ */
+function ClubPage({ club }: { readonly club: ClubView }): ReactNode {
+  const t = useT();
+
+  return (
+    <Box sx={{ mt: 3 }}>
+      <Typography color="text.secondary" sx={{ maxWidth: 680 }}>
+        {t('manage.page.lead')}
+      </Typography>
+      <FreshnessPanel club={club} />
+      <ImagesEditor club={club} />
+      <HallEditor club={club} />
+      <HoursEditor club={club} />
+      <PricesEditor club={club} />
     </Box>
   );
 }

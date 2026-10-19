@@ -63,8 +63,13 @@ function answer(url: string): Response {
     return reply(CLUB);
   }
 
+  if (/\/clubs\/[^/?]+\/summary$/.test(url)) {
+    return reply({ matchesRecent: 0, activePlayersRecent: 0, tournamentsHeld: 0, podiums: [] });
+  }
+
   if (url.includes('/clubs')) {
-    return reply(pageOf([CLUB]));
+    // Элемент списка — клуб с ближайшим турниром (ADR-055).
+    return reply(pageOf([{ ...CLUB, nextTournamentAt: null }]));
   }
 
   if (url.includes('/players')) {

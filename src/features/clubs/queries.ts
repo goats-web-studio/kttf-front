@@ -1,14 +1,16 @@
-import { MAX_PAGE_SIZE, type ClubView, type ListClubsQuery } from '@kttf/shared/types';
+import { MAX_PAGE_SIZE, type ClubView, type ListClubsRequest } from '@kttf/shared/types';
 import { queryOptions } from '@tanstack/react-query';
 
-import { fetchClub, listClubMembers, listClubs } from './api';
+import { fetchClub, fetchClubStats, fetchClubSummary, listClubMembers, listClubs } from './api';
 
 export const clubKeys = {
   all: ['clubs'] as const,
   directory: ['clubs', 'directory'] as const,
-  list: (query: ListClubsQuery) => ['clubs', 'list', query] as const,
+  list: (query: ListClubsRequest) => ['clubs', 'list', query] as const,
   detail: (id: string) => ['clubs', 'detail', id] as const,
   members: (id: string) => ['clubs', 'members', id] as const,
+  summary: (id: string) => ['clubs', 'summary', id] as const,
+  stats: (id: string, days: number) => ['clubs', 'stats', id, days] as const,
 };
 
 /**
@@ -32,7 +34,7 @@ export const clubDirectoryQuery = queryOptions({
 });
 
 /** Список клубов с фильтрами — страница «Клубы». */
-export function clubsQuery(query: ListClubsQuery) {
+export function clubsQuery(query: ListClubsRequest) {
   return queryOptions({
     queryKey: clubKeys.list(query),
     queryFn: () => listClubs(query),
@@ -51,5 +53,21 @@ export function clubMembersQuery(id: string) {
   return queryOptions({
     queryKey: clubKeys.members(id),
     queryFn: () => listClubMembers(id),
+  });
+}
+
+/** Живые данные клуба. Меняются с каждой встречей, но не каждую секунду. */
+export function clubSummaryQuery(id: string) {
+  return queryOptions({
+    queryKey: clubKeys.summary(id),
+    queryFn: () => fetchClubSummary(id),
+    staleTime: 60_000,
+  });
+}
+
+export function clubStatsQuery(id: string, days: number) {
+  return queryOptions({
+    queryKey: clubKeys.stats(id, days),
+    queryFn: () => fetchClubStats(id, days),
   });
 }

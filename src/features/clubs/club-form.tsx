@@ -1,8 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createClubSchema, type ClubView, type CreateClubInput } from '@kttf/shared/types';
+import {
+  CONTACT_KINDS,
+  createClubSchema,
+  type ClubView,
+  type CreateClubInput,
+} from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import type { ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -10,6 +16,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import CityPicker from '@/features/places/city-picker';
+
+import { telegramHandle } from './contacts';
 
 interface ClubFormProps {
   /** Клуб для правки. Без него форма заводит новый. */
@@ -45,8 +53,9 @@ const NUMERIC = { inputMode: 'numeric' } as const;
  * умолчанием — без них клуб не проводит турниров, а форма турнира берёт
  * число столов отсюда как подсказку. Остальное необязательно и пусто.
  *
- * Расписания работы и фото зала здесь нет: колонок под них в схеме нет
- * (ОВ-12), а логотип ждёт загрузки файлов для клуба.
+ * Контакты — здесь же: Telegram, сайт, ссылка в 2GIS и главная кнопка
+ * связи (ADR-055). Часы, цены, зал и картинки — на вкладке «Страница»
+ * кабинета: у них свои маршруты и своё сохранение.
  */
 export default function ClubForm({
   club,
@@ -71,6 +80,10 @@ export default function ClubForm({
         whatsapp: club?.whatsapp,
         instagram: club?.instagram,
         description: club?.description ?? initial?.description,
+        telegram: club?.telegram,
+        website: club?.website,
+        twoGisUrl: club?.twoGisUrl,
+        primaryContact: club?.primaryContact,
       }),
     },
   });
@@ -159,6 +172,54 @@ export default function ClubForm({
           label={t('club.field.instagram')}
           {...register('instagram', optionalText)}
           {...hint(t, undefined)}
+        />
+        <TextField
+          label={t('club.field.telegram')}
+          placeholder="@club"
+          {...register('telegram', {
+            // Вписывают как привыкли: «@club», «t.me/club» — сервер ждёт имя.
+            setValueAs: (value: string) =>
+              value.trim() === '' ? undefined : telegramHandle(value),
+          })}
+          {...hint(t, errors.telegram === undefined ? undefined : 'error.form.telegramName')}
+        />
+        <TextField
+          label={t('club.field.website')}
+          type="url"
+          placeholder="https://"
+          {...register('website', optionalText)}
+          {...hint(t, errors.website === undefined ? undefined : 'error.form.website')}
+        />
+        <TextField
+          label={t('club.field.twoGisUrl')}
+          type="url"
+          placeholder="https://2gis.kz/…"
+          {...register('twoGisUrl', optionalText)}
+          {...hint(t, errors.twoGisUrl === undefined ? undefined : 'error.form.twoGis')}
+        />
+        <Controller
+          control={form.control}
+          name="primaryContact"
+          render={({ field }) => (
+            <TextField
+              select
+              label={t('club.field.primaryContact')}
+              name={field.name}
+              value={field.value ?? ''}
+              onChange={(event) => {
+                field.onChange(event.target.value === '' ? undefined : event.target.value);
+              }}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+            >
+              <MenuItem value="">{t('club.field.primaryContact.auto')}</MenuItem>
+              {CONTACT_KINDS.map((kind) => (
+                <MenuItem key={kind} value={kind}>
+                  {t(`club.contactKind.${kind}`)}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
         />
       </Box>
 
