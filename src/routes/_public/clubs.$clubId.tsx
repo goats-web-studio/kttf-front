@@ -20,6 +20,8 @@ import { BackLink } from '@/common/ui/page-header';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
+import ClubGallery from '@/features/club-content/club-gallery';
+import ClubPosts from '@/features/club-content/club-posts';
 import Amenities from '@/features/clubs/amenities';
 import { ClubNumbers, ClubResults } from '@/features/clubs/club-live';
 import ClubMark from '@/features/clubs/club-mark';
@@ -105,6 +107,8 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
         </Box>
       </Section>
     );
+  const posts = <ClubPosts clubId={club.id} />;
+  const gallery = <ClubGallery clubId={club.id} />;
   const results = <ClubResults clubId={club.id} />;
   const about =
     club.description === null ? null : (
@@ -207,7 +211,9 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
           <Box>
             {tournaments}
             {prices}
+            {posts}
             {results}
+            {gallery}
             {about}
             {players}
             {staff}
@@ -227,7 +233,9 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
         <Box>
           {tournaments}
           {prices}
+          {posts}
           {hours !== null && <Box sx={{ mt: 4 }}>{hours}</Box>}
+          {gallery}
           {results}
           <Box sx={{ mt: 4, display: 'grid', gap: 2 }}>
             {hall}

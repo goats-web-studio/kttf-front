@@ -64,3 +64,8 @@ const MONDAY = Date.UTC(2026, 9, 19, 12);
 export function weekdayDate(weekday: number): Date {
   return new Date(MONDAY + (weekday - 1) * 24 * 60 * 60 * 1000);
 }
+
+/** Сегодня по местному времени клуба (UTC+5) — `YYYY-MM-DD`, как срок акции. */
+export function clubTodayIso(now: Date = new Date()): string {
+  return new Date(now.getTime() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}

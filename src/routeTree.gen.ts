@@ -22,6 +22,7 @@ import { Route as ConsoleTournamentIdRouteImport } from './routes/console/$tourn
 import { Route as ScreenPublicTokenRouteImport } from './routes/screen.$publicToken'
 import { Route as AppCabinetIndexRouteImport } from './routes/_app/cabinet.index'
 import { Route as AppCabinetApplicationsRouteImport } from './routes/_app/cabinet.applications'
+import { Route as AppCabinetContentRouteImport } from './routes/_app/cabinet.content'
 import { Route as AppCabinetPlacesRouteImport } from './routes/_app/cabinet.places'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings.index'
 import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings.account'
@@ -99,6 +100,11 @@ const AppCabinetIndexRoute = AppCabinetIndexRouteImport.update({
 const AppCabinetApplicationsRoute = AppCabinetApplicationsRouteImport.update({
   id: '/cabinet/applications',
   path: '/cabinet/applications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCabinetContentRoute = AppCabinetContentRouteImport.update({
+  id: '/cabinet/content',
+  path: '/cabinet/content',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCabinetPlacesRoute = AppCabinetPlacesRouteImport.update({
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console/': typeof ConsoleIndexRoute
   '/cabinet/applications': typeof AppCabinetApplicationsRoute
+  '/cabinet/content': typeof AppCabinetContentRoute
   '/cabinet/places': typeof AppCabinetPlacesRoute
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/profile': typeof AppSettingsProfileRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console': typeof ConsoleIndexRoute
   '/cabinet/applications': typeof AppCabinetApplicationsRoute
+  '/cabinet/content': typeof AppCabinetContentRoute
   '/cabinet/places': typeof AppCabinetPlacesRoute
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/profile': typeof AppSettingsProfileRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   '/_public/': typeof PublicIndexRoute
   '/console/': typeof ConsoleIndexRoute
   '/_app/cabinet/applications': typeof AppCabinetApplicationsRoute
+  '/_app/cabinet/content': typeof AppCabinetContentRoute
   '/_app/cabinet/places': typeof AppCabinetPlacesRoute
   '/_app/settings/account': typeof AppSettingsAccountRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/screen/$publicToken'
     | '/console/'
     | '/cabinet/applications'
+    | '/cabinet/content'
     | '/cabinet/places'
     | '/settings/account'
     | '/settings/profile'
@@ -305,6 +315,7 @@ export interface FileRouteTypes {
     | '/screen/$publicToken'
     | '/console'
     | '/cabinet/applications'
+    | '/cabinet/content'
     | '/cabinet/places'
     | '/settings/account'
     | '/settings/profile'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/_public/'
     | '/console/'
     | '/_app/cabinet/applications'
+    | '/_app/cabinet/content'
     | '/_app/cabinet/places'
     | '/_app/settings/account'
     | '/_app/settings/profile'
@@ -453,6 +465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCabinetApplicationsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/cabinet/content': {
+      id: '/_app/cabinet/content'
+      path: '/cabinet/content'
+      fullPath: '/cabinet/content'
+      preLoaderRoute: typeof AppCabinetContentRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/cabinet/places': {
       id: '/_app/cabinet/places'
       path: '/cabinet/places'
@@ -563,6 +582,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCabinetApplicationsRoute: typeof AppCabinetApplicationsRoute
+  AppCabinetContentRoute: typeof AppCabinetContentRoute
   AppCabinetPlacesRoute: typeof AppCabinetPlacesRoute
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
@@ -577,6 +597,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCabinetApplicationsRoute: AppCabinetApplicationsRoute,
+  AppCabinetContentRoute: AppCabinetContentRoute,
   AppCabinetPlacesRoute: AppCabinetPlacesRoute,
   AppSettingsAccountRoute: AppSettingsAccountRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,

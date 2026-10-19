@@ -63,6 +63,14 @@ function answer(url: string): Response {
     return reply(CLUB);
   }
 
+  if (/\/clubs\/[^/?]+\/posts/.test(url)) {
+    return reply(pageOf([]));
+  }
+
+  if (/\/clubs\/[^/?]+\/media/.test(url)) {
+    return reply([]);
+  }
+
   if (/\/clubs\/[^/?]+\/summary$/.test(url)) {
     return reply({ matchesRecent: 0, activePlayersRecent: 0, tournamentsHeld: 0, podiums: [] });
   }

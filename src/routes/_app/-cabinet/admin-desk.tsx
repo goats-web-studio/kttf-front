@@ -28,6 +28,9 @@ export default function AdminDesk(): ReactNode {
             ? fill(t('cabinet.admin.applicationsNew'), { count: String(fresh) })
             : t('cabinet.admin.applications')}
         </Button>
+        <Button href="/cabinet/content" sx={{ minHeight: 44 }}>
+          {t('page.content.title')}
+        </Button>
         <Button href="/cabinet/places" sx={{ minHeight: 44 }}>
           {t('page.places.title')}
         </Button>

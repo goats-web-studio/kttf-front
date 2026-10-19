@@ -37,6 +37,8 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
 
   // Справочник стран и городов — ADR-046.
   CITY_UNAVAILABLE: 'error.api.CITY_UNAVAILABLE',
+  CLUB_PLAN_LIMIT: 'error.api.CLUB_PLAN_LIMIT',
+  VIDEO_NOT_FOUND: 'error.api.VIDEO_NOT_FOUND',
   PLACE_ALREADY_EXISTS: 'error.api.PLACE_ALREADY_EXISTS',
 };
 

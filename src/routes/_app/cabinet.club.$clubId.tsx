@@ -30,6 +30,8 @@ import {
   groupClubTournaments,
   type ClubTournamentGroup,
 } from '@/features/clubs/club-tournaments';
+import MediaEditor from '@/features/club-content/media-editor';
+import PostsEditor from '@/features/club-content/posts-editor';
 import FreshnessPanel from '@/features/clubs/page-editor/freshness-panel';
 import HallEditor from '@/features/clubs/page-editor/hall-editor';
 import HoursEditor from '@/features/clubs/page-editor/hours-editor';
@@ -48,13 +50,23 @@ import { tournamentsQuery } from '@/features/tournaments/queries';
  * состав шли одной лентой: организатор, пришедший открыть консоль, листал
  * мимо формы с девятью полями. Вкладка живёт в адресе.
  */
-const MANAGE_TABS = ['tournaments', 'page', 'stats', 'settings', 'staff'] as const;
+const MANAGE_TABS = [
+  'tournaments',
+  'page',
+  'posts',
+  'media',
+  'stats',
+  'settings',
+  'staff',
+] as const;
 
 type ManageTab = (typeof MANAGE_TABS)[number];
 
 const MANAGE_TAB_LABELS: Readonly<Record<ManageTab, MessageKey>> = {
   tournaments: 'club.tournaments.title',
   page: 'manage.page.title',
+  posts: 'manage.posts.title',
+  media: 'manage.media.title',
   stats: 'manage.stats.title',
   settings: 'manage.settings.title',
   staff: 'club.staff.title',
@@ -195,6 +207,8 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
       >
         {tab === 'tournaments' && <ClubTournaments club={club} />}
         {tab === 'page' && <ClubPage club={club} />}
+        {tab === 'posts' && <PostsEditor club={club} />}
+        {tab === 'media' && <MediaEditor club={club} />}
         {tab === 'stats' && <StatsPanel club={club} />}
         {tab === 'settings' && <ClubSettings club={club} />}
         {tab === 'staff' && <StaffPanel clubId={club.id} />}
