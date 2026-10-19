@@ -1,3 +1,5 @@
+import { authUserViewSchema, type AuthUserView } from '@kttf/shared/types';
+
 /**
  * Единственное место, где refresh-токен попадает на диск.
  *
@@ -33,6 +35,51 @@ export function writeRefreshToken(token: string): void {
 export function clearRefreshToken(): void {
   try {
     globalThis.localStorage.removeItem(KEY);
+  } catch {
+    // Удалять нечего или хранилище недоступно — оба случая безобидны.
+  }
+}
+
+/**
+ * Вошедший пользователь — на случай перезагрузки без сети.
+ *
+ * Консоль судьи обязана открываться в зале с выключенным Wi-Fi и после
+ * перезагрузки вкладки (ТЗ 6.4): снимок турнира лежит в IndexedDB, а чтобы
+ * охрана маршрутов пустила к нему, нужен вошедший. Без сети его не спросить
+ * у сервера — поэтому последний известный хранится здесь.
+ *
+ * Без контактов: телефон, почта и Telegram ID консоли не нужны, а на диске
+ * браузера это лишние персональные данные. При возврате сети пользователь
+ * перечитывается с сервера целиком.
+ */
+const USER_KEY = 'kttf.session-user';
+
+export function writeSavedUser(user: AuthUserView): void {
+  try {
+    globalThis.localStorage.setItem(
+      USER_KEY,
+      JSON.stringify({ ...user, phone: '', email: null, telegramId: null }),
+    );
+  } catch {
+    // Хранилище недоступно: без сети перезагрузка вернёт на вход, как раньше.
+  }
+}
+
+export function readSavedUser(): AuthUserView | null {
+  try {
+    const raw = globalThis.localStorage.getItem(USER_KEY);
+    const parsed = raw === null ? null : authUserViewSchema.safeParse(JSON.parse(raw));
+
+    return parsed?.success === true ? parsed.data : null;
+  } catch {
+    // Испорченная запись — то же, что её нет.
+    return null;
+  }
+}
+
+export function clearSavedUser(): void {
+  try {
+    globalThis.localStorage.removeItem(USER_KEY);
   } catch {
     // Удалять нечего или хранилище недоступно — оба случая безобидны.
   }

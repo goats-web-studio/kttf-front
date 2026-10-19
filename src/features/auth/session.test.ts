@@ -2,9 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { apiRequest, configureAuth } from '@/common/api';
 
-import { connectSessionToApi } from './session';
+import { USER_WITH_PROFILE } from '@/test/fixtures';
+
+import { connectSessionToApi, restoreSession } from './session';
 import { useSessionStore } from './session-store';
-import { readRefreshToken, writeRefreshToken } from './token-storage';
+import {
+  readRefreshToken,
+  readSavedUser,
+  writeRefreshToken,
+  writeSavedUser,
+} from './token-storage';
 
 /** Минимальный ответ: клиент читает только `ok`, `status` и `text()`. */
 function reply(status: number, body: unknown): Response {
@@ -117,5 +124,95 @@ describe('истёкший access-токен', () => {
     await Promise.all([apiRequest('/players'), apiRequest('/clubs'), apiRequest('/ratings')]);
 
     expect(refreshes).toBe(1);
+  });
+});
+
+/** Сеть недоступна: `fetch` отвергается, клиент превращает это в `NetworkError`. */
+const offline = (): Promise<Response> => Promise.reject(new TypeError('Failed to fetch'));
+
+describe('перезагрузка без сети — консоль в зале (ТЗ 6.4)', () => {
+  beforeEach(() => {
+    useSessionStore.setState({ user: null, accessToken: null, isRestoring: true });
+  });
+
+  it('вошедший берётся с диска, refresh-токен не стирается', async () => {
+    writeRefreshToken('refresh-1');
+    writeSavedUser(USER_WITH_PROFILE);
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockImplementation(offline));
+
+    await restoreSession();
+
+    const state = useSessionStore.getState();
+    expect(state.isRestoring).toBe(false);
+    expect(state.accessToken).toBeNull();
+    expect(state.user).toMatchObject({
+      id: USER_WITH_PROFILE.id,
+      clubRoles: USER_WITH_PROFILE.clubRoles,
+    });
+    expect(readRefreshToken()).toBe('refresh-1');
+  });
+
+  it('на диске нет контактов человека', () => {
+    writeSavedUser({ ...USER_WITH_PROFILE, email: 'a@b.kz', telegramId: '42' });
+
+    expect(readSavedUser()).toMatchObject({ phone: '', email: null, telegramId: null });
+  });
+
+  it('сохранённого вошедшего нет — вход, но токен цел до возврата сети', async () => {
+    writeRefreshToken('refresh-1');
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockImplementation(offline));
+
+    await restoreSession();
+
+    expect(useSessionStore.getState()).toMatchObject({ user: null, isRestoring: false });
+    expect(readRefreshToken()).toBe('refresh-1');
+  });
+
+  it('сеть вернулась — сессия восстанавливается сама', async () => {
+    writeRefreshToken('refresh-1');
+    writeSavedUser(USER_WITH_PROFILE);
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(offline);
+    vi.stubGlobal('fetch', fetchMock);
+    await restoreSession();
+
+    fetchMock.mockReset();
+    fetchMock
+      .mockResolvedValueOnce(reply(200, { accessToken: 'access-2', refreshToken: 'refresh-2' }))
+      .mockResolvedValueOnce(reply(200, USER_WITH_PROFILE));
+    globalThis.dispatchEvent(new Event('online'));
+
+    await vi.waitFor(() => {
+      expect(useSessionStore.getState().accessToken).toBe('access-2');
+    });
+    expect(useSessionStore.getState().user?.phone).toBe(USER_WITH_PROFILE.phone);
+  });
+
+  it('сервер отказал — человек вышел, токен и вошедший стёрты', async () => {
+    writeRefreshToken('refresh-1');
+    writeSavedUser(USER_WITH_PROFILE);
+    vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockResolvedValue(UNAUTHORIZED));
+
+    await restoreSession();
+
+    expect(useSessionStore.getState().user).toBeNull();
+    expect(readRefreshToken()).toBeNull();
+    expect(readSavedUser()).toBeNull();
+  });
+
+  it('сеть пропала между обновлением и запросом вошедшего — тоже без выхода', async () => {
+    writeRefreshToken('refresh-1');
+    writeSavedUser(USER_WITH_PROFILE);
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(reply(200, { accessToken: 'access-2', refreshToken: 'refresh-2' }))
+        .mockImplementationOnce(offline),
+    );
+
+    await restoreSession();
+
+    expect(useSessionStore.getState().user?.id).toBe(USER_WITH_PROFILE.id);
+    expect(readRefreshToken()).toBe('refresh-2');
   });
 });

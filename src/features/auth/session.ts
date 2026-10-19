@@ -1,8 +1,15 @@
-import { configureAuth } from '@/common/api';
+import { configureAuth, isNetworkError } from '@/common/api';
 
 import { endSession, fetchMe, refreshTokens } from './api';
 import { useSessionStore } from './session-store';
-import { clearRefreshToken, readRefreshToken } from './token-storage';
+import { clearRefreshToken, readRefreshToken, readSavedUser } from './token-storage';
+
+/**
+ * Чем кончилось обновление пары: обновилась, сервер отказал, сервер не
+ * ответил. Последние два — разные вещи: отказ значит «не вошёл», молчание
+ * значит «в зале нет сети», и выкидывать судью из сессии за это нельзя.
+ */
+type RefreshOutcome = 'ok' | 'rejected' | 'offline';
 
 /**
  * Обновление пары токенов.
@@ -12,33 +19,41 @@ import { clearRefreshToken, readRefreshToken } from './token-storage';
  * Второе и последующие обновления одним и тем же refresh-токеном обречены —
  * сервер заменяет его при каждом обновлении (ADR-013).
  */
-let inFlight: Promise<boolean> | null = null;
+let inFlight: Promise<RefreshOutcome> | null = null;
 
-async function performRefresh(): Promise<boolean> {
+async function performRefresh(): Promise<RefreshOutcome> {
   const refreshToken = readRefreshToken();
 
   if (refreshToken === null) {
-    return false;
+    return 'rejected';
   }
 
   try {
     const pair = await refreshTokens(refreshToken);
     useSessionStore.getState().tokensRefreshed(pair.accessToken, pair.refreshToken);
-    return true;
-  } catch {
-    // Токен отозван, истёк или не существует. Разбирать причину незачем:
-    // во всех случаях человек снова не вошёл.
+    return 'ok';
+  } catch (error) {
+    // Сервер не ответил — токен цел, сессия тоже. Стереть его сейчас значило
+    // бы потребовать пароль у судьи в зале, где сети нет (ТЗ 6.4).
+    if (isNetworkError(error)) return 'offline';
+
+    // Токен отозван, истёк или не существует: человек снова не вошёл.
     useSessionStore.getState().signedOut();
-    return false;
+    return 'rejected';
   }
 }
 
-export function refreshSession(): Promise<boolean> {
+function attemptRefresh(): Promise<RefreshOutcome> {
   inFlight ??= performRefresh().finally(() => {
     inFlight = null;
   });
 
   return inFlight;
+}
+
+/** Для клиента API: `true` — запрос можно повторить. */
+export async function refreshSession(): Promise<boolean> {
+  return (await attemptRefresh()) === 'ok';
 }
 
 /** Связывает клиент API с хранилищем сессии. Вызывается один раз при старте. */
@@ -74,25 +89,59 @@ async function performRestore(): Promise<void> {
     return;
   }
 
-  if (!(await refreshSession())) {
+  const outcome = await attemptRefresh();
+
+  if (outcome === 'offline') {
+    restoreOffline();
+    return;
+  }
+
+  if (outcome === 'rejected') {
     return;
   }
 
   try {
-    const accessToken = useSessionStore.getState().accessToken;
     const user = await fetchMe();
+    // Токен — после запроса: `fetchMe` мог по дороге обновить пару.
+    const accessToken = useSessionStore.getState().accessToken;
 
     if (accessToken === null) {
       throw new Error('Токен пропал между обновлением и запросом пользователя');
     }
 
     useSessionStore.getState().userLoaded(user, accessToken);
-  } catch {
-    // Пара обновилась, а пользователь не пришёл: аккаунт удалён либо сервер
-    // недоступен. Считаем, что не вошли, — иначе интерфейс покажет кабинет
-    // без данных.
+  } catch (error) {
+    if (isNetworkError(error)) {
+      // Сеть пропала между обновлением и запросом пользователя.
+      restoreOffline();
+      return;
+    }
+
+    // Пара обновилась, а пользователь не пришёл: аккаунт удалён. Считаем,
+    // что не вошли, — иначе интерфейс покажет кабинет без данных.
     useSessionStore.getState().signedOut();
   }
+}
+
+/**
+ * Перезагрузка без сети — ТЗ 6.4, консоль в зале с выключенным Wi-Fi.
+ *
+ * Вошедший берётся последний известный с диска, токена нет: консоль
+ * откроется из своего снимка турнира, действия лягут в очередь. Сеть
+ * вернётся — сессия восстановится по-настоящему и пользователь перечитается.
+ * Записи на диске нет (вход был до этой версии) — экран входа, как раньше,
+ * но refresh-токен не стирается, и с сетью вход восстановится сам.
+ */
+function restoreOffline(): void {
+  const saved = readSavedUser();
+
+  if (saved === null) {
+    useSessionStore.getState().restoreFinished();
+  } else {
+    useSessionStore.getState().restoredOffline(saved);
+  }
+
+  globalThis.addEventListener('online', () => void restoreSession(), { once: true });
 }
 
 /**

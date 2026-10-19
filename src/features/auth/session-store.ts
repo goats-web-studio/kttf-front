@@ -1,7 +1,12 @@
 import type { AuthSession, AuthUserView } from '@kttf/shared/types';
 import { create } from 'zustand';
 
-import { clearRefreshToken, writeRefreshToken } from './token-storage';
+import {
+  clearRefreshToken,
+  clearSavedUser,
+  writeRefreshToken,
+  writeSavedUser,
+} from './token-storage';
 
 interface SessionState {
   /** `null` — не вошёл. Тот же тип, что отдаёт ТС 7.1. */
@@ -22,6 +27,11 @@ interface SessionState {
   readonly userChanged: (user: AuthUserView) => void;
   readonly signedOut: () => void;
   readonly restoreFinished: () => void;
+  /**
+   * Перезагрузка без сети: вошедший — последний известный, токена нет.
+   * Запросы уйдут без него, получат 401 и обновят пару, когда сеть вернётся.
+   */
+  readonly restoredOffline: (user: AuthUserView) => void;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -31,6 +41,7 @@ export const useSessionStore = create<SessionState>((set) => ({
 
   signedIn: (session) => {
     writeRefreshToken(session.refreshToken);
+    writeSavedUser(session.user);
     set({ user: session.user, accessToken: session.accessToken, isRestoring: false });
   },
 
@@ -40,20 +51,27 @@ export const useSessionStore = create<SessionState>((set) => ({
   },
 
   userLoaded: (user, accessToken) => {
+    writeSavedUser(user);
     set({ user, accessToken, isRestoring: false });
   },
 
   userChanged: (user) => {
     // Токены не трогаются: сменились настройки, а не сессия.
+    writeSavedUser(user);
     set({ user });
   },
 
   signedOut: () => {
     clearRefreshToken();
+    clearSavedUser();
     set({ user: null, accessToken: null, isRestoring: false });
   },
 
   restoreFinished: () => {
     set({ isRestoring: false });
+  },
+
+  restoredOffline: (user) => {
+    set({ user, accessToken: null, isRestoring: false });
   },
 }));
