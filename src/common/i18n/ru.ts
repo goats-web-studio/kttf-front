@@ -179,6 +179,8 @@ export const ru = {
   'login.identifier.placeholder': 'aslan или +7XXXXXXXXXX',
   'login.password.label': 'Пароль',
   'login.submit': 'Войти',
+  // Предел неудачных входов — ADR-056.
+  'login.rateLimited': 'Слишком много неудачных попыток. Попробуйте через {minutes} мин.',
   'login.noAccount': 'Нет кабинета?',
   'login.signUp': 'Зарегистрироваться',
   'page.signUp.title': 'Регистрация',

@@ -183,6 +183,8 @@ export const kk: Record<MessageKey, string> = {
   'login.identifier.placeholder': 'aslan немесе +7XXXXXXXXXX',
   'login.password.label': 'Құпия сөз',
   'login.submit': 'Кіру',
+  // Предел неудачных входов — ADR-056.
+  'login.rateLimited': 'Сәтсіз әрекеттер тым көп. {minutes} мин кейін қайталап көріңіз.',
   'login.noAccount': 'Кабинет жоқ па?',
   'login.signUp': 'Тіркелу',
   'page.signUp.title': 'Тіркелу',

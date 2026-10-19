@@ -10,10 +10,10 @@ import { useMutation } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
 
 import { signIn } from './api';
+import { loginErrorText } from './login-error';
 import { useSessionStore } from './session-store';
 
 interface SignInFormProps {
@@ -87,7 +87,7 @@ export default function SignInForm({ onSignedIn }: SignInFormProps): ReactNode {
       {(errors.identifier !== undefined || errors.password !== undefined) && (
         <Alert severity="error">{t('error.form.credentials')}</Alert>
       )}
-      {login.error !== null && <Alert severity="error">{t(errorMessageKey(login.error))}</Alert>}
+      {login.error !== null && <Alert severity="error">{loginErrorText(login.error, t)}</Alert>}
 
       <Button
         variant="contained"
