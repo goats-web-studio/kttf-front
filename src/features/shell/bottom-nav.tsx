@@ -2,7 +2,14 @@ import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Paper from '@mui/material/Paper';
 import { useMatchRoute } from '@tanstack/react-router';
-import { Building2, CalendarDays, ShoppingBag, Users, type LucideIcon } from 'lucide-react';
+import {
+  Building2,
+  CalendarDays,
+  ShoppingBag,
+  Users,
+  Whistle,
+  type LucideIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -19,6 +26,7 @@ const ICONS: Readonly<Record<string, LucideIcon>> = {
   '/tournaments': CalendarDays,
   '/clubs': Building2,
   '/market': ShoppingBag,
+  '/trainings': Whistle,
 };
 
 /**
@@ -66,11 +74,20 @@ export default function BottomNav(): ReactNode {
               aria-current={current?.to === section.to ? 'page' : undefined}
               // Подпись одного размера в выбранном и прочих пунктах: по
               // умолчанию MUI увеличивает выбранную, и соседние подписи едут.
+              // Пять разделов в 360px (ADR-059): по 72px на пункт, и
+              // «Тренировки» влезает только без боковых полей и в 11px —
+              // нижняя ступень шкалы (07, 3.5).
               sx={{
                 minWidth: 0,
+                px: 0.25,
                 gap: 0.25,
                 '& .MuiBottomNavigationAction-label, &.Mui-selected .MuiBottomNavigationAction-label':
-                  { typography: 'caption', fontWeight: 600 },
+                  {
+                    typography: 'caption',
+                    fontWeight: 600,
+                    fontSize: { xs: 11, sm: 12 },
+                    whiteSpace: 'nowrap',
+                  },
               }}
             />
           );

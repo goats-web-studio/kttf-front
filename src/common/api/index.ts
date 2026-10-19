@@ -1,5 +1,6 @@
 export {
   API_BASE_URL,
+  apiBlob,
   apiRequest,
   type AuthHooks,
   configureAuth,

@@ -145,3 +145,45 @@ async function perform<T>(path: string, options: RequestOptions, mayRetry: boole
 
   return payload as T;
 }
+
+/**
+ * Файл, который отдаётся только с токеном, — скан непубличного документа
+ * тренера (ADR-059). Обычной ссылкой его не открыть: `<img>` и `<a>` не
+ * несут заголовка `Authorization`. Ответ — двоичный, поэтому отдельно от
+ * `apiRequest`; отказ — те же `AppError` и `NetworkError`.
+ */
+export async function apiBlob(path: string): Promise<Blob> {
+  return performBlob(path, true);
+}
+
+async function performBlob(path: string, mayRetry: boolean): Promise<Blob> {
+  const token = auth?.accessToken() ?? null;
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      headers: token === null ? {} : { Authorization: `Bearer ${token}` },
+    });
+  } catch (cause) {
+    throw new NetworkError(cause);
+  }
+
+  if (response.status === 401 && mayRetry && auth !== null && (await auth.refresh())) {
+    return performBlob(path, false);
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    let payload: unknown;
+
+    try {
+      payload = text === '' ? undefined : JSON.parse(text);
+    } catch {
+      payload = undefined;
+    }
+
+    throw readError(payload, response.status);
+  }
+
+  return response.blob();
+}

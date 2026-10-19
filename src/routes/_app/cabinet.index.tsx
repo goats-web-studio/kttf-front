@@ -12,6 +12,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 
 import AdminDesk from './-cabinet/admin-desk';
 import ClubDesk from './-cabinet/club-desk';
+import CoachDesk from './-cabinet/coach-desk';
 import PlayerDesk from './-cabinet/player-desk';
 
 export const Route = createFileRoute('/_app/cabinet/')({
@@ -69,6 +70,9 @@ function CabinetPage(): ReactNode {
           {user.clubRoles.length > 0 && <ClubDesk user={user} />}
 
           {user.playerId !== null && <PlayerDesk playerId={user.playerId} />}
+
+          {/* Страница тренера строится на профиле игрока (ADR-059). */}
+          {(user.playerId !== null || user.coach !== null) && <CoachDesk user={user} />}
 
           {user.isAdmin && <AdminDesk />}
         </Stack>
