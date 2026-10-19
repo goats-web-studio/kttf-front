@@ -1,5 +1,7 @@
 import type { MatchResultInput, MatchView, TournamentSnapshotView } from '@kttf/shared/types';
 
+import { formatRating } from '@/common/i18n';
+
 /**
  * Снимок турнира в консоли и его изменения.
  *
@@ -99,13 +101,14 @@ export function namesOf(state: TournamentSnapshotView): ReadonlyMap<string, stri
  *
  * Берётся снимок на старте турнира (ТС 5.4), а не текущее значение: в зале
  * важно, с чем игрок в турнир вошёл, и это число не меняется по ходу. До
- * старта снимка ещё нет — тогда показывается текущий рейтинг.
+ * старта снимка ещё нет — тогда показывается текущий рейтинг. Целым, как
+ * везде (ADR-053).
  */
 export function ratingsOf(state: TournamentSnapshotView): ReadonlyMap<string, string> {
   return new Map(
     state.registrations.map((registration) => [
       registration.player.id,
-      registration.ratingAtStart ?? registration.player.rating,
+      formatRating(registration.ratingAtStart ?? registration.player.rating),
     ]),
   );
 }

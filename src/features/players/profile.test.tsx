@@ -11,6 +11,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { formatRating } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
 import {
@@ -281,28 +282,30 @@ afterEach(() => {
 });
 
 describe('карточка игрока', () => {
-  it('открывается без входа и показывает рейтинг как он пришёл', async () => {
+  it('открывается без входа и показывает рейтинг целым', async () => {
     renderProfile();
 
     expect(
       await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 }),
     ).toBeDefined();
-    // Строкой, а не числом: сотая доля обязана дожить до экрана (ADR-014).
-    expect(screen.getAllByText(PLAYERS.first.rating).length).toBeGreaterThan(0);
+    // Сотые остаются в журнале, на экране рейтинг целый (ADR-053).
+    expect(screen.getAllByText(formatRating(PLAYERS.first.rating)).length).toBeGreaterThan(0);
     // Максимальный — из сводки сервера.
-    expect((await screen.findAllByText(SUMMARY.maxRating)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(formatRating(SUMMARY.maxRating))).length).toBeGreaterThan(0);
   });
 
   it('рейтинг — со звездой, одним компонентом во всех блоках', async () => {
     renderProfile();
 
-    await screen.findAllByText(SUMMARY.maxRating);
+    await screen.findAllByText(formatRating(SUMMARY.maxRating));
     // Шапка профиля, а не сайта: у обеих тег header.
     const header = screen
       .getByRole('heading', { name: playerName(PLAYERS.first), level: 1 })
       .closest('header');
 
-    expect(header?.querySelector('[data-rating-value]')?.textContent).toBe(PLAYERS.first.rating);
+    expect(header?.querySelector('[data-rating-value]')?.textContent).toBe(
+      formatRating(PLAYERS.first.rating),
+    );
     // Звезда — знак, а не текст: чтецу экрана она не читается.
     expect(header?.querySelector('[data-rating-value] svg')?.getAttribute('aria-hidden')).toBe(
       'true',
@@ -448,7 +451,9 @@ describe('кривая рейтинга', () => {
     await waitFor(() => {
       expect(container.querySelector('[data-rating-peak]')?.textContent).toContain('14 марта');
     });
-    expect(container.querySelector('[data-rating-peak]')?.textContent).toContain(SUMMARY.maxRating);
+    expect(container.querySelector('[data-rating-peak]')?.textContent).toContain(
+      formatRating(SUMMARY.maxRating),
+    );
   });
 
   it('стрелками с клавиатуры — подсказка о турнире: дата, турнир, рейтинг, изменение', async () => {
@@ -462,7 +467,7 @@ describe('кривая рейтинга', () => {
     if (first === undefined) throw new Error('нет точки');
 
     expect(tip?.textContent).toContain(first.tournamentName ?? '');
-    expect(tip?.textContent).toContain(first.ratingAfter);
+    expect(tip?.textContent).toContain(formatRating(first.ratingAfter));
     expect(tip?.textContent).toContain(`+${first.delta}`);
 
     fireEvent.keyDown(chart, { key: 'ArrowRight' });
@@ -563,8 +568,9 @@ describe('лучшие победы', () => {
     const [row] = within(table).getAllByRole('row').slice(1);
     if (row === undefined) throw new Error('нет строки');
 
-    expect(row.textContent).toContain('471.30');
-    expect(row.textContent).toContain('640.00');
+    expect(row.textContent).toContain('471');
+    expect(row.textContent).not.toContain('471.30');
+    expect(row.textContent).toContain('Смагулов Асан640');
     expect(row.textContent).toContain('+9.10');
     expect(row.textContent).toContain('19');
     // Соперник — ссылкой на его профиль.
@@ -603,7 +609,7 @@ describe('результаты по турнирам', () => {
 
     expect(card.textContent).toContain(ru['tournament.level.REGIONAL']);
     expect(card.textContent).toContain('участников: 16');
-    expect(card.querySelector('[data-result-me]')?.textContent).toMatch(/^Я.*480\.00/);
+    expect(card.querySelector('[data-result-me]')?.textContent).toMatch(/^Я480на старте/);
   });
 
   it('на чужом профиле вместо «Я» — имя игрока', async () => {
@@ -626,7 +632,8 @@ describe('результаты по турнирам', () => {
     const table = found(container, '[data-result-table]');
     const [won, lost] = within(found(table, 'tbody')).getAllByRole('row');
 
-    expect(won?.textContent).toContain('505.20');
+    expect(won?.textContent).toContain('505');
+    expect(won?.textContent).not.toContain('505.20');
     expect(won?.textContent).toContain('25');
     expect(within(required(won)).getByLabelText(`${ru['player.matches.won']} 3:1`)).toBeDefined();
     // Без вызова к столу — прочерки, а не нули.
@@ -643,7 +650,8 @@ describe('результаты по турнирам', () => {
     expect(total?.textContent).toContain('Победы: 1 · Поражения: 1');
     expect(total?.textContent).toContain('+12.50');
     expect(total?.textContent).toContain('25 мин');
-    expect(total?.textContent).toContain('492.50');
+    // Рейтинг после — целым, половина вверх; сумма изменений — с сотыми.
+    expect(total?.textContent).toContain('Рейтинг после 493');
   });
 
   it('место диапазоном, круг сетки словами, изменение рейтинга', async () => {

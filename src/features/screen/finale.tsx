@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import { Trophy } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { useT } from '@/common/i18n';
+import { formatRating, useT } from '@/common/i18n';
 
 import { BOARD_TITLE, DISPLAY, size } from './scale';
 
@@ -289,7 +289,7 @@ export function RatingsBoard({
                 color: 'text.secondary',
               }}
             >
-              {rating.ratingAfter}
+              {rating.ratingAfter === null ? '' : formatRating(rating.ratingAfter)}
             </Typography>
           </Box>
         );

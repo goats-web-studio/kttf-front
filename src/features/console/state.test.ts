@@ -1,6 +1,7 @@
 import type { MatchView, TournamentSnapshotView } from '@kttf/shared/types';
 import { describe, expect, it } from 'vitest';
 
+import { formatRating } from '@/common/i18n';
 import {
   CONSOLE_SNAPSHOT,
   PLAYER_IDS,
@@ -122,7 +123,9 @@ describe('возврат встречи в очередь', () => {
 describe('участники снимка', () => {
   it('имя и рейтинг находятся по идентификатору игрока', () => {
     expect(namesOf(CONSOLE_SNAPSHOT).get(PLAYER_IDS.first)).toContain(PLAYERS.first.lastName);
-    // Рядом с фамилией стоит рейтинг на старте турнира — ТЗ 6.6, ТС 5.4.
-    expect(ratingsOf(CONSOLE_SNAPSHOT).get(PLAYER_IDS.first)).toBe(PLAYERS.first.rating);
+    // Рядом с фамилией стоит рейтинг на старте турнира — ТЗ 6.6, ТС 5.4 — целым (ADR-053).
+    expect(ratingsOf(CONSOLE_SNAPSHOT).get(PLAYER_IDS.first)).toBe(
+      formatRating(PLAYERS.first.rating),
+    );
   });
 });

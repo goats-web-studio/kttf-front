@@ -15,7 +15,7 @@ import { useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
-import { useT } from '@/common/i18n';
+import { formatRating, useT } from '@/common/i18n';
 import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
@@ -167,7 +167,7 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
                       >
                         <ListItemText
                           primary={playerName(player)}
-                          secondary={`${placeName(player.city)} · ${player.rating}`}
+                          secondary={`${placeName(player.city)} · ${formatRating(player.rating)}`}
                         />
                       </ListItemButton>
                     </ListItem>

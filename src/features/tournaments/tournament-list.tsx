@@ -203,7 +203,6 @@ function ListTable({
                     <RatingValue
                       value={String(tournament.averageRating)}
                       sx={{ fontWeight: 600 }}
-                      whole
                     />
                   )}
                 </TableCell>
@@ -283,7 +282,7 @@ function ListRows({ groups, clubName }: GroupsProps): ReactNode {
                   <span>{clubName(tournament.clubId)}</span>
                   {tournament.averageRating !== null && (
                     <span title={t('tournaments.col.avgFull')}>
-                      <RatingValue value={String(tournament.averageRating)} whole />
+                      <RatingValue value={String(tournament.averageRating)} />
                     </span>
                   )}
                   <Participants tournament={tournament} />

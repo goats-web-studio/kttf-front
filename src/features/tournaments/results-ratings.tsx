@@ -8,7 +8,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { formatDelta, useT } from '@/common/i18n';
+import { formatDelta, formatRating, useT } from '@/common/i18n';
 import DeltaPill from '@/common/ui/delta-pill';
 import RatingValue from '@/common/ui/rating-value';
 
@@ -123,7 +123,8 @@ function Events({ rating }: { readonly rating: ParticipantRatingView }): ReactNo
       >
         {rating.events.map((event, index) => (
           <li key={event.matchId ?? index}>
-            {event.ratingBefore} {formatDelta(event.delta)} = {event.ratingAfter}
+            {formatRating(event.ratingBefore)} {formatDelta(event.delta)} ={' '}
+            {formatRating(event.ratingAfter)}
           </li>
         ))}
       </Box>

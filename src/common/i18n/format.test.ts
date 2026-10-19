@@ -3,16 +3,23 @@ import { describe, expect, it } from 'vitest';
 import { formatDelta, formatRating, formatTimeTick } from './format';
 
 describe('formatRating', () => {
-  it('два знака после точки — дописывает нули строкой (07, 10.2)', () => {
-    expect(formatRating('421.22')).toBe('421.22');
-    expect(formatRating('411.9')).toBe('411.90');
-    expect(formatRating('250')).toBe('250.00');
+  it('целым, до ближайшего (ADR-053)', () => {
+    expect(formatRating('384.10')).toBe('384');
+    expect(formatRating('396.78')).toBe('397');
+    expect(formatRating('411.9')).toBe('412');
+    expect(formatRating('250')).toBe('250');
+    expect(formatRating('399.99')).toBe('400');
   });
 
-  it('лишних знаков не обрезает и неразбираемое не трогает', () => {
-    // Округлять — значит менять рейтинг на экране, а он должен совпадать с журналом.
-    expect(formatRating('421.225')).toBe('421.225');
+  it('половина — вверх, по первой цифре дробной части', () => {
+    expect(formatRating('421.50')).toBe('422');
+    expect(formatRating('421.49')).toBe('421');
+    expect(formatRating('421.499')).toBe('421');
+  });
+
+  it('неразбираемое не трогает', () => {
     expect(formatRating('—')).toBe('—');
+    expect(formatRating('')).toBe('');
   });
 });
 

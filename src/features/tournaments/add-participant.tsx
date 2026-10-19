@@ -13,7 +13,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
-import { useT } from '@/common/i18n';
+import { formatRating, useT } from '@/common/i18n';
 import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
@@ -146,7 +146,7 @@ export default function AddParticipant({
                     <>
                       {placeName(player.city)}{' '}
                       <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {player.rating}
+                        {formatRating(player.rating)}
                       </Box>
                     </>
                   }

@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { formatRating } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
 import { playerName } from '@/features/players/player-name';
@@ -270,7 +271,7 @@ describe('шапка вошедшего — ADR-048', () => {
 
     const account = await screen.findByRole('button', { name: ru['nav.account'] });
     await waitFor(() => {
-      expect(account.textContent).toContain(PLAYERS.first.rating);
+      expect(account.textContent).toContain(formatRating(PLAYERS.first.rating));
     });
 
     fireEvent.click(account);

@@ -6,21 +6,16 @@ import type { ReactNode } from 'react';
 import { formatRating } from '@/common/i18n';
 
 interface RatingValueProps {
-  /** Рейтинг строкой, как пришёл от сервера (ADR-014); два знака дописываются при показе. */
+  /** Рейтинг строкой, как пришёл от сервера (ADR-014); целым он становится при показе. */
   readonly value: string;
   /** Кегль, начертание и гарнитуру задаёт место: звезда — доля кегля. */
   readonly sx?: Exclude<SxProps<Theme>, readonly unknown[]>;
-  /**
-   * Целое — как есть, без «.00»: средний рейтинг поля турнира — мера силы,
-   * а не чей-то рейтинг, и сотые в ней шум (ADR-052).
-   */
-  readonly whole?: boolean;
 }
 
 /**
- * Рейтинг со звездой — `★421.22`, как у RTTF (ADR-050).
+ * Рейтинг со звездой — `★421`, как у RTTF (ADR-050, ADR-053).
  *
- * Звезда — знак «это рейтинг», а не украшение: в строке «421.22 · 8 место ·
+ * Звезда — знак «это рейтинг», а не украшение: в строке «421 · 8 место ·
  * 3:1» без неё не понять, какое из чисел рейтинг. Одна на всё приложение,
  * чтобы рейтинг везде читался одинаково — в шапке, таблице, графике.
  *
@@ -29,7 +24,7 @@ interface RatingValueProps {
  * таблицы съели бы правило 5% (07, 1.3). Чтецу экрана звезда не нужна: рядом
  * всегда подпись «Рейтинг» или заголовок колонки.
  */
-export default function RatingValue({ value, sx, whole = false }: RatingValueProps): ReactNode {
+export default function RatingValue({ value, sx }: RatingValueProps): ReactNode {
   return (
     <Box
       component="span"
@@ -59,7 +54,7 @@ export default function RatingValue({ value, sx, whole = false }: RatingValuePro
           alignSelf: 'center',
         }}
       />
-      <span>{whole ? value : formatRating(value)}</span>
+      <span>{formatRating(value)}</span>
     </Box>
   );
 }

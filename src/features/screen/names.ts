@@ -1,5 +1,7 @@
 import type { PlayerView } from '@kttf/shared/types';
 
+import { formatRating } from '@/common/i18n';
+
 /**
  * Разворачивание идентификаторов в фамилии — ТЗ 6.5.
  *
@@ -12,7 +14,7 @@ export function namesOf(players: readonly PlayerView[]): ReadonlyMap<string, str
   return new Map(players.map((player) => [player.id, `${player.lastName} ${player.firstName}`]));
 }
 
-/** Рейтинг рядом с фамилией — ТЗ 6.6 требует его и в таблице на стене. */
+/** Рейтинг рядом с фамилией — ТЗ 6.6 требует его и в таблице на стене. Целым (ADR-053). */
 export function ratingsOf(players: readonly PlayerView[]): ReadonlyMap<string, string> {
-  return new Map(players.map((player) => [player.id, player.rating]));
+  return new Map(players.map((player) => [player.id, formatRating(player.rating)]));
 }

@@ -64,7 +64,7 @@ export function formatMoney(amount: number, locale: Locale): string {
  * дописывается, ноль остаётся без знака.
  */
 export function formatDelta(delta: string): string {
-  const value = formatRating(delta);
+  const value = padHundredths(delta);
 
   if (value.startsWith('-') || /^0(\.0+)?$/.test(value)) {
     return value;
@@ -74,15 +74,14 @@ export function formatDelta(delta: string): string {
 }
 
 /**
- * Рейтинг — два знака после точки: «421.20», а не «421.2» (07, 10.2).
+ * Два знака после точки: «-7.90», а не «-7.9» (07, 10.2).
  *
  * Сервер отдаёт `Decimal` строкой, и ноль на конце в ней теряется. Дописывается
- * он здесь, работой со строкой, а не через `Number`: разбор в число ради
- * показа — тот способ потерять сотую долю, от которого рейтинг и передаётся
- * строкой (ADR-014). Больше двух знаков не обрезается — это уже не наша
- * сотая, и прятать её нельзя. Неразбираемое значение показывается как есть.
+ * он работой со строкой, а не через `Number`: разбор в число ради показа — тот
+ * способ потерять сотую долю, от которого значение и передаётся строкой
+ * (ADR-014). Больше двух знаков не обрезается. Неразбираемое — как есть.
  */
-export function formatRating(value: string): string {
+function padHundredths(value: string): string {
   const match = /^(-?\d+)(?:\.(\d*))?$/.exec(value);
 
   if (match === null) {
@@ -92,6 +91,27 @@ export function formatRating(value: string): string {
   const [, whole = '', fraction = ''] = match;
 
   return `${whole}.${fraction.padEnd(2, '0')}`;
+}
+
+/**
+ * Рейтинг — целым: «384», а не «384.10» (ADR-053).
+ *
+ * Сотые остаются в журнале и в начислениях за встречу (`formatDelta`), а сам
+ * рейтинг, как у RTTF, читается целым. Округление до ближайшего, половина —
+ * от нуля: «421.50» → «422». Считается по первой цифре дробной части, без
+ * разбора всей строки в число. Неразбираемое значение показывается как есть.
+ */
+export function formatRating(value: string): string {
+  const match = /^(-?)(\d+)(?:\.(\d*))?$/.exec(value);
+
+  if (match === null) {
+    return value;
+  }
+
+  const [, sign = '', whole = '', fraction = ''] = match;
+  const rounded = Number(whole) + ((fraction[0] ?? '0') >= '5' ? 1 : 0);
+
+  return rounded === 0 ? '0' : `${sign}${String(rounded)}`;
 }
 
 /** Число записей: «1 248», с разрядами по языку интерфейса. */
