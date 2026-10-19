@@ -326,6 +326,7 @@ export const ru = {
   'club.contact.call': 'Позвонить',
   'club.contact.telegram': 'Telegram',
   'club.contact.route': 'Маршрут в 2GIS',
+  'club.contact.routeShort': 'Маршрут',
   'club.contact.website': 'Сайт',
   'club.contact.instagram': 'Инстаграм',
   'club.contact.message': 'Здравствуйте! Пишу со страницы клуба «{club}» на KTTF.',

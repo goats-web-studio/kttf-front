@@ -332,6 +332,7 @@ export const kk: Record<MessageKey, string> = {
   'club.contact.call': 'Қоңырау шалу',
   'club.contact.telegram': 'Telegram',
   'club.contact.route': '2GIS-те бағыт',
+  'club.contact.routeShort': 'Бағыт',
   'club.contact.website': 'Сайт',
   'club.contact.instagram': 'Инстаграм',
   'club.contact.message': 'Сәлеметсіз бе! KTTF-тегі «{club}» клубының парағынан жазып отырмын.',

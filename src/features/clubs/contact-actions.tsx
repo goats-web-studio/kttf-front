@@ -120,7 +120,19 @@ export default function ContactActions({ club }: { readonly club: ClubView }): R
                 : {}),
             }}
           >
-            {t(action.label)}
+            {action.kind === 'ROUTE' ? (
+              // На телефоне кнопка в полширины: «Маршрут в 2GIS» в неё не влезает.
+              <>
+                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                  {t('club.contact.routeShort')}
+                </Box>
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  {t(action.label)}
+                </Box>
+              </>
+            ) : (
+              t(action.label)
+            )}
           </Button>
         );
       })}
