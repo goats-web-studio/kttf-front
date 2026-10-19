@@ -43,6 +43,11 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
 
   // Каталог маркета — ADR-058.
   BRAND_ALREADY_EXISTS: 'error.api.BRAND_ALREADY_EXISTS',
+
+  // Страница тренера — ADR-059.
+  COACH_ALREADY_EXISTS: 'error.api.COACH_ALREADY_EXISTS',
+  COACH_INCOMPLETE: 'error.api.COACH_INCOMPLETE',
+  COACH_STATUS_INVALID: 'error.api.COACH_STATUS_INVALID',
 };
 
 /**

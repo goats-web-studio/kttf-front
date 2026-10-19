@@ -94,6 +94,7 @@ const ME: AuthUserView = {
   playerId: PLAYER_PROFILE.id,
   clubRoles: [],
   isAdmin: false,
+  coach: null,
 };
 
 /** Игрок списка «Кто играет». */

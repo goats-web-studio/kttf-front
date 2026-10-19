@@ -1228,6 +1228,11 @@ export const kk: Record<MessageKey, string> = {
   'page.market.title': 'Маркет',
   'page.catalog.title': 'Каталог',
   'error.api.BRAND_ALREADY_EXISTS': 'Мұндай атаулы өндіруші бар',
+  'error.api.COACH_ALREADY_EXISTS': 'Бұл профильде жаттықтырушы беті бұрыннан бар',
+  'error.api.COACH_INCOMPLETE':
+    'Тексеруге қала және кемінде бір жаттығу керек. Оларды толтырып, қайта жіберіңіз.',
+  'error.api.COACH_STATUS_INVALID':
+    'Бет тексеруде немесе жарияланған. Экранды жаңартыңыз — мәртебесі өзгерген болуы мүмкін.',
   'market.category.BLADE': 'Негіздер',
   'market.category.RUBBER': 'Жапсырмалар',
   'market.category.RACKET': 'Дайын ракеткалар',

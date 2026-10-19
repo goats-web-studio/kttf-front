@@ -30,6 +30,7 @@ const SIGNED_IN: AuthUserView = {
   playerId: null,
   clubRoles: [],
   isAdmin: false,
+  coach: null,
 };
 
 /** Запросы, ушедшие на сервер: по ним видно, что действие правда отправлено. */

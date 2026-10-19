@@ -645,6 +645,7 @@ export const USER_WITHOUT_PROFILE: AuthUserView = {
   playerId: null,
   clubRoles: [],
   isAdmin: false,
+  coach: null,
 };
 
 /** Тот же человек после заведения профиля и с ролью в клубе. */
@@ -714,6 +715,7 @@ export const PLAYER_PROFILE: PlayerProfileView = {
   bio: null,
   coachPlayerId: null,
   coachName: null,
+  coachSlug: null,
   lastSeenAt: null,
   online: false,
 };

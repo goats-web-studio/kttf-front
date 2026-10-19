@@ -1217,6 +1217,11 @@ export const ru = {
   'page.market.title': 'Маркет',
   'page.catalog.title': 'Каталог',
   'error.api.BRAND_ALREADY_EXISTS': 'Производитель с таким названием уже есть',
+  'error.api.COACH_ALREADY_EXISTS': 'Страница тренера у этого профиля уже есть',
+  'error.api.COACH_INCOMPLETE':
+    'Для проверки нужны город и хотя бы одна тренировка. Заполните их и отправьте снова.',
+  'error.api.COACH_STATUS_INVALID':
+    'Страница уже на проверке или опубликована. Обновите экран — статус мог измениться.',
   'market.category.BLADE': 'Основания',
   'market.category.RUBBER': 'Накладки',
   'market.category.RACKET': 'Готовые ракетки',
