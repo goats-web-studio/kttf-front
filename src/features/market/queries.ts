@@ -4,6 +4,7 @@ import {
   fetchAdminProduct,
   fetchBrand,
   fetchProduct,
+  listEquipmentTexts,
   listAdminProducts,
   listBrands,
   listProducts,
@@ -19,6 +20,7 @@ export const marketKeys = {
   brand: (slug: string) => ['market', 'brand', slug] as const,
   admin: (query: string) => ['market', 'admin', query] as const,
   adminProduct: (id: string) => ['market', 'admin-product', id] as const,
+  equipmentTexts: (query: string) => ['market', 'equipment-texts', query] as const,
 };
 
 /** Список товаров по готовой строке запроса — см. `catalogApiQuery`. */
@@ -75,5 +77,12 @@ export function adminProductQuery(id: string) {
   return queryOptions({
     queryKey: marketKeys.adminProduct(id),
     queryFn: () => fetchAdminProduct(id),
+  });
+}
+
+export function equipmentTextsQuery(query: string) {
+  return queryOptions({
+    queryKey: marketKeys.equipmentTexts(query),
+    queryFn: () => listEquipmentTexts(query),
   });
 }

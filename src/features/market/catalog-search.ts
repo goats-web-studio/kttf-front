@@ -26,7 +26,8 @@ import { searchPage, searchText } from '@/common/search';
  */
 
 /** Порядок «популярные» — умолчание и в адрес не пишется. */
-export const CATALOG_SORTS = ['popular', 'name', 'new'] as const;
+/** `players` — «Выбор игроков»: по числу игроков с товаром в инвентаре (M1.2). */
+export const CATALOG_SORTS = ['popular', 'players', 'name', 'new'] as const;
 export type CatalogSort = (typeof CATALOG_SORTS)[number];
 
 /**
@@ -79,7 +80,7 @@ const brandList = z
 const baseSchema = z.object({
   q: searchText,
   brand: brandList,
-  sort: z.enum(['name', 'new']).optional().catch(undefined),
+  sort: z.enum(['players', 'name', 'new']).optional().catch(undefined),
   page: searchPage,
 });
 

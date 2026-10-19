@@ -11,6 +11,7 @@ import type {
   Page,
   SetClubHoursInput,
   SetClubPricesInput,
+  SetClubTablesInput,
   TrafficSource,
   UpdateClubInput,
   UploadedImage,
@@ -59,6 +60,11 @@ export function addClubMember(id: string, input: AddMemberInput): Promise<ClubMe
 /** Часы работы неделей целиком — ADR-055. */
 export function setClubHours(id: string, input: SetClubHoursInput): Promise<ClubView> {
   return apiRequest<ClubView>(`/clubs/${id}/hours`, { method: 'PUT', body: input });
+}
+
+/** Модели столов из каталога маркета целиком — ADR-058. */
+export function setClubTables(id: string, input: SetClubTablesInput): Promise<ClubView> {
+  return apiRequest<ClubView>(`/clubs/${id}/tables`, { method: 'PUT', body: input });
 }
 
 /** Прайс целиком: порядок строк — порядок в списке. */

@@ -16,19 +16,23 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, type ReactNode } from 'react';
 
-import { fill, formatCount, formatDate, useLocale, useT } from '@/common/i18n';
+import { fill, formatCount, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import Pagination from '@/common/ui/pagination';
 import PlayerAvatar from '@/common/ui/player-avatar';
+import PillTabs from '@/common/ui/pill-tabs';
 import RankBadge from '@/common/ui/rank-badge';
 import RatingValue from '@/common/ui/rating-value';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import type { PickedProduct } from '@/features/market/picked-product';
 import { useCityLabel } from '@/features/places/city-label';
 import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
+import { equipmentFilterLabel } from '@/features/players/equipment-labels';
+import { EquipmentText } from '@/features/players/equipment-text';
 import PlayersFilter, { type PlayersFilterValue } from '@/features/players/players-filter';
 import {
   citiesOf,
@@ -42,6 +46,11 @@ export const Route = createFileRoute('/_public/players/')({
   validateSearch: parsePlayersSearch,
   component: PlayersPage,
 });
+
+const VIEWS: readonly (readonly ['list' | 'equipment', MessageKey])[] = [
+  ['list', 'players.view.list'],
+  ['equipment', 'players.view.equipment'],
+];
 
 /** Колонки, которых на телефоне нет: город уходит подписью под фамилию. */
 const WIDE = { display: { xs: 'none', sm: 'table-cell' } } as const;
@@ -85,12 +94,49 @@ function PlayersPage(): ReactNode {
     [navigate],
   );
 
+  const items = players.data?.items ?? [];
+  const bladeLabel =
+    search.bladeId === undefined ? undefined : equipmentFilterLabel(search.bladeId, 'blade', items);
+  const rubberLabel =
+    search.rubberId === undefined
+      ? undefined
+      : equipmentFilterLabel(search.rubberId, 'rubber', items);
+  const picked = (id: string | undefined, label: string | undefined): PickedProduct | null =>
+    id === undefined
+      ? null
+      : { id, label: label ?? t('players.filter.productChosen'), image: null };
+
   const active = activeFilters(search, {
     t,
     cityLabel,
     clubName: (id) => clubs.data?.get(id)?.name ?? t('common.loading'),
     remove: filter,
   });
+  if (search.bladeId !== undefined) {
+    active.push({
+      key: 'blade',
+      label: fill(t('filter.chip'), {
+        label: t('players.filter.blade'),
+        value: bladeLabel ?? t('players.filter.productChosen'),
+      }),
+      onRemove: () => {
+        filter({ bladeId: undefined });
+      },
+    });
+  }
+  if (search.rubberId !== undefined) {
+    active.push({
+      key: 'rubber',
+      label: fill(t('filter.chip'), {
+        label: t('players.filter.rubber'),
+        value: rubberLabel ?? t('players.filter.productChosen'),
+      }),
+      onRemove: () => {
+        filter({ rubberId: undefined });
+      },
+    });
+  }
+  const equipmentView = search.view === 'equipment';
 
   const reset = (): void => {
     void navigate({ search: {} });
@@ -109,12 +155,33 @@ function PlayersPage(): ReactNode {
 
       {/* Ключ — фильтры из адреса: снятый чип или «Назад» заново заполняют поля. */}
       <PlayersFilter
-        key={JSON.stringify(filterPart(search))}
+        key={JSON.stringify([filterPart(search), bladeLabel, rubberLabel])}
         initial={search}
+        blade={picked(search.bladeId, bladeLabel)}
+        rubber={picked(search.rubberId, rubberLabel)}
         onSubmit={(value: PlayersFilterValue) => {
           filter(value);
         }}
       />
+
+      {/* «Список игроков / инвентарь игроков», как у RTTF (ADR-058). */}
+      <Box sx={{ mt: 3 }}>
+        <PillTabs
+          value={equipmentView ? 'equipment' : 'list'}
+          options={VIEWS}
+          label={t('players.view.label')}
+          onChange={(next) => {
+            void navigate({
+              search: (previous) => ({
+                ...previous,
+                view: next === 'equipment' ? 'equipment' : undefined,
+              }),
+              replace: true,
+              resetScroll: false,
+            });
+          }}
+        />
+      </Box>
 
       <FilterSummary
         total={players.isError ? null : players.data?.total}
@@ -142,7 +209,9 @@ function PlayersPage(): ReactNode {
                       {t('ratings.column.rank')}
                     </TableCell>
                     <TableCell>{t('ratings.column.player')}</TableCell>
-                    <TableCell sx={WIDE}>{t('ratings.column.city')}</TableCell>
+                    {equipmentView ? null : (
+                      <TableCell sx={WIDE}>{t('ratings.column.city')}</TableCell>
+                    )}
                     <TableCell align="right" sortDirection={descending ? 'desc' : 'asc'}>
                       <TableSortLabel
                         active
@@ -155,12 +224,22 @@ function PlayersPage(): ReactNode {
                         {t('ratings.column.rating')}
                       </TableSortLabel>
                     </TableCell>
-                    <TableCell align="right" sx={WIDE}>
-                      {t('ratings.column.matches')}
-                    </TableCell>
-                    <TableCell align="right" sx={WIDEST}>
-                      {t('players.column.updated')}
-                    </TableCell>
+                    {equipmentView ? (
+                      <>
+                        <TableCell sx={WIDE}>{t('player.form.blade')}</TableCell>
+                        <TableCell sx={WIDE}>{t('players.column.forehand')}</TableCell>
+                        <TableCell sx={WIDE}>{t('players.column.backhand')}</TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell align="right" sx={WIDE}>
+                          {t('ratings.column.matches')}
+                        </TableCell>
+                        <TableCell align="right" sx={WIDEST}>
+                          {t('players.column.updated')}
+                        </TableCell>
+                      </>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -184,6 +263,7 @@ function PlayersPage(): ReactNode {
                         }
                         matches={formatCount(player.ratedMatches, locale)}
                         provisional={t('ratings.provisional')}
+                        equipment={equipmentView}
                       />
                     );
                   })}
@@ -227,8 +307,11 @@ function PlayerRow({
   updated,
   matches,
   provisional,
+  equipment,
 }: {
   readonly player: PlayerListItemView;
+  /** «Инвентарь игроков»: основание и накладки вместо города, встреч и даты. */
+  readonly equipment: boolean;
   readonly rank: number;
   readonly rankLabel: string;
   readonly city: string;
@@ -275,32 +358,58 @@ function PlayerRow({
                 {provisional}
               </Typography>
             )}
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ display: { sm: 'none' }, mt: -0.5 }}
-            >
-              {city}
-            </Typography>
+            {equipment ? (
+              // На телефоне колонок инвентаря нет — он строками под фамилией.
+              <Box sx={{ display: { sm: 'none' }, typography: 'body2', color: 'text.secondary' }}>
+                <Box>
+                  <EquipmentText value={player.blade} />
+                </Box>
+                <Box>
+                  <EquipmentText value={player.rubberForehand} />
+                  {' / '}
+                  <EquipmentText value={player.rubberBackhand} />
+                </Box>
+              </Box>
+            ) : (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ display: { sm: 'none' }, mt: -0.5 }}
+              >
+                {city}
+              </Typography>
+            )}
           </Box>
         </Stack>
       </TableCell>
-      <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>{city}</TableCell>
+      {equipment ? null : <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>{city}</TableCell>}
       <TableCell
         align="right"
         sx={{ ...NUM, fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18 }}
       >
         <RatingValue value={player.rating} />
       </TableCell>
-      <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
-        {matches}
-      </TableCell>
-      <TableCell
-        align="right"
-        sx={{ ...WIDEST, ...NUM, color: 'text.secondary', whiteSpace: 'nowrap' }}
-      >
-        {updated}
-      </TableCell>
+      {equipment ? (
+        <>
+          {[player.blade, player.rubberForehand, player.rubberBackhand].map((value, index) => (
+            <TableCell key={index} sx={{ ...WIDE, typography: 'body2' }}>
+              <EquipmentText value={value} />
+            </TableCell>
+          ))}
+        </>
+      ) : (
+        <>
+          <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
+            {matches}
+          </TableCell>
+          <TableCell
+            align="right"
+            sx={{ ...WIDEST, ...NUM, color: 'text.secondary', whiteSpace: 'nowrap' }}
+          >
+            {updated}
+          </TableCell>
+        </>
+      )}
     </TableRow>
   );
 }
@@ -318,6 +427,8 @@ function filterPart(search: PlayersSearch): PlayersFilterValue {
     to: search.to,
     gender: search.gender,
     hand: search.hand,
+    bladeId: search.bladeId,
+    rubberId: search.rubberId,
   };
 }
 

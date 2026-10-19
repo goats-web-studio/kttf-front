@@ -4,7 +4,10 @@ import type {
   BrandView,
   CreateBrandInput,
   CreateProductInput,
+  EquipmentTextView,
   ImportRowResult,
+  LinkEquipmentTextInput,
+  LinkEquipmentTextResult,
   Page,
   ProductImageView,
   ProductListItemView,
@@ -141,5 +144,18 @@ export function importProducts(rows: readonly unknown[]): Promise<readonly Impor
   return apiRequest<readonly ImportRowResult[]>('/admin/catalog/import', {
     method: 'POST',
     body: { rows },
+  });
+}
+
+/** Строки инвентаря анкет без товара — сопоставление (`docs/10` 4.2, 5.8). */
+export function listEquipmentTexts(query: string): Promise<Page<EquipmentTextView>> {
+  return apiRequest<Page<EquipmentTextView>>(`/admin/catalog/equipment-texts${query}`);
+}
+
+/** Связать строку с товаром разом у всех игроков, кто её написал. */
+export function linkEquipmentText(input: LinkEquipmentTextInput): Promise<LinkEquipmentTextResult> {
+  return apiRequest<LinkEquipmentTextResult>('/admin/catalog/equipment-texts/link', {
+    method: 'POST',
+    body: input,
   });
 }

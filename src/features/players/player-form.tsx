@@ -23,13 +23,15 @@ import Typography from '@mui/material/Typography';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { useId, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import type { PickedProduct } from '@/features/market/picked-product';
 import CityPicker from '@/features/places/city-picker';
+import EquipmentField from '@/features/players/equipment-field';
 import PhotoField from '@/features/players/photo-field';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
@@ -47,7 +49,13 @@ interface PlayerFormProps {
   readonly error: unknown;
   readonly onSubmit: (values: CreatePlayerInput) => void;
   readonly onCancel?: (() => void) | undefined;
+  /** Инвентарь из каталога — подписи и фото выбранных товаров при правке. */
+  readonly products?: EquipmentProducts | undefined;
 }
+
+export type EquipmentProducts = Readonly<
+  Record<'blade' | 'rubberForehand' | 'rubberBackhand', PickedProduct | null>
+>;
 
 /**
  * Профиль игрока — ТЗ 2.2 целиком.
@@ -71,6 +79,7 @@ export default function PlayerForm({
   error,
   onSubmit,
   onCancel,
+  products,
 }: PlayerFormProps): ReactNode {
   const t = useT();
   const clubs = useQuery(clubDirectoryQuery);
@@ -287,23 +296,16 @@ export default function PlayerForm({
             options={gripSchema.options.map((value) => ({ value, label: GRIP_KEYS[value] }))}
           />
 
-          {/* Инвентарь — свободная строка, а не справочник моделей: свой
-              справочник нужно наполнять и чистить, это отдельный продукт. */}
-          <TextInput control={control} name="blade" label="player.form.blade" optional />
-
-          <TextInput
-            control={control}
-            name="rubberForehand"
-            label="player.form.rubberForehand"
-            optional
-          />
-
-          <TextInput
-            control={control}
-            name="rubberBackhand"
-            label="player.form.rubberBackhand"
-            optional
-          />
+          {/* Инвентарь — товар каталога маркета, а чего в нём нет — строкой
+              (ADR-058). */}
+          {EQUIPMENT_SLOTS.map((slot) => (
+            <EquipmentSlot
+              key={slot.text}
+              form={form}
+              slot={slot}
+              initial={products?.[slot.text] ?? null}
+            />
+          ))}
         </Box>
       </Section>
 
@@ -353,6 +355,56 @@ const GRID = {
 const TOUCH = { minHeight: { xs: 44, sm: 40 } } as const;
 
 type PlayerFormApi = ReturnType<typeof useForm<CreatePlayerInput>>;
+
+/** Три места инвентаря: строка анкеты и товар каталога рядом. */
+const EQUIPMENT_SLOTS = [
+  { text: 'blade', product: 'bladeProductId', category: 'BLADE', label: 'player.form.blade' },
+  {
+    text: 'rubberForehand',
+    product: 'rubberForehandProductId',
+    category: 'RUBBER',
+    label: 'player.form.rubberForehand',
+  },
+  {
+    text: 'rubberBackhand',
+    product: 'rubberBackhandProductId',
+    category: 'RUBBER',
+    label: 'player.form.rubberBackhand',
+  },
+] as const;
+
+/**
+ * Место инвентаря в форме: товар и строка — одно из двух. Выбор товара
+ * стирает строку и наоборот (`EquipmentField`), форма хранит оба поля.
+ */
+function EquipmentSlot({
+  form,
+  slot,
+  initial,
+}: {
+  readonly form: PlayerFormApi;
+  readonly slot: (typeof EQUIPMENT_SLOTS)[number];
+  readonly initial: PickedProduct | null;
+}): ReactNode {
+  const t = useT();
+  const text = useWatch({ control: form.control, name: slot.text });
+  const productId = useWatch({ control: form.control, name: slot.product });
+  const [product, setProduct] = useState<PickedProduct | null>(initial);
+  const shown = productId === undefined ? null : product;
+
+  return (
+    <EquipmentField
+      category={slot.category}
+      label={t(slot.label)}
+      value={{ product: shown, text }}
+      onChange={(next) => {
+        setProduct(next.product);
+        form.setValue(slot.product, next.product?.id, { shouldDirty: true });
+        form.setValue(slot.text, next.text, { shouldDirty: true });
+      }}
+    />
+  );
+}
 
 /** Поля профиля, значение которых — строка. */
 type TextName =

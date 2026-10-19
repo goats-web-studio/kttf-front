@@ -42,6 +42,11 @@ export const playersSearchSchema = z.object({
   to: searchRating,
   gender: z.enum(['MALE', 'FEMALE']).optional().catch(undefined),
   hand: z.enum(['RIGHT', 'LEFT']).optional().catch(undefined),
+  /** Играют этим основанием или накладкой — товар каталога (ADR-058). */
+  bladeId: searchId,
+  rubberId: searchId,
+  /** «Инвентарь игроков» вместо «Списка игроков», как у RTTF. */
+  view: z.literal('equipment').optional().catch(undefined),
   /** Сильнейшие первыми — умолчание, в адрес не пишется. */
   order: z.literal('asc').optional().catch(undefined),
   page: searchPage,
@@ -70,5 +75,7 @@ export function toPlayersQuery(search: PlayersSearch): ListPlayersRequest {
     ...(search.gender === undefined ? {} : { gender: search.gender }),
     ...(search.hand === undefined ? {} : { playingHand: search.hand }),
     ...(search.order === undefined ? {} : { order: search.order }),
+    ...(search.bladeId === undefined ? {} : { bladeId: search.bladeId }),
+    ...(search.rubberId === undefined ? {} : { rubberId: search.rubberId }),
   };
 }

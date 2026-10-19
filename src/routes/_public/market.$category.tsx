@@ -3,7 +3,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import MenuItem from '@mui/material/MenuItem';
-import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
@@ -39,6 +38,7 @@ export const Route = createFileRoute('/_public/market/$category')({
 
 const SORT_LABELS: Readonly<Record<CatalogSort, MessageKey>> = {
   popular: 'market.sort.popular',
+  players: 'market.sort.players',
   name: 'market.sort.name',
   new: 'market.sort.new',
 };
@@ -121,13 +121,19 @@ function Category({ category }: { readonly category: ProductCategory }): ReactNo
         }}
       />
 
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        useFlexGap
-        spacing={2}
-        sx={{ mt: 1, alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
+      {/* Сетка, а не строка: число найденного и чипы занимают свою колонку
+          целиком, а порядок — свою, и плавающая подпись поля не наезжает на
+          «Найдено». */}
+      <Box
+        sx={{
+          mt: 3,
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 1fr) 240px' },
+          alignItems: 'center',
+        }}
       >
-        <Box sx={{ minWidth: 0 }}>
+        <Box sx={{ minWidth: 0, '& > .MuiStack-root': { mt: 0 } }}>
           <FilterSummary
             total={products.isError ? null : products.data?.total}
             filters={chips}
@@ -147,12 +153,7 @@ function Category({ category }: { readonly category: ProductCategory }): ReactNo
               page: undefined,
             });
           }}
-          sx={{
-            mt: { sm: 2 },
-            minWidth: 200,
-            flexShrink: 0,
-            '& .MuiInputBase-root': { minHeight: 44 },
-          }}
+          sx={{ gridRow: { xs: 1, sm: 'auto' }, '& .MuiInputBase-root': { minHeight: 44 } }}
         >
           {CATALOG_SORTS.map((sort) => (
             <MenuItem key={sort} value={sort} sx={{ minHeight: 44 }}>
@@ -160,12 +161,13 @@ function Category({ category }: { readonly category: ProductCategory }): ReactNo
             </MenuItem>
           ))}
         </TextField>
-      </Stack>
+      </Box>
 
       <Box sx={{ mt: 2 }}>
         <ProductResults
           result={products}
           page={page}
+          showPlayers={search.sort === 'players'}
           onPage={(next) => {
             go({ ...search, page: next === 1 ? undefined : next });
           }}

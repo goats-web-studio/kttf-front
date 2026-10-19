@@ -31,16 +31,18 @@ const GRID = {
 export default function ProductGrid({
   products,
   withAd = false,
+  showPlayers = false,
 }: {
   readonly products: readonly ProductListItemView[];
   readonly withAd?: boolean;
+  readonly showPlayers?: boolean;
 }): ReactNode {
   return (
     <Box component="ul" sx={GRID}>
       {products.map((product, index) => (
         <Fragment key={product.id}>
           <Box component="li" sx={{ minWidth: 0 }}>
-            <ProductCard product={product} eager={index < EAGER} />
+            <ProductCard product={product} eager={index < EAGER} showPlayers={showPlayers} />
           </Box>
           {withAd && index === AD_AFTER - 1 && <AdSlot placement="market-inline" />}
         </Fragment>
@@ -70,13 +72,20 @@ interface ProductResultsProps {
   readonly onPage: (page: number) => void;
   /** Что показать, когда список пуст: «ничего не найдено» или «пока пусто». */
   readonly empty: ReactNode;
+  readonly showPlayers?: boolean;
 }
 
 /**
  * Список товаров с номерами страниц — у RTTF бесконечная прокрутка без
  * адресов страниц, у нас страница — часть адреса (`docs/10` 5.3).
  */
-export function ProductResults({ result, page, onPage, empty }: ProductResultsProps): ReactNode {
+export function ProductResults({
+  result,
+  page,
+  onPage,
+  empty,
+  showPlayers = false,
+}: ProductResultsProps): ReactNode {
   const pages =
     result.data === undefined ? 1 : Math.max(1, Math.ceil(result.data.total / result.data.limit));
 
@@ -89,7 +98,7 @@ export function ProductResults({ result, page, onPage, empty }: ProductResultsPr
         loading={<ProductGridSkeleton />}
       >
         {result.data === undefined ? null : result.data.items.length > 0 ? (
-          <ProductGrid products={result.data.items} withAd />
+          <ProductGrid products={result.data.items} withAd showPlayers={showPlayers} />
         ) : (
           empty
         )}

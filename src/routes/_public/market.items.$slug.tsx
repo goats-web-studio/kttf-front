@@ -14,7 +14,7 @@ import { Settings } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 
 import { isMissingResource } from '@/common/api';
-import { useLocale, useT } from '@/common/i18n';
+import { fill, formatCount, useLocale, useT } from '@/common/i18n';
 import AdSlot from '@/common/ui/ad-slot';
 import { BackLink } from '@/common/ui/page-header';
 import QueryState from '@/common/ui/query-state';
@@ -28,6 +28,9 @@ import ProductOptions from '@/features/market/product-options';
 import { productQuery } from '@/features/market/queries';
 import { trackProductView } from '@/features/market/track';
 
+import WhereStands from './-market/where-stands';
+import WhoPlays from './-market/who-plays';
+
 export const Route = createFileRoute('/_public/market/items/$slug')({
   component: ProductPage,
 });
@@ -35,10 +38,9 @@ export const Route = createFileRoute('/_public/market/items/$slug')({
 /**
  * Товар — `docs/10` 5.4, 5.5.
  *
- * На этом этапе (M1.1) — справочник: фото, характеристики, варианты,
- * описание. «Где купить», «Заказать», «Играю» и «Кто играет» придут с
- * магазинами и профилями (M1.2–M1.4); пустых мест под них нет (ADR-042),
- * поэтому и кнопки `primary` на странице пока нет.
+ * Справочник: фото, характеристики, варианты, описание, «Кто играет» с
+ * «Играю» и «Где стоит» (M1.1–M1.2). «Где купить» и «Заказать» придут с
+ * магазинами (M1.3–M1.4); пустых мест под них нет (ADR-042).
  */
 function ProductPage(): ReactNode {
   const t = useT();
@@ -120,6 +122,13 @@ function ProductDetails({ product }: { readonly product: ProductView }): ReactNo
       >
         {product.name}
       </Typography>
+      {product.playerCount > 0 && (
+        <Typography color="text.secondary" sx={{ mt: 0.5, fontVariantNumeric: 'tabular-nums' }}>
+          {fill(t('market.product.playerCount'), {
+            count: formatCount(product.playerCount, locale),
+          })}
+        </Typography>
+      )}
       {user?.isAdmin === true && (
         <Button
           href={`/cabinet/catalog?edit=${product.id}`}
@@ -142,6 +151,14 @@ function ProductDetails({ product }: { readonly product: ProductView }): ReactNo
       <ProductOptions category={product.category} options={product.options} />
     </AsideCard>
   );
+  // Справочник в профилях (M1.2): «Кто играет» у оснований и накладок,
+  // «Где стоит» у столов.
+  const people =
+    product.category === 'BLADE' || product.category === 'RUBBER' ? (
+      <WhoPlays product={product} />
+    ) : product.category === 'TABLE' ? (
+      <WhereStands product={product} />
+    ) : null;
   const description = product.description !== null && (
     <Box component="section" sx={{ mt: { xs: 4, md: 6 } }}>
       <Typography variant="h2" sx={{ mb: 2 }}>
@@ -158,6 +175,7 @@ function ProductDetails({ product }: { readonly product: ProductView }): ReactNo
         <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 8fr) minmax(0, 4fr)', gap: 4 }}>
           <Box>
             <ProductGallery images={product.images} name={product.name} />
+            {people}
             {description}
           </Box>
           <Box component="aside" sx={{ display: 'grid', gap: 2, alignContent: 'start' }}>
@@ -182,6 +200,7 @@ function ProductDetails({ product }: { readonly product: ProductView }): ReactNo
         {attributes}
         {options}
       </Box>
+      {people}
       {description}
       <Box sx={{ mt: 4 }}>
         <AdSlot placement="product-aside" />

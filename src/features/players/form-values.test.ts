@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CITIES } from '@/test/fixtures';
 
-import { toFormValues, toPlayerPatch } from './form-values';
+import { equipmentProducts, toFormValues, toPlayerPatch } from './form-values';
 
 /**
  * Переход профиль ↔ форма — ADR-035.
@@ -33,6 +33,9 @@ const profile: PlayerProfileView = {
   blade: 'Butterfly Lin Gaoyuan ALC',
   rubberForehand: 'Nittaku Hurricane PRO 3',
   rubberBackhand: 'DHS Hurricane 8 Soft',
+  bladeProduct: null,
+  rubberForehandProduct: null,
+  rubberBackhandProduct: null,
   bio: 'hate tensor, love sticky',
   coachPlayerId: null,
   coachName: 'Сериков Тимур',
@@ -112,5 +115,46 @@ describe('форма в правку', () => {
     expect(patch.birthYear).toBe(2001);
     expect(patch.gender).toBe('MALE');
     expect(patch.cityId).toBe(CITIES.almaty.id);
+  });
+});
+
+describe('инвентарь из каталога — ADR-058', () => {
+  const blade = {
+    id: '00000000-0000-4000-8000-0000000000e1',
+    slug: 'butterfly-viscaria',
+    category: 'BLADE' as const,
+    name: 'Viscaria',
+    brand: { id: '00000000-0000-4000-8000-0000000000d1', name: 'Butterfly', slug: 'butterfly' },
+    image: null,
+    playerCount: 3,
+  };
+
+  it('выбранный товар стирает строку того же места', () => {
+    const patch = toPlayerPatch({ ...filled, bladeProductId: blade.id, blade: 'старая строка' });
+
+    expect(patch).toMatchObject({
+      bladeProductId: blade.id,
+      blade: null,
+      rubberForehandProductId: null,
+      rubberBackhandProductId: null,
+    });
+  });
+
+  it('без товара строка остаётся, а снятый товар уходит null', () => {
+    const patch = toPlayerPatch({ ...filled, rubberForehand: 'Тенерджи 05' });
+
+    expect(patch).toMatchObject({ rubberForehand: 'Тенерджи 05', rubberForehandProductId: null });
+  });
+
+  it('в форму попадает одно из двух: товар — без строки', () => {
+    const values = toFormValues({ ...profile, bladeProduct: blade });
+
+    expect(values.bladeProductId).toBe(blade.id);
+    expect(values).not.toHaveProperty('blade');
+    expect(values.rubberForehand).toBe('Nittaku Hurricane PRO 3');
+    expect(equipmentProducts({ ...profile, bladeProduct: blade }).blade).toMatchObject({
+      id: blade.id,
+      label: 'Butterfly Viscaria',
+    });
   });
 });

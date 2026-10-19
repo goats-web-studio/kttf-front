@@ -1,6 +1,7 @@
-import type { PlayerProfileView } from '@kttf/shared/types';
+import type { PlayerProfileView, ProductListItemView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -9,6 +10,7 @@ import type { ReactNode } from 'react';
 
 import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import RatingValue from '@/common/ui/rating-value';
+import { Thumb } from '@/features/market/product-picker';
 
 import { gripLabel, handLabel } from './player-labels';
 import { playerName } from './player-name';
@@ -42,12 +44,12 @@ export default function ProfileHeader({
   const t = useT();
   const locale = useLocale();
 
-  const details: readonly (readonly [MessageKey, string | null])[] = [
+  const details: readonly (readonly [MessageKey, ReactNode])[] = [
     ['player.form.playingHand', handLabel(player.playingHand, t)],
     ['player.form.grip', gripLabel(player.grip, t)],
-    ['player.form.blade', player.blade],
-    ['player.form.rubberForehand', player.rubberForehand],
-    ['player.form.rubberBackhand', player.rubberBackhand],
+    ['player.form.blade', equipment(player.bladeProduct, player.blade)],
+    ['player.form.rubberForehand', equipment(player.rubberForehandProduct, player.rubberForehand)],
+    ['player.form.rubberBackhand', equipment(player.rubberBackhandProduct, player.rubberBackhand)],
     ['player.form.coach', player.coachName],
     ['player.form.bio', player.bio],
     ['profile.since', since(player, locale, t)],
@@ -116,7 +118,7 @@ export default function ProfileHeader({
           }}
         >
           {details.map(([label, value]) =>
-            value === null || value === '' ? null : (
+            value === null || value === undefined || value === '' ? null : (
               <Box key={label} sx={{ display: 'contents' }}>
                 <dt>{t(label)}</dt>
                 <dd>{value}</dd>
@@ -246,5 +248,23 @@ function Meta({
       <Icon size={15} aria-hidden />
       {children}
     </Box>
+  );
+}
+
+/**
+ * Инвентарь: товар каталога — ссылкой в маркет с маленьким фото, а чего в
+ * каталоге нет — строкой анкеты (ADR-058).
+ */
+function equipment(product: ProductListItemView | null, text: string | null): ReactNode {
+  if (product === null) return text;
+
+  return (
+    <Link
+      href={`/market/items/${product.slug}`}
+      sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, verticalAlign: 'middle' }}
+    >
+      <Thumb image={product.image} size={24} />
+      {`${product.brand.name} ${product.name}`}
+    </Link>
   );
 }

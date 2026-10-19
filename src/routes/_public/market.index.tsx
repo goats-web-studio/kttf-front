@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
+import { z } from 'zod';
 
 import { queryString } from '@/common/api';
 import { fill, useT } from '@/common/i18n';
@@ -18,12 +19,23 @@ import BrandMark from '@/features/market/brand-mark';
 import { catalogApiQuery, parseCatalogSearch } from '@/features/market/catalog-search';
 import { CATEGORY_ICONS, categoryHref, categoryLabel } from '@/features/market/labels';
 import MarketSection, { CATALOG_PAGE_SIZE } from '@/features/market/market-section';
+import PlayersChoice from '@/features/market/players-choice';
+import { CHOICE_BANDS, CHOICE_PICKS } from '@/features/market/players-choice-query';
 import ProductGrid, { ProductGridSkeleton, ProductResults } from '@/features/market/product-grid';
 import ProductSearch from '@/features/market/product-search';
 import { brandsQuery, productsQuery } from '@/features/market/queries';
 
+/** Вкладка и планка «Выбора игроков» — в адресе, как фильтры списка (07, 6.2). */
+const choiceSchema = z.object({
+  pick: z.enum(CHOICE_PICKS).optional().catch(undefined),
+  band: z.enum(CHOICE_BANDS).optional().catch(undefined),
+});
+
 export const Route = createFileRoute('/_public/market/')({
-  validateSearch: (search: Record<string, unknown>) => parseCatalogSearch(null, search),
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...parseCatalogSearch(null, search),
+    ...choiceSchema.parse(search),
+  }),
   component: MarketPage,
 });
 
@@ -36,10 +48,10 @@ const BRANDS = 12;
 /**
  * Главная маркета — `docs/10` 5.2.
  *
- * Поиск сверху, категории плитками, популярное, новое, производители, слот
- * рекламы. «Выбор игроков» до M1.2 считается по просмотрам — отсюда
- * «Популярное». Скидки и магазины придут с магазинами (M1.3) и пустыми
- * местами здесь не стоят (ADR-042).
+ * Поиск сверху, категории плитками, «Выбор игроков Казахстана» (по числу
+ * игроков с планкой рейтинга, M1.2), популярное по просмотрам, новое,
+ * производители, слот рекламы. Скидки и магазины придут с магазинами (M1.3)
+ * и пустыми местами здесь не стоят (ADR-042).
  *
  * Поиск с Enter показывает результаты здесь же, адресом `?q=`: ссылку на
  * поиск можно переслать, как подборку категории.
@@ -115,6 +127,8 @@ function Results({ q, page }: { readonly q: string; readonly page: number }): Re
 
 function Showcase(): ReactNode {
   const t = useT();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const popular = useQuery(
     productsQuery(queryString({ sort: 'popular', page: 1, limit: POPULAR })),
   );
@@ -134,6 +148,23 @@ function Showcase(): ReactNode {
         </Box>
       ) : (
         <>
+          <MarketSection title={t('market.choice.title')}>
+            <PlayersChoice
+              pick={search.pick ?? 'BLADE'}
+              band={search.band ?? 'all'}
+              onChange={(next) => {
+                void navigate({
+                  search: {
+                    pick: next.pick === 'BLADE' ? undefined : next.pick,
+                    band: next.band === 'all' ? undefined : next.band,
+                  },
+                  replace: true,
+                  resetScroll: false,
+                });
+              }}
+            />
+          </MarketSection>
+
           <MarketSection title={t('market.popular')}>
             <QueryState
               isPending={popular.isPending}

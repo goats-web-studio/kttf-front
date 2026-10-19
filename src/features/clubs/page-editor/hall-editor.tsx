@@ -104,14 +104,19 @@ export default function HallEditor({ club }: { readonly club: ClubView }): React
           gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' },
         }}
       >
-        <TextField
-          label={t('club.field.tableBrand')}
-          value={values.tableBrand}
-          onChange={(event) => {
-            change({ tableBrand: event.target.value });
-          }}
-          slotProps={{ htmlInput: { maxLength: 100 } }}
-        />
+        {/* Марка строкой — только пока моделей из каталога нет: на странице
+            клуба модели её заменяют (ADR-058). */}
+        {club.tables.length === 0 && (
+          <TextField
+            label={t('club.field.tableBrandFallback')}
+            helperText={t('club.field.tableBrandHint')}
+            value={values.tableBrand}
+            onChange={(event) => {
+              change({ tableBrand: event.target.value });
+            }}
+            slotProps={{ htmlInput: { maxLength: 100 } }}
+          />
+        )}
         <TextField
           select
           label={t('club.field.floorType')}

@@ -11,6 +11,8 @@ import { useT, type MessageKey } from '@/common/i18n';
 import { orUndefined } from '@/common/search';
 import PillTabs from '@/common/ui/pill-tabs';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import type { PickedProduct } from '@/features/market/picked-product';
+import ProductPicker from '@/features/market/product-picker';
 import CitiesFilter from '@/features/places/cities-filter';
 
 import { citiesOf, type PlayersSearch } from './players-search';
@@ -18,13 +20,16 @@ import { citiesOf, type PlayersSearch } from './players-search';
 /** То, что задаёт панель; порядок и страница живут отдельно. */
 export type PlayersFilterValue = Pick<
   PlayersSearch,
-  'search' | 'city' | 'club' | 'from' | 'to' | 'gender' | 'hand'
+  'search' | 'city' | 'club' | 'from' | 'to' | 'gender' | 'hand' | 'bladeId' | 'rubberId'
 >;
 
 interface PlayersFilterProps {
   /** Фильтры из адреса — начальное состояние полей. */
   readonly initial: PlayersSearch;
   readonly onSubmit: (value: PlayersFilterValue) => void;
+  /** Основание и накладка из адреса — с подписью, если она известна. */
+  readonly blade: PickedProduct | null;
+  readonly rubber: PickedProduct | null;
 }
 
 type Gender = 'any' | 'MALE' | 'FEMALE';
@@ -52,7 +57,12 @@ const HANDS: readonly (readonly [Hand, MessageKey])[] = [
  * На телефоне видно только поле имени и «Найти»; остальное раскрывает
  * «Фильтры» с числом заданных условий.
  */
-export default function PlayersFilter({ initial, onSubmit }: PlayersFilterProps): ReactNode {
+export default function PlayersFilter({
+  initial,
+  onSubmit,
+  blade: initialBlade,
+  rubber: initialRubber,
+}: PlayersFilterProps): ReactNode {
   const t = useT();
   const clubs = useQuery(clubDirectoryQuery);
   const moreId = useId();
@@ -65,6 +75,8 @@ export default function PlayersFilter({ initial, onSubmit }: PlayersFilterProps)
   const [gender, setGender] = useState<Gender>(initial.gender ?? 'any');
   const [hand, setHand] = useState<Hand>(initial.hand ?? 'any');
   const [open, setOpen] = useState(false);
+  const [blade, setBlade] = useState<PickedProduct | null>(initialBlade);
+  const [rubber, setRubber] = useState<PickedProduct | null>(initialRubber);
 
   const extra = [
     from !== '' || to !== '',
@@ -72,6 +84,8 @@ export default function PlayersFilter({ initial, onSubmit }: PlayersFilterProps)
     club !== '',
     gender !== 'any',
     hand !== 'any',
+    blade !== null,
+    rubber !== null,
   ].filter(Boolean).length;
 
   const submit = (event: SyntheticEvent): void => {
@@ -86,6 +100,8 @@ export default function PlayersFilter({ initial, onSubmit }: PlayersFilterProps)
       to: high,
       gender: gender === 'any' ? undefined : gender,
       hand: hand === 'any' ? undefined : hand,
+      bladeId: blade?.id,
+      rubberId: rubber?.id,
     });
   };
 
@@ -188,8 +204,25 @@ export default function PlayersFilter({ initial, onSubmit }: PlayersFilterProps)
           value={hand}
           options={HANDS}
           onChange={setHand}
-          span={{ sm: 'span 3', md: 'span 3' }}
+          span={{ sm: 'span 3', md: 'span 5' }}
         />
+        {/* Инвентарь — товаром каталога, «Кто играет» RTTF (ADR-058). */}
+        <Box sx={{ gridColumn: { sm: 'span 3', md: 'span 5' } }}>
+          <ProductPicker
+            category="BLADE"
+            label={t('players.filter.blade')}
+            value={blade}
+            onChange={setBlade}
+          />
+        </Box>
+        <Box sx={{ gridColumn: { sm: 'span 3', md: 'span 5' } }}>
+          <ProductPicker
+            category="RUBBER"
+            label={t('players.filter.rubber')}
+            value={rubber}
+            onChange={setRubber}
+          />
+        </Box>
       </Box>
 
       <Button

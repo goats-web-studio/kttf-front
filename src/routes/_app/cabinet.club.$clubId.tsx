@@ -37,6 +37,7 @@ import HallEditor from '@/features/clubs/page-editor/hall-editor';
 import HoursEditor from '@/features/clubs/page-editor/hours-editor';
 import ImagesEditor from '@/features/clubs/page-editor/images-editor';
 import PricesEditor from '@/features/clubs/page-editor/prices-editor';
+import TablesEditor from '@/features/clubs/page-editor/tables-editor';
 import StatsPanel from '@/features/clubs/page-editor/stats-panel';
 import { clubKeys, clubQuery } from '@/features/clubs/queries';
 import { isClubStaff } from '@/features/clubs/roles';
@@ -316,6 +317,7 @@ function ClubPage({ club }: { readonly club: ClubView }): ReactNode {
       <FreshnessPanel club={club} />
       <ImagesEditor club={club} />
       <HallEditor club={club} />
+      <TablesEditor club={club} />
       <HoursEditor club={club} />
       <PricesEditor club={club} />
     </Box>

@@ -1,4 +1,13 @@
-import type { CreatePlayerInput, PlayerProfileView, UpdatePlayerInput } from '@kttf/shared/types';
+import type {
+  CreatePlayerInput,
+  PlayerProfileView,
+  ProductListItemView,
+  UpdatePlayerInput,
+} from '@kttf/shared/types';
+
+import { pickedOf, type PickedProduct } from '@/features/market/picked-product';
+
+import type { EquipmentProducts } from './player-form';
 
 /**
  * Профиль и форма — переход в обе стороны.
@@ -28,9 +37,23 @@ export function toFormValues(player: PlayerProfileView): Partial<CreatePlayerInp
       ? { playingHand: player.playingHand }
       : {}),
     ...(player.grip === 'SHAKEHAND' || player.grip === 'PENHOLD' ? { grip: player.grip } : {}),
-    ...(player.blade === null ? {} : { blade: player.blade }),
-    ...(player.rubberForehand === null ? {} : { rubberForehand: player.rubberForehand }),
-    ...(player.rubberBackhand === null ? {} : { rubberBackhand: player.rubberBackhand }),
+    // Инвентарь — товар каталога или строка, одно из двух (ADR-058): при
+    // выбранном товаре строка в форму не попадает.
+    ...(player.bladeProduct === null
+      ? player.blade === null
+        ? {}
+        : { blade: player.blade }
+      : { bladeProductId: player.bladeProduct.id }),
+    ...(player.rubberForehandProduct === null
+      ? player.rubberForehand === null
+        ? {}
+        : { rubberForehand: player.rubberForehand }
+      : { rubberForehandProductId: player.rubberForehandProduct.id }),
+    ...(player.rubberBackhandProduct === null
+      ? player.rubberBackhand === null
+        ? {}
+        : { rubberBackhand: player.rubberBackhand }
+      : { rubberBackhandProductId: player.rubberBackhandProduct.id }),
     ...(player.bio === null ? {} : { bio: player.bio }),
     // Выбранный из списка тренер и вписанный руками спорят друг с другом,
     // поэтому в форму попадает ровно один: имя — только когда выбора нет.
@@ -65,11 +88,29 @@ export function toPlayerPatch(values: CreatePlayerInput): UpdatePlayerInput {
     photoUrl: values.photoUrl ?? null,
     playingHand: values.playingHand ?? null,
     grip: values.grip ?? null,
-    blade: values.blade ?? null,
-    rubberForehand: values.rubberForehand ?? null,
-    rubberBackhand: values.rubberBackhand ?? null,
+    // Выбранный товар стирает строку: профиль не говорит двумя голосами.
+    bladeProductId: values.bladeProductId ?? null,
+    blade: values.bladeProductId === undefined ? (values.blade ?? null) : null,
+    rubberForehandProductId: values.rubberForehandProductId ?? null,
+    rubberForehand:
+      values.rubberForehandProductId === undefined ? (values.rubberForehand ?? null) : null,
+    rubberBackhandProductId: values.rubberBackhandProductId ?? null,
+    rubberBackhand:
+      values.rubberBackhandProductId === undefined ? (values.rubberBackhand ?? null) : null,
     bio: values.bio ?? null,
     coachPlayerId: values.coachPlayerId ?? null,
     coachName: values.coachName ?? null,
+  };
+}
+
+/** Выбранные товары профиля — подписи и фото для полей инвентаря. */
+export function equipmentProducts(player: PlayerProfileView): EquipmentProducts {
+  const pick = (product: ProductListItemView | null): PickedProduct | null =>
+    product === null ? null : pickedOf(product);
+
+  return {
+    blade: pick(player.bladeProduct),
+    rubberForehand: pick(player.rubberForehandProduct),
+    rubberBackhand: pick(player.rubberBackhandProduct),
   };
 }

@@ -15,15 +15,17 @@ import EmptyState from '@/common/ui/empty-state';
 import { BackLink } from '@/common/ui/page-header';
 import { useSessionStore } from '@/features/auth/session-store';
 import BrandsAdmin from '@/features/market/admin/brands-admin';
+import EquipmentTexts from '@/features/market/admin/equipment-texts';
 import ImportPanel from '@/features/market/admin/import-panel';
 import ProductsAdmin, { type ProductsAdminSearch } from '@/features/market/admin/products-admin';
 
-const CATALOG_TABS = ['products', 'brands', 'import'] as const;
+const CATALOG_TABS = ['products', 'brands', 'equipment', 'import'] as const;
 type CatalogTab = (typeof CATALOG_TABS)[number];
 
 const TAB_LABELS: Readonly<Record<CatalogTab, MessageKey>> = {
   products: 'catalog.tab.products',
   brands: 'catalog.tab.brands',
+  equipment: 'catalog.tab.equipment',
   import: 'catalog.tab.import',
 };
 
@@ -142,6 +144,7 @@ function Catalog(): ReactNode {
           />
         )}
         {tab === 'brands' && <BrandsAdmin />}
+        {tab === 'equipment' && <EquipmentTexts />}
         {tab === 'import' && <ImportPanel />}
       </Box>
     </>

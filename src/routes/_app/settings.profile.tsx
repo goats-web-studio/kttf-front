@@ -9,7 +9,7 @@ import Surface from '@/common/ui/surface';
 import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 import { createPlayer, updatePlayer } from '@/features/players/api';
-import { toFormValues, toPlayerPatch } from '@/features/players/form-values';
+import { equipmentProducts, toFormValues, toPlayerPatch } from '@/features/players/form-values';
 import PlayerForm from '@/features/players/player-form';
 import { playerKeys, playerQuery } from '@/features/players/queries';
 import SettingsLayout from '@/features/settings/settings-layout';
@@ -104,6 +104,7 @@ function EditProfile({ playerId }: { readonly playerId: string }): ReactNode {
           <PlayerForm
             defaultValues={toFormValues(player.data)}
             city={player.data.city}
+            products={equipmentProducts(player.data)}
             submitLabel="cabinet.profile.save"
             isPending={update.isPending}
             error={update.error}

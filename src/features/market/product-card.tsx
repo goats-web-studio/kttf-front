@@ -5,7 +5,7 @@ import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { useT } from '@/common/i18n';
+import { fill, formatCount, useLocale, useT } from '@/common/i18n';
 
 import { CATEGORY_ICONS, productHref } from './labels';
 
@@ -21,11 +21,15 @@ import { CATEGORY_ICONS, productHref } from './labels';
 export default function ProductCard({
   product,
   eager = false,
+  showPlayers = false,
 }: {
   readonly product: ProductListItemView;
   readonly eager?: boolean;
+  /** «Игроков: 12» — в «Выборе игроков» и при таком порядке списка. */
+  readonly showPlayers?: boolean;
 }): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const Icon = CATEGORY_ICONS[product.category];
   const image = product.image;
 
@@ -94,6 +98,15 @@ export default function ProductCard({
         >
           {product.name}
         </Typography>
+        {showPlayers && product.playerCount > 0 && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', mt: 0.5, fontVariantNumeric: 'tabular-nums' }}
+          >
+            {fill(t('market.card.players'), { count: formatCount(product.playerCount, locale) })}
+          </Typography>
+        )}
       </Box>
     </ButtonBase>
   );

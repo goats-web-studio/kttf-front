@@ -322,10 +322,12 @@ function AsideCard({
 function Hall({ club }: { readonly club: ClubView }): ReactNode {
   const t = useT();
 
+  // Модели из каталога заменяют марку строкой (ADR-058): тогда в строке
+  // «Столы» — только число, а модели — ссылками ниже.
   const rows: [string, string][] = [
     [
       t('club.hall.tables'),
-      club.tableBrand === null
+      club.tableBrand === null || club.tables.length > 0
         ? String(club.tableCount)
         : `${String(club.tableCount)} · ${club.tableBrand}`,
     ],
@@ -357,6 +359,26 @@ function Hall({ club }: { readonly club: ClubView }): ReactNode {
           </Box>
         ))}
       </Box>
+      {club.tables.length > 0 && (
+        <Box
+          component="ul"
+          sx={{ m: 0, mt: 1.5, p: 0, listStyle: 'none', display: 'grid', gap: 0.5 }}
+        >
+          {club.tables.map((table) => (
+            <Typography component="li" variant="body2" key={table.product.id}>
+              <Link href={`/market/items/${table.product.slug}`}>
+                {`${table.product.brand.name} ${table.product.name}`}
+              </Link>
+              <Box
+                component="span"
+                sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}
+              >
+                {` × ${String(table.count)}`}
+              </Box>
+            </Typography>
+          ))}
+        </Box>
+      )}
       {club.amenities.length > 0 && (
         <Box sx={{ mt: 2 }}>
           <Amenities amenities={club.amenities} />
