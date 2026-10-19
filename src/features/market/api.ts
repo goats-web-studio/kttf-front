@@ -1,4 +1,6 @@
 import type {
+  AdminProductListItemView,
+  AdminProductView,
   BrandView,
   CreateBrandInput,
   CreateProductInput,
@@ -65,26 +67,14 @@ export function sendProductView(id: string): void {
 
 // ---------- администрирование ----------
 
-/**
- * Строка списка администратора. Сервер добавляет признаки скрытой и
- * предложенной карточки; читаются они осторожно — поле может и не прийти.
- */
-export type AdminProductListItem = ProductListItemView & {
-  readonly hidden?: boolean;
-  readonly hiddenAt?: string | null;
-  readonly status?: string;
-};
-
-/** Скрыт ли товар — по признаку, который сервер может и не прислать. */
-export function hiddenOf(item: object): boolean | undefined {
-  if ('hidden' in item && typeof item.hidden === 'boolean') return item.hidden;
-  if ('hiddenAt' in item) return item.hiddenAt !== null && item.hiddenAt !== undefined;
-
-  return undefined;
+/** Список администратора — со скрытыми и предложенными магазинами. */
+export function listAdminProducts(query: string): Promise<Page<AdminProductListItemView>> {
+  return apiRequest<Page<AdminProductListItemView>>(`/admin/catalog/products${query}`);
 }
 
-export function listAdminProducts(query: string): Promise<Page<AdminProductListItem>> {
-  return apiRequest<Page<AdminProductListItem>>(`/admin/catalog/products${query}`);
+/** Товар для правки — по идентификатору, в том числе скрытый. */
+export function fetchAdminProduct(id: string): Promise<AdminProductView> {
+  return apiRequest<AdminProductView>(`/admin/catalog/products/${id}`);
 }
 
 export function createProduct(input: CreateProductInput): Promise<ProductView> {
@@ -137,11 +127,13 @@ export function updateBrand(id: string, input: UpdateBrandInput): Promise<BrandV
   return apiRequest<BrandView>(`/admin/catalog/brands/${id}`, { method: 'PATCH', body: input });
 }
 
-export async function uploadBrandLogo(id: string, file: File): Promise<void> {
+/** Логотип сохраняется сразу: в ответ — производитель с новым логотипом. */
+export function uploadBrandLogo(id: string, file: File): Promise<BrandView> {
   const form = new FormData();
 
   form.append('file', file);
-  await apiRequest<unknown>(`/admin/catalog/brands/${id}/logo`, { method: 'POST', body: form });
+
+  return apiRequest<BrandView>(`/admin/catalog/brands/${id}/logo`, { method: 'POST', body: form });
 }
 
 /** Пачка импорта — не больше `IMPORT_BATCH_MAX` строк. */

@@ -167,7 +167,7 @@ function Showcase(): ReactNode {
   );
 }
 
-/** Категории плитками с иконками. Все десять — и пустые: каталог наполняется импортом. */
+/** Категории плитками с иконками. Все двенадцать — и пустые: каталог наполняется импортом. */
 function Categories(): ReactNode {
   const t = useT();
 
@@ -183,7 +183,7 @@ function Categories(): ReactNode {
         gridTemplateColumns: {
           xs: 'repeat(2, minmax(0, 1fr))',
           sm: 'repeat(3, minmax(0, 1fr))',
-          md: 'repeat(5, minmax(0, 1fr))',
+          md: 'repeat(6, minmax(0, 1fr))',
         },
       }}
     >

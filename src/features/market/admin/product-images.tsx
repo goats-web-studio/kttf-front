@@ -1,5 +1,5 @@
 import {
-  CLUB_IMAGE_MAX_BYTES,
+  CATALOG_IMAGE_MAX_BYTES,
   PRODUCT_IMAGES_MAX,
   catalogImageVariant,
   rejectPhoto,
@@ -80,7 +80,7 @@ export default function ProductImages({
           event.target.value = '';
 
           const bad = files
-            .map((file) => rejectPhoto(file, CLUB_IMAGE_MAX_BYTES))
+            .map((file) => rejectPhoto(file, CATALOG_IMAGE_MAX_BYTES))
             .find((rejection) => rejection !== null);
           if (bad !== undefined) {
             setRejected(bad === 'SIZE' ? 'manage.page.imageTooBig' : 'manage.page.imageType');

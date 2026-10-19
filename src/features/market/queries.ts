@@ -1,6 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 
 import {
+  fetchAdminProduct,
   fetchBrand,
   fetchProduct,
   listAdminProducts,
@@ -17,6 +18,7 @@ export const marketKeys = {
   brands: ['market', 'brands'] as const,
   brand: (slug: string) => ['market', 'brand', slug] as const,
   admin: (query: string) => ['market', 'admin', query] as const,
+  adminProduct: (id: string) => ['market', 'admin-product', id] as const,
 };
 
 /** Список товаров по готовой строке запроса — см. `catalogApiQuery`. */
@@ -66,5 +68,12 @@ export function adminProductsQuery(query: string) {
   return queryOptions({
     queryKey: marketKeys.admin(query),
     queryFn: () => listAdminProducts(query),
+  });
+}
+
+export function adminProductQuery(id: string) {
+  return queryOptions({
+    queryKey: marketKeys.adminProduct(id),
+    queryFn: () => fetchAdminProduct(id),
   });
 }

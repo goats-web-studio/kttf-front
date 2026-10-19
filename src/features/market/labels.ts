@@ -1,13 +1,16 @@
 import {
   PRODUCT_CATEGORY_SLUGS,
   PRODUCT_OPTION_AXES,
+  type AttributeUnit,
   type OptionAxis,
   type ProductCategory,
 } from '@kttf/shared/types';
 import {
   Backpack,
+  Briefcase,
   CircleDot,
   Disc,
+  Disc3,
   Footprints,
   Layers,
   Package,
@@ -51,8 +54,10 @@ export const productHref = (slug: string): string => `/market/items/${slug}`;
 export const CATEGORY_ICONS: Readonly<Record<ProductCategory, LucideIcon>> = {
   BLADE: Layers,
   RUBBER: Disc,
+  RACKET: Disc3,
   BALL: CircleDot,
-  CASE: Backpack,
+  CASE: Briefcase,
+  BAG: Backpack,
   TOP: Shirt,
   BOTTOM: Shirt,
   SOCKS: Footprints,
@@ -107,15 +112,13 @@ export function formatNumber(value: number, locale: Locale, minimumFractionDigit
   );
 }
 
-/** Число с единицей: «85 г», «2,1 мм», «47,5°». Градус пишется слитно. */
-export function withUnit(t: T, text: string, unit: Unit | undefined): string {
+/** Число с единицей: «85 г», «2,1 мм», «47,5°», «30 л». Градус пишется слитно. */
+export function withUnit(t: T, text: string, unit: AttributeUnit | undefined): string {
   if (unit === undefined) return text;
   const sign = t(`market.unit.${unit}`);
 
   return unit === 'deg' ? `${text}${sign}` : `${text} ${sign}`;
 }
-
-export type Unit = 'g' | 'mm' | 'deg' | 'kg' | 'pcs';
 
 /** Есть ли что показать — чтобы не выводить пустую карточку «Варианты». */
 export function hasOptions(

@@ -1,5 +1,5 @@
 import {
-  CLUB_IMAGE_MAX_BYTES,
+  CATALOG_IMAGE_MAX_BYTES,
   createBrandSchema,
   rejectPhoto,
   updateBrandSchema,
@@ -184,11 +184,17 @@ function BrandDialog({
     },
   });
   const logo = useMutation({
-    mutationFn: (file: File) => {
-      if (brand === undefined) return Promise.resolve();
-      return uploadBrandLogo(brand.id, file);
+    mutationFn: (file: File) =>
+      brand === undefined ? Promise.resolve(null) : uploadBrandLogo(brand.id, file),
+    onSuccess: async (saved) => {
+      // Ответ — производитель с новым логотипом: знак меняется сразу, без ожидания списка.
+      if (saved !== null) {
+        queryClient.setQueryData<readonly BrandView[]>(marketKeys.brands, (list) =>
+          list?.map((item) => (item.id === saved.id ? saved : item)),
+        );
+      }
+      await refresh();
     },
-    onSuccess: refresh,
   });
 
   const submit = (event: SyntheticEvent): void => {
@@ -263,7 +269,7 @@ function BrandDialog({
                 const file = event.target.files?.[0];
                 event.target.value = '';
                 if (file === undefined) return;
-                const rejection = rejectPhoto(file, CLUB_IMAGE_MAX_BYTES);
+                const rejection = rejectPhoto(file, CATALOG_IMAGE_MAX_BYTES);
                 if (rejection !== null) {
                   setRejected(
                     rejection === 'SIZE' ? 'manage.page.imageTooBig' : 'manage.page.imageType',

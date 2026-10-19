@@ -2,7 +2,7 @@ import {
   PRODUCT_CATEGORIES,
   catalogImageVariant,
   productCategorySchema,
-  type Page,
+  type AdminProductListItemView,
   type ProductCategory,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
@@ -12,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import { useCallback, type ReactNode } from 'react';
 
@@ -25,9 +25,8 @@ import QueryState from '@/common/ui/query-state';
 import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 
-import { hiddenOf, type AdminProductListItem } from '../api';
 import { CATEGORY_ICONS, categoryLabel } from '../labels';
-import { adminProductsQuery, brandsQuery, marketKeys, productQuery } from '../queries';
+import { adminProductQuery, adminProductsQuery, brandsQuery } from '../queries';
 import ProductEditor from './product-editor';
 
 const PAGE_SIZE = 20;
@@ -36,7 +35,7 @@ export interface ProductsAdminSearch {
   readonly q?: string | undefined;
   readonly category?: ProductCategory | undefined;
   readonly page?: number | undefined;
-  /** Адрес товара в правке или `new` — новый. */
+  /** Идентификатор товара в правке или `new` — новый. */
   readonly edit?: string | undefined;
 }
 
@@ -63,7 +62,7 @@ export default function ProductsAdmin({
 
   if (search.edit !== undefined) {
     return (
-      <Editor slug={search.edit} defaultCategory={search.category ?? 'BLADE'} onSearch={onSearch} />
+      <Editor id={search.edit} defaultCategory={search.category ?? 'BLADE'} onSearch={onSearch} />
     );
   }
 
@@ -161,7 +160,7 @@ function List({
                 key={item.id}
                 item={item}
                 onEdit={() => {
-                  onSearch({ edit: item.slug });
+                  onSearch({ edit: item.id });
                 }}
               />
             ))}
@@ -183,12 +182,12 @@ function Row({
   item,
   onEdit,
 }: {
-  readonly item: AdminProductListItem;
+  readonly item: AdminProductListItemView;
   readonly onEdit: () => void;
 }): ReactNode {
   const t = useT();
   const Icon = CATEGORY_ICONS[item.category];
-  const hidden = hiddenOf(item) === true;
+  const hidden = item.hidden;
 
   return (
     <Box
@@ -295,28 +294,19 @@ function Badge({
 
 /** Карточка в правке: новый товар — сразу, существующий — после загрузки. */
 function Editor({
-  slug,
+  id,
   defaultCategory,
   onSearch,
 }: {
-  readonly slug: string;
+  readonly id: string;
   readonly defaultCategory: ProductCategory;
   readonly onSearch: (patch: ProductsAdminSearch, replace?: boolean) => void;
 }): ReactNode {
   const t = useT();
-  const queryClient = useQueryClient();
   const brands = useQuery(brandsQuery);
-  const isNew = slug === 'new';
-  const product = useQuery({ ...productQuery(slug), enabled: !isNew });
-  // Признак «скрыт» публичная карточка не несёт — он есть в строке списка.
-  const listed = queryClient
-    .getQueriesData<Page<AdminProductListItem>>({ queryKey: [...marketKeys.all, 'admin'] })
-    .flatMap(([, data]) => data?.items ?? [])
-    .find((item) => item.slug === slug);
-  const hidden =
-    product.data === undefined
-      ? undefined
-      : (hiddenOf(product.data) ?? (listed === undefined ? undefined : hiddenOf(listed)));
+  const isNew = id === 'new';
+  // Через администрирование: публичная карточка скрытого товара не отдаёт.
+  const product = useQuery({ ...adminProductQuery(id), enabled: !isNew });
   const close = (): void => {
     onSearch({ edit: undefined });
   };
@@ -341,13 +331,13 @@ function Editor({
         loading={<RowsSkeleton />}
       >
         <ProductEditor
-          key={isNew ? 'new' : (product.data?.id ?? slug)}
+          key={isNew ? 'new' : (product.data?.id ?? id)}
           product={isNew ? null : (product.data ?? null)}
           brands={brands.data ?? []}
-          hidden={isNew ? undefined : hidden}
+          hidden={product.data?.hidden}
           defaultCategory={defaultCategory}
           onSaved={(saved) => {
-            if (saved.slug !== slug) onSearch({ edit: saved.slug }, true);
+            if (isNew) onSearch({ edit: saved.id }, true);
           }}
           onClose={close}
         />
