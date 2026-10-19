@@ -30,8 +30,8 @@ importers:
         specifier: ^5.9.1
         version: 5.9.1(@standard-schema/spec@1.1.0)(ajv@8.20.0)(react-hook-form@7.86.0(react@19.2.8))(zod@4.5.2)
       '@kttf/shared':
-        specifier: github:goats-web-studio/kttf-shared#fa6e56031df82475bc99558a2201ae52a2de5e07
-        version: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/fa6e56031df82475bc99558a2201ae52a2de5e07(zod@4.5.2)
+        specifier: github:goats-web-studio/kttf-shared#69b0098236df18d0e029f11701435629d378478b
+        version: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/69b0098236df18d0e029f11701435629d378478b(zod@4.5.2)
       '@mui/material':
         specifier: ^9.4.0
         version: 9.4.0(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.18)(react@19.2.8))(@types/react@19.2.18)(react@19.2.8))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -944,8 +944,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/fa6e56031df82475bc99558a2201ae52a2de5e07':
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/fa6e56031df82475bc99558a2201ae52a2de5e07}
+  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/69b0098236df18d0e029f11701435629d378478b':
+    resolution: {gitHosted: true, tarball: https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/69b0098236df18d0e029f11701435629d378478b}
     version: 0.1.0
     engines: {node: '>=24'}
     peerDependencies:
@@ -4372,7 +4372,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/fa6e56031df82475bc99558a2201ae52a2de5e07(zod@4.5.2)':
+  '@kttf/shared@https://codeload.github.com/goats-web-studio/kttf-shared/tar.gz/69b0098236df18d0e029f11701435629d378478b(zod@4.5.2)':
     dependencies:
       zod: 4.5.2
 
