@@ -1,4 +1,4 @@
-import type { ClubApplicationView } from '@kttf/shared/types';
+import { COACH_STATUSES, type ClubApplicationView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -23,11 +23,26 @@ import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
 import { updateClubApplication } from '@/features/club-applications/api';
-import { clubApplicationKeys, clubApplicationsQuery } from '@/features/club-applications/queries';
+import {
+  clubApplicationKeys,
+  clubApplicationsQuery,
+  newClubApplicationsCountQuery,
+} from '@/features/club-applications/queries';
+import CoachApplications from '@/features/coaches/admin/coach-applications';
+import { pendingCoachesCountQuery } from '@/features/coaches/queries';
 
-/** Вкладка и страница — в адресе: ссылку на «все, вторая страница» можно открыть заново. */
+/**
+ * Вкладка и страница — в адресе: ссылку на «все, вторая страница» можно
+ * открыть заново. `tab` — клубы или тренеры (ADR-059), `status` — фильтр
+ * заявок тренеров, по умолчанию ждущие проверки.
+ */
 const searchSchema = z.object({
+  tab: z.coerce
+    .string()
+    .pipe(z.enum(['clubs', 'coaches']))
+    .catch('clubs'),
   view: z.enum(['new', 'all']).catch('new'),
+  status: z.coerce.string().pipe(z.enum(COACH_STATUSES)).catch('PENDING'),
   page: z.coerce.number().int().positive().catch(1),
 });
 
@@ -51,15 +66,12 @@ function ApplicationsPage(): ReactNode {
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
       <BackLink href="/cabinet" label={t('page.cabinet.title')} />
       <Typography variant="h1" sx={{ mt: 1 }}>
-        {t('page.applications.title')}
+        {t('applications.title')}
       </Typography>
 
       {user?.isAdmin === true ? (
         <>
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            {t('applications.lead')}
-          </Typography>
-          <Applications />
+          <Sections />
         </>
       ) : (
         <Box sx={{ mt: 3 }}>
@@ -71,6 +83,60 @@ function ApplicationsPage(): ReactNode {
         </Box>
       )}
     </Container>
+  );
+}
+
+/**
+ * Заявки клубов и тренеров — вкладками одного раздела (`docs/11` 3.1).
+ * Число ждущих — на вкладке, как на кнопке в кабинете.
+ */
+function Sections(): ReactNode {
+  const t = useT();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { tab, status, page } = Route.useSearch();
+  const clubs = useQuery(newClubApplicationsCountQuery).data ?? 0;
+  const coaches = useQuery(pendingCoachesCountQuery).data ?? 0;
+  const counted = (label: string, count: number): string =>
+    count > 0 ? `${label} (${String(count)})` : label;
+
+  return (
+    <>
+      <Tabs
+        value={tab}
+        onChange={(_, next: 'clubs' | 'coaches') => {
+          void navigate({ search: { tab: next, view: 'new', status: 'PENDING', page: 1 } });
+        }}
+        aria-label={t('page.applications.title')}
+        sx={{ mt: 3 }}
+      >
+        <Tab value="clubs" label={counted(t('applications.tab.clubs'), clubs)} />
+        <Tab value="coaches" label={counted(t('applications.tab.coaches'), coaches)} />
+      </Tabs>
+      {tab === 'clubs' ? (
+        <>
+          <Typography color="text.secondary" sx={{ mt: 3 }}>
+            {t('applications.lead')}
+          </Typography>
+          <Applications />
+        </>
+      ) : (
+        <Box sx={{ mt: 3 }}>
+          <Typography color="text.secondary" sx={{ mb: 3, maxWidth: 680 }}>
+            {t('applications.coaches.lead')}
+          </Typography>
+          <CoachApplications
+            status={status}
+            page={page}
+            onStatus={(next) => {
+              void navigate({ search: (previous) => ({ ...previous, status: next, page: 1 }) });
+            }}
+            onPage={(next) => {
+              void navigate({ search: (previous) => ({ ...previous, page: next }) });
+            }}
+          />
+        </Box>
+      )}
+    </>
   );
 }
 
@@ -96,7 +162,7 @@ function Applications(): ReactNode {
       <Tabs
         value={view}
         onChange={(_, next: 'new' | 'all') => {
-          void navigate({ search: { view: next, page: 1 } });
+          void navigate({ search: (previous) => ({ ...previous, view: next, page: 1 }) });
         }}
         aria-label={t('page.applications.title')}
       >
@@ -143,7 +209,7 @@ function Applications(): ReactNode {
               page={page}
               pages={pages}
               onPage={(next) => {
-                void navigate({ search: { view, page: next } });
+                void navigate({ search: (previous) => ({ ...previous, page: next }) });
               }}
             />
           </Box>
