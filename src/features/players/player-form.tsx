@@ -29,6 +29,7 @@ import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { coachesQuery } from '@/features/coaches/queries';
 import type { PickedProduct } from '@/features/market/picked-product';
 import CityPicker from '@/features/places/city-picker';
 import EquipmentField from '@/features/players/equipment-field';
@@ -424,9 +425,9 @@ type TextName =
  * Тренер: выбор из списка либо имя вручную.
  *
  * Разом заполненные, они спорят друг с другом — схема такое отвергает, —
- * поэтому выбор гасит поле и наоборот. Список делится надвое: сверху те,
- * кого уже называли тренером, ниже остальные игроки. Роли тренера в
- * продукте ещё нет, и «тренеры» — это те, на кого сослались.
+ * поэтому выбор гасит поле и наоборот. Список делится натрое: сверху
+ * тренеры со страницей на KTTF (ADR-059) — выбор кладёт их профиль игрока,
+ * ниже те, кого уже называли тренером (ADR-035), затем остальные игроки.
  *
  * Список ограничен полусотней в каждой группе. Когда база вырастет, здесь
  * появится поиск: выпадающий список на всю страну не открывают.
@@ -443,11 +444,15 @@ function CoachField({
   readonly error: MessageKey | undefined;
 }): ReactNode {
   const t = useT();
+  const withPage = useQuery(coachesQuery({ page: 1, limit: 50 }));
   const coaches = useQuery(playersQuery({ page: 1, limit: 50, coachesOnly: true }));
   const players = useQuery(playersQuery({ page: 1, limit: 50 }));
 
-  const coachItems = coaches.data?.items ?? [];
-  const chosenIds = new Set(coachItems.map((coach) => coach.id));
+  // Тренер — это игрок: у всех трёх групп значение — идентификатор профиля.
+  const pageItems = withPage.data?.items ?? [];
+  const pageIds = new Set(pageItems.map((coach) => coach.player.id));
+  const coachItems = (coaches.data?.items ?? []).filter((coach) => !pageIds.has(coach.id));
+  const chosenIds = new Set([...pageIds, ...coachItems.map((coach) => coach.id)]);
   const others = (players.data?.items ?? []).filter((player) => !chosenIds.has(player.id));
 
   // Группы — плоским списком: меню MUI ждёт пункты и подзаголовки прямыми
@@ -457,6 +462,17 @@ function CoachField({
       {t('player.form.notSet')}
     </MenuItem>,
   ];
+
+  if (pageItems.length > 0) {
+    options.push(
+      <ListSubheader key="with-page">{t('player.form.coachWithPage')}</ListSubheader>,
+      ...pageItems.map((coach) => (
+        <MenuItem key={coach.player.id} value={coach.player.id}>
+          {`${coach.player.lastName} ${coach.player.firstName}`}
+        </MenuItem>
+      )),
+    );
+  }
 
   if (coachItems.length > 0) {
     options.push(

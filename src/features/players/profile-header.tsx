@@ -1,4 +1,4 @@
-import type { PlayerProfileView, ProductListItemView } from '@kttf/shared/types';
+import type { PlayerProfileView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
@@ -10,8 +10,8 @@ import type { ReactNode } from 'react';
 
 import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import RatingValue from '@/common/ui/rating-value';
-import { Thumb } from '@/features/market/product-picker';
 
+import { equipmentValue as equipment } from './equipment-value';
 import { gripLabel, handLabel } from './player-labels';
 import { playerName } from './player-name';
 import ProfilePhoto from './profile-photo';
@@ -50,7 +50,7 @@ export default function ProfileHeader({
     ['player.form.blade', equipment(player.bladeProduct, player.blade)],
     ['player.form.rubberForehand', equipment(player.rubberForehandProduct, player.rubberForehand)],
     ['player.form.rubberBackhand', equipment(player.rubberBackhandProduct, player.rubberBackhand)],
-    ['player.form.coach', player.coachName],
+    ['player.form.coach', coach(player)],
     ['player.form.bio', player.bio],
     ['profile.since', since(player, locale, t)],
   ];
@@ -252,19 +252,12 @@ function Meta({
 }
 
 /**
- * Инвентарь: товар каталога — ссылкой в маркет с маленьким фото, а чего в
- * каталоге нет — строкой анкеты (ADR-058).
+ * Тренер: со страницей на KTTF — ссылкой на неё (ADR-059), иначе именем,
+ * как в анкете (ADR-035).
  */
-function equipment(product: ProductListItemView | null, text: string | null): ReactNode {
-  if (product === null) return text;
+function coach(player: PlayerProfileView): ReactNode {
+  if (player.coachName === null) return null;
+  if (player.coachSlug === null) return player.coachName;
 
-  return (
-    <Link
-      href={`/market/items/${product.slug}`}
-      sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, verticalAlign: 'middle' }}
-    >
-      <Thumb image={product.image} size={24} />
-      {`${product.brand.name} ${product.name}`}
-    </Link>
-  );
+  return <Link href={`/coaches/${player.coachSlug}`}>{player.coachName}</Link>;
 }
