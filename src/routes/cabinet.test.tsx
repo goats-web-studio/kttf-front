@@ -22,6 +22,7 @@ import {
   USER_WITH_PROFILE,
   USER_WITHOUT_PROFILE,
 } from '@/test/fixtures';
+import { COACH_LIST_ITEM } from '@/test/coach-fixtures';
 
 /**
  * Кабинет и настройки — ТЗ 2.1, 2.2, ADR-048.
@@ -115,6 +116,11 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
   if (url.includes('/clubs')) {
     return reply(pageOf([CLUB]));
+  }
+
+  // Поиск тренера в анкете — ADR-059.
+  if (url.includes('/coaches')) {
+    return reply(pageOf([COACH_LIST_ITEM]));
   }
 
   if (url.includes('/players')) {
@@ -340,6 +346,68 @@ describe('свой профиль в настройках', () => {
       expect(requests('PATCH')).toHaveLength(1);
     });
     expect(requests('PATCH')[0]?.body).toMatchObject({ cityId: hidden.id });
+  });
+
+  it('сохранённый тренер виден именем; выбор тренера KTTF уходит его профилем', async () => {
+    profile = { ...PLAYER_PROFILE, coachPlayerId: PLAYERS.second.id, coachName: 'Смагулов Асан' };
+    renderAt(PROFILE, USER_WITH_PROFILE);
+
+    const coach = await screen.findByRole('combobox', {
+      name: new RegExp(ru['player.form.coachFind']),
+    });
+    expect((coach as HTMLInputElement).value).toBe('Смагулов Асан');
+
+    fireEvent.focus(coach);
+    fireEvent.change(coach, { target: { value: 'Ерж' } });
+    fireEvent.click(
+      await screen.findByText(`${PLAYERS.first.lastName} ${PLAYERS.first.firstName}`, {
+        selector: 'p',
+      }),
+    );
+    submit(ru['cabinet.profile.save']);
+
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+    expect(requests('PATCH')[0]?.body).toMatchObject({
+      coachPlayerId: PLAYERS.first.id,
+      coachName: null,
+    });
+  });
+
+  it('тренер строкой — имя без ссылки на профиль; крестик стирает оба поля', async () => {
+    profile = { ...PLAYER_PROFILE, coachPlayerId: PLAYERS.second.id, coachName: 'Смагулов Асан' };
+    renderAt(PROFILE, USER_WITH_PROFILE);
+
+    const coach = await screen.findByRole('combobox', {
+      name: new RegExp(ru['player.form.coachFind']),
+    });
+    fireEvent.focus(coach);
+    fireEvent.change(coach, { target: { value: 'Сериков Тимур' } });
+    fireEvent.click(await screen.findByText('Вписать: «Сериков Тимур»'));
+    submit(ru['cabinet.profile.save']);
+
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+    expect(requests('PATCH')[0]?.body).toMatchObject({
+      coachPlayerId: null,
+      coachName: 'Сериков Тимур',
+    });
+  });
+
+  it('крестик у тренера стирает и выбор, и вписанное имя', async () => {
+    profile = { ...PLAYER_PROFILE, coachPlayerId: PLAYERS.second.id, coachName: 'Смагулов Асан' };
+    renderAt(PROFILE, USER_WITH_PROFILE);
+
+    await screen.findByRole('combobox', { name: new RegExp(ru['player.form.coachFind']) });
+    fireEvent.click(screen.getByLabelText(ru['player.form.coachClear']));
+    submit(ru['cabinet.profile.save']);
+
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+    expect(requests('PATCH')[0]?.body).toMatchObject({ coachPlayerId: null, coachName: null });
   });
 
   it('аккаунта на странице профиля нет — он в своём разделе', async () => {
