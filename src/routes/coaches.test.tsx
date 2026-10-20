@@ -599,7 +599,7 @@ describe('окно тренировки', () => {
     });
   });
 
-  it('группа клуба: «Записывает клуб X, тренер группы — Y», одна главная кнопка, тренер карточкой', async () => {
+  it('группа клуба: «Записывает клуб, тренер группы — Y», одна главная кнопка, тренер карточкой', async () => {
     asDesktop();
     renderAt(`/trainings?training=${CLUB_EVENING.id}`);
 
@@ -608,7 +608,7 @@ describe('окно тренировки', () => {
 
     expect(block.getAttribute('data-training-booking-block')).toBe('CLUB');
     expect(element('[data-training-booking-caption]').textContent).toBe(
-      `Записывает клуб ${CLUB.name}, тренер группы — ${PLAYERS.first.lastName} ${PLAYERS.first.firstName}`,
+      `Записывает клуб, тренер группы — ${PLAYERS.first.lastName} ${PLAYERS.first.firstName}`,
     );
     const primary = dialog.querySelectorAll('.MuiButton-contained');
     expect(primary.length).toBe(1);
@@ -617,7 +617,7 @@ describe('окно тренировки', () => {
 
     // Тренер группы на клуб работает: карточкой, без своих контактов.
     const coachCard = element('[data-training-coach="CLUB"]');
-    expect(coachCard.textContent).toContain(`Работает в клубе ${CLUB.name}`);
+    expect(coachCard.textContent).toContain(`Работает в клубе: ${CLUB.name}`);
     expect(within(coachCard).queryByRole('link', { name: /WhatsApp|Позвонить/ })).toBeNull();
     expect(
       within(dialog).getByRole('link', { name: ru['club.contact.route'] }).getAttribute('href'),
@@ -652,7 +652,7 @@ describe('окно тренировки', () => {
     expect(document.querySelector('[data-training-coach]')).toBeNull();
   });
 
-  it('тренер через клуб: «Тренер Y проводит в зале клуба X, записывает клуб»', async () => {
+  it('тренер через клуб: «Тренер Y проводит занятия в этом зале, записывает клуб»', async () => {
     renderAt(`/trainings?training=${KIDS_GROUP.id}`);
 
     const dialog = await screen.findByRole('dialog', { name: KIDS_GROUP.title });
@@ -661,7 +661,7 @@ describe('окно тренировки', () => {
       element('[data-training-booking-block]').getAttribute('data-training-booking-block'),
     ).toBe('CLUB');
     expect(element('[data-training-booking-caption]').textContent).toBe(
-      `Тренер ${PLAYERS.first.lastName} ${PLAYERS.first.firstName} проводит в зале клуба ${CLUB.name}, записывает клуб`,
+      `Тренер ${PLAYERS.first.lastName} ${PLAYERS.first.firstName} проводит занятия в этом зале, записывает клуб`,
     );
     expect(dialog.querySelector('.MuiButton-contained')?.getAttribute('href')).toContain(
       'https://wa.me/77770000000?text=',
