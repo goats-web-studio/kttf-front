@@ -13,7 +13,6 @@ import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
-import ListSubheader from '@mui/material/ListSubheader';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField, { type TextFieldProps } from '@mui/material/TextField';
@@ -29,13 +28,13 @@ import { Controller, useForm, useWatch, type Control } from 'react-hook-form';
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
-import { coachesQuery } from '@/features/coaches/queries';
 import type { PickedProduct } from '@/features/market/picked-product';
 import CityPicker from '@/features/places/city-picker';
 import EquipmentField from '@/features/players/equipment-field';
+
+import CoachField from './coach-field';
+import { coachFields, initialCoachOption } from './coach-options';
 import PhotoField from '@/features/players/photo-field';
-import { playerName } from '@/features/players/player-name';
-import { playersQuery } from '@/features/players/queries';
 
 interface PlayerFormProps {
   /** Заполненные поля при правке. Пусто — профиль заводится впервые. */
@@ -52,6 +51,11 @@ interface PlayerFormProps {
   readonly onCancel?: (() => void) | undefined;
   /** Инвентарь из каталога — подписи и фото выбранных товаров при правке. */
   readonly products?: EquipmentProducts | undefined;
+  /**
+   * Имя тренера из профиля (`coachName` ответа): у выбранного из списка
+   * сервер подставляет его сам — по нему поле показывает тренера сразу.
+   */
+  readonly coachLabel?: string | null | undefined;
 }
 
 export type EquipmentProducts = Readonly<
@@ -81,6 +85,7 @@ export default function PlayerForm({
   onSubmit,
   onCancel,
   products,
+  coachLabel,
 }: PlayerFormProps): ReactNode {
   const t = useT();
   const clubs = useQuery(clubDirectoryQuery);
@@ -109,8 +114,11 @@ export default function PlayerForm({
   const photoUrl = useWatch({ control, name: 'photoUrl' });
   const birthDate = useWatch({ control, name: 'birthDate' });
   const birthYear = useWatch({ control, name: 'birthYear' });
-  const coachPlayerId = useWatch({ control, name: 'coachPlayerId' });
-  const coachName = useWatch({ control, name: 'coachName' });
+  // Выбранный тренер — вариантом поля; имя из профиля, даже если этого
+  // тренера нет в текущей выдаче поиска.
+  const [coachOption, setCoachOption] = useState(() =>
+    initialCoachOption(defaultValues?.coachPlayerId, coachLabel ?? defaultValues?.coachName),
+  );
 
   const birthFailed = errors.birthDate !== undefined || errors.birthYear !== undefined;
 
@@ -310,12 +318,26 @@ export default function PlayerForm({
         </Box>
       </Section>
 
-      <CoachField
-        form={form}
-        chosenId={coachPlayerId}
-        typedName={coachName}
-        error={errors.coachName === undefined ? undefined : 'error.form.coach'}
-      />
+      {/* Тренер — поиском: тренеры KTTF, на кого уже ссылались, или имя
+          строкой (ADR-035, ADR-059). Выбор и вписанное — одно из двух. */}
+      <Section legend="player.form.coach">
+        <Box sx={{ maxWidth: { sm: 'calc(50% - 8px)' } }}>
+          <CoachField
+            value={coachOption}
+            onChange={(option) => {
+              setCoachOption(option);
+              const fields = coachFields(option);
+              form.setValue('coachPlayerId', fields.coachPlayerId, { shouldDirty: true });
+              form.setValue('coachName', fields.coachName, {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
+            }}
+            label={<FieldLabel label="player.form.coachFind" optional />}
+            error={errors.coachName === undefined ? undefined : 'error.form.coach'}
+          />
+        </Box>
+      </Section>
 
       <TextInput
         control={control}
@@ -420,113 +442,6 @@ type TextName =
   | 'bio'
   | 'coachPlayerId'
   | 'coachName';
-
-/**
- * Тренер: выбор из списка либо имя вручную.
- *
- * Разом заполненные, они спорят друг с другом — схема такое отвергает, —
- * поэтому выбор гасит поле и наоборот. Список делится натрое: сверху
- * тренеры со страницей на KTTF (ADR-059) — выбор кладёт их профиль игрока,
- * ниже те, кого уже называли тренером (ADR-035), затем остальные игроки.
- *
- * Список ограничен полусотней в каждой группе. Когда база вырастет, здесь
- * появится поиск: выпадающий список на всю страну не открывают.
- */
-function CoachField({
-  form,
-  chosenId,
-  typedName,
-  error,
-}: {
-  readonly form: PlayerFormApi;
-  readonly chosenId: string | undefined;
-  readonly typedName: string | undefined;
-  readonly error: MessageKey | undefined;
-}): ReactNode {
-  const t = useT();
-  const withPage = useQuery(coachesQuery({ page: 1, limit: 50 }));
-  const coaches = useQuery(playersQuery({ page: 1, limit: 50, coachesOnly: true }));
-  const players = useQuery(playersQuery({ page: 1, limit: 50 }));
-
-  // Тренер — это игрок: у всех трёх групп значение — идентификатор профиля.
-  const pageItems = withPage.data?.items ?? [];
-  const pageIds = new Set(pageItems.map((coach) => coach.player.id));
-  const coachItems = (coaches.data?.items ?? []).filter((coach) => !pageIds.has(coach.id));
-  const chosenIds = new Set([...pageIds, ...coachItems.map((coach) => coach.id)]);
-  const others = (players.data?.items ?? []).filter((player) => !chosenIds.has(player.id));
-
-  // Группы — плоским списком: меню MUI ждёт пункты и подзаголовки прямыми
-  // детьми, пункт внутри фрагмента не выбирается.
-  const options: ReactNode[] = [
-    <MenuItem key="none" value="">
-      {t('player.form.notSet')}
-    </MenuItem>,
-  ];
-
-  if (pageItems.length > 0) {
-    options.push(
-      <ListSubheader key="with-page">{t('player.form.coachWithPage')}</ListSubheader>,
-      ...pageItems.map((coach) => (
-        <MenuItem key={coach.player.id} value={coach.player.id}>
-          {`${coach.player.lastName} ${coach.player.firstName}`}
-        </MenuItem>
-      )),
-    );
-  }
-
-  if (coachItems.length > 0) {
-    options.push(
-      <ListSubheader key="coaches">{t('player.form.coachGroup')}</ListSubheader>,
-      ...coachItems.map((coach) => (
-        <MenuItem key={coach.id} value={coach.id}>
-          {playerName(coach)}
-        </MenuItem>
-      )),
-    );
-  }
-
-  options.push(
-    <ListSubheader key="players">{t('player.form.playersGroup')}</ListSubheader>,
-    ...others.map((player) => (
-      <MenuItem key={player.id} value={player.id}>
-        {playerName(player)}
-      </MenuItem>
-    )),
-  );
-
-  return (
-    <Section legend="player.form.coach">
-      <Box sx={GRID}>
-        <TextInput
-          control={form.control}
-          name="coachPlayerId"
-          label="player.form.coachFromList"
-          optional
-          select
-          disabled={typedName !== undefined && typedName !== ''}
-          onValue={() => {
-            // Выбранный тренер и вписанный руками спорят друг с другом.
-            form.setValue('coachName', undefined);
-          }}
-        >
-          {options}
-        </TextInput>
-
-        <TextInput
-          control={form.control}
-          name="coachName"
-          label="player.form.coachName"
-          optional
-          error={error}
-          disabled={chosenId !== undefined && chosenId !== ''}
-          onValue={() => {
-            form.setValue('coachPlayerId', undefined);
-          }}
-        />
-      </Box>
-    </Section>
-  );
-}
 
 /** Группа полей с подписью над линейкой. */
 function Section({

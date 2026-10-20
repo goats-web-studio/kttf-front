@@ -1092,10 +1092,6 @@ export const kk: Record<MessageKey, string> = {
   'player.form.rubberBackhand': 'Сол жақ накладка',
   'player.form.bio': 'Өзі туралы',
   'player.form.coach': 'Жаттықтырушы',
-  'player.form.coachFromList': 'Тізімнен',
-  'player.form.coachName': 'Тізімде жоқ болса',
-  'player.form.coachGroup': 'Жаттықтырушылар',
-  'player.form.playersGroup': 'Ойыншылар',
   'player.hand.RIGHT': 'Оң',
   'player.hand.LEFT': 'Сол',
   'player.grip.SHAKEHAND': 'Еуропалық',
@@ -1797,6 +1793,16 @@ export const kk: Record<MessageKey, string> = {
   'coach.editor.statsLead':
     'Бетті неше рет ашты және байланыс тәсілдерін неше рет басты. KTTF жарнамасынан келгендер бөлек.',
 
+  'player.form.coachFind': 'Жаттықтырушыны табу немесе атын жазу',
+  'player.form.coachPlaceholder': 'Тегі немесе аты',
+  'player.form.coachOthers': 'Басқалар',
+  'player.form.coachTypedGroup': 'Тізімде жоқ',
+  'player.form.coachTyped': 'Жазу: «{name}»',
+  'player.form.coachNotFound': 'Жаттықтырушы табылмады — атын жазыңыз',
+  'player.form.coachSearchError':
+    'Жаттықтырушыларды жүктеу мүмкін болмады. Атын қолмен жазуға болады.',
+  'player.form.coachClear': 'Жаттықтырушыны алып тастау',
+  'player.form.coachOpen': 'Жаттықтырушыларды көрсету',
   'player.form.coachWithPage': 'KTTF жаттықтырушылары',
   'cabinet.admin.coaches': 'Жаттықтырушылардың өтінімдері',
   'cabinet.admin.coachesNew': 'Жаттықтырушылардың өтінімдері: {count}',

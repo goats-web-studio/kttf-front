@@ -105,6 +105,7 @@ function EditProfile({ playerId }: { readonly playerId: string }): ReactNode {
             defaultValues={toFormValues(player.data)}
             city={player.data.city}
             products={equipmentProducts(player.data)}
+            coachLabel={player.data.coachName}
             submitLabel="cabinet.profile.save"
             isPending={update.isPending}
             error={update.error}

@@ -31,8 +31,15 @@ import { API_BASE_URL, apiBlob, apiRequest, queryString } from '@/common/api';
  * владельцу страницы и администратору; права проверяет сервер (ТС 8.3).
  */
 
-export function listCoaches(query: ListCoachesRequest): Promise<Page<CoachListItemView>> {
-  return apiRequest<Page<CoachListItemView>>(`/coaches${queryString(query)}`);
+/** `signal` — отмена прежнего запроса, когда поиск в анкете ушёл дальше. */
+export function listCoaches(
+  query: ListCoachesRequest,
+  signal?: AbortSignal,
+): Promise<Page<CoachListItemView>> {
+  return apiRequest<Page<CoachListItemView>>(
+    `/coaches${queryString(query)}`,
+    signal === undefined ? {} : { signal },
+  );
 }
 
 /** Тренировки блоками по месту: клуб KTTF, зал вне KTTF, «выезд и онлайн». Страница считает блоки. */

@@ -35,7 +35,9 @@ export const coachKeys = {
 export function coachesQuery(query: ListCoachesRequest) {
   return queryOptions({
     queryKey: coachKeys.list(query),
-    queryFn: () => listCoaches(query),
+    // Сигнал отменяет запрос, ставший ненужным: в анкете текст поиска
+    // меняется быстрее, чем отвечает сервер.
+    queryFn: ({ signal }) => listCoaches(query, signal),
   });
 }
 
