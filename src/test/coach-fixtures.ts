@@ -36,6 +36,10 @@ export const COACH_REF: TrainingCoachRef = {
   slug: COACH_SLUG,
   player: PLAYER_REF,
   photoUrl: null,
+  phone: '+7 701 123 45 67',
+  whatsapp: '+7 701 123 45 67',
+  telegram: 'coach_ivanov',
+  primaryContact: 'WHATSAPP',
 };
 
 export const CLUB_REF: TrainingClubRef = {
@@ -44,6 +48,11 @@ export const CLUB_REF: TrainingClubRef = {
   logoUrl: null,
   address: 'Абая 10',
   city: CLUB.city,
+  twoGisUrl: null,
+  phone: '+7 727 000 00 00',
+  whatsapp: '+7 777 000 00 00',
+  telegram: null,
+  primaryContact: 'WHATSAPP',
 };
 
 /** Общие поля тренировки — каждая фикстура меняет своё. */
@@ -63,6 +72,7 @@ const TRAINING_BASE: TrainingView = {
   priceKzt: null,
   unit: 'NONE',
   note: null,
+  description: null,
 };
 
 /** Детская группа тренера в клубе KTTF — клуб подтвердил. */

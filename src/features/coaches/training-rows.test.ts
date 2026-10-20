@@ -112,6 +112,7 @@ describe('тренировки тренера — в PUT /coaches/:id/trainings'
       priceKzt: 8000,
       unit: 'HOUR',
       note: null,
+      description: null,
       place: 'ONLINE',
       clubId: null,
       venueName: null,
@@ -143,6 +144,7 @@ describe('тренировки клуба — в PUT /clubs/:id/trainings', () =
         priceKzt: 15000,
         unit: 'MONTH',
         note: null,
+        description: null,
         coachId: COACH_REF.id,
       },
     ]);
