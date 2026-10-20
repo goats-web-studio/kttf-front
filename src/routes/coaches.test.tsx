@@ -25,6 +25,7 @@ import {
   KIDS_GROUP,
   TRAINING_GROUPS,
   VENUE_TRAINING,
+  VISIT_TRAINING,
   userWithCoach,
 } from '@/test/coach-fixtures';
 import {
@@ -98,6 +99,8 @@ function answer(url: string, init: RequestInit | undefined): Response {
   if (path === `/trainings/${KIDS_GROUP.id}`) {
     return reply({ ...KIDS_GROUP, booking: 'CLUB', more: [] });
   }
+  if (path === `/trainings/${VISIT_TRAINING.id}`) return reply({ ...VISIT_TRAINING, more: [] });
+  if (path === `/trainings/${CLUB_INVITE.id}`) return reply({ ...CLUB_INVITE, more: [] });
   if (path === `/trainings/${CLUB_EVENING.id}`) {
     return reply({ ...CLUB_EVENING, description: 'Разминка.\nИгра на счёт.', more: [CLUB_INVITE] });
   }
@@ -485,7 +488,7 @@ describe('владелец тренировки и «Записаться»', ()
     ).toContain('https://wa.me/77011234567?text=');
     expect(
       within(evening).getByRole('link', { name: ru['training.details'] }).getAttribute('href'),
-    ).toBe(`/trainings/${CLUB_EVENING.id}`);
+    ).toBe(`/trainings?training=${CLUB_EVENING.id}`);
   });
 
   it('«Записаться» считается в статистику владельца — клуба', async () => {
@@ -547,62 +550,129 @@ describe('владелец тренировки и «Записаться»', ()
 
     expect(within(kids).getByText(ru['training.link.coach.PENDING'])).toBeDefined();
   });
+});
 
-  it('страница тренировки: владелец, одна главная «Записаться», место, тренер, другие', async () => {
-    asDesktop();
-    renderAt(`/trainings/${CLUB_EVENING.id}`);
+describe('окно тренировки', () => {
+  it('ссылка ?training= открывает окно сразу; закрытие убирает параметр', async () => {
+    renderAt(`/trainings?training=${CLUB_EVENING.id}`);
 
-    expect(
-      await screen.findByRole('heading', { level: 1, name: CLUB_EVENING.title }),
-    ).toBeDefined();
-    expect(element('[data-training-owner="CLUB"]').textContent).toContain(
-      `${ru['training.detail.ofClub']} ${CLUB.name}`,
+    const dialog = await screen.findByRole('dialog', { name: CLUB_EVENING.title });
+    expect(element('[data-training-description]').textContent).toBe('Разминка.\nИгра на счёт.');
+
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['training.dialog.close'] }));
+
+    await waitFor(() => {
+      expect(window.location.search).not.toContain('training=');
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
+  it('«Подробнее» в строке открывает окно на месте и кладёт его в адрес', async () => {
+    renderAt('/trainings');
+
+    await screen.findByRole('link', { name: CLUB.name });
+    fireEvent.click(
+      within(element(`[data-training="${CLUB_EVENING.id}"]`)).getByRole('link', {
+        name: ru['training.details'],
+      }),
     );
 
-    const contacts = element('[data-training-contacts]');
-    const primary = contacts.querySelectorAll('.MuiButton-contained');
+    expect(await screen.findByRole('dialog', { name: CLUB_EVENING.title })).toBeDefined();
+    expect(window.location.pathname).toBe('/trainings');
+    expect(window.location.search).toContain(`training=${CLUB_EVENING.id}`);
+  });
+
+  it('на странице клуба окно открывается поверх неё же', async () => {
+    renderAt(`/clubs/${CLUB.id}?training=${CLUB_EVENING.id}`);
+
+    expect(await screen.findByRole('dialog', { name: CLUB_EVENING.title })).toBeDefined();
+    expect(window.location.pathname).toBe(`/clubs/${CLUB.id}`);
+  });
+
+  it('старый адрес /trainings/:id ведёт в раздел с открытым окном', async () => {
+    renderAt(`/trainings/${CLUB_EVENING.id}`);
+
+    expect(await screen.findByRole('dialog', { name: CLUB_EVENING.title })).toBeDefined();
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/trainings');
+      expect(window.location.search).toContain(`training=${CLUB_EVENING.id}`);
+    });
+  });
+
+  it('группа клуба: «Записывает клуб X, тренер группы — Y», одна главная кнопка, тренер карточкой', async () => {
+    asDesktop();
+    renderAt(`/trainings?training=${CLUB_EVENING.id}`);
+
+    const dialog = await screen.findByRole('dialog', { name: CLUB_EVENING.title });
+    const block = element('[data-training-booking-block]');
+
+    expect(block.getAttribute('data-training-booking-block')).toBe('CLUB');
+    expect(element('[data-training-booking-caption]').textContent).toBe(
+      `Записывает клуб ${CLUB.name}, тренер группы — ${PLAYERS.first.lastName} ${PLAYERS.first.firstName}`,
+    );
+    const primary = dialog.querySelectorAll('.MuiButton-contained');
     expect(primary.length).toBe(1);
     expect(primary[0]?.textContent).toBe(ru['training.enroll']);
     expect(primary[0]?.getAttribute('href')).toContain('https://wa.me/77770000000?text=');
 
-    // Группа клуба: записывает клуб, тренер на него работает и без контактов.
-    expect(element('[data-training-enrolls="CLUB"]').textContent).toBe(
-      `Записывает клуб ${CLUB.name}`,
-    );
-    const groupCoach = element('[data-training-coach="CLUB"]');
-    expect(groupCoach.textContent).toContain(`Работает в клубе ${CLUB.name}`);
-    expect(screen.getByRole('heading', { name: ru['training.detail.groupCoach'] })).toBeDefined();
-    expect(within(groupCoach).queryByRole('link', { name: /WhatsApp|Позвонить/ })).toBeNull();
-
-    expect(element('[data-training-description]').textContent).toBe('Разминка.\nИгра на счёт.');
+    // Тренер группы на клуб работает: карточкой, без своих контактов.
+    const coachCard = element('[data-training-coach="CLUB"]');
+    expect(coachCard.textContent).toContain(`Работает в клубе ${CLUB.name}`);
+    expect(within(coachCard).queryByRole('link', { name: /WhatsApp|Позвонить/ })).toBeNull();
     expect(
-      screen.getByRole('link', { name: ru['club.contact.route'] }).getAttribute('href'),
+      within(dialog).getByRole('link', { name: ru['club.contact.route'] }).getAttribute('href'),
     ).toContain('https://2gis.kz/search/');
+  });
+
+  it('другие тренировки переключают окно', async () => {
+    renderAt(`/trainings?training=${CLUB_EVENING.id}`);
+
+    await screen.findByRole('dialog', { name: CLUB_EVENING.title });
+    fireEvent.click(within(element('[data-training-more]')).getByText(CLUB_INVITE.title));
+
+    await waitFor(() => {
+      expect(window.location.search).toContain(`training=${CLUB_INVITE.id}`);
+    });
+  });
+
+  it('тренер лично: «Записывает тренер Y лично», писать тренеру, карточки тренера нет', async () => {
+    renderAt(`/trainings?training=${VISIT_TRAINING.id}`);
+
+    const dialog = await screen.findByRole('dialog', { name: VISIT_TRAINING.title });
+
     expect(
-      screen
-        .getAllByRole('link', { name: `${PLAYERS.first.lastName} ${PLAYERS.first.firstName}` })[0]
-        ?.getAttribute('href'),
-    ).toBe(`/coaches/${COACH_SLUG}`);
-    expect(screen.getByRole('heading', { name: ru['training.detail.moreClub'] })).toBeDefined();
-    expect(screen.getByText(CLUB_INVITE.title)).toBeDefined();
-  });
-
-  it('тренер записывает через клуб: «запись через клуб» и «Записывает клуб»', async () => {
-    renderAt(`/trainings/${KIDS_GROUP.id}`);
-
-    const owner = await waitFor(() => element('[data-training-owner="COACH"]'));
-    expect(owner.textContent).toContain(`· ${ru['training.via.club'].toLowerCase()}`);
-    expect(element('[data-training-enrolls="CLUB"]').textContent).toBe(
-      `Записывает клуб ${CLUB.name}`,
+      element('[data-training-booking-block]').getAttribute('data-training-booking-block'),
+    ).toBe('COACH');
+    expect(element('[data-training-booking-caption]').textContent).toBe(
+      `Записывает тренер ${PLAYERS.first.lastName} ${PLAYERS.first.firstName} лично`,
     );
-    const primary = element('[data-training-contacts]').querySelector('.MuiButton-contained');
-    expect(primary?.getAttribute('href')).toContain('https://wa.me/77770000000?text=');
+    expect(dialog.querySelector('.MuiButton-contained')?.getAttribute('href')).toContain(
+      'https://wa.me/77011234567?text=',
+    );
+    expect(document.querySelector('[data-training-coach]')).toBeNull();
   });
 
-  it('неизвестная тренировка — «тренировка не найдена»', async () => {
-    renderAt('/trainings/00000000-0000-4000-8000-00000000ffff');
+  it('тренер через клуб: «Тренер Y проводит в зале клуба X, записывает клуб»', async () => {
+    renderAt(`/trainings?training=${KIDS_GROUP.id}`);
 
-    expect(await screen.findByText(ru['training.notFound'])).toBeDefined();
+    const dialog = await screen.findByRole('dialog', { name: KIDS_GROUP.title });
+
+    expect(
+      element('[data-training-booking-block]').getAttribute('data-training-booking-block'),
+    ).toBe('CLUB');
+    expect(element('[data-training-booking-caption]').textContent).toBe(
+      `Тренер ${PLAYERS.first.lastName} ${PLAYERS.first.firstName} проводит в зале клуба ${CLUB.name}, записывает клуб`,
+    );
+    expect(dialog.querySelector('.MuiButton-contained')?.getAttribute('href')).toContain(
+      'https://wa.me/77770000000?text=',
+    );
+  });
+
+  it('неизвестная тренировка — «тренировка не найдена» в окне', async () => {
+    renderAt('/trainings?training=00000000-0000-4000-8000-00000000ffff');
+
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByText(ru['training.notFound'])).toBeDefined();
   });
 });
 
