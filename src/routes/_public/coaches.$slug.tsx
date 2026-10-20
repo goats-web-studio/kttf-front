@@ -10,7 +10,8 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { MapPin, Pencil, Users } from 'lucide-react';
-import { useEffect, type ReactNode } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
+import { z } from 'zod';
 
 import { isMissingResource } from '@/common/api';
 import { fill, formatCount, useLocale, useT } from '@/common/i18n';
@@ -21,6 +22,8 @@ import QueryState from '@/common/ui/query-state';
 import RatingValue from '@/common/ui/rating-value';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
+import TrainingDialogHost from '@/features/coaches/training-dialog-host';
+import { searchTraining } from '@/features/coaches/trainings-search';
 import { STALE_PUBLIC_DAYS, daysSince, freshnessWhen } from '@/features/clubs/club-time';
 import { Badge } from '@/features/coaches/coach-cards';
 import {
@@ -40,7 +43,11 @@ import CoachStatusPlate from '@/features/coaches/status-plate';
 import { trackCoachView } from '@/features/coaches/track';
 import { usePlaceName } from '@/features/places/place-name';
 
+/** `?training=<id>` — окно тренировки поверх страницы (ADR-059). */
+const searchSchema = z.object({ training: searchTraining });
+
 export const Route = createFileRoute('/_public/coaches/$slug')({
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: CoachPage,
 });
 
@@ -54,30 +61,51 @@ export const Route = createFileRoute('/_public/coaches/$slug')({
  */
 function CoachPage(): ReactNode {
   const t = useT();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  // Окно тренировки — в адресе: «Назад» закрывает его, ссылку можно переслать.
+  const openTraining = useCallback(
+    (trainingId: string) => {
+      void navigate({
+        search: (previous) => ({ ...previous, training: trainingId }),
+        resetScroll: false,
+      });
+    },
+    [navigate],
+  );
+  const closeTraining = useCallback(() => {
+    void navigate({
+      search: (previous) => ({ ...previous, training: undefined }),
+      replace: true,
+      resetScroll: false,
+    });
+  }, [navigate]);
   const { slug } = Route.useParams();
   const coach = useQuery(coachBySlugQuery(slug));
 
   return (
-    <Container maxWidth="lg" component="section" sx={{ py: { xs: 4, sm: 6 } }}>
-      <BackLink href="/trainings?view=coaches" label={t('nav.trainings')} />
+    <TrainingDialogHost trainingId={search.training} onOpen={openTraining} onClose={closeTraining}>
+      <Container maxWidth="lg" component="section" sx={{ py: { xs: 4, sm: 6 } }}>
+        <BackLink href="/trainings?view=coaches" label={t('nav.trainings')} />
 
-      <Box sx={{ mt: 1 }}>
-        {isMissingResource(coach.error) ? (
-          <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
-            {t('coach.notFound')}
-          </Typography>
-        ) : (
-          <QueryState
-            isPending={coach.isPending}
-            error={coach.error}
-            onRetry={() => void coach.refetch()}
-            loading={<RowsSkeleton />}
-          >
-            {coach.data !== undefined && <CoachDetails coach={coach.data} />}
-          </QueryState>
-        )}
-      </Box>
-    </Container>
+        <Box sx={{ mt: 1 }}>
+          {isMissingResource(coach.error) ? (
+            <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
+              {t('coach.notFound')}
+            </Typography>
+          ) : (
+            <QueryState
+              isPending={coach.isPending}
+              error={coach.error}
+              onRetry={() => void coach.refetch()}
+              loading={<RowsSkeleton />}
+            >
+              {coach.data !== undefined && <CoachDetails coach={coach.data} />}
+            </QueryState>
+          )}
+        </Box>
+      </Container>
+    </TrainingDialogHost>
   );
 }
 

@@ -27,6 +27,9 @@ import { searchPage, searchText } from '@/common/search';
  * через `z.coerce.string()`.
  */
 
+/** Окно тренировки поверх страницы: `?training=<id>`; кривой — без окна. */
+export const searchTraining = z.coerce.string().pipe(z.uuid()).optional().catch(undefined);
+
 /** Вид страницы: тренировки — по умолчанию и в адрес не пишутся. */
 export const TRAININGS_VIEWS = ['trainings', 'coaches'] as const;
 export type TrainingsView = (typeof TRAININGS_VIEWS)[number];
@@ -74,6 +77,8 @@ export const trainingsSearchSchema = z.object({
   /** Поиск тренера по имени — только у вида «Тренеры». */
   q: searchText,
   page: searchPage,
+  /** Открытое окно тренировки — ссылку `?training=` дают в рекламе. */
+  training: searchTraining,
 });
 
 export type TrainingsSearch = z.infer<typeof trainingsSearchSchema>;

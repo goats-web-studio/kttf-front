@@ -5,7 +5,7 @@ import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { CalendarClock, MapPin, MessageCircle, Phone, Send, type LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 
 import { fill, useLocale, useT } from '@/common/i18n';
 import PlayerAvatar from '@/common/ui/player-avatar';
@@ -15,6 +15,7 @@ import { usePlaceName } from '@/features/places/place-name';
 
 import { Badge } from './coach-cards';
 import { enrollAction, linkStateKey, splitByOwner, trackEnroll } from './enroll';
+import { useTrainingDialog } from './training-dialog-context';
 import {
   TRAINING_AUDIENCE_KEYS,
   TRAINING_KIND_KEYS,
@@ -33,6 +34,19 @@ import {
  * подписан «Тренер: X». Своя тренировка тренера — владелец тренер, клуб в
  * ней только место.
  */
+
+/**
+ * «Подробнее» открывает окно на месте; с Ctrl, Cmd, Shift или средней
+ * кнопкой ссылка ведёт себя как ссылка — в новую вкладку с окном.
+ */
+function openInPlace(event: MouseEvent, open: () => void): void {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return;
+  }
+
+  event.preventDefault();
+  open();
+}
 
 /** Ссылки и кнопки строки — над растянутой ссылкой «Подробнее». */
 const ABOVE = { position: 'relative', zIndex: 1 } as const;
@@ -82,6 +96,7 @@ export function TrainingActions({
   readonly details?: boolean;
 }): ReactNode {
   const t = useT();
+  const dialog = useTrainingDialog();
   const action = enrollAction(training, t);
   const Icon = action === null ? null : CHANNEL_ICONS[action.kind];
 
@@ -113,7 +128,12 @@ export function TrainingActions({
         <Button
           size="small"
           variant="text"
-          href={`/trainings/${training.id}`}
+          href={dialog.hrefFor(training.id)}
+          onClick={(event) => {
+            openInPlace(event, () => {
+              dialog.open(training.id);
+            });
+          }}
           sx={{ minHeight: 44 }}
         >
           {t('training.details')}
@@ -150,6 +170,7 @@ export function TrainingRow({
 }: TrainingRowProps): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const dialog = useTrainingDialog();
   const fromClub = training.author === 'CLUB';
   // Тренер-владелец — карточкой, кроме его собственной страницы.
   const ownerCoach = !fromClub && context !== 'coach' ? training.coach : null;
@@ -192,7 +213,12 @@ export function TrainingRow({
               // Вся строка ведёт на страницу тренировки: ссылка заголовка
               // растянута на строку, кнопки и ссылки лежат над ней.
               <Link
-                href={`/trainings/${training.id}`}
+                href={dialog.hrefFor(training.id)}
+                onClick={(event) => {
+                  openInPlace(event, () => {
+                    dialog.open(training.id);
+                  });
+                }}
                 color="inherit"
                 underline="hover"
                 sx={{ '&::after': { content: '""', position: 'absolute', inset: 0 } }}

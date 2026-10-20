@@ -37,6 +37,7 @@ import {
   TRAINING_PLACE_KEYS,
 } from '@/features/coaches/labels';
 import { coachesQuery, trainingsQuery } from '@/features/coaches/queries';
+import TrainingDialogHost from '@/features/coaches/training-dialog-host';
 import { TrainingGroupBlock } from '@/features/coaches/training-list';
 import { clubsQuery } from '@/features/clubs/queries';
 import {
@@ -136,6 +137,24 @@ function TrainingsPage(): ReactNode {
       },
     });
   };
+  // Окно тренировки — в адресе: «Назад» закрывает его, ссылку можно переслать.
+  const openTraining = useCallback(
+    (trainingId: string) => {
+      void navigate({
+        search: (previous) => ({ ...previous, training: trainingId }),
+        resetScroll: false,
+      });
+    },
+    [navigate],
+  );
+  const closeTraining = useCallback(() => {
+    void navigate({
+      search: (previous) => ({ ...previous, training: undefined }),
+      replace: true,
+      resetScroll: false,
+    });
+  }, [navigate]);
+
   const reset = (): void => {
     void navigate({ search: view === 'coaches' ? { view: 'coaches' } : {} });
   };
@@ -324,65 +343,67 @@ function TrainingsPage(): ReactNode {
     );
 
   return (
-    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Typography variant="h1">{t('page.trainings.title')}</Typography>
-      <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 680 }}>
-        {t('trainings.lead')}
-      </Typography>
+    <TrainingDialogHost trainingId={search.training} onOpen={openTraining} onClose={closeTraining}>
+      <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+        <Typography variant="h1">{t('page.trainings.title')}</Typography>
+        <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 680 }}>
+          {t('trainings.lead')}
+        </Typography>
 
-      <Box sx={{ mt: 3 }}>
-        <PillTabs
-          value={view}
-          options={VIEW_OPTIONS}
-          label={t('trainings.view.label')}
-          onChange={switchView}
-        />
-      </Box>
-
-      <Box role="search" sx={{ mt: 3, display: 'grid', gap: 1.5 }}>
-        {view === 'coaches' && (
-          <SearchInput label={t('trainings.filter.name')} value={search.q} onCommit={commitQ} />
-        )}
-        <Button
-          variant="outlined"
-          startIcon={<SlidersHorizontal size={16} aria-hidden />}
-          aria-expanded={filtersOpen}
-          aria-controls={`${id}-filters`}
-          onClick={() => {
-            setFiltersOpen((open) => !open);
-          }}
-          sx={{ display: { xs: 'inline-flex', sm: 'none' }, minHeight: 44, justifySelf: 'start' }}
-        >
-          {hidden === 0
-            ? t('clubs.filter.open')
-            : fill(t('clubs.filter.openCount'), { count: String(hidden) })}
-        </Button>
-        <Box
-          id={`${id}-filters`}
-          sx={{ display: { xs: filtersOpen ? 'block' : 'none', sm: 'block' } }}
-        >
-          {panel}
+        <Box sx={{ mt: 3 }}>
+          <PillTabs
+            value={view}
+            options={VIEW_OPTIONS}
+            label={t('trainings.view.label')}
+            onChange={switchView}
+          />
         </Box>
-      </Box>
 
-      {view === 'trainings' ? (
-        <TrainingsList
-          search={search}
-          page={page}
-          filtered={filtered}
-          active={active}
-          onReset={reset}
-        />
-      ) : (
-        <CoachesList
-          search={search}
-          page={page}
-          filtered={filtered}
-          active={active}
-          onReset={reset}
-        />
-      )}
-    </Container>
+        <Box role="search" sx={{ mt: 3, display: 'grid', gap: 1.5 }}>
+          {view === 'coaches' && (
+            <SearchInput label={t('trainings.filter.name')} value={search.q} onCommit={commitQ} />
+          )}
+          <Button
+            variant="outlined"
+            startIcon={<SlidersHorizontal size={16} aria-hidden />}
+            aria-expanded={filtersOpen}
+            aria-controls={`${id}-filters`}
+            onClick={() => {
+              setFiltersOpen((open) => !open);
+            }}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' }, minHeight: 44, justifySelf: 'start' }}
+          >
+            {hidden === 0
+              ? t('clubs.filter.open')
+              : fill(t('clubs.filter.openCount'), { count: String(hidden) })}
+          </Button>
+          <Box
+            id={`${id}-filters`}
+            sx={{ display: { xs: filtersOpen ? 'block' : 'none', sm: 'block' } }}
+          >
+            {panel}
+          </Box>
+        </Box>
+
+        {view === 'trainings' ? (
+          <TrainingsList
+            search={search}
+            page={page}
+            filtered={filtered}
+            active={active}
+            onReset={reset}
+          />
+        ) : (
+          <CoachesList
+            search={search}
+            page={page}
+            filtered={filtered}
+            active={active}
+            onReset={reset}
+          />
+        )}
+      </Container>
+    </TrainingDialogHost>
   );
 }
 

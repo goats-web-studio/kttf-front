@@ -9,7 +9,12 @@ import { fill, type MessageKey } from '@/common/i18n';
 import { phoneHref, telegramHref, whatsappHref } from '@/features/clubs/contacts';
 import { trackClubContact } from '@/features/clubs/track';
 
-import { LINK_KEYS_FOR_CLUB, LINK_KEYS_FOR_COACH, TRAINING_PLACE_KEYS } from './labels';
+import {
+  LINK_KEYS_FOR_CLUB,
+  LINK_KEYS_FOR_COACH,
+  TRAINING_PLACE_KEYS,
+  coachShortName,
+} from './labels';
 import { trackCoachContact } from './track';
 
 /**
@@ -179,4 +184,37 @@ export function splitByOwner<T extends Pick<TrainingView, 'author'>>(
     club: trainings.filter((training) => training.author === 'CLUB'),
     coach: trainings.filter((training) => training.author === 'COACH'),
   };
+}
+
+/**
+ * Подпись блока «Запись и оплата» — кто записывает и как он связан со
+ * второй стороной (замечание владельца: связь должна быть явной):
+ * «Записывает клуб X, тренер группы — Y», «Записывает тренер Y лично»,
+ * «Тренер Y проводит в зале клуба X, записывает клуб».
+ */
+export function bookingCaption(
+  training: Pick<TrainingView, 'author' | 'booking' | 'club' | 'coach'>,
+  t: T,
+): string | null {
+  const target = trainingBookingTarget(training);
+
+  if (target === null) return null;
+
+  if (target.kind === 'COACH') {
+    return fill(t('training.booking.coach'), { coach: coachShortName(target.coach.player) });
+  }
+  if (training.author === 'COACH' && training.coach !== null) {
+    return fill(t('training.booking.coachViaClub'), {
+      coach: coachShortName(training.coach.player),
+      club: target.club.name,
+    });
+  }
+
+  const club = fill(t('training.booking.club'), { club: target.club.name });
+
+  return training.coach === null
+    ? club
+    : `${club}, ${fill(t('training.booking.groupCoach'), {
+        coach: coachShortName(training.coach.player),
+      })}`;
 }

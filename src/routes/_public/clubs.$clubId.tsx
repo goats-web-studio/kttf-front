@@ -11,7 +11,8 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { MapPin, Settings } from 'lucide-react';
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
+import { z } from 'zod';
 
 import { isMissingResource } from '@/common/api';
 import { fill, useT } from '@/common/i18n';
@@ -20,6 +21,8 @@ import { BackLink } from '@/common/ui/page-header';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
+import TrainingDialogHost from '@/features/coaches/training-dialog-host';
+import { searchTraining } from '@/features/coaches/trainings-search';
 import ClubGallery from '@/features/club-content/club-gallery';
 import ClubPosts from '@/features/club-content/club-posts';
 import ClubTrainingsSection from '@/features/coaches/club/club-trainings-section';
@@ -42,7 +45,11 @@ import { usePlaceName } from '@/features/places/place-name';
 import LeadersTable from '@/features/players/leaders-table';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 
+/** `?training=<id>` — окно тренировки поверх страницы (ADR-059). */
+const searchSchema = z.object({ training: searchTraining });
+
 export const Route = createFileRoute('/_public/clubs/$clubId')({
+  validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: ClubPage,
 });
 
@@ -58,30 +65,51 @@ const PLAYERS = 10;
  */
 function ClubPage(): ReactNode {
   const t = useT();
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  // Окно тренировки — в адресе: «Назад» закрывает его, ссылку можно переслать.
+  const openTraining = useCallback(
+    (trainingId: string) => {
+      void navigate({
+        search: (previous) => ({ ...previous, training: trainingId }),
+        resetScroll: false,
+      });
+    },
+    [navigate],
+  );
+  const closeTraining = useCallback(() => {
+    void navigate({
+      search: (previous) => ({ ...previous, training: undefined }),
+      replace: true,
+      resetScroll: false,
+    });
+  }, [navigate]);
   const { clubId } = Route.useParams();
   const club = useQuery(clubQuery(clubId));
 
   return (
-    <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <BackLink href="/clubs" label={t('nav.clubs')} />
+    <TrainingDialogHost trainingId={search.training} onOpen={openTraining} onClose={closeTraining}>
+      <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
+        <BackLink href="/clubs" label={t('nav.clubs')} />
 
-      <Box sx={{ mt: 1 }}>
-        {isMissingResource(club.error) ? (
-          <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
-            {t('club.notFound')}
-          </Typography>
-        ) : (
-          <QueryState
-            isPending={club.isPending}
-            error={club.error}
-            onRetry={() => void club.refetch()}
-            loading={<RowsSkeleton />}
-          >
-            {club.data !== undefined && <ClubDetails club={club.data} />}
-          </QueryState>
-        )}
-      </Box>
-    </Container>
+        <Box sx={{ mt: 1 }}>
+          {isMissingResource(club.error) ? (
+            <Typography role="alert" color="text.secondary" sx={{ py: 5, textAlign: 'center' }}>
+              {t('club.notFound')}
+            </Typography>
+          ) : (
+            <QueryState
+              isPending={club.isPending}
+              error={club.error}
+              onRetry={() => void club.refetch()}
+              loading={<RowsSkeleton />}
+            >
+              {club.data !== undefined && <ClubDetails club={club.data} />}
+            </QueryState>
+          )}
+        </Box>
+      </Container>
+    </TrainingDialogHost>
   );
 }
 
