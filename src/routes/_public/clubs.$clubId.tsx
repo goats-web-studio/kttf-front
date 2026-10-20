@@ -104,13 +104,13 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
       <Section title={t('club.prices.title')}>
         <PriceList prices={club.prices} />
         <Box sx={{ mt: 2 }}>
-          <QuickRequests club={club} />
+          <QuickRequests club={club} requests={['rent']} />
         </Box>
       </Section>
     );
   // Тренировки в клубе — рядом с ценами: и то и другое отвечает «сколько
   // стоит и когда приходить» (ADR-059).
-  const trainings = <ClubTrainingsSection clubId={club.id} />;
+  const trainings = <ClubTrainingsSection club={club} />;
   const posts = <ClubPosts clubId={club.id} />;
   const gallery = <ClubGallery clubId={club.id} />;
   const results = <ClubResults clubId={club.id} />;

@@ -21,6 +21,7 @@ import { playerQuery, playerSummaryQuery } from '@/features/players/queries';
 import { Badge } from './coach-cards';
 import { CoachQuickRequests } from './contact-actions';
 import CredentialScan from './credential-scan';
+import { splitByOwner } from './enroll';
 import { TrainingList } from './training-list';
 import {
   ACHIEVEMENT_ROLE_KEYS,
@@ -88,29 +89,40 @@ export function AsideCard({
 // ---------------------------------------------------------------- тренировки
 
 /**
- * «Тренировки и цены» — первым блоком (решение владельца, `docs/11` 2):
- * свои тренировки тренера и клубные, где он подтвердил участие. У строки
- * место — клуб ссылкой, зал с адресом, «выезд» или «онлайн»; клубная
- * помечена «тренировка клуба X». Ниже — готовые запросы в WhatsApp.
+ * Тренировки — первым блоком (решение владельца, `docs/11` 2), двумя
+ * частями по владельцу (решение от 20.10.2026): «Мои тренировки» — свои,
+ * записываются к тренеру; «Веду в клубах» — группы клубов, где он тренер,
+ * записываются к клубу. Ниже своих — готовые запросы в WhatsApp.
  */
 export function TrainingsBlock({ coach }: { readonly coach: CoachView }): ReactNode {
   const t = useT();
-
-  if (coach.trainings.length === 0) return null;
+  const parts = splitByOwner(coach.trainings);
 
   return (
-    <Section title={t('coach.services.title')}>
-      <TrainingList
-        trainings={coach.trainings}
-        showCoach={false}
-        showPlace
-        showAuthor
-        linkKeys={LINK_KEYS_FOR_COACH}
-      />
-      <Box sx={{ mt: 2 }}>
-        <CoachQuickRequests coach={coach} />
-      </Box>
-    </Section>
+    <>
+      {parts.coach.length > 0 && (
+        <Section title={t('training.part.own')}>
+          <Box data-coach-trainings="own">
+            <TrainingList
+              trainings={parts.coach}
+              context="coach"
+              showPlace
+              linkKeys={LINK_KEYS_FOR_COACH}
+            />
+          </Box>
+          <Box sx={{ mt: 2 }}>
+            <CoachQuickRequests coach={coach} />
+          </Box>
+        </Section>
+      )}
+      {parts.club.length > 0 && (
+        <Section title={t('training.part.inClubs')}>
+          <Box data-coach-trainings="clubs">
+            <TrainingList trainings={parts.club} context="coach" showPlace />
+          </Box>
+        </Section>
+      )}
+    </>
   );
 }
 

@@ -320,6 +320,7 @@ export const kk: Record<MessageKey, string> = {
   'club.open.opensOn': 'Жабық · ашылады: {day}, {time}',
   'club.prices.title': 'Бағалар',
   'club.price.kind.TABLE_RENT': 'Үстел жалдау',
+  'club.price.kind.HALL_RENT': 'Зал жалдау',
   'club.price.kind.MEMBERSHIP': 'Абонементтер',
   'club.price.kind.TRAINING': 'Жаттығулар',
   'club.price.kind.KIDS': 'Балалар топтары',
@@ -1874,4 +1875,30 @@ export const kk: Record<MessageKey, string> = {
   'training.editor.noCoach': 'Беті бар жаттықтырушы табылмады',
   'training.editor.coachInvalid':
     'Әр жаттығуға атауы мен кемінде бір аудитория керек; «клубта» болса — KTTF клубы немесе мекенжайы бар зал; бағасы — бүтін санмен.',
+  'training.enroll': 'Жазылу',
+  'training.details': 'Толығырақ',
+  'training.enroll.message':
+    'Сәлеметсіз бе! KTTF-тен жазып отырмын: «{title}» жаттығуына жазылғым келеді',
+  'training.enroll.club': '«{club}» клубы',
+  'training.coachLabel': 'Жаттықтырушы:',
+  'training.part.clubGroups': 'Клуб топтары',
+  'training.part.coaches': 'Клубтағы жаттықтырушылар',
+  'training.part.own': 'Менің жаттығуларым',
+  'training.part.inClubs': 'Клубтарда жүргіземін',
+  'training.notFound':
+    'Жаттығу табылмады. Сілтеме толық емес немесе жаттығу алынып тасталған болуы мүмкін.',
+  'training.detail.ofClub': 'Клуб тобы',
+  'training.detail.ofCoach': 'Жаттықтырушының жаттығуы',
+  'training.detail.about': 'Жаттығу туралы',
+  'training.detail.price': 'Бағасы',
+  'training.detail.where': 'Қайда',
+  'training.detail.coach': 'Жаттықтырушы',
+  'training.detail.moreClub': 'Клубтың басқа топтары',
+  'training.detail.moreCoach': 'Жаттықтырушының басқа жаттығулары',
+  'training.detail.noContacts': 'Жазылуға арналған байланыс деректері әзірге жоқ.',
+  'training.detail.PENDING': 'Әлі жарияланбаған: байланыс екінші тараптың растауын күтуде.',
+  'training.detail.DECLINED':
+    'Екінші тарап байланыстан бас тартты: жаттығу онсыз көрінеді немесе мүлде көрінбейді.',
+  'training.editor.description': 'Толығырақ',
+  'training.editor.descriptionHint': 'Сабақта не болады, өзіңізбен не алу керек',
 };

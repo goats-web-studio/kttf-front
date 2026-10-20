@@ -93,6 +93,11 @@ export function CoachPicker({
     slug: coach.slug,
     player: coach.player,
     photoUrl: coach.photoUrl,
+    // Контакты в выборе не нужны: строка уходит на сервер одним `coachId`.
+    phone: null,
+    whatsapp: null,
+    telegram: null,
+    primaryContact: null,
   }));
   const options =
     value === null || found.some((coach) => coach.id === value.id) ? found : [value, ...found];

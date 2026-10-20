@@ -263,21 +263,35 @@ export function ContactList({ club }: { readonly club: ClubView }): ReactNode {
   );
 }
 
+export type QuickRequest = 'trial' | 'rent';
+
+const QUICK_REQUESTS: Readonly<Record<QuickRequest, readonly [MessageKey, MessageKey]>> = {
+  trial: ['club.contact.trial', 'club.contact.trialMessage'],
+  rent: ['club.contact.rent', 'club.contact.rentMessage'],
+};
+
 /**
- * Готовые сообщения под прайсом: «Записаться на пробную тренировку»,
- * «Забронировать стол». Только при WhatsApp — у звонка и Telegram текста
+ * Готовые сообщения в WhatsApp клуба: «Забронировать стол» под ценами,
+ * «Записаться на пробную тренировку» под тренировками. Только при WhatsApp — у звонка и Telegram текста
  * заранее не подставить.
  */
-export function QuickRequests({ club }: { readonly club: ClubView }): ReactNode {
+export function QuickRequests({
+  club,
+  requests: kinds,
+}: {
+  readonly club: Pick<ClubView, 'id' | 'name' | 'whatsapp'>;
+  /**
+   * Какие запросы: под ценами — «Забронировать стол», под тренировками —
+   * «Записаться на пробную» (тренировки ушли из прайса, ADR-059).
+   */
+  readonly requests: readonly QuickRequest[];
+}): ReactNode {
   const t = useT();
 
   if (club.whatsapp === null) return null;
 
   const whatsapp = club.whatsapp;
-  const requests: readonly (readonly [MessageKey, MessageKey])[] = [
-    ['club.contact.trial', 'club.contact.trialMessage'],
-    ['club.contact.rent', 'club.contact.rentMessage'],
-  ];
+  const requests = kinds.map((kind) => QUICK_REQUESTS[kind]);
 
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>

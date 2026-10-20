@@ -57,7 +57,7 @@ import {
 import CitiesFilter from '@/features/places/cities-filter';
 import { useCityLabel } from '@/features/places/city-label';
 
-export const Route = createFileRoute('/_public/trainings')({
+export const Route = createFileRoute('/_public/trainings/')({
   validateSearch: (search: Record<string, unknown>) => trainingsSearchSchema.parse(search),
   component: TrainingsPage,
 });

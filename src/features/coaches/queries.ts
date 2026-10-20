@@ -7,6 +7,7 @@ import {
   fetchCoach,
   fetchCoachBySlug,
   fetchCoachStats,
+  fetchTraining,
   listCoachApplications,
   listCoaches,
   listTrainings,
@@ -21,6 +22,7 @@ export const coachKeys = {
   all: ['coaches'] as const,
   list: (query: ListCoachesRequest) => ['coaches', 'list', query] as const,
   trainings: (query: ListTrainingsRequest) => ['coaches', 'trainings', query] as const,
+  training: (id: string) => ['coaches', 'training', id] as const,
   bySlug: (slug: string) => ['coaches', 'slug', slug] as const,
   detail: (id: string) => ['coaches', 'detail', id] as const,
   stats: (id: string, days: number) => ['coaches', 'stats', id, days] as const,
@@ -41,6 +43,13 @@ export function trainingsQuery(query: ListTrainingsRequest) {
   return queryOptions({
     queryKey: coachKeys.trainings(query),
     queryFn: () => listTrainings(query),
+  });
+}
+
+export function trainingQuery(id: string) {
+  return queryOptions({
+    queryKey: coachKeys.training(id),
+    queryFn: () => fetchTraining(id),
   });
 }
 

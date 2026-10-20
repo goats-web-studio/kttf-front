@@ -101,7 +101,12 @@ export function LinkedTrainings({
             sx={{ borderTop: 1, borderColor: 'divider', '&:first-of-type': { borderTop: 0 } }}
           >
             <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-              <TrainingRow training={training} showCoach={showCoach} showPlace={!showCoach} />
+              <TrainingRow
+                training={training}
+                context={showCoach ? 'club' : 'coach'}
+                showPlace={!showCoach}
+                actions={false}
+              />
             </Box>
             <Box sx={{ px: { xs: 2, sm: 3 }, pb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {confirm && (

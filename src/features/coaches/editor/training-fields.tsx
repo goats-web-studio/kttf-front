@@ -1,6 +1,7 @@
 import {
   PRICE_UNITS,
   TRAINING_AUDIENCES,
+  TRAINING_DESCRIPTION_MAX,
   TRAINING_KINDS,
   type PriceUnit,
   type TrainingKind,
@@ -30,7 +31,15 @@ type Row = CoachTrainingRow | ClubTrainingRow;
 /** Поля, общие у строки тренера и клуба. */
 type Common = Pick<
   Row,
-  'kind' | 'audiences' | 'kidsFromAge' | 'title' | 'schedule' | 'price' | 'unit' | 'note'
+  | 'kind'
+  | 'audiences'
+  | 'kidsFromAge'
+  | 'title'
+  | 'schedule'
+  | 'price'
+  | 'unit'
+  | 'note'
+  | 'description'
 >;
 
 interface TrainingFieldsProps {
@@ -232,6 +241,23 @@ export default function TrainingFields({
         }}
         slotProps={{ htmlInput: { maxLength: 200 } }}
         sx={{ gridColumn: { xs: '1 / -1', md: '3 / -1' } }}
+      />
+      <TextField
+        size="small"
+        label={t('training.editor.description')}
+        placeholder={t('training.editor.descriptionHint')}
+        value={row.description}
+        onChange={(event) => {
+          onPatch({ description: event.target.value });
+        }}
+        multiline
+        minRows={2}
+        helperText={fill(t('coach.editor.aboutCount'), {
+          count: String(row.description.length),
+          max: String(TRAINING_DESCRIPTION_MAX),
+        })}
+        slotProps={{ htmlInput: { maxLength: TRAINING_DESCRIPTION_MAX } }}
+        sx={{ gridColumn: '1 / -1' }}
       />
     </Box>
   );

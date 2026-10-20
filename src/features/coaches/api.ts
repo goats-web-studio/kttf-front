@@ -13,6 +13,7 @@ import type {
   SetClubTrainingsInput,
   SetCoachTrainingsInput,
   TrafficSource,
+  TrainingDetailView,
   TrainingGroupView,
   TrainingView,
   ClubTrainingsManageView,
@@ -63,6 +64,11 @@ export function updateCoach(id: string, input: UpdateCoachInput): Promise<CoachV
  */
 export function setCoachTrainings(id: string, input: SetCoachTrainingsInput): Promise<unknown> {
   return apiRequest<unknown>(`/coaches/${id}/trainings`, { method: 'PUT', body: input });
+}
+
+/** Страница тренировки — «Подробнее»: сама тренировка и другие у того же владельца. */
+export function fetchTraining(id: string): Promise<TrainingDetailView> {
+  return apiRequest<TrainingDetailView>(`/trainings/${id}`);
 }
 
 // ---------------------------------------------------------------- тренировки клуба

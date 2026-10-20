@@ -37,6 +37,8 @@ interface TrainingRowBase {
   readonly price: string;
   readonly unit: PriceUnit;
   readonly note: string;
+  /** «Подробнее» — простой текст до 1000 знаков. */
+  readonly description: string;
   /** Связь со второй стороной — только для показа. */
   readonly link: TrainingLink;
 }
@@ -53,6 +55,7 @@ function baseOf(training: TrainingView): TrainingRowBase {
     price: training.priceKzt === null ? '' : String(training.priceKzt),
     unit: training.unit,
     note: training.note ?? '',
+    description: training.description ?? '',
     link: training.link,
   };
 }
@@ -69,6 +72,7 @@ function emptyBase(): TrainingRowBase {
     price: '',
     unit: 'MONTH',
     note: '',
+    description: '',
     link: 'NONE',
   };
 }
@@ -91,6 +95,7 @@ function baseInput(row: TrainingRowBase) {
     priceKzt: price,
     unit: price === null ? ('NONE' as const) : row.unit,
     note: textOrNull(row.note),
+    description: textOrNull(row.description),
   };
 }
 

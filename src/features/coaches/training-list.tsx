@@ -1,9 +1,10 @@
 import type { TrainingCoachRef, TrainingGroupView, TrainingView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import { CalendarClock, MapPin } from 'lucide-react';
+import { CalendarClock, MapPin, MessageCircle, Phone, Send, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { fill, useLocale, useT, type MessageKey } from '@/common/i18n';
@@ -13,6 +14,7 @@ import ClubMark from '@/features/clubs/club-mark';
 import { usePlaceName } from '@/features/places/place-name';
 
 import { Badge } from './coach-cards';
+import { enrollAction, splitByOwner, trackEnroll } from './enroll';
 import {
   TRAINING_AUDIENCE_KEYS,
   TRAINING_KIND_KEYS,
@@ -26,12 +28,22 @@ import {
 
 /**
  * Тренировки строками — в блоках `/trainings`, на странице тренера и на
- * странице клуба (ADR-059, решение владельца от 20.10.2026). Что в строке,
- * зависит от места: в блоке клуба место уже сказано шапкой, на странице
- * тренера тренер — он сам.
+ * странице клуба (ADR-059). Решение владельца от 20.10.2026: всегда видно,
+ * кто владелец и кому писать. Группа клуба — владелец клуб, тренер в ней
+ * подписан «Тренер: X». Своя тренировка тренера — владелец тренер, клуб в
+ * ней только место.
  */
 
-/** Тренер строки: фото, имя ссылкой на страницу, рейтинг. */
+/** Ссылки и кнопки строки — над растянутой ссылкой «Подробнее». */
+const ABOVE = { position: 'relative', zIndex: 1 } as const;
+
+const CHANNEL_ICONS: Readonly<Record<'WHATSAPP' | 'PHONE' | 'TELEGRAM', LucideIcon>> = {
+  WHATSAPP: MessageCircle,
+  PHONE: Phone,
+  TELEGRAM: Send,
+};
+
+/** Тренер-владелец: фото, имя ссылкой на страницу, рейтинг. */
 export function CoachChip({ coach }: { readonly coach: TrainingCoachRef }): ReactNode {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
@@ -45,7 +57,7 @@ export function CoachChip({ coach }: { readonly coach: TrainingCoachRef }): Reac
         <Link
           href={`/coaches/${coach.slug}`}
           color="inherit"
-          sx={{ display: 'block', fontWeight: 600, overflowWrap: 'anywhere' }}
+          sx={{ ...ABOVE, display: 'block', fontWeight: 600, overflowWrap: 'anywhere' }}
         >
           {coachShortName(coach.player)}
         </Link>
@@ -57,31 +69,96 @@ export function CoachChip({ coach }: { readonly coach: TrainingCoachRef }): Reac
   );
 }
 
+/**
+ * «Записаться» — владельцу, с готовым текстом про эту тренировку, и
+ * «Подробнее». Обводкой и текстом: главная кнопка на экране одна (07,
+ * запрет 2), а строк в списке много.
+ */
+export function TrainingActions({
+  training,
+  details = true,
+}: {
+  readonly training: TrainingView;
+  readonly details?: boolean;
+}): ReactNode {
+  const t = useT();
+  const action = enrollAction(training, t);
+  const Icon = action === null ? null : CHANNEL_ICONS[action.kind];
+
+  return (
+    <Box
+      sx={{
+        ...ABOVE,
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 1,
+        justifyContent: { md: 'flex-end' },
+      }}
+    >
+      {action !== null && Icon !== null && (
+        <Button
+          size="small"
+          href={action.href}
+          startIcon={<Icon size={16} aria-hidden />}
+          {...(action.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          onClick={() => {
+            trackEnroll(action);
+          }}
+          sx={{ minHeight: 44 }}
+        >
+          {t('training.enroll')}
+        </Button>
+      )}
+      {details && (
+        <Button
+          size="small"
+          variant="text"
+          href={`/trainings/${training.id}`}
+          sx={{ minHeight: 44 }}
+        >
+          {t('training.details')}
+        </Button>
+      )}
+    </Box>
+  );
+}
+
+/**
+ * Где показана строка — от этого зависят владелец и место:
+ * - `club` — блок клуба и страница клуба: у группы клуба «Тренер: X», у
+ *   тренировки тренера — тренер-владелец карточкой;
+ * - `place` — зал вне KTTF и «выезд и онлайн»: владелец — тренер карточкой;
+ * - `coach` — страница тренера: своя тренировка — с местом, клубная —
+ *   «Группа клуба X».
+ */
+export type TrainingContext = 'club' | 'place' | 'coach';
+
 interface TrainingRowProps {
   readonly training: TrainingView;
-  /** Показать тренера (в блоках и у клуба), а не на странице самого тренера. */
-  readonly showCoach: boolean;
+  readonly context: TrainingContext;
   /** Показать место — где его не сказала шапка блока. */
   readonly showPlace: boolean;
-  /** На странице тренера: клубная тренировка помечена «тренировка клуба X». */
-  readonly showAuthor?: boolean;
   /**
    * Подписи связи, ждущей ответа или отклонённой, — глазами автора. Такие
    * строки видит только автор: публично их нет.
    */
   readonly linkKeys?: Readonly<Record<'PENDING' | 'CONFIRMED' | 'DECLINED', MessageKey>>;
+  /** Без «Записаться» и «Подробнее» — в кабинете, где у строки свои кнопки. */
+  readonly actions?: boolean;
 }
 
 export function TrainingRow({
   training,
-  showCoach,
+  context,
   showPlace,
-  showAuthor = false,
   linkKeys,
+  actions = true,
 }: TrainingRowProps): ReactNode {
   const t = useT();
   const locale = useLocale();
-  const coach = showCoach ? training.coach : null;
+  const fromClub = training.author === 'CLUB';
+  // Тренер-владелец — карточкой, кроме его собственной страницы.
+  const ownerCoach = !fromClub && context !== 'coach' ? training.coach : null;
   const pending =
     linkKeys !== undefined && (training.link === 'PENDING' || training.link === 'DECLINED');
 
@@ -89,7 +166,9 @@ export function TrainingRow({
     <Box
       component="li"
       data-training={training.id}
+      data-training-owner={training.author}
       sx={{
+        position: 'relative',
         px: { xs: 2, sm: 3 },
         py: 2,
         display: 'grid',
@@ -97,14 +176,15 @@ export function TrainingRow({
         rowGap: 1.25,
         gridTemplateColumns: {
           xs: 'minmax(0, 1fr)',
-          // Колонки одной ширины во всех строках блока: тренеры и цены
-          // встают столбиком, даже если у строки тренера нет.
-          md: showCoach ? 'minmax(0, 1fr) 240px 168px' : 'minmax(0, 1fr) 168px',
+          md: ownerCoach === null ? 'minmax(0, 1fr) 260px' : 'minmax(0, 1fr) 220px 260px',
         },
         alignItems: 'start',
         borderTop: 1,
         borderColor: 'divider',
         '&:first-of-type': { borderTop: 0 },
+        ...(actions
+          ? { '@media (hover: hover)': { '&:hover': { bgcolor: 'var(--paper-hover)' } } }
+          : {}),
       }}
     >
       <Box sx={{ minWidth: 0, display: 'grid', gap: 0.75 }}>
@@ -113,13 +193,36 @@ export function TrainingRow({
             {t(TRAINING_KIND_KEYS[training.kind])}
           </Typography>
           <Typography variant="h3" component="h3" sx={{ mt: 0.25 }}>
-            {training.title}
+            {actions ? (
+              // Вся строка ведёт на страницу тренировки: ссылка заголовка
+              // растянута на строку, кнопки и ссылки лежат над ней.
+              <Link
+                href={`/trainings/${training.id}`}
+                color="inherit"
+                underline="hover"
+                sx={{ '&::after': { content: '""', position: 'absolute', inset: 0 } }}
+              >
+                {training.title}
+              </Link>
+            ) : (
+              training.title
+            )}
           </Typography>
         </Box>
-        {showAuthor && training.author === 'CLUB' && training.club !== null && (
+        {fromClub && context === 'coach' && training.club !== null && (
           <Typography variant="body2" sx={{ fontWeight: 500 }}>
             {t('training.ofClub')}{' '}
-            <Link href={`/clubs/${training.club.id}`}>{training.club.name}</Link>
+            <Link href={`/clubs/${training.club.id}`} sx={ABOVE}>
+              {training.club.name}
+            </Link>
+          </Typography>
+        )}
+        {fromClub && context !== 'coach' && training.coach !== null && (
+          <Typography variant="body2">
+            {t('training.coachLabel')}{' '}
+            <Link href={`/coaches/${training.coach.slug}`} sx={{ ...ABOVE, fontWeight: 600 }}>
+              {coachShortName(training.coach.player)}
+            </Link>
           </Typography>
         )}
         <Typography
@@ -131,10 +234,10 @@ export function TrainingRow({
           {showPlace && (
             <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
               <MapPin size={14} aria-hidden style={{ flexShrink: 0 }} />
-              {training.club === null || (showAuthor && training.author === 'CLUB') ? (
+              {training.club === null || fromClub ? (
                 placeText(training, t)
               ) : (
-                <Link href={`/clubs/${training.club.id}`} color="inherit">
+                <Link href={`/clubs/${training.club.id}`} color="inherit" sx={ABOVE}>
                   {placeText(training, t)}
                 </Link>
               )}
@@ -164,20 +267,26 @@ export function TrainingRow({
           </Typography>
         )}
       </Box>
-      {coach !== null && <CoachChip coach={coach} />}
-      {showCoach && coach === null && <Box sx={{ display: { xs: 'none', md: 'block' } }} />}
-      <Typography
+      {ownerCoach !== null && <CoachChip coach={ownerCoach} />}
+      <Box
         sx={{
-          gridRow: { xs: 2, md: 'auto' },
-          fontWeight: 600,
-          fontVariantNumeric: 'tabular-nums',
-          whiteSpace: 'nowrap',
+          display: 'grid',
+          gap: 1,
+          justifyItems: { xs: 'start', md: 'end' },
           textAlign: { md: 'right' },
-          color: training.priceKzt === null ? 'text.secondary' : 'text.primary',
         }}
       >
-        {priceText(training, t, locale)}
-      </Typography>
+        <Typography
+          sx={{
+            fontWeight: 600,
+            fontVariantNumeric: 'tabular-nums',
+            color: training.priceKzt === null ? 'text.secondary' : 'text.primary',
+          }}
+        >
+          {priceText(training, t, locale)}
+        </Typography>
+        {actions && <TrainingActions training={training} />}
+      </Box>
     </Box>
   );
 }
@@ -198,10 +307,70 @@ export function TrainingList({
   );
 }
 
+/** Подзаголовок части блока: «Группы клуба», «Тренеры в клубе». */
+function PartTitle({ children }: { readonly children: ReactNode }): ReactNode {
+  return (
+    <Typography
+      variant="body2"
+      component="h3"
+      sx={{
+        px: { xs: 2, sm: 3 },
+        pt: 1.5,
+        pb: 0.5,
+        fontWeight: 600,
+        color: 'text.secondary',
+      }}
+    >
+      {children}
+    </Typography>
+  );
+}
+
+/**
+ * Тренировки клуба двумя частями: группы клуба (записываются к клубу) и
+ * личные тренировки тренеров в его зале (записываются к тренеру).
+ */
+export function ClubTrainingParts({
+  trainings,
+}: {
+  readonly trainings: readonly TrainingView[];
+}): ReactNode {
+  const t = useT();
+  const parts = splitByOwner(trainings);
+
+  return (
+    <>
+      {parts.club.length > 0 && (
+        <Box data-training-part="CLUB">
+          <PartTitle>{t('training.part.clubGroups')}</PartTitle>
+          <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+            {parts.club.map((training) => (
+              <TrainingRow key={training.id} training={training} context="club" showPlace={false} />
+            ))}
+          </Box>
+        </Box>
+      )}
+      {parts.coach.length > 0 && (
+        <Box
+          data-training-part="COACH"
+          sx={{ borderTop: parts.club.length > 0 ? 1 : 0, borderColor: 'divider' }}
+        >
+          <PartTitle>{t('training.part.coaches')}</PartTitle>
+          <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+            {parts.coach.map((training) => (
+              <TrainingRow key={training.id} training={training} context="club" showPlace={false} />
+            ))}
+          </Box>
+        </Box>
+      )}
+    </>
+  );
+}
+
 /**
  * Блок `/trainings` — место и его тренировки (`docs/11` 3.1.1): клуб KTTF
- * с логотипом, названием-ссылкой и адресом; зал вне KTTF с пометкой; затем
- * «Выезд и онлайн».
+ * с логотипом, названием-ссылкой и адресом — двумя частями по владельцу;
+ * зал вне KTTF с пометкой; последним — «Выезд и онлайн».
  */
 export function TrainingGroupBlock({ group }: { readonly group: TrainingGroupView }): ReactNode {
   const t = useT();
@@ -230,14 +399,14 @@ export function TrainingGroupBlock({ group }: { readonly group: TrainingGroupVie
         }}
       >
         {club !== null && (
-          <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-            <ClubMark club={club} size={48} />
-          </Box>
-        )}
-        {club !== null && (
-          <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
-            <ClubMark club={club} size={36} />
-          </Box>
+          <>
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <ClubMark club={club} size={48} />
+            </Box>
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+              <ClubMark club={club} size={36} />
+            </Box>
+          </>
         )}
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="h3" component="h2">
@@ -262,16 +431,20 @@ export function TrainingGroupBlock({ group }: { readonly group: TrainingGroupVie
           </Typography>
         </Box>
       </Box>
-      <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-        {group.trainings.map((training) => (
-          <TrainingRow
-            key={training.id}
-            training={training}
-            showCoach
-            showPlace={group.kind === 'ANYWHERE'}
-          />
-        ))}
-      </Box>
+      {club !== null ? (
+        <ClubTrainingParts trainings={group.trainings} />
+      ) : (
+        <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+          {group.trainings.map((training) => (
+            <TrainingRow
+              key={training.id}
+              training={training}
+              context="place"
+              showPlace={group.kind === 'ANYWHERE'}
+            />
+          ))}
+        </Box>
+      )}
     </Paper>
   );
 }
