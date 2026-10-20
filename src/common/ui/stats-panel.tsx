@@ -79,7 +79,7 @@ export default function StatsPanel<M extends string>({
                   gap: 1.5,
                   gridTemplateColumns: {
                     xs: '1fr 1fr',
-                    md: `repeat(${String(metrics.length)}, 1fr)`,
+                    md: 'repeat(auto-fill, minmax(150px, 1fr))',
                   },
                 }}
               >

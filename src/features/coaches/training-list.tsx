@@ -7,14 +7,14 @@ import Typography from '@mui/material/Typography';
 import { CalendarClock, MapPin, MessageCircle, Phone, Send, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { fill, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, useLocale, useT } from '@/common/i18n';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import RatingValue from '@/common/ui/rating-value';
 import ClubMark from '@/features/clubs/club-mark';
 import { usePlaceName } from '@/features/places/place-name';
 
 import { Badge } from './coach-cards';
-import { enrollAction, splitByOwner, trackEnroll } from './enroll';
+import { enrollAction, linkStateKey, splitByOwner, trackEnroll } from './enroll';
 import {
   TRAINING_AUDIENCE_KEYS,
   TRAINING_KIND_KEYS,
@@ -138,11 +138,6 @@ interface TrainingRowProps {
   readonly context: TrainingContext;
   /** Показать место — где его не сказала шапка блока. */
   readonly showPlace: boolean;
-  /**
-   * Подписи связи, ждущей ответа или отклонённой, — глазами автора. Такие
-   * строки видит только автор: публично их нет.
-   */
-  readonly linkKeys?: Readonly<Record<'PENDING' | 'CONFIRMED' | 'DECLINED', MessageKey>>;
   /** Без «Записаться» и «Подробнее» — в кабинете, где у строки свои кнопки. */
   readonly actions?: boolean;
 }
@@ -151,7 +146,6 @@ export function TrainingRow({
   training,
   context,
   showPlace,
-  linkKeys,
   actions = true,
 }: TrainingRowProps): ReactNode {
   const t = useT();
@@ -159,8 +153,9 @@ export function TrainingRow({
   const fromClub = training.author === 'CLUB';
   // Тренер-владелец — карточкой, кроме его собственной страницы.
   const ownerCoach = !fromClub && context !== 'coach' ? training.coach : null;
-  const pending =
-    linkKeys !== undefined && (training.link === 'PENDING' || training.link === 'DECLINED');
+  // Связь ждёт ответа или отклонена — такую строку видят только стороны и
+  // администратор, и она не должна выглядеть опубликованной.
+  const linkState = linkStateKey(training);
 
   return (
     <Box
@@ -210,19 +205,32 @@ export function TrainingRow({
           </Typography>
         </Box>
         {fromClub && context === 'coach' && training.club !== null && (
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            {t('training.ofClub')}{' '}
+          <Typography variant="body2" sx={{ fontWeight: 500 }} data-training-enroll="club">
+            {t('training.via.clubNamed')}{' '}
             <Link href={`/clubs/${training.club.id}`} sx={ABOVE}>
               {training.club.name}
             </Link>
           </Typography>
         )}
-        {fromClub && context !== 'coach' && training.coach !== null && (
-          <Typography variant="body2">
-            {t('training.coachLabel')}{' '}
-            <Link href={`/coaches/${training.coach.slug}`} sx={{ ...ABOVE, fontWeight: 600 }}>
-              {coachShortName(training.coach.player)}
-            </Link>
+        {fromClub && context !== 'coach' && (
+          // Группа клуба: пишут клубу, тренер на него работает (решение
+          // владельца от 21.10.2026).
+          <Typography variant="body2" data-training-enroll="club">
+            {t('training.via.club')}
+            {training.coach !== null && (
+              <>
+                {` · ${t('training.via.groupCoach')} `}
+                <Link href={`/coaches/${training.coach.slug}`} sx={{ ...ABOVE, fontWeight: 600 }}>
+                  {coachShortName(training.coach.player)}
+                </Link>
+              </>
+            )}
+          </Typography>
+        )}
+        {!fromClub && context === 'club' && (
+          // Своя тренировка тренера в зале клуба: пишут тренеру.
+          <Typography variant="body2" color="text.secondary" data-training-enroll="coach">
+            {t('training.via.coach')}
           </Typography>
         )}
         <Typography
@@ -257,8 +265,10 @@ export function TrainingRow({
           {training.audiences.map((audience) => (
             <Badge key={audience}>{t(TRAINING_AUDIENCE_KEYS[audience])}</Badge>
           ))}
-          {pending && (
-            <Badge tone="warn">{t(linkKeys[training.link as 'PENDING' | 'DECLINED'])}</Badge>
+          {linkState !== null && (
+            <Badge tone="warn">
+              <span data-training-link={training.link}>{t(linkState)}</span>
+            </Badge>
           )}
         </Box>
         {training.note !== null && (

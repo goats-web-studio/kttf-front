@@ -27,7 +27,6 @@ import {
   ACHIEVEMENT_ROLE_KEYS,
   COACH_CATEGORY_KEYS,
   CREDENTIAL_KIND_KEYS,
-  LINK_KEYS_FOR_COACH,
   SPORTS_RANK_KEYS,
   TRAINING_PLACE_KEYS,
 } from './labels';
@@ -103,12 +102,7 @@ export function TrainingsBlock({ coach }: { readonly coach: CoachView }): ReactN
       {parts.coach.length > 0 && (
         <Section title={t('training.part.own')}>
           <Box data-coach-trainings="own">
-            <TrainingList
-              trainings={parts.coach}
-              context="coach"
-              showPlace
-              linkKeys={LINK_KEYS_FOR_COACH}
-            />
+            <TrainingList trainings={parts.coach} context="coach" showPlace />
           </Box>
           <Box sx={{ mt: 2 }}>
             <CoachQuickRequests coach={coach} />

@@ -16,6 +16,7 @@ const METRIC_LABELS: Readonly<Record<StatMetric, MessageKey>> = {
   telegram: 'manage.stats.telegram',
   route: 'manage.stats.route',
   links: 'manage.stats.links',
+  coachTraining: 'manage.stats.coachTraining',
 };
 
 /**

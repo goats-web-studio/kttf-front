@@ -7,7 +7,18 @@ import { summarizeStatRows, type StatsSummary } from '@/common/ui/stats-model';
  * Метрики статистики тренера — `CoachStatDaily` (ADR-059): просмотры и
  * нажатия на каждый способ связи. Маршрута и сайта, как у клуба, нет.
  */
-export const COACH_STAT_METRICS = ['views', 'phone', 'whatsapp', 'telegram', 'instagram'] as const;
+/**
+ * `clubGroup` — «Записаться» в группы клубов, где он тренер: писали клубу,
+ * тренеру — отдельной строкой (ADR-059, решение владельца от 21.10.2026).
+ */
+export const COACH_STAT_METRICS = [
+  'views',
+  'phone',
+  'whatsapp',
+  'telegram',
+  'instagram',
+  'clubGroup',
+] as const;
 export type CoachStatMetric = (typeof COACH_STAT_METRICS)[number];
 
 export const COACH_STAT_LABELS: Readonly<Record<CoachStatMetric, MessageKey>> = {
@@ -16,6 +27,7 @@ export const COACH_STAT_LABELS: Readonly<Record<CoachStatMetric, MessageKey>> = 
   whatsapp: 'manage.stats.whatsapp',
   telegram: 'manage.stats.telegram',
   instagram: 'club.contact.instagram',
+  clubGroup: 'manage.stats.clubGroup',
 };
 
 export function summarizeCoachStats(view: CoachStatsView): StatsSummary<CoachStatMetric> {
@@ -25,5 +37,6 @@ export function summarizeCoachStats(view: CoachStatsView): StatsSummary<CoachSta
     whatsapp: row.whatsapp,
     telegram: row.telegram,
     instagram: row.instagram,
+    clubGroup: row.clubGroup,
   }));
 }

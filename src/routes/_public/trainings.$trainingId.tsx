@@ -26,7 +26,13 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import ClubMark from '@/features/clubs/club-mark';
 import { phoneHref, routeHref, telegramHref, whatsappHref } from '@/features/clubs/contacts';
 import { Badge } from '@/features/coaches/coach-cards';
-import { enrollAction, enrollMessage, ownerContacts, trackEnroll } from '@/features/coaches/enroll';
+import {
+  enrollAction,
+  enrollMessage,
+  linkStateKey,
+  ownerContacts,
+  trackEnroll,
+} from '@/features/coaches/enroll';
 import {
   TRAINING_AUDIENCE_KEYS,
   TRAINING_KIND_KEYS,
@@ -98,13 +104,27 @@ function TrainingDetails({ training }: { readonly training: TrainingDetailView }
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
   const owner = trainingOwner(training);
+  const linkState = linkStateKey(training);
 
   const facts = <Facts training={training} />;
   const place = <PlaceCard training={training} />;
+  // Тренер группы клуба на клуб работает: его карточка — без контактов,
+  // только ссылка на страницу (решение владельца от 21.10.2026).
   const coach =
     training.coach === null ? null : (
-      <AsideCard title={t('training.detail.coach')}>
-        <CoachChip coach={training.coach} />
+      <AsideCard
+        title={t(
+          training.author === 'CLUB' ? 'training.detail.groupCoach' : 'training.detail.coach',
+        )}
+      >
+        <Box data-training-coach={training.author}>
+          <CoachChip coach={training.coach} />
+          {training.author === 'CLUB' && training.club !== null && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+              {fill(t('training.detail.worksAt'), { club: training.club.name })}
+            </Typography>
+          )}
+        </Box>
       </AsideCard>
     );
   const more =
@@ -123,7 +143,7 @@ function TrainingDetails({ training }: { readonly training: TrainingDetailView }
 
   return (
     <>
-      {(training.link === 'PENDING' || training.link === 'DECLINED') && (
+      {linkState !== null && (
         <Paper
           variant="outlined"
           role="status"
@@ -131,9 +151,7 @@ function TrainingDetails({ training }: { readonly training: TrainingDetailView }
           sx={{ mb: 2, p: 2, bgcolor: 'var(--warn-50)', borderColor: 'var(--warn)' }}
         >
           <Typography sx={{ color: 'var(--warn-text)', fontWeight: 600 }}>
-            {t(
-              training.link === 'PENDING' ? 'training.detail.PENDING' : 'training.detail.DECLINED',
-            )}
+            {`${t(linkState)}. ${t('training.detail.notPublic')}`}
           </Typography>
         </Paper>
       )}
@@ -197,6 +215,19 @@ function Header({
               <Link href={`/clubs/${owner.club.id}`} sx={{ fontWeight: 600 }}>
                 {owner.club.name}
               </Link>
+            </>
+          ) : training.club !== null ? (
+            // Своя тренировка тренера в зале клуба: клуб — только место.
+            <>
+              {t('training.detail.coachWord')}{' '}
+              <Link href={`/coaches/${owner.coach.slug}`} sx={{ fontWeight: 600 }}>
+                {coachShortName(owner.coach.player)}
+              </Link>{' '}
+              {t('training.detail.holdsIn')}{' '}
+              <Link href={`/clubs/${training.club.id}`} sx={{ fontWeight: 600 }}>
+                {training.club.name}
+              </Link>
+              {` · ${t('training.via.coach').toLowerCase()}`}
             </>
           ) : (
             <>
@@ -271,45 +302,57 @@ function ContactButtons({
   const EnrollIcon = CHANNEL_ICONS[enroll.kind];
 
   return (
-    <Box
-      data-training-contacts
-      sx={{
-        display: 'grid',
-        gap: 1,
-        gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(180px, max-content))' },
-      }}
-    >
-      <Button
-        variant="contained"
-        size="large"
-        href={enroll.href}
-        startIcon={<EnrollIcon size={18} aria-hidden />}
-        {...(enroll.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-        onClick={() => {
-          trackEnroll(enroll);
+    <>
+      <Box
+        data-training-contacts
+        sx={{
+          display: 'grid',
+          gap: 1,
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(180px, max-content))' },
         }}
       >
-        {t('training.enroll')}
-      </Button>
-      {others.map((item) => {
-        const Icon = CHANNEL_ICONS[item.kind];
+        <Button
+          variant="contained"
+          size="large"
+          href={enroll.href}
+          startIcon={<EnrollIcon size={18} aria-hidden />}
+          {...(enroll.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          onClick={() => {
+            trackEnroll(enroll);
+          }}
+        >
+          {t('training.enroll')}
+        </Button>
+        {others.map((item) => {
+          const Icon = CHANNEL_ICONS[item.kind];
 
-        return (
-          <Button
-            key={item.kind}
-            size="large"
-            href={item.href}
-            startIcon={<Icon size={18} aria-hidden />}
-            {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-            onClick={() => {
-              trackEnroll({ kind: item.kind, owner });
-            }}
-          >
-            {t(CHANNEL_LABELS[item.kind])}
-          </Button>
-        );
-      })}
-    </Box>
+          return (
+            <Button
+              key={item.kind}
+              size="large"
+              href={item.href}
+              startIcon={<Icon size={18} aria-hidden />}
+              {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              onClick={() => {
+                trackEnroll({ kind: item.kind, owner, partner: enroll.partner });
+              }}
+            >
+              {t(CHANNEL_LABELS[item.kind])}
+            </Button>
+          );
+        })}
+      </Box>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mt: 1 }}
+        data-training-enrolls={owner.kind}
+      >
+        {owner.kind === 'CLUB'
+          ? fill(t('training.detail.enrollsClub'), { club: owner.club.name })
+          : fill(t('training.detail.enrollsCoach'), { coach: coachShortName(owner.coach.player) })}
+      </Typography>
+    </>
   );
 }
 

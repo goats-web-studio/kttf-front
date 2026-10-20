@@ -9,7 +9,7 @@ import { fill, type MessageKey } from '@/common/i18n';
 import { phoneHref, telegramHref, whatsappHref } from '@/features/clubs/contacts';
 import { trackClubContact } from '@/features/clubs/track';
 
-import { TRAINING_PLACE_KEYS } from './labels';
+import { LINK_KEYS_FOR_CLUB, LINK_KEYS_FOR_COACH, TRAINING_PLACE_KEYS } from './labels';
 import { trackCoachContact } from './track';
 
 /**
@@ -26,12 +26,32 @@ interface Contacts {
   readonly telegram: string | null;
 }
 
+/**
+ * Вторая сторона тренировки, которой нажатие тоже засчитывается отдельной
+ * строкой (решение владельца от 21.10.2026): тренер группы клуба или клуб
+ * KTTF, в зале которого тренер проводит свою тренировку.
+ */
+export type EnrollPartner =
+  { readonly kind: 'COACH'; readonly id: string } | { readonly kind: 'CLUB'; readonly id: string };
+
 export interface EnrollAction {
   readonly kind: ContactKind;
   readonly href: string;
   /** WhatsApp и Telegram — в новой вкладке, звонок — на месте. */
   readonly external: boolean;
   readonly owner: TrainingOwner;
+  readonly partner: EnrollPartner | null;
+}
+
+/** Вторая сторона: у группы клуба — её тренер, у тренировки тренера — клуб-место. */
+export function enrollPartner(
+  training: Pick<TrainingView, 'author' | 'club' | 'coach'>,
+): EnrollPartner | null {
+  if (training.author === 'CLUB') {
+    return training.coach === null ? null : { kind: 'COACH', id: training.coach.id };
+  }
+
+  return training.club === null ? null : { kind: 'CLUB', id: training.club.id };
 }
 
 /** Контакты владельца. */
@@ -85,6 +105,7 @@ export function enrollAction(
   if (owner === null) return null;
 
   const contacts = ownerContacts(owner);
+  const partner = enrollPartner(training);
 
   if (contacts.whatsapp !== null) {
     return {
@@ -92,22 +113,52 @@ export function enrollAction(
       href: whatsappHref(contacts.whatsapp, enrollMessage(training, t)),
       external: true,
       owner,
+      partner,
     };
   }
   if (contacts.phone !== null) {
-    return { kind: 'PHONE', href: phoneHref(contacts.phone), external: false, owner };
+    return { kind: 'PHONE', href: phoneHref(contacts.phone), external: false, owner, partner };
   }
   if (contacts.telegram !== null) {
-    return { kind: 'TELEGRAM', href: telegramHref(contacts.telegram), external: true, owner };
+    return {
+      kind: 'TELEGRAM',
+      href: telegramHref(contacts.telegram),
+      external: true,
+      owner,
+      partner,
+    };
   }
 
   return null;
 }
 
-/** Нажатие считается в статистику владельца: клуба или тренера. */
-export function trackEnroll(action: Pick<EnrollAction, 'kind' | 'owner'>): void {
+/**
+ * Нажатие считается обеим сторонам (решение владельца от 21.10.2026):
+ * владельцу — обычным обращением по каналу, второй стороне — отдельной
+ * строкой. Тренеру группы клуба — «записи в группы клуба» (`CLUB_GROUP`),
+ * клубу, в зале которого тренер проводит своё, — «записи к тренерам в
+ * зале» (`COACH_TRAINING`). В прямые обращения второй стороны они не идут:
+ * писали не ей.
+ */
+export function trackEnroll(action: Pick<EnrollAction, 'kind' | 'owner' | 'partner'>): void {
   if (action.owner.kind === 'CLUB') trackClubContact(action.owner.club.id, action.kind);
   else trackCoachContact(action.owner.coach.id, action.kind);
+
+  if (action.partner?.kind === 'COACH') trackCoachContact(action.partner.id, 'CLUB_GROUP');
+  if (action.partner?.kind === 'CLUB') trackClubContact(action.partner.id, 'COACH_TRAINING');
+}
+
+/**
+ * Связь, ждущая ответа или отклонённая, — глазами любого смотрящего:
+ * тренировку тренера подтверждает клуб, группу клуба — тренер. Публично
+ * таких строк нет: их видят стороны и администратор.
+ */
+export function linkStateKey(training: Pick<TrainingView, 'author' | 'link'>): MessageKey | null {
+  if (training.link !== 'PENDING' && training.link !== 'DECLINED') return null;
+
+  return training.author === 'COACH'
+    ? LINK_KEYS_FOR_COACH[training.link]
+    : LINK_KEYS_FOR_CLUB[training.link];
 }
 
 /** Тренировки по владельцу: группы клуба и личные тренировки тренеров. */

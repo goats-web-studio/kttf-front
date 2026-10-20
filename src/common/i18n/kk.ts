@@ -1834,7 +1834,6 @@ export const kk: Record<MessageKey, string> = {
   'training.group.anywhereHint':
     'Жаттықтырушы өзі келеді немесе бейнебайланыс арқылы сабақ өткізеді',
   'training.group.venue': '{address} · зал KTTF-те емес',
-  'training.ofClub': 'Клуб жаттығуы',
   'training.inClub.title': 'Клубтағы жаттығулар',
   'training.link.coach.PENDING': 'клубтың растауын күтуде',
   'training.link.coach.DECLINED': 'клуб бас тартты',
@@ -1875,12 +1874,24 @@ export const kk: Record<MessageKey, string> = {
   'training.editor.noCoach': 'Беті бар жаттықтырушы табылмады',
   'training.editor.coachInvalid':
     'Әр жаттығуға атауы мен кемінде бір аудитория керек; «клубта» болса — KTTF клубы немесе мекенжайы бар зал; бағасы — бүтін санмен.',
+  'training.via.club': 'Жазылу клуб арқылы',
+  'training.via.clubNamed': 'Жазылу клуб арқылы:',
+  'training.via.groupCoach': 'топ жаттықтырушысы:',
+  'training.via.coach': 'Жазылу жаттықтырушыда',
+  'training.detail.groupCoach': 'Топ жаттықтырушысы',
+  'training.detail.worksAt': '{club} клубында жұмыс істейді',
+  'training.detail.coachWord': 'Жаттықтырушы',
+  'training.detail.holdsIn': 'мына клуб залында өткізеді:',
+  'training.detail.enrollsClub': '{club} клубы жазады',
+  'training.detail.enrollsCoach': 'Жаттықтырушы {coach} жазады',
+  'training.detail.notPublic': 'Жария көрсетілмейді',
+  'manage.stats.coachTraining': 'Залдағы жаттықтырушыларға жазылу',
+  'manage.stats.clubGroup': 'Клуб топтарына жазылу',
   'training.enroll': 'Жазылу',
   'training.details': 'Толығырақ',
   'training.enroll.message':
     'Сәлеметсіз бе! KTTF-тен жазып отырмын: «{title}» жаттығуына жазылғым келеді',
   'training.enroll.club': '«{club}» клубы',
-  'training.coachLabel': 'Жаттықтырушы:',
   'training.part.clubGroups': 'Клуб топтары',
   'training.part.coaches': 'Клубтағы жаттықтырушылар',
   'training.part.own': 'Менің жаттығуларым',
@@ -1896,9 +1907,6 @@ export const kk: Record<MessageKey, string> = {
   'training.detail.moreClub': 'Клубтың басқа топтары',
   'training.detail.moreCoach': 'Жаттықтырушының басқа жаттығулары',
   'training.detail.noContacts': 'Жазылуға арналған байланыс деректері әзірге жоқ.',
-  'training.detail.PENDING': 'Әлі жарияланбаған: байланыс екінші тараптың растауын күтуде.',
-  'training.detail.DECLINED':
-    'Екінші тарап байланыстан бас тартты: жаттығу онсыз көрінеді немесе мүлде көрінбейді.',
   'training.editor.description': 'Толығырақ',
   'training.editor.descriptionHint': 'Сабақта не болады, өзіңізбен не алу керек',
 };
