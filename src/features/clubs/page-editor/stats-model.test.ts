@@ -12,6 +12,7 @@ const row = (date: string, source: 'ORGANIC' | 'CAMPAIGN', views: number, whatsa
   instagram: 1,
   website: 1,
   route: 0,
+  coachTraining: 2,
 });
 
 describe('статистика клуба на экране', () => {
@@ -26,6 +27,8 @@ describe('статистика клуба на экране', () => {
     expect(summary.totals.whatsapp).toEqual({ total: 3, campaign: 2 });
     // Сайт и Инстаграм — одной плиткой.
     expect(summary.totals.links).toEqual({ total: 4, campaign: 2 });
+    // Записи к тренерам в зале — своей строкой (ADR-059).
+    expect(summary.totals.coachTraining).toEqual({ total: 4, campaign: 2 });
   });
 
   it('пустые дни окна дорисованы нулями', () => {

@@ -327,7 +327,7 @@ describe('страница тренера', () => {
     const venue = document.querySelector(`[data-training="${VENUE_TRAINING.id}"]`);
     expect(venue?.textContent).toContain('Спортзал школы №5 · Сатпаева 3');
     const evening = element(`[data-training="${CLUB_EVENING.id}"]`);
-    expect(evening.textContent).toContain(ru['training.ofClub']);
+    expect(evening.textContent).toContain(`${ru['training.via.clubNamed']} ${CLUB.name}`);
   });
 
   it('телефон — своя раскладка в одну колонку', async () => {
@@ -464,7 +464,10 @@ describe('владелец тренировки и «Записаться»', ()
 
     expect(within(clubPart).getByText(ru['training.part.clubGroups'])).toBeDefined();
     expect(within(clubPart).getByRole('link', { name: CLUB_EVENING.title })).toBeDefined();
-    expect(clubPart.textContent).toContain(ru['training.coachLabel']);
+    expect(clubPart.textContent).toContain(
+      `${ru['training.via.club']} · ${ru['training.via.groupCoach']} ${PLAYERS.first.lastName} ${PLAYERS.first.firstName}`,
+    );
+    expect(coachPart.textContent).toContain(ru['training.via.coach']);
     expect(within(coachPart).getByText(ru['training.part.coaches'])).toBeDefined();
     expect(within(coachPart).getByRole('link', { name: KIDS_GROUP.title })).toBeDefined();
 
@@ -492,12 +495,54 @@ describe('владелец тренировки и «Записаться»', ()
       }),
     );
 
+    // Клубу — обращение по каналу, тренеру группы — «записи в группы клуба».
     await waitFor(() => {
       expect(requests('POST', `/clubs/${CLUB.id}/events`)[0]?.body).toEqual({
         kind: 'WHATSAPP',
         source: 'ORGANIC',
       });
+      expect(requests('POST', `/coaches/${COACH.id}/events`)[0]?.body).toEqual({
+        kind: 'CLUB_GROUP',
+        source: 'ORGANIC',
+      });
     });
+  });
+
+  it('личная тренировка тренера в зале клуба: тренеру — канал, клубу — COACH_TRAINING', async () => {
+    renderAt('/trainings');
+
+    await screen.findByRole('link', { name: CLUB.name });
+    fireEvent.click(
+      within(element(`[data-training="${KIDS_GROUP.id}"]`)).getByRole('link', {
+        name: ru['training.enroll'],
+      }),
+    );
+
+    await waitFor(() => {
+      expect(requests('POST', `/coaches/${COACH.id}/events`)[0]?.body).toEqual({
+        kind: 'WHATSAPP',
+        source: 'ORGANIC',
+      });
+      expect(requests('POST', `/clubs/${CLUB.id}/events`)[0]?.body).toEqual({
+        kind: 'COACH_TRAINING',
+        source: 'ORGANIC',
+      });
+    });
+  });
+
+  it('связь ждёт ответа — у строки метка, а не вид опубликованной', async () => {
+    coach = {
+      ...COACH,
+      trainings: COACH.trainings.map((training) =>
+        training.id === KIDS_GROUP.id ? { ...training, link: 'PENDING' as const } : training,
+      ),
+    };
+    renderAt(`/coaches/${COACH_SLUG}`, userWithCoach(COACH));
+
+    await screen.findByText(ru['training.part.own']);
+    const kids = element(`[data-training="${KIDS_GROUP.id}"]`);
+
+    expect(within(kids).getByText(ru['training.link.coach.PENDING'])).toBeDefined();
   });
 
   it('страница тренировки: владелец, одна главная «Записаться», место, тренер, другие', async () => {
@@ -516,6 +561,15 @@ describe('владелец тренировки и «Записаться»', ()
     expect(primary.length).toBe(1);
     expect(primary[0]?.textContent).toBe(ru['training.enroll']);
     expect(primary[0]?.getAttribute('href')).toContain('https://wa.me/77770000000?text=');
+
+    // Группа клуба: записывает клуб, тренер на него работает и без контактов.
+    expect(element('[data-training-enrolls="CLUB"]').textContent).toBe(
+      `Записывает клуб ${CLUB.name}`,
+    );
+    const groupCoach = element('[data-training-coach="CLUB"]');
+    expect(groupCoach.textContent).toContain(`Работает в клубе ${CLUB.name}`);
+    expect(screen.getByRole('heading', { name: ru['training.detail.groupCoach'] })).toBeDefined();
+    expect(within(groupCoach).queryByRole('link', { name: /WhatsApp|Позвонить/ })).toBeNull();
 
     expect(element('[data-training-description]').textContent).toBe('Разминка.\nИгра на счёт.');
     expect(

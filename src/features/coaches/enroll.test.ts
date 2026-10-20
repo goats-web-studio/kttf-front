@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MessageKey } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
@@ -11,7 +11,17 @@ import {
   VISIT_TRAINING,
 } from '@/test/coach-fixtures';
 
-import { enrollAction, enrollMessage, splitByOwner } from './enroll';
+import { enrollAction, enrollMessage, linkStateKey, splitByOwner, trackEnroll } from './enroll';
+
+const trackClubContact = vi.hoisted(() => vi.fn());
+const trackCoachContact = vi.hoisted(() => vi.fn());
+vi.mock('@/features/clubs/track', () => ({ trackClubContact }));
+vi.mock('./track', () => ({ trackCoachContact }));
+
+beforeEach(() => {
+  trackClubContact.mockClear();
+  trackCoachContact.mockClear();
+});
 
 const t = (key: MessageKey): string => ru[key];
 
@@ -79,5 +89,61 @@ describe('«Записаться» — владельцу тренировки',
 
     expect(parts.club.map((training) => training.id)).toEqual([CLUB_EVENING.id]);
     expect(parts.coach.map((training) => training.id)).toEqual([KIDS_GROUP.id, VENUE_TRAINING.id]);
+  });
+});
+
+describe('нажатие «Записаться» — обеим сторонам', () => {
+  it('группа клуба: клубу — канал, тренеру группы — CLUB_GROUP', () => {
+    const action = enrollAction(CLUB_EVENING, t);
+    if (action === null) throw new Error('нет действия');
+
+    trackEnroll(action);
+
+    expect(trackClubContact.mock.calls).toEqual([[CLUB_REF.id, 'WHATSAPP']]);
+    expect(trackCoachContact.mock.calls).toEqual([[COACH_REF.id, 'CLUB_GROUP']]);
+  });
+
+  it('тренировка тренера в клубе KTTF: тренеру — канал, клубу — COACH_TRAINING', () => {
+    const action = enrollAction(KIDS_GROUP, t);
+    if (action === null) throw new Error('нет действия');
+
+    trackEnroll(action);
+
+    expect(trackCoachContact.mock.calls).toEqual([[COACH_REF.id, 'WHATSAPP']]);
+    expect(trackClubContact.mock.calls).toEqual([[CLUB_REF.id, 'COACH_TRAINING']]);
+  });
+
+  it('выезд или зал вне KTTF — только тренеру; группа без тренера — только клубу', () => {
+    const visit = enrollAction(VISIT_TRAINING, t);
+    const venue = enrollAction(VENUE_TRAINING, t);
+    const alone = enrollAction({ ...CLUB_EVENING, coach: null }, t);
+    if (visit === null || venue === null || alone === null) throw new Error('нет действия');
+
+    trackEnroll(visit);
+    trackEnroll(venue);
+    trackEnroll(alone);
+
+    expect(trackCoachContact.mock.calls).toEqual([
+      [COACH_REF.id, 'WHATSAPP'],
+      [COACH_REF.id, 'WHATSAPP'],
+    ]);
+    expect(trackClubContact.mock.calls).toEqual([[CLUB_REF.id, 'WHATSAPP']]);
+  });
+});
+
+describe('метка связи', () => {
+  it('тренировку тренера подтверждает клуб, группу клуба — тренер', () => {
+    expect(linkStateKey({ author: 'COACH', link: 'PENDING' })).toBe('training.link.coach.PENDING');
+    expect(linkStateKey({ author: 'COACH', link: 'DECLINED' })).toBe(
+      'training.link.coach.DECLINED',
+    );
+    expect(linkStateKey({ author: 'CLUB', link: 'PENDING' })).toBe('training.link.club.PENDING');
+    expect(linkStateKey({ author: 'CLUB', link: 'DECLINED' })).toBe('training.link.club.DECLINED');
+    expect(ru['training.link.club.DECLINED']).toBe('тренер отклонил');
+  });
+
+  it('опубликованная и без второй стороны — без метки', () => {
+    expect(linkStateKey({ author: 'CLUB', link: 'CONFIRMED' })).toBeNull();
+    expect(linkStateKey({ author: 'COACH', link: 'NONE' })).toBeNull();
   });
 });
