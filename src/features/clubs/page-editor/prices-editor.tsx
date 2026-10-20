@@ -1,10 +1,10 @@
 import {
   CLUB_PRICES_MAX,
-  PRICE_KINDS,
+  CLUB_PRICE_KINDS,
   PRICE_UNITS,
   type ClubPriceInput,
   type ClubView,
-  type PriceKind,
+  type ClubPriceKind,
   type PriceUnit,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
@@ -22,7 +22,7 @@ import { useT, type MessageKey } from '@/common/i18n';
 import { setClubPrices } from '../api';
 import { clubKeys } from '../queries';
 import EditorSection from './editor-section';
-import { toPriceInputs, type PriceRow } from './price-rows';
+import { clubPriceKindOf, toPriceInputs, type PriceRow } from './price-rows';
 
 const UNIT_LABELS: Readonly<Record<PriceUnit, MessageKey>> = {
   HOUR: 'club.price.unit.HOUR',
@@ -48,7 +48,7 @@ export default function PricesEditor({ club }: { readonly club: ClubView }): Rea
   const [rows, setRows] = useState<readonly PriceRow[]>(() =>
     club.prices.map((price) => ({
       key: newKey(),
-      kind: price.kind,
+      kind: clubPriceKindOf(price.kind),
       title: price.title,
       price: String(price.priceKzt),
       unit: price.unit,
@@ -125,10 +125,10 @@ export default function PricesEditor({ club }: { readonly club: ClubView }): Rea
               label={t('manage.prices.kind')}
               value={row.kind}
               onChange={(event) => {
-                patch(row.key, { kind: event.target.value as PriceKind });
+                patch(row.key, { kind: event.target.value as ClubPriceKind });
               }}
             >
-              {PRICE_KINDS.map((kind) => (
+              {CLUB_PRICE_KINDS.map((kind) => (
                 <MenuItem key={kind} value={kind}>
                   {t(`club.price.kind.${kind}`)}
                 </MenuItem>

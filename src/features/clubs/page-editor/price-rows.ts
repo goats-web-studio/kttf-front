@@ -1,6 +1,8 @@
 import {
+  CLUB_PRICE_KINDS,
   setClubPricesSchema,
   type ClubPriceInput,
+  type ClubPriceKind,
   type PriceKind,
   type PriceUnit,
 } from '@kttf/shared/types';
@@ -8,7 +10,7 @@ import {
 export /** Строка в форме: цена строкой, как её вписали; ключ — для перестановки. */
 interface PriceRow {
   readonly key: string;
-  readonly kind: PriceKind;
+  readonly kind: ClubPriceKind;
   readonly title: string;
   readonly price: string;
   readonly unit: PriceUnit;
@@ -28,4 +30,15 @@ export function toPriceInputs(rows: readonly PriceRow[]): ClubPriceInput[] | nul
   }));
 
   return setClubPricesSchema.safeParse({ prices }).success ? prices : null;
+}
+
+/**
+ * Вид строки прайса для формы. Тренировки и детские группы из прайса ушли
+ * (ADR-059): сервер их больше не отдаёт, но если старая строка всё же
+ * придёт, форма не падает, а показывает её как «Прочее».
+ */
+export function clubPriceKindOf(kind: PriceKind): ClubPriceKind {
+  return (CLUB_PRICE_KINDS as readonly PriceKind[]).includes(kind)
+    ? (kind as ClubPriceKind)
+    : 'OTHER';
 }
