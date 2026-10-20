@@ -65,6 +65,8 @@ export const trainingsSearchSchema = z.object({
   /** Возраст ребёнка: от трёх до семнадцати, как в контракте. */
   age: z.coerce.number().int().min(3).max(17).optional().catch(undefined),
   place: commaList(isPlace),
+  /** Конкретный клуб KTTF — «где» сужено до одного зала. */
+  clubId: z.coerce.string().pipe(z.uuid()).optional().catch(undefined),
   /** Города справочника — идентификаторами, через запятую (ADR-046). */
   city: commaList(isUuid),
   priceTo: z.coerce.number().int().min(0).max(PRICE_KZT_MAX).optional().catch(undefined),
@@ -111,6 +113,7 @@ export function toTrainingsQuery(search: TrainingsSearch, page: number): ListTra
     ...(audience.length === 0 ? {} : { audience }),
     ...(search.age === undefined ? {} : { age: search.age }),
     ...(place.length === 0 ? {} : { place }),
+    ...(search.clubId === undefined ? {} : { clubId: search.clubId }),
     ...(city.length === 0 ? {} : { cityId: city }),
     ...(search.priceTo === undefined ? {} : { priceTo: search.priceTo }),
     ...(search.language === undefined ? {} : { language: search.language }),
@@ -144,6 +147,7 @@ export function hiddenFilterCount(search: TrainingsSearch, view: TrainingsView):
     kindsOf(search).length +
     audiencesOf(search).length +
     placesOf(search).length +
+    (search.clubId === undefined ? 0 : 1) +
     (search.age === undefined ? 0 : 1) +
     (search.priceTo === undefined ? 0 : 1)
   );

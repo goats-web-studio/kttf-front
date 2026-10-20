@@ -1,0 +1,192 @@
+import {
+  setClubTrainingsSchema,
+  setCoachTrainingsSchema,
+  type ClubTrainingInput,
+  type CoachTrainingInput,
+  type PriceUnit,
+  type TrainingAudience,
+  type TrainingCoachRef,
+  type TrainingKind,
+  type TrainingLink,
+  type TrainingPlace,
+  type TrainingView,
+} from '@kttf/shared/types';
+
+import { newRowKey, parseInteger, textOrNull } from './editor/form-model';
+import { isForChildren } from './labels';
+
+/**
+ * Строки тренировок в формах кабинета — тренера и клуба (ADR-059,
+ * решение владельца от 20.10.2026: тренировку заводит тренер или клуб).
+ *
+ * `id` строки обязательно уходит обратно: по нему сервер узнаёт тренировку
+ * и сохраняет её связь со второй стороной. Строка без `id` — новая
+ * тренировка, и связь у неё начнётся заново.
+ */
+
+/** Поля, общие у тренера и клуба, — как их вписал человек. */
+interface TrainingRowBase {
+  /** Ключ строки — для перестановки и React, на сервер не уходит. */
+  readonly key: string;
+  readonly id: string | undefined;
+  readonly kind: TrainingKind;
+  readonly audiences: readonly TrainingAudience[];
+  readonly kidsFromAge: string;
+  readonly title: string;
+  readonly schedule: string;
+  readonly price: string;
+  readonly unit: PriceUnit;
+  readonly note: string;
+  /** Связь со второй стороной — только для показа. */
+  readonly link: TrainingLink;
+}
+
+function baseOf(training: TrainingView): TrainingRowBase {
+  return {
+    key: newRowKey(),
+    id: training.id,
+    kind: training.kind,
+    audiences: training.audiences,
+    kidsFromAge: training.kidsFromAge === null ? '' : String(training.kidsFromAge),
+    title: training.title,
+    schedule: training.schedule ?? '',
+    price: training.priceKzt === null ? '' : String(training.priceKzt),
+    unit: training.unit,
+    note: training.note ?? '',
+    link: training.link,
+  };
+}
+
+function emptyBase(): TrainingRowBase {
+  return {
+    key: newRowKey(),
+    id: undefined,
+    kind: 'GROUP',
+    audiences: [],
+    kidsFromAge: '',
+    title: '',
+    schedule: '',
+    price: '',
+    unit: 'MONTH',
+    note: '',
+    link: 'NONE',
+  };
+}
+
+/**
+ * Общие поля — в тело. Возраст ребёнка уходит только у тренировки для
+ * детей или подростков: снятая «дети» не оставляет невидимого поля, которое
+ * сервер отвергнет. Без цены единица ни к чему — «по договорённости».
+ */
+function baseInput(row: TrainingRowBase) {
+  const price = parseInteger(row.price);
+
+  return {
+    ...(row.id === undefined ? {} : { id: row.id }),
+    kind: row.kind,
+    audiences: [...row.audiences],
+    kidsFromAge: isForChildren(row.audiences) ? parseInteger(row.kidsFromAge) : null,
+    title: row.title.trim(),
+    schedule: textOrNull(row.schedule),
+    priceKzt: price,
+    unit: price === null ? ('NONE' as const) : row.unit,
+    note: textOrNull(row.note),
+  };
+}
+
+// ---------------------------------------------------------------- тренер
+
+/** Место «в клубе»: клуб KTTF или зал вне KTTF названием и адресом. */
+export type ClubPlaceMode = 'club' | 'venue';
+
+export interface CoachTrainingRow extends TrainingRowBase {
+  readonly place: TrainingPlace;
+  readonly mode: ClubPlaceMode;
+  readonly clubId: string | null;
+  /** Название выбранного клуба — для поля выбора, на сервер не уходит. */
+  readonly clubName: string;
+  readonly venueName: string;
+  readonly venueAddress: string;
+}
+
+/**
+ * Строки формы тренера — только его собственные тренировки. Клубные, где
+ * он подтвердил участие, ведёт клуб: тренер видит их отдельно и может
+ * только отказаться.
+ */
+export function coachTrainingRowsOf(trainings: readonly TrainingView[]): CoachTrainingRow[] {
+  return trainings
+    .filter((training) => training.author === 'COACH')
+    .map((training) => ({
+      ...baseOf(training),
+      place: training.place,
+      mode: training.venue === null ? 'club' : 'venue',
+      clubId: training.club?.id ?? null,
+      clubName: training.club?.name ?? '',
+      venueName: training.venue?.name ?? '',
+      venueAddress: training.venue?.address ?? '',
+    }));
+}
+
+export function emptyCoachTrainingRow(): CoachTrainingRow {
+  return {
+    ...emptyBase(),
+    place: 'CLUB',
+    mode: 'club',
+    clubId: null,
+    clubName: '',
+    venueName: '',
+    venueAddress: '',
+  };
+}
+
+/**
+ * Строки тренера — в тело `PUT /coaches/:id/trainings`. `null` — в форме
+ * ошибка. У места «в клубе» уходит ровно одно: клуб или зал с адресом; у
+ * выезда и онлайна места нет вовсе.
+ */
+export function toCoachTrainingInputs(
+  rows: readonly CoachTrainingRow[],
+): CoachTrainingInput[] | null {
+  const trainings = rows.map((row): CoachTrainingInput => {
+    const place =
+      row.place !== 'CLUB'
+        ? { clubId: null, venueName: null, venueAddress: null }
+        : row.mode === 'club'
+          ? { clubId: row.clubId, venueName: null, venueAddress: null }
+          : {
+              clubId: null,
+              venueName: textOrNull(row.venueName),
+              venueAddress: textOrNull(row.venueAddress),
+            };
+
+    return { ...baseInput(row), place: row.place, ...place };
+  });
+
+  return setCoachTrainingsSchema.safeParse({ trainings }).success ? trainings : null;
+}
+
+// ---------------------------------------------------------------- клуб
+
+export interface ClubTrainingRow extends TrainingRowBase {
+  /** Тренер со страницей; `null` — тренировка клуба без тренера. */
+  readonly coach: TrainingCoachRef | null;
+}
+
+export function clubTrainingRowsOf(trainings: readonly TrainingView[]): ClubTrainingRow[] {
+  return trainings.map((training) => ({ ...baseOf(training), coach: training.coach }));
+}
+
+export function emptyClubTrainingRow(): ClubTrainingRow {
+  return { ...emptyBase(), coach: null };
+}
+
+/** Строки клуба — в тело `PUT /clubs/:id/trainings`. Место — сам клуб. */
+export function toClubTrainingInputs(rows: readonly ClubTrainingRow[]): ClubTrainingInput[] | null {
+  const trainings = rows.map((row): ClubTrainingInput => ({
+    ...baseInput(row),
+    coachId: row.coach?.id ?? null,
+  }));
+
+  return setClubTrainingsSchema.safeParse({ trainings }).success ? trainings : null;
+}

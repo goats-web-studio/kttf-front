@@ -30,7 +30,7 @@ import {
   EquipmentCard,
   GameStatsBlock,
   QualificationBlock,
-  ServicesBlock,
+  TrainingsBlock,
   WhereContent,
 } from '@/features/coaches/coach-sections';
 import CoachContactActions, { CoachContactList } from '@/features/coaches/contact-actions';
@@ -98,7 +98,7 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
     if (isPublic && !isOwner) trackCoachView(coach.id);
   }, [coach.id, isPublic, isOwner]);
 
-  const services = <ServicesBlock coach={coach} layout={desktop ? 'rows' : 'cards'} />;
+  const services = <TrainingsBlock coach={coach} />;
   const qualification = <QualificationBlock coach={coach} />;
   const achievements = <AchievementsBlock coach={coach} />;
   const about = <AboutBlock coach={coach} />;

@@ -6,13 +6,14 @@ import {
   type CoachLanguage,
   type CoachPlayerRef,
   type CoachRequirement,
-  type CoachServiceView,
   type CoachStatus,
   type CredentialKind,
   type PriceUnit,
   type SportsRank,
   type TrainingAudience,
   type TrainingKind,
+  type TrainingLink,
+  type TrainingView,
   type TrainingPlace,
 } from '@kttf/shared/types';
 
@@ -96,10 +97,26 @@ export const COACH_STATUS_KEYS: Readonly<Record<CoachStatus, MessageKey>> = {
   REJECTED: 'coach.status.REJECTED',
 };
 
+/**
+ * Связь тренировки со второй стороной — глазами того, кто смотрит. Тренер
+ * ждёт клуб, клуб ждёт тренера; `NONE` подписи не требует.
+ */
+export const LINK_KEYS_FOR_COACH: Readonly<Record<Exclude<TrainingLink, 'NONE'>, MessageKey>> = {
+  PENDING: 'training.link.coach.PENDING',
+  CONFIRMED: 'training.link.CONFIRMED',
+  DECLINED: 'training.link.coach.DECLINED',
+};
+
+export const LINK_KEYS_FOR_CLUB: Readonly<Record<Exclude<TrainingLink, 'NONE'>, MessageKey>> = {
+  PENDING: 'training.link.club.PENDING',
+  CONFIRMED: 'training.link.CONFIRMED',
+  DECLINED: 'training.link.club.DECLINED',
+};
+
 /** Чего не хватает для отправки на проверку — `coachMissing`. */
 export const COACH_REQUIREMENT_KEYS: Readonly<Record<CoachRequirement, MessageKey>> = {
   city: 'coach.missing.city',
-  services: 'coach.missing.services',
+  trainings: 'coach.missing.trainings',
 };
 
 export const PRICE_UNIT_KEYS: Readonly<Record<PriceUnit, MessageKey>> = {
@@ -145,7 +162,7 @@ export function coachFullName(
 
 /** «20 000 ₸ в месяц», «5 000 ₸» или «по договорённости» — цена необязательна. */
 export function priceText(
-  service: Pick<CoachServiceView, 'priceKzt' | 'unit'>,
+  service: Pick<TrainingView, 'priceKzt' | 'unit'>,
   t: T,
   locale: Locale,
 ): string {
@@ -165,9 +182,9 @@ export function isForChildren(audiences: readonly TrainingAudience[]): boolean {
 
 /** С какого возраста берёт тренер: самый младший среди детских тренировок. */
 export function youngestAge(
-  services: readonly Pick<CoachServiceView, 'audiences' | 'kidsFromAge'>[],
+  trainings: readonly Pick<TrainingView, 'audiences' | 'kidsFromAge'>[],
 ): number | null {
-  const ages = services
+  const ages = trainings
     .filter((service) => isForChildren(service.audiences))
     .flatMap((service) => (service.kidsFromAge === null ? [] : [service.kidsFromAge]));
 
@@ -204,12 +221,12 @@ export function headerBadges(
     readonly sportsRank: SportsRank | null;
     readonly coachCategory: CoachCategory | null;
     readonly languages: readonly CoachLanguage[];
-    readonly services: readonly Pick<CoachServiceView, 'audiences' | 'kidsFromAge'>[];
+    readonly trainings: readonly Pick<TrainingView, 'audiences' | 'kidsFromAge'>[];
   },
   t: T,
 ): string[] {
   const badges: string[] = [];
-  const age = youngestAge(coach.services);
+  const age = youngestAge(coach.trainings);
 
   if (coach.sportsRank !== null) badges.push(t(SPORTS_RANK_KEYS[coach.sportsRank]));
   if (coach.coachCategory !== null && coach.coachCategory !== 'NONE') {
@@ -221,4 +238,19 @@ export function headerBadges(
   }
 
   return badges;
+}
+
+/**
+ * Где проходит тренировка — строкой: клуб KTTF названием, зал вне KTTF —
+ * названием и адресом, иначе «Выезд» или «Онлайн».
+ */
+export function placeText(training: Pick<TrainingView, 'place' | 'club' | 'venue'>, t: T): string {
+  if (training.club !== null) {
+    return training.club.address === null
+      ? training.club.name
+      : `${training.club.name} · ${training.club.address}`;
+  }
+  if (training.venue !== null) return `${training.venue.name} · ${training.venue.address}`;
+
+  return t(TRAINING_PLACE_KEYS[training.place]);
 }

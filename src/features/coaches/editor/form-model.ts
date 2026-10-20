@@ -1,28 +1,21 @@
 import {
   setCoachAchievementsSchema,
   setCoachCredentialsSchema,
-  setCoachServicesSchema,
   updateCoachSchema,
   type AchievementRole,
   type CoachAchievementInput,
   type CoachCategory,
   type CoachCredentialInput,
   type CoachLanguage,
-  type CoachServiceInput,
   type CoachView,
   type ContactKind,
   type CredentialKind,
-  type PriceUnit,
   type SportsRank,
-  type TrainingAudience,
-  type TrainingKind,
   type TrainingPlace,
   type UpdateCoachInput,
 } from '@kttf/shared/types';
 
 import { telegramHandle } from '@/features/clubs/contacts';
-
-import { isForChildren } from '../labels';
 
 /**
  * Формы кабинета тренера — в тела запросов (ADR-059).
@@ -50,7 +43,7 @@ export function newRowKey(): string {
 }
 
 /** Пустая строка — `null`, остальное без краёв. */
-function textOrNull(value: string): string | null {
+export function textOrNull(value: string): string | null {
   const trimmed = value.trim();
 
   return trimmed === '' ? null : trimmed;
@@ -198,79 +191,6 @@ export const QUALIFICATION_FIELDS = [
   'refereeCategory',
   'education',
 ] as const satisfies readonly (keyof Fields)[];
-
-// ---------------------------------------------------------------- тренировки
-
-export interface ServiceRow {
-  readonly key: string;
-  readonly kind: TrainingKind;
-  readonly audiences: readonly TrainingAudience[];
-  readonly kidsFromAge: string;
-  readonly place: TrainingPlace;
-  readonly title: string;
-  readonly schedule: string;
-  readonly price: string;
-  readonly unit: PriceUnit;
-  readonly note: string;
-}
-
-export function serviceRowsOf(coach: CoachView): ServiceRow[] {
-  return coach.services.map((service) => ({
-    key: newRowKey(),
-    kind: service.kind,
-    audiences: service.audiences,
-    kidsFromAge: service.kidsFromAge === null ? '' : String(service.kidsFromAge),
-    place: service.place,
-    title: service.title,
-    schedule: service.schedule ?? '',
-    price: service.priceKzt === null ? '' : String(service.priceKzt),
-    unit: service.unit,
-    note: service.note ?? '',
-  }));
-}
-
-export function emptyServiceRow(): ServiceRow {
-  return {
-    key: newRowKey(),
-    kind: 'GROUP',
-    audiences: [],
-    kidsFromAge: '',
-    place: 'CLUB',
-    title: '',
-    schedule: '',
-    price: '',
-    unit: 'MONTH',
-    note: '',
-  };
-}
-
-/**
- * Строки — в тело `PUT /coaches/:id/services`. `null` — в форме ошибка.
- * Возраст ребёнка уходит только у тренировки для детей или подростков:
- * снятая галочка «дети» не должна оставлять за собой невидимое поле,
- * которое сервер отвергнет.
- */
-export function toServiceInputs(rows: readonly ServiceRow[]): CoachServiceInput[] | null {
-  const services = rows.map((row) => {
-    const price = parseInteger(row.price);
-    const age = isForChildren(row.audiences) ? parseInteger(row.kidsFromAge) : null;
-
-    return {
-      kind: row.kind,
-      audiences: [...row.audiences],
-      kidsFromAge: age,
-      place: row.place,
-      title: row.title.trim(),
-      schedule: textOrNull(row.schedule),
-      priceKzt: price,
-      // Без цены единица ни к чему: «по договорённости».
-      unit: price === null ? 'NONE' : row.unit,
-      note: textOrNull(row.note),
-    } satisfies CoachServiceInput;
-  });
-
-  return setCoachServicesSchema.safeParse({ services }).success ? services : null;
-}
 
 // ---------------------------------------------------------------- документы
 

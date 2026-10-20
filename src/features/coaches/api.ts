@@ -10,9 +10,12 @@ import type {
   Page,
   SetCoachAchievementsInput,
   SetCoachCredentialsInput,
-  SetCoachServicesInput,
+  SetClubTrainingsInput,
+  SetCoachTrainingsInput,
   TrafficSource,
-  TrainingListItemView,
+  TrainingGroupView,
+  TrainingView,
+  ClubTrainingsManageView,
   UpdateCoachInput,
   UploadedFile,
   UploadedImage,
@@ -31,8 +34,9 @@ export function listCoaches(query: ListCoachesRequest): Promise<Page<CoachListIt
   return apiRequest<Page<CoachListItemView>>(`/coaches${queryString(query)}`);
 }
 
-export function listTrainings(query: ListTrainingsRequest): Promise<Page<TrainingListItemView>> {
-  return apiRequest<Page<TrainingListItemView>>(`/trainings${queryString(query)}`);
+/** Тренировки блоками по месту: клуб KTTF, зал вне KTTF, «выезд и онлайн». Страница считает блоки. */
+export function listTrainings(query: ListTrainingsRequest): Promise<Page<TrainingGroupView>> {
+  return apiRequest<Page<TrainingGroupView>>(`/trainings${queryString(query)}`);
 }
 
 /** Страница по адресу. С токеном владелец и администратор видят и неопубликованную. */
@@ -53,9 +57,39 @@ export function updateCoach(id: string, input: UpdateCoachInput): Promise<CoachV
   return apiRequest<CoachView>(`/coaches/${id}`, { method: 'PATCH', body: input });
 }
 
-/** Тренировки целиком: порядок строк — порядок в списке. */
-export function setCoachServices(id: string, input: SetCoachServicesInput): Promise<CoachView> {
-  return apiRequest<CoachView>(`/coaches/${id}/services`, { method: 'PUT', body: input });
+/**
+ * Свои тренировки тренера целиком: порядок строк — порядок в списке, `id`
+ * строки сохраняет тренировку и её связь с клубом.
+ */
+export function setCoachTrainings(id: string, input: SetCoachTrainingsInput): Promise<unknown> {
+  return apiRequest<unknown>(`/coaches/${id}/trainings`, { method: 'PUT', body: input });
+}
+
+// ---------------------------------------------------------------- тренировки клуба
+
+/** Публично: тренировки клуба и подтверждённые тренерские в нём. */
+export function fetchClubTrainings(clubId: string): Promise<TrainingView[]> {
+  return apiRequest<TrainingView[]>(`/clubs/${clubId}/trainings`);
+}
+
+/** Кабинет клуба (OWNER, ORGANIZER): свои, входящие от тренеров, подтверждённые тренерские. */
+export function fetchClubTrainingsManage(clubId: string): Promise<ClubTrainingsManageView> {
+  return apiRequest<ClubTrainingsManageView>(`/clubs/${clubId}/trainings/manage`);
+}
+
+/** Свои тренировки клуба целиком; смена тренера у строки — снова ждёт подтверждения. */
+export function setClubTrainings(clubId: string, input: SetClubTrainingsInput): Promise<unknown> {
+  return apiRequest<unknown>(`/clubs/${clubId}/trainings`, { method: 'PUT', body: input });
+}
+
+/** Вторая сторона подтверждает связь: клуб — тренера в своём зале, тренер — участие в клубной. */
+export async function confirmTraining(id: string): Promise<void> {
+  await apiRequest<unknown>(`/trainings/${id}/confirm`, { method: 'POST' });
+}
+
+/** Отказ или разрыв связи — любой из сторон. */
+export async function declineTraining(id: string): Promise<void> {
+  await apiRequest<unknown>(`/trainings/${id}/decline`, { method: 'POST' });
 }
 
 export function setCoachCredentials(

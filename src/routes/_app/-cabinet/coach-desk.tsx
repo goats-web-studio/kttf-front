@@ -3,14 +3,16 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import { useQuery } from '@tanstack/react-query';
 import { ExternalLink, Whistle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
-import { useT } from '@/common/i18n';
+import { fill, useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
 import { useBecomeCoach } from '@/features/coaches/become';
 import { COACH_STATUS_KEYS } from '@/features/coaches/labels';
+import { coachQuery } from '@/features/coaches/queries';
 
 /**
  * Тренировки на рабочем столе — ADR-059, `docs/11` 3.1.
@@ -23,6 +25,9 @@ export default function CoachDesk({ user }: { readonly user: AuthUserView }): Re
   const t = useT();
   const become = useBecomeCoach();
   const coach = user.coach;
+  // Приглашения от клубов — число на карточке: их ждут, как заявки.
+  const page = useQuery({ ...coachQuery(coach?.id ?? ''), enabled: coach !== null });
+  const requests = page.data?.trainingRequests.length ?? 0;
 
   if (coach === null) {
     return (
@@ -51,8 +56,16 @@ export default function CoachDesk({ user }: { readonly user: AuthUserView }): Re
       <Typography data-coach-desk-status={coach.status} sx={{ fontWeight: 600 }}>
         {t(COACH_STATUS_KEYS[coach.status])}
       </Typography>
+      {requests > 0 && (
+        <Typography data-coach-desk-requests sx={{ mt: 0.5, color: 'var(--warn-text)' }}>
+          {fill(t('training.requests.count'), { count: String(requests) })}
+        </Typography>
+      )}
       <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        <Button href="/cabinet/coach" sx={{ minHeight: 44 }}>
+        <Button
+          href={requests > 0 ? '/cabinet/coach?tab=trainings' : '/cabinet/coach'}
+          sx={{ minHeight: 44 }}
+        >
           {t('coach.edit')}
         </Button>
         <Button

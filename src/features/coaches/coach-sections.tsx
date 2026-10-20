@@ -1,10 +1,10 @@
-import { ACHIEVEMENT_ROLES, type CoachServiceView, type CoachView } from '@kttf/shared/types';
+import { ACHIEVEMENT_ROLES, type CoachView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { BadgeCheck, CalendarClock, Flag, MapPin, TrendingUp, Trophy } from 'lucide-react';
+import { BadgeCheck, Flag, MapPin, TrendingUp, Trophy } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { formatCount, useLocale, useT } from '@/common/i18n';
@@ -21,17 +21,14 @@ import { playerQuery, playerSummaryQuery } from '@/features/players/queries';
 import { Badge } from './coach-cards';
 import { CoachQuickRequests } from './contact-actions';
 import CredentialScan from './credential-scan';
+import { TrainingList } from './training-list';
 import {
   ACHIEVEMENT_ROLE_KEYS,
   COACH_CATEGORY_KEYS,
   CREDENTIAL_KIND_KEYS,
+  LINK_KEYS_FOR_COACH,
   SPORTS_RANK_KEYS,
-  TRAINING_AUDIENCE_KEYS,
-  TRAINING_KIND_KEYS,
   TRAINING_PLACE_KEYS,
-  isForChildren,
-  kidsFromText,
-  priceText,
 } from './labels';
 
 /**
@@ -90,151 +87,26 @@ export function AsideCard({
 
 // ---------------------------------------------------------------- тренировки
 
-/** Метки тренировки: «дети с 6 лет» и для кого. */
-function ServiceBadges({ service }: { readonly service: CoachServiceView }): ReactNode {
-  const t = useT();
-
-  return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-      {service.kidsFromAge !== null && isForChildren(service.audiences) && (
-        <Badge>{kidsFromText(service.kidsFromAge, t)}</Badge>
-      )}
-      {service.audiences.map((audience) => (
-        <Badge key={audience}>{t(TRAINING_AUDIENCE_KEYS[audience])}</Badge>
-      ))}
-    </Box>
-  );
-}
-
-/** Где и когда — строкой под названием. */
-function ServiceFacts({ service }: { readonly service: CoachServiceView }): ReactNode {
-  const t = useT();
-
-  return (
-    <Typography
-      variant="body2"
-      color="text.secondary"
-      sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 2, rowGap: 0.5 }}
-    >
-      <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-        <MapPin size={14} aria-hidden />
-        {t(TRAINING_PLACE_KEYS[service.place])}
-      </Box>
-      {service.schedule !== null && (
-        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-          <CalendarClock size={14} aria-hidden />
-          {service.schedule}
-        </Box>
-      )}
-    </Typography>
-  );
-}
-
 /**
- * «Тренировки и цены» — первым блоком (решение владельца, `docs/11` 2).
- * Десктоп — строками прайса, цена справа столбиком; телефон — карточками,
- * цена под названием. Ниже — готовые запросы в WhatsApp.
+ * «Тренировки и цены» — первым блоком (решение владельца, `docs/11` 2):
+ * свои тренировки тренера и клубные, где он подтвердил участие. У строки
+ * место — клуб ссылкой, зал с адресом, «выезд» или «онлайн»; клубная
+ * помечена «тренировка клуба X». Ниже — готовые запросы в WhatsApp.
  */
-export function ServicesBlock({
-  coach,
-  layout,
-}: {
-  readonly coach: CoachView;
-  readonly layout: 'rows' | 'cards';
-}): ReactNode {
+export function TrainingsBlock({ coach }: { readonly coach: CoachView }): ReactNode {
   const t = useT();
-  const locale = useLocale();
 
-  if (coach.services.length === 0) return null;
+  if (coach.trainings.length === 0) return null;
 
   return (
     <Section title={t('coach.services.title')}>
-      {layout === 'rows' ? (
-        <Paper variant="outlined" component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-          {coach.services.map((service) => (
-            <Box
-              component="li"
-              key={service.id}
-              sx={{
-                px: 3,
-                py: 2,
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr) auto',
-                columnGap: 3,
-                rowGap: 1,
-                borderTop: 1,
-                borderColor: 'divider',
-                '&:first-of-type': { borderTop: 0 },
-              }}
-            >
-              <Box sx={{ minWidth: 0 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  {t(TRAINING_KIND_KEYS[service.kind])}
-                </Typography>
-                <Typography variant="h3" component="h3" sx={{ mt: 0.25 }}>
-                  {service.title}
-                </Typography>
-              </Box>
-              <Typography
-                sx={{
-                  fontWeight: 600,
-                  fontVariantNumeric: 'tabular-nums',
-                  whiteSpace: 'nowrap',
-                  textAlign: 'right',
-                  color: service.priceKzt === null ? 'text.secondary' : 'text.primary',
-                }}
-              >
-                {priceText(service, t, locale)}
-              </Typography>
-              <Box sx={{ gridColumn: '1 / -1', display: 'grid', gap: 1 }}>
-                <ServiceFacts service={service} />
-                <ServiceBadges service={service} />
-                {service.note !== null && (
-                  <Typography variant="body2" color="text.secondary">
-                    {service.note}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-          ))}
-        </Paper>
-      ) : (
-        <Box sx={{ display: 'grid', gap: 1.5 }}>
-          {coach.services.map((service) => (
-            <Paper
-              key={service.id}
-              variant="outlined"
-              component="article"
-              sx={{ p: 2, display: 'grid', gap: 1 }}
-            >
-              <Box>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  {t(TRAINING_KIND_KEYS[service.kind])}
-                </Typography>
-                <Typography variant="h3" component="h3" sx={{ mt: 0.25 }}>
-                  {service.title}
-                </Typography>
-              </Box>
-              <Typography
-                sx={{
-                  fontWeight: 600,
-                  fontVariantNumeric: 'tabular-nums',
-                  color: service.priceKzt === null ? 'text.secondary' : 'text.primary',
-                }}
-              >
-                {priceText(service, t, locale)}
-              </Typography>
-              <ServiceFacts service={service} />
-              <ServiceBadges service={service} />
-              {service.note !== null && (
-                <Typography variant="body2" color="text.secondary">
-                  {service.note}
-                </Typography>
-              )}
-            </Paper>
-          ))}
-        </Box>
-      )}
+      <TrainingList
+        trainings={coach.trainings}
+        showCoach={false}
+        showPlace
+        showAuthor
+        linkKeys={LINK_KEYS_FOR_COACH}
+      />
       <Box sx={{ mt: 2 }}>
         <CoachQuickRequests coach={coach} />
       </Box>

@@ -32,7 +32,7 @@ import CoachFreshnessPanel from '@/features/coaches/editor/freshness-panel';
 import CoachImagesEditor from '@/features/coaches/editor/images-editor';
 import CoachPageEditor from '@/features/coaches/editor/page-editor';
 import CoachQualificationEditor from '@/features/coaches/editor/qualification-editor';
-import CoachServicesEditor from '@/features/coaches/editor/services-editor';
+import CoachTrainingsTab from '@/features/coaches/editor/trainings-tab';
 import CoachStatsPanel from '@/features/coaches/editor/stats-panel';
 import { COACH_REQUIREMENT_KEYS, coachFullName } from '@/features/coaches/labels';
 import { coachKeys, coachQuery } from '@/features/coaches/queries';
@@ -43,12 +43,12 @@ import CoachStatusPlate from '@/features/coaches/status-plate';
  * тренера. «Клубы» — этап T2. Вкладка и, у администратора, чья страница —
  * в адресе.
  */
-const COACH_TABS = ['page', 'services', 'qualification', 'stats'] as const;
+const COACH_TABS = ['page', 'trainings', 'qualification', 'stats'] as const;
 type CoachTab = (typeof COACH_TABS)[number];
 
 const TAB_LABELS: Readonly<Record<CoachTab, MessageKey>> = {
   page: 'coach.tab.page',
-  services: 'coach.tab.services',
+  trainings: 'coach.tab.services',
   qualification: 'coach.tab.qualification',
   stats: 'manage.stats.title',
 };
@@ -201,7 +201,12 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
           <Tab
             key={value}
             value={value}
-            label={t(TAB_LABELS[value])}
+            label={
+              // Приглашения от клубов ждут ответа — число на вкладке.
+              value === 'trainings' && coach.trainingRequests.length > 0
+                ? `${t(TAB_LABELS[value])} (${String(coach.trainingRequests.length)})`
+                : t(TAB_LABELS[value])
+            }
             id={`${id}-tab-${value}`}
             aria-controls={`${id}-panel`}
           />
@@ -222,7 +227,7 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
             <CoachPageEditor coach={coach} />
           </>
         )}
-        {tab === 'services' && <CoachServicesEditor coach={coach} />}
+        {tab === 'trainings' && <CoachTrainingsTab coach={coach} />}
         {tab === 'qualification' && <CoachQualificationEditor coach={coach} />}
         {tab === 'stats' && <CoachStatsPanel coach={coach} />}
       </Box>

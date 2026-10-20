@@ -2,6 +2,8 @@ import type { CoachStatus, ListCoachesRequest, ListTrainingsRequest } from '@ktt
 import { queryOptions } from '@tanstack/react-query';
 
 import {
+  fetchClubTrainings,
+  fetchClubTrainingsManage,
   fetchCoach,
   fetchCoachBySlug,
   fetchCoachStats,
@@ -22,6 +24,8 @@ export const coachKeys = {
   bySlug: (slug: string) => ['coaches', 'slug', slug] as const,
   detail: (id: string) => ['coaches', 'detail', id] as const,
   stats: (id: string, days: number) => ['coaches', 'stats', id, days] as const,
+  clubTrainings: (clubId: string) => ['coaches', 'club-trainings', clubId] as const,
+  clubTrainingsManage: (clubId: string) => ['coaches', 'club-trainings-manage', clubId] as const,
   applications: (status: CoachStatus | undefined, page: number) =>
     ['coaches', 'applications', status ?? 'all', page] as const,
 };
@@ -51,6 +55,21 @@ export function coachQuery(id: string) {
   return queryOptions({
     queryKey: coachKeys.detail(id),
     queryFn: () => fetchCoach(id),
+  });
+}
+
+/** Тренировки на публичной странице клуба. Под корнем тренеров: подтверждение связи меняет и их. */
+export function clubTrainingsQuery(clubId: string) {
+  return queryOptions({
+    queryKey: coachKeys.clubTrainings(clubId),
+    queryFn: () => fetchClubTrainings(clubId),
+  });
+}
+
+export function clubTrainingsManageQuery(clubId: string) {
+  return queryOptions({
+    queryKey: coachKeys.clubTrainingsManage(clubId),
+    queryFn: () => fetchClubTrainingsManage(clubId),
   });
 }
 

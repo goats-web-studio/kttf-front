@@ -1716,7 +1716,7 @@ export const ru = {
     'Страницу никто не видит. Исправьте то, что указано в причине, и напишите администратору.',
   'coach.missing.lead': 'Чтобы отправить, не хватает: {items}.',
   'coach.missing.city': 'города',
-  'coach.missing.services': 'хотя бы одной тренировки',
+  'coach.missing.trainings': 'хотя бы одной тренировки',
 
   'coach.tab.page': 'Страница',
   'coach.tab.services': 'Тренировки',
@@ -1810,4 +1810,53 @@ export const ru = {
   'applications.coaches.reasonHint':
     'Тренер увидит причину в кабинете и сможет поправить страницу.',
   'applications.coaches.cancel': 'Отмена',
+  'error.api.TRAINING_LINK_INVALID':
+    'Эта связь уже не ждёт вашего ответа. Обновите экран — её могли подтвердить или отменить.',
+  'trainings.filter.club': 'Клуб',
+  'trainings.found': 'Мест с тренировками: {count}',
+  'coach.trainingsCount': 'тренировок: {count}',
+  'training.group.anywhere': 'Выезд и онлайн',
+  'training.group.anywhereHint': 'Тренер приедет к вам или проведёт занятие по видеосвязи',
+  'training.group.venue': '{address} · зал не в KTTF',
+  'training.ofClub': 'Тренировка клуба',
+  'training.inClub.title': 'Тренировки в клубе',
+  'training.link.coach.PENDING': 'ждёт подтверждения клуба',
+  'training.link.coach.DECLINED': 'клуб отклонил',
+  'training.link.club.PENDING': 'ждёт подтверждения тренера',
+  'training.link.club.DECLINED': 'тренер отклонил',
+  'training.link.CONFIRMED': 'подтверждено',
+  'training.link.confirm': 'Подтвердить',
+  'training.link.decline': 'Отклонить',
+  'training.link.leave': 'Отказаться',
+  'training.link.remove': 'Убрать',
+  'training.requests.count': 'Приглашений от клубов: {count}',
+  'training.requests.coachTitle': 'Приглашения от клубов',
+  'training.requests.coachLead':
+    'Клуб указал вас тренером своей тренировки. Подтвердите — и она появится на вашей странице и на странице клуба.',
+  'training.requests.clubTitle': 'Запросы от тренеров',
+  'training.requests.clubLead':
+    'Тренер указал ваш клуб местом своей тренировки. Пока вы не подтвердите, она не публикуется.',
+  'training.clubOwned.title': 'Тренировки клубов с вашим участием',
+  'training.clubOwned.lead':
+    'Их ведёт клуб: название, расписание и цену меняет он. Отказаться можно в любой момент.',
+  'training.coachOwned.title': 'Тренеры, которые у вас тренируют',
+  'training.coachOwned.lead':
+    'Тренировки тренеров в вашем клубе. Их ведёт тренер; убрать связь можно в любой момент.',
+  'training.club.title': 'Тренировки клуба',
+  'training.club.lead':
+    'Группы и занятия клуба. Тренер со страницей на KTTF подтверждает участие — до этого тренировка видна без него.',
+  'training.club.empty': 'Тренировок клуба пока нет.',
+  'training.editor.modeClub': 'Клуб KTTF',
+  'training.editor.modeVenue': 'Другой зал',
+  'training.editor.club': 'Клуб',
+  'training.editor.noClub': 'Клуб не найден — выберите «Другой зал»',
+  'training.editor.clubHint':
+    'Клуб подтвердит, что вы у него тренируете. До этого тренировка не публикуется.',
+  'training.editor.venueName': 'Название зала',
+  'training.editor.venueAddress': 'Адрес',
+  'training.editor.coach': 'Тренер',
+  'training.editor.coachNone': 'Без тренера — тренировка клуба',
+  'training.editor.noCoach': 'Тренер со страницей не найден',
+  'training.editor.coachInvalid':
+    'У каждой тренировки нужны название и хотя бы одна аудитория; «в клубе» — клуб KTTF или зал с адресом; цена — целым числом.',
 } as const satisfies Record<string, string>;

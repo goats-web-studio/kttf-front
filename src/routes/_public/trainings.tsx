@@ -3,7 +3,9 @@ import {
   TRAINING_AUDIENCES,
   TRAINING_KINDS,
   TRAINING_PLACES,
+  MAX_PAGE_SIZE,
   type CoachLanguage,
+  type TrainingGroupView,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -27,7 +29,7 @@ import PillTabs from '@/common/ui/pill-tabs';
 import QueryState from '@/common/ui/query-state';
 import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
-import { CoachCard, TrainingCard } from '@/features/coaches/coach-cards';
+import { CoachCard } from '@/features/coaches/coach-cards';
 import {
   COACH_LANGUAGE_KEYS,
   TRAINING_AUDIENCE_KEYS,
@@ -35,6 +37,8 @@ import {
   TRAINING_PLACE_KEYS,
 } from '@/features/coaches/labels';
 import { coachesQuery, trainingsQuery } from '@/features/coaches/queries';
+import { TrainingGroupBlock } from '@/features/coaches/training-list';
+import { clubsQuery } from '@/features/clubs/queries';
 import {
   audiencesOf,
   hasFilters,
@@ -58,8 +62,11 @@ export const Route = createFileRoute('/_public/trainings')({
   component: TrainingsPage,
 });
 
-/** После какой карточки стоит рекламный слот (`docs/11` 5.2). */
+/** После какой карточки тренера стоит рекламный слот (`docs/11` 5.2). */
 const AD_AFTER = 6;
+
+/** У тренировок — после второго блока места: блок длиннее карточки. */
+const AD_AFTER_GROUP = 2;
 
 const VIEW_OPTIONS = [
   ['trainings', 'trainings.view.trainings'],
@@ -133,9 +140,22 @@ function TrainingsPage(): ReactNode {
     void navigate({ search: view === 'coaches' ? { view: 'coaches' } : {} });
   };
 
+  // Клубы для «где» — города из фильтра, если он задан: в Алматы не нужен
+  // выбор клуба из Астаны.
+  const clubs = useQuery({
+    ...clubsQuery({
+      page: 1,
+      limit: MAX_PAGE_SIZE,
+      ...(cities.length === 0 ? {} : { cityId: cities }),
+    }),
+    enabled: view === 'trainings',
+  });
+  const clubName = (clubId: string): string =>
+    clubs.data?.items.find((club) => club.id === clubId)?.name ?? t('trainings.filter.club');
   const active = activeFilters(search, view, {
     t,
     cityLabel,
+    clubName,
     money: (amount) => formatMoney(amount, locale),
     filter,
   });
@@ -203,6 +223,30 @@ function TrainingsPage(): ReactNode {
     />
   );
 
+  const clubFilter = (
+    <TextField
+      select
+      label={t('trainings.filter.club')}
+      value={search.clubId ?? ''}
+      onChange={(event) => {
+        const value = event.target.value;
+        filter({ clubId: value === '' ? undefined : value });
+      }}
+    >
+      <MenuItem value="">{t('filter.any')}</MenuItem>
+      {/* Выбранный клуб не теряется, пока список другого города грузится. */}
+      {search.clubId !== undefined &&
+        clubs.data?.items.every((club) => club.id !== search.clubId) !== false && (
+          <MenuItem value={search.clubId}>{clubName(search.clubId)}</MenuItem>
+        )}
+      {(clubs.data?.items ?? []).map((club) => (
+        <MenuItem key={club.id} value={club.id}>
+          {club.name}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+
   const panel =
     view === 'trainings' ? (
       <Box sx={{ display: 'grid', gap: 2 }}>
@@ -242,7 +286,13 @@ function TrainingsPage(): ReactNode {
         {chipGroup('trainings.filter.kind', TRAINING_KINDS, kinds, TRAINING_KIND_KEYS, (next) => {
           filter({ kind: joinList(next) });
         })}
-        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' } }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 2,
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 3fr) minmax(0, 2fr)' },
+          }}
+        >
           {chipGroup(
             'trainings.filter.audience',
             TRAINING_AUDIENCES,
@@ -252,15 +302,18 @@ function TrainingsPage(): ReactNode {
               filter({ audience: joinList(next) });
             },
           )}
-          {chipGroup(
-            'trainings.filter.place',
-            TRAINING_PLACES,
-            places,
-            TRAINING_PLACE_KEYS,
-            (next) => {
-              filter({ place: joinList(next) });
-            },
-          )}
+          <Box sx={{ display: 'grid', gap: 1.5, alignContent: 'start' }}>
+            {chipGroup(
+              'trainings.filter.place',
+              TRAINING_PLACES,
+              places,
+              TRAINING_PLACE_KEYS,
+              (next) => {
+                filter({ place: joinList(next) });
+              },
+            )}
+            {clubFilter}
+          </Box>
         </Box>
       </Box>
     ) : (
@@ -333,6 +386,14 @@ function TrainingsPage(): ReactNode {
   );
 }
 
+/** Ключ блока: клуб, зал или «выезд и онлайн». */
+function groupKey(group: TrainingGroupView): string {
+  if (group.club !== null) return `club-${group.club.id}`;
+  if (group.venue !== null) return `venue-${group.venue.name}-${group.venue.address}`;
+
+  return 'anywhere';
+}
+
 interface ListProps {
   readonly search: TrainingsSearch;
   readonly page: number;
@@ -360,11 +421,13 @@ function TrainingsList({ search, page, filtered, active, onReset }: ListProps): 
 
   return (
     <>
-      <FilterSummary
-        total={trainings.isError ? null : data?.total}
-        filters={active}
-        onReset={onReset}
-      />
+      {/* Страница считает места, а не тренировки: «найдено» — мест. */}
+      <FilterSummary total={null} filters={active} onReset={onReset} />
+      {data !== undefined && data.total > 0 && (
+        <Typography variant="body2" color="text.secondary" aria-live="polite" sx={{ mt: 2 }}>
+          {fill(t('trainings.found'), { count: String(data.total) })}
+        </Typography>
+      )}
       <Box sx={{ mt: 2 }}>
         <QueryState
           isPending={trainings.isPending}
@@ -373,13 +436,11 @@ function TrainingsList({ search, page, filtered, active, onReset }: ListProps): 
           loading={<RowsSkeleton />}
         >
           {data === undefined ? null : data.items.length > 0 ? (
-            <Box component="ul" data-trainings-list sx={GRID}>
-              {data.items.map((training, index) => (
-                <Fragment key={training.id}>
-                  <Box component="li" sx={{ minWidth: 0 }}>
-                    <TrainingCard training={training} />
-                  </Box>
-                  {index === AD_AFTER - 1 && <AdSlot placement="trainings-inline" />}
+            <Box data-trainings-list sx={{ display: 'grid', gap: { xs: 2, sm: 3 } }}>
+              {data.items.map((group, index) => (
+                <Fragment key={groupKey(group)}>
+                  <TrainingGroupBlock group={group} />
+                  {index === AD_AFTER_GROUP - 1 && <AdSlot placement="trainings-inline" />}
                 </Fragment>
               ))}
             </Box>
@@ -478,11 +539,12 @@ function activeFilters(
   helpers: {
     readonly t: (key: MessageKey) => string;
     readonly cityLabel: (id: string) => string;
+    readonly clubName: (id: string) => string;
     readonly money: (amount: number) => string;
     readonly filter: (patch: Partial<TrainingsSearch>) => void;
   },
 ): ActiveFilter[] {
-  const { t, cityLabel, money, filter } = helpers;
+  const { t, cityLabel, clubName, money, filter } = helpers;
   const chip = (label: MessageKey, value: string): string =>
     fill(t('filter.chip'), { label: t(label), value });
   const active: ActiveFilter[] = [];
@@ -559,6 +621,15 @@ function activeFilters(
       label: t(TRAINING_PLACE_KEYS[place]),
       onRemove: () => {
         filter({ place: joinList(toggleIn(places, place)) });
+      },
+    });
+  }
+  if (search.clubId !== undefined) {
+    active.push({
+      key: 'clubId',
+      label: chip('trainings.filter.club', clubName(search.clubId)),
+      onRemove: () => {
+        filter({ clubId: undefined });
       },
     });
   }

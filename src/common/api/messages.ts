@@ -48,6 +48,7 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   COACH_ALREADY_EXISTS: 'error.api.COACH_ALREADY_EXISTS',
   COACH_INCOMPLETE: 'error.api.COACH_INCOMPLETE',
   COACH_STATUS_INVALID: 'error.api.COACH_STATUS_INVALID',
+  TRAINING_LINK_INVALID: 'error.api.TRAINING_LINK_INVALID',
 };
 
 /**

@@ -1729,7 +1729,7 @@ export const kk: Record<MessageKey, string> = {
     'Бетті ешкім көрмейді. Себепте көрсетілгенді түзетіп, әкімшіге жазыңыз.',
   'coach.missing.lead': 'Жіберу үшін жетіспейді: {items}.',
   'coach.missing.city': 'қала',
-  'coach.missing.services': 'кемінде бір жаттығу',
+  'coach.missing.trainings': 'кемінде бір жаттығу',
 
   'coach.tab.page': 'Бет',
   'coach.tab.services': 'Жаттығулар',
@@ -1824,4 +1824,54 @@ export const kk: Record<MessageKey, string> = {
   'applications.coaches.reason': 'Себебі',
   'applications.coaches.reasonHint': 'Жаттықтырушы себебін кабинетте көріп, бетті түзете алады.',
   'applications.coaches.cancel': 'Болдырмау',
+  'error.api.TRAINING_LINK_INVALID':
+    'Бұл байланыс енді сіздің жауабыңызды күтпейді. Экранды жаңартыңыз — оны растаған не болдырмаған болуы мүмкін.',
+  'trainings.filter.club': 'Клуб',
+  'trainings.found': 'Жаттығулары бар орындар: {count}',
+  'coach.trainingsCount': 'жаттығулар: {count}',
+  'training.group.anywhere': 'Барып оқыту және онлайн',
+  'training.group.anywhereHint':
+    'Жаттықтырушы өзі келеді немесе бейнебайланыс арқылы сабақ өткізеді',
+  'training.group.venue': '{address} · зал KTTF-те емес',
+  'training.ofClub': 'Клуб жаттығуы',
+  'training.inClub.title': 'Клубтағы жаттығулар',
+  'training.link.coach.PENDING': 'клубтың растауын күтуде',
+  'training.link.coach.DECLINED': 'клуб бас тартты',
+  'training.link.club.PENDING': 'жаттықтырушының растауын күтуде',
+  'training.link.club.DECLINED': 'жаттықтырушы бас тартты',
+  'training.link.CONFIRMED': 'расталды',
+  'training.link.confirm': 'Растау',
+  'training.link.decline': 'Бас тарту',
+  'training.link.leave': 'Қатысудан бас тарту',
+  'training.link.remove': 'Алып тастау',
+  'training.requests.count': 'Клубтардан шақырулар: {count}',
+  'training.requests.coachTitle': 'Клубтардан шақырулар',
+  'training.requests.coachLead':
+    'Клуб сізді өз жаттығуының жаттықтырушысы етіп көрсетті. Растасаңыз, ол сіздің бетіңізде және клуб бетінде шығады.',
+  'training.requests.clubTitle': 'Жаттықтырушылардың сұраулары',
+  'training.requests.clubLead':
+    'Жаттықтырушы өз жаттығуының орны ретінде сіздің клубыңызды көрсетті. Растамайынша ол жарияланбайды.',
+  'training.clubOwned.title': 'Сіз қатысатын клуб жаттығулары',
+  'training.clubOwned.lead':
+    'Оларды клуб жүргізеді: атауын, кестесін және бағасын клуб өзгертеді. Кез келген уақытта бас тартуға болады.',
+  'training.coachOwned.title': 'Сізде жаттықтыратын жаттықтырушылар',
+  'training.coachOwned.lead':
+    'Клубыңыздағы жаттықтырушылардың жаттығулары. Оларды жаттықтырушы жүргізеді; байланысты кез келген уақытта алып тастауға болады.',
+  'training.club.title': 'Клуб жаттығулары',
+  'training.club.lead':
+    'Клубтың топтары мен сабақтары. KTTF-те беті бар жаттықтырушы қатысуын растайды — оған дейін жаттығу онсыз көрінеді.',
+  'training.club.empty': 'Әзірге клуб жаттығулары жоқ.',
+  'training.editor.modeClub': 'KTTF клубы',
+  'training.editor.modeVenue': 'Басқа зал',
+  'training.editor.club': 'Клуб',
+  'training.editor.noClub': 'Клуб табылмады — «Басқа зал» таңдаңыз',
+  'training.editor.clubHint':
+    'Клуб сіздің онда жаттықтыратыныңызды растайды. Оған дейін жаттығу жарияланбайды.',
+  'training.editor.venueName': 'Зал атауы',
+  'training.editor.venueAddress': 'Мекенжайы',
+  'training.editor.coach': 'Жаттықтырушы',
+  'training.editor.coachNone': 'Жаттықтырушысыз — клуб жаттығуы',
+  'training.editor.noCoach': 'Беті бар жаттықтырушы табылмады',
+  'training.editor.coachInvalid':
+    'Әр жаттығуға атауы мен кемінде бір аудитория керек; «клубта» болса — KTTF клубы немесе мекенжайы бар зал; бағасы — бүтін санмен.',
 };
