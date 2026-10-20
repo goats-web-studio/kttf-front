@@ -61,7 +61,7 @@ describe('подписи страницы', () => {
   });
 
   it('«дети с N лет» — самый младший возраст детских тренировок', () => {
-    expect(youngestAge(COACH.services)).toBe(6);
+    expect(youngestAge(COACH.trainings)).toBe(6);
     expect(
       youngestAge([
         { audiences: ['TEENS'], kidsFromAge: 12 },
@@ -112,7 +112,7 @@ describe('статус и отправка на проверку', () => {
       items: missing.map((item) => t(COACH_REQUIREMENT_KEYS[item])).join(', '),
     });
 
-    expect(missing).toEqual(['city', 'services']);
+    expect(missing).toEqual(['city', 'trainings']);
     expect(text).toBe('Чтобы отправить, не хватает: города, хотя бы одной тренировки.');
     expect(coachMissing(COACH)).toEqual([]);
   });

@@ -18,7 +18,13 @@ import {
   COACH_LIST_ITEM,
   COACH_SLUG,
   DRAFT_COACH,
-  TRAINING_ITEM,
+  CLUB_EVENING,
+  CLUB_INVITE,
+  CLUB_MANAGE,
+  COACH_REQUEST,
+  KIDS_GROUP,
+  TRAINING_GROUPS,
+  VENUE_TRAINING,
   userWithCoach,
 } from '@/test/coach-fixtures';
 import {
@@ -30,11 +36,6 @@ import {
   placesReply,
   USER_WITH_PROFILE,
 } from '@/test/fixtures';
-
-/** Тело строки без идентификатора — так её отправляет форма. */
-function withoutId(row: object): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'id'));
-}
 
 /**
  * Раздел «Тренировки» от адреса до данных — ADR-059, `docs/11` 5.
@@ -53,7 +54,7 @@ interface Sent {
 
 let sent: Sent[] = [];
 let coach: CoachView = COACH;
-let trainings: unknown[] = [TRAINING_ITEM];
+let trainings: unknown[] = TRAINING_GROUPS;
 let applications: CoachApplicationView[] = [COACH_APPLICATION];
 let me: AuthUserView = USER_WITH_PROFILE;
 let profile: PlayerProfileView = PLAYER_PROFILE;
@@ -93,7 +94,19 @@ function answer(url: string, init: RequestInit | undefined): Response {
   if (places !== undefined) return reply(places);
 
   if (path.startsWith('/auth/me')) return reply(me);
+  if (/^\/trainings\/[^/]+\/(confirm|decline)$/.test(path)) return reply(undefined, 204);
   if (path.startsWith('/trainings')) return reply(pageOf(trainings));
+  if (/^\/coaches\/[^/]+\/trainings$/.test(path)) return reply(coach);
+  if (/^\/clubs\/[^/]+\/trainings\/manage$/.test(path)) return reply(CLUB_MANAGE);
+  if (/^\/clubs\/[^/]+\/trainings$/.test(path)) {
+    return method === 'PUT' ? reply(CLUB_MANAGE) : reply([CLUB_EVENING]);
+  }
+  if (/^\/clubs\/[^/]+\/members$/.test(path)) return reply([]);
+  if (/^\/clubs\/[^/]+\/posts/.test(path)) return reply(pageOf([]));
+  if (/^\/clubs\/[^/]+\/media/.test(path)) return reply([]);
+  if (/^\/clubs\/[^/]+\/summary$/.test(path)) {
+    return reply({ matchesRecent: 0, activePlayersRecent: 0, tournamentsHeld: 0, podiums: [] });
+  }
   if (/^\/coaches\/[^/]+\/events$/.test(path)) return reply(undefined, 204);
   if (path.startsWith('/coaches/by-slug/')) {
     return path.endsWith(`/${COACH_SLUG}`)
@@ -150,6 +163,13 @@ function asDesktop(): void {
   }));
 }
 
+/** Элемент по селектору — без него тест падает понятной ошибкой. */
+function element(selector: string): HTMLElement {
+  const found = document.querySelector<HTMLElement>(selector);
+  if (found === null) throw new Error(`Нет элемента ${selector}`);
+  return found;
+}
+
 const requests = (method: string, part: string): Sent[] =>
   sent.filter((request) => request.method === method && request.url.includes(part));
 
@@ -158,7 +178,7 @@ beforeEach(() => {
   window.sessionStorage.clear();
   sent = [];
   coach = COACH;
-  trainings = [TRAINING_ITEM];
+  trainings = TRAINING_GROUPS;
   applications = [COACH_APPLICATION];
   me = USER_WITH_PROFILE;
   profile = PLAYER_PROFILE;
@@ -173,19 +193,37 @@ afterEach(() => {
 });
 
 describe('«Тренировки»', () => {
-  it('открываются без входа: карточка тренировки ведёт на страницу тренера', async () => {
+  it('блоками по месту: клуб ссылкой, зал вне KTTF, «выезд и онлайн» последним', async () => {
     renderAt('/trainings');
 
-    const card = await screen.findByRole('link', { name: TRAINING_ITEM.title });
+    const club = await screen.findByRole('link', { name: CLUB.name });
+    expect(club.getAttribute('href')).toBe(`/clubs/${CLUB.id}`);
 
-    expect(card.getAttribute('href')).toBe(`/coaches/${COACH_SLUG}`);
-    expect(within(card).getByText('дети с 6 лет')).toBeDefined();
+    const groups = [...document.querySelectorAll('[data-training-group]')].map((group) =>
+      group.getAttribute('data-training-group'),
+    );
+    expect(groups).toEqual(['CLUB', 'VENUE', 'ANYWHERE']);
+
+    const venue = element('[data-training-group="VENUE"]');
+    expect(venue.textContent).toContain('Сатпаева 3 · зал не в KTTF');
+    expect(within(venue).queryByRole('link', { name: /Спортзал/ })).toBeNull();
+
+    // Тренер в строке — ссылкой на свою страницу.
+    const row = element(`[data-training="${KIDS_GROUP.id}"]`);
+    expect(
+      within(row)
+        .getByRole('link', { name: `${PLAYERS.first.lastName} ${PLAYERS.first.firstName}` })
+        .getAttribute('href'),
+    ).toBe(`/coaches/${COACH_SLUG}`);
+    expect(within(row).getByText('дети с 6 лет')).toBeDefined();
   });
 
-  it('фильтры из ссылки доходят до сервера', async () => {
-    renderAt('/trainings?kind=KIDS_GROUP&audience=KIDS,TEENS&age=9&priceTo=20000&language=KK');
+  it('фильтры из ссылки доходят до сервера, клуб — clubId', async () => {
+    renderAt(
+      `/trainings?kind=KIDS_GROUP&audience=KIDS,TEENS&age=9&priceTo=20000&language=KK&clubId=${CLUB.id}`,
+    );
 
-    await screen.findByRole('link', { name: TRAINING_ITEM.title });
+    await screen.findByRole('link', { name: CLUB.name });
     const [query] = requests('GET', '/trainings?');
 
     expect(query?.url).toContain('kind=KIDS_GROUP');
@@ -193,12 +231,13 @@ describe('«Тренировки»', () => {
     expect(query?.url).toContain('age=9');
     expect(query?.url).toContain('priceTo=20000');
     expect(query?.url).toContain('language=KK');
+    expect(query?.url).toContain(`clubId=${CLUB.id}`);
   });
 
   it('чип вида кладёт фильтр в адрес', async () => {
     renderAt('/trainings');
 
-    await screen.findByRole('link', { name: TRAINING_ITEM.title });
+    await screen.findByRole('link', { name: CLUB.name });
     fireEvent.click(screen.getByRole('button', { name: ru['coach.kind.SPARRING'] }));
 
     await waitFor(() => {
@@ -269,7 +308,19 @@ describe('страница тренера', () => {
     ).toBe(true);
 
     expect(screen.getByText(ru['coach.credential.verified'])).toBeDefined();
-    expect(screen.getByText('по договорённости')).toBeDefined();
+    expect(screen.getAllByText('по договорённости').length).toBeGreaterThan(0);
+
+    // Место: клуб ссылкой, зал с адресом; клубная — «тренировка клуба X».
+    const kids = element(`[data-training="${KIDS_GROUP.id}"]`);
+    expect(
+      within(kids)
+        .getByRole('link', { name: /Абая 10/ })
+        .getAttribute('href'),
+    ).toBe(`/clubs/${CLUB.id}`);
+    const venue = document.querySelector(`[data-training="${VENUE_TRAINING.id}"]`);
+    expect(venue?.textContent).toContain('Спортзал школы №5 · Сатпаева 3');
+    const evening = element(`[data-training="${CLUB_EVENING.id}"]`);
+    expect(evening.textContent).toContain(ru['training.ofClub']);
   });
 
   it('телефон — своя раскладка в одну колонку', async () => {
@@ -350,16 +401,107 @@ describe('кабинет тренера', () => {
     });
   });
 
-  it('вкладка «Тренировки» сохраняет список целиком', async () => {
-    renderAt('/cabinet/coach?tab=services', userWithCoach(COACH));
+  it('вкладка «Тренировки» сохраняет свои тренировки с id — связь с клубом не сбрасывается', async () => {
+    renderAt('/cabinet/coach?tab=trainings', userWithCoach(COACH));
 
     fireEvent.click(await screen.findByRole('button', { name: ru['manage.page.save'] }));
 
     await waitFor(() => {
-      expect(requests('PUT', `/coaches/${COACH.id}/services`)[0]?.body).toEqual({
-        services: COACH.services.map(withoutId),
+      expect(requests('PUT', `/coaches/${COACH.id}/trainings`).length).toBe(1);
+    });
+    const body = requests('PUT', `/coaches/${COACH.id}/trainings`)[0]?.body as {
+      trainings: { id?: string; clubId?: string | null; venueName?: string | null }[];
+    };
+    // Клубная вечерняя группа в теле не участвует — её ведёт клуб.
+    expect(body.trainings.map((training) => training.id)).toEqual([
+      KIDS_GROUP.id,
+      COACH.trainings[1]?.id,
+      VENUE_TRAINING.id,
+    ]);
+    expect(body.trainings[0]?.clubId).toBe(CLUB.id);
+    expect(body.trainings[2]?.venueName).toBe('Спортзал школы №5');
+  });
+
+  it('приглашение клуба подтверждается, клубная тренировка — «Отказаться»', async () => {
+    coach = { ...COACH, trainingRequests: [CLUB_INVITE] };
+    renderAt('/cabinet/coach?tab=trainings', userWithCoach(COACH));
+
+    expect(
+      await screen.findByRole('tab', { name: `${ru['coach.tab.services']} (1)` }),
+    ).toBeDefined();
+    const invites = await waitFor(() => {
+      const found = document.querySelector('[data-linked-trainings="requests"]');
+      if (found === null) throw new Error('нет приглашений');
+      return found as HTMLElement;
+    });
+    fireEvent.click(within(invites).getByRole('button', { name: ru['training.link.confirm'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/trainings/${CLUB_INVITE.id}/confirm`).length).toBe(1);
+    });
+
+    const owned = element('[data-linked-trainings="confirmed"]');
+    fireEvent.click(within(owned).getByRole('button', { name: ru['training.link.leave'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/trainings/${CLUB_EVENING.id}/decline`).length).toBe(1);
+    });
+  });
+});
+
+describe('тренировки клуба', () => {
+  it('на странице клуба — «Тренировки в клубе» с тренером ссылкой', async () => {
+    renderAt(`/clubs/${CLUB.id}`);
+
+    await screen.findByText(CLUB_EVENING.title);
+    const section = element('[data-club-trainings]');
+
+    expect(
+      within(section).getByRole('heading', { name: ru['training.inClub.title'] }),
+    ).toBeDefined();
+    expect(
+      within(section)
+        .getByRole('link', { name: `${PLAYERS.first.lastName} ${PLAYERS.first.firstName}` })
+        .getAttribute('href'),
+    ).toBe(`/coaches/${COACH_SLUG}`);
+  });
+
+  it('кабинет клуба: запросы тренеров с числом на вкладке, свои — списком с id и тренером', async () => {
+    renderAt(`/cabinet/club/${CLUB.id}?tab=trainings`, USER_WITH_PROFILE);
+
+    expect(await screen.findByRole('tab', { name: `${ru['nav.trainings']} (1)` })).toBeDefined();
+
+    const incoming = await waitFor(() => {
+      const found = document.querySelector('[data-linked-trainings="requests"]');
+      if (found === null) throw new Error('нет запросов');
+      return found as HTMLElement;
+    });
+    expect(within(incoming).getByText(COACH_REQUEST.title)).toBeDefined();
+    fireEvent.click(within(incoming).getByRole('button', { name: ru['training.link.decline'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/trainings/${COACH_REQUEST.id}/decline`).length).toBe(1);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: ru['manage.page.save'] }));
+    await waitFor(() => {
+      expect(requests('PUT', `/clubs/${CLUB.id}/trainings`)[0]?.body).toEqual({
+        trainings: [
+          {
+            id: CLUB_EVENING.id,
+            kind: 'GROUP',
+            audiences: ['AMATEURS'],
+            kidsFromAge: null,
+            title: 'Вечерняя группа',
+            schedule: 'вт, чт 19:00',
+            priceKzt: 15000,
+            unit: 'MONTH',
+            note: null,
+            coachId: COACH.id,
+          },
+        ],
       });
     });
+
+    const coaches = element('[data-linked-trainings="confirmed"]');
+    expect(within(coaches).getByRole('button', { name: ru['training.link.remove'] })).toBeDefined();
   });
 });
 

@@ -8,19 +8,11 @@ import {
   coachFieldsOf,
   coachPatch,
   credentialRowsOf,
-  emptyServiceRow,
   moveRow,
   parseInteger,
-  serviceRowsOf,
   toAchievementInputs,
   toCredentialInputs,
-  toServiceInputs,
 } from './form-model';
-
-/** Тело строки без идентификатора — так её отправляет форма. */
-function withoutId(row: object): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(row).filter(([key]) => key !== 'id'));
-}
 
 describe('поля страницы — в PATCH', () => {
   it('без правок — ничего не отправляется', () => {
@@ -71,53 +63,6 @@ describe('поля страницы — в PATCH', () => {
       kind: 'patch',
       patch: { sportsRank: null },
     });
-  });
-});
-
-describe('тренировки — в PUT', () => {
-  it('строки страницы возвращаются тем же телом', () => {
-    expect(toServiceInputs(serviceRowsOf(COACH))).toEqual(COACH.services.map(withoutId));
-  });
-
-  it('цена с пробелами разрядов — числом; без цены — «по договорённости»', () => {
-    const [row] = serviceRowsOf(COACH);
-    if (row === undefined) throw new Error('нет строки');
-
-    expect(toServiceInputs([{ ...row, price: '25 000' }])?.[0]).toMatchObject({
-      priceKzt: 25000,
-      unit: 'MONTH',
-    });
-    expect(toServiceInputs([{ ...row, price: '' }])?.[0]).toMatchObject({
-      priceKzt: null,
-      unit: 'NONE',
-    });
-  });
-
-  it('возраст ребёнка уходит только у тренировки для детей или подростков', () => {
-    const [row] = serviceRowsOf(COACH);
-    if (row === undefined) throw new Error('нет строки');
-
-    expect(
-      toServiceInputs([{ ...row, audiences: ['AMATEURS'], kidsFromAge: '6' }])?.[0],
-    ).toMatchObject({ kidsFromAge: null });
-    expect(
-      toServiceInputs([{ ...row, audiences: ['TEENS'], kidsFromAge: '12' }])?.[0],
-    ).toMatchObject({ kidsFromAge: 12 });
-  });
-
-  it('без названия или аудитории — ошибка формы', () => {
-    expect(toServiceInputs([emptyServiceRow()])).toBeNull();
-    expect(toServiceInputs([{ ...emptyServiceRow(), title: 'Группа' }])).toBeNull();
-    expect(
-      toServiceInputs([{ ...emptyServiceRow(), title: 'Группа', audiences: ['KIDS'] }]),
-    ).not.toBeNull();
-  });
-
-  it('кривая цена — ошибка формы', () => {
-    const [row] = serviceRowsOf(COACH);
-    if (row === undefined) throw new Error('нет строки');
-
-    expect(toServiceInputs([{ ...row, price: '20к' }])).toBeNull();
   });
 });
 
