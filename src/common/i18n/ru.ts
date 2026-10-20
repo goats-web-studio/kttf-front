@@ -1852,6 +1852,9 @@ export const ru = {
   'training.editor.noClub': 'Клуб не найден — выберите «Другой зал»',
   'training.editor.clubHint':
     'Клуб подтвердит, что вы у него тренируете. До этого тренировка не публикуется.',
+  'training.editor.booking': 'Кто записывает и принимает оплату',
+  'training.editor.bookingCoach': 'Я лично',
+  'training.editor.bookingClub': 'Клуб',
   'training.editor.venueName': 'Название зала',
   'training.editor.venueAddress': 'Адрес',
   'training.editor.coach': 'Тренер',
@@ -1871,7 +1874,7 @@ export const ru = {
   'training.detail.enrollsCoach': 'Записывает тренер {coach}',
   'training.detail.notPublic': 'Публично не показывается',
   'manage.stats.coachTraining': 'Записи к тренерам в зале',
-  'manage.stats.clubGroup': 'Записи в группы клуба',
+  'manage.stats.clubGroup': 'Записи через клуб',
   'training.enroll': 'Записаться',
   'training.details': 'Подробнее',
   'training.enroll.message': 'Здравствуйте! Пишу с KTTF: хочу записаться на «{title}»',

@@ -227,7 +227,9 @@ function Header({
               <Link href={`/clubs/${training.club.id}`} sx={{ fontWeight: 600 }}>
                 {training.club.name}
               </Link>
-              {` · ${t('training.via.coach').toLowerCase()}`}
+              {` · ${t(
+                training.booking === 'CLUB' ? 'training.via.club' : 'training.via.coach',
+              ).toLowerCase()}`}
             </>
           ) : (
             <>
@@ -253,7 +255,7 @@ function Header({
         {priceText(training, t, locale)}
       </Typography>
       <Box sx={{ mt: 3 }}>
-        <ContactButtons training={training} owner={owner} />
+        <ContactButtons training={training} />
       </Box>
     </Paper>
   );
@@ -261,20 +263,16 @@ function Header({
 
 /**
  * «Записаться» — единственная главная кнопка экрана (07, запрет 2), с
- * готовым текстом про эту тренировку. Остальные способы связи владельца —
- * обводкой. Каждое нажатие — в статистику владельца.
+ * готовым текстом про эту тренировку. Остальные способы связи адресата —
+ * обводкой. Каждое нажатие — адресату и второй стороне.
  */
-function ContactButtons({
-  training,
-  owner,
-}: {
-  readonly training: TrainingView;
-  readonly owner: TrainingOwner | null;
-}): ReactNode {
+function ContactButtons({ training }: { readonly training: TrainingView }): ReactNode {
   const t = useT();
+  // Адресат — кто записывает и принимает оплату (`trainingBookingTarget`),
+  // а не автор: тренер может записывать через клуб.
   const enroll = enrollAction(training, t);
 
-  if (owner === null || enroll === null) {
+  if (enroll === null) {
     return (
       <Typography variant="body2" color="text.secondary">
         {t('training.detail.noContacts')}
@@ -282,6 +280,7 @@ function ContactButtons({
     );
   }
 
+  const owner = enroll.owner;
   const contacts = ownerContacts(owner);
   const message = enrollMessage(training, t);
   const others: { kind: Channel; href: string; external: boolean }[] = [];

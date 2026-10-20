@@ -1,5 +1,5 @@
 import {
-  trainingOwner,
+  trainingBookingTarget,
   type ContactKind,
   type TrainingOwner,
   type TrainingView,
@@ -13,9 +13,11 @@ import { LINK_KEYS_FOR_CLUB, LINK_KEYS_FOR_COACH, TRAINING_PLACE_KEYS } from './
 import { trackCoachContact } from './track';
 
 /**
- * «Записаться» на тренировку (ADR-059, решение владельца от 20.10.2026):
- * пишут владельцу — клубу за его группу, тренеру за его тренировку. Правило
- * владельца одно на всех — `trainingOwner` из общего кода.
+ * «Записаться» на тренировку (ADR-059, решения владельца от 20–21.10.2026):
+ * пишут тому, кто записывает и принимает оплату, — клубу за его группу,
+ * тренеру за его тренировку, а если тренер записывает через клуб — клубу.
+ * Правило одно на всех — `trainingBookingTarget` из общего кода; авторство
+ * (`trainingOwner`) только раскладывает списки.
  */
 
 type T = (key: MessageKey) => string;
@@ -39,15 +41,23 @@ export interface EnrollAction {
   readonly href: string;
   /** WhatsApp и Telegram — в новой вкладке, звонок — на месте. */
   readonly external: boolean;
+  /**
+   * Кому пишут — адресат записи, `trainingBookingTarget`: клуб у группы
+   * клуба и у тренировки тренера с записью через клуб, иначе тренер.
+   */
   readonly owner: TrainingOwner;
   readonly partner: EnrollPartner | null;
 }
 
-/** Вторая сторона: у группы клуба — её тренер, у тренировки тренера — клуб-место. */
+/**
+ * Вторая сторона — не адресат: пишут клубу — тренер тренировки, пишут
+ * тренеру — клуб KTTF, в зале которого она проходит.
+ */
 export function enrollPartner(
-  training: Pick<TrainingView, 'author' | 'club' | 'coach'>,
+  target: TrainingOwner,
+  training: Pick<TrainingView, 'club' | 'coach'>,
 ): EnrollPartner | null {
-  if (training.author === 'CLUB') {
+  if (target.kind === 'CLUB') {
     return training.coach === null ? null : { kind: 'COACH', id: training.coach.id };
   }
 
@@ -96,16 +106,16 @@ export function enrollMessage(
 export function enrollAction(
   training: Pick<
     TrainingView,
-    'author' | 'club' | 'coach' | 'title' | 'schedule' | 'place' | 'venue'
+    'author' | 'booking' | 'club' | 'coach' | 'title' | 'schedule' | 'place' | 'venue'
   >,
   t: T,
 ): EnrollAction | null {
-  const owner = trainingOwner(training);
+  const owner = trainingBookingTarget(training);
 
   if (owner === null) return null;
 
   const contacts = ownerContacts(owner);
-  const partner = enrollPartner(training);
+  const partner = enrollPartner(owner, training);
 
   if (contacts.whatsapp !== null) {
     return {
@@ -134,10 +144,10 @@ export function enrollAction(
 
 /**
  * Нажатие считается обеим сторонам (решение владельца от 21.10.2026):
- * владельцу — обычным обращением по каналу, второй стороне — отдельной
- * строкой. Тренеру группы клуба — «записи в группы клуба» (`CLUB_GROUP`),
- * клубу, в зале которого тренер проводит своё, — «записи к тренерам в
- * зале» (`COACH_TRAINING`). В прямые обращения второй стороны они не идут:
+ * адресату — обычным обращением по каналу, второй стороне — отдельной
+ * строкой. Пишут клубу — тренеру «записи через клуб» (`CLUB_GROUP`); пишут
+ * тренеру в зале клуба KTTF — клубу «записи к тренерам в зале»
+ * (`COACH_TRAINING`). В прямые обращения второй стороны они не идут:
  * писали не ей.
  */
 export function trackEnroll(action: Pick<EnrollAction, 'kind' | 'owner' | 'partner'>): void {

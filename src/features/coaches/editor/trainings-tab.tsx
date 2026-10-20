@@ -3,6 +3,7 @@ import {
   coachLimits,
   type CoachTrainingInput,
   type CoachView,
+  type TrainingBooking,
   type TrainingPlace,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
@@ -25,6 +26,7 @@ import { LINK_KEYS_FOR_COACH, TRAINING_PLACE_KEYS } from '../labels';
 import { LinkStatus, LinkedTrainings } from '../link-requests';
 import { coachKeys } from '../queries';
 import {
+  canBookViaClub,
   coachTrainingRowsOf,
   emptyCoachTrainingRow,
   toCoachTrainingInputs,
@@ -202,7 +204,8 @@ function PlaceFields({
         label={t('coach.editor.place')}
         value={row.place}
         onChange={(event) => {
-          onPatch({ place: event.target.value as TrainingPlace, link: 'NONE' });
+          // Другое место — запись снова у тренера: «через клуб» только в клубе KTTF.
+          onPatch({ place: event.target.value as TrainingPlace, link: 'NONE', booking: 'COACH' });
         }}
       >
         {TRAINING_PLACES.map((place) => (
@@ -218,7 +221,11 @@ function PlaceFields({
             aria-label={t('coach.editor.place')}
             value={row.mode}
             onChange={(event) => {
-              onPatch({ mode: event.target.value as ClubPlaceMode, link: 'NONE' });
+              onPatch({
+                mode: event.target.value as ClubPlaceMode,
+                link: 'NONE',
+                booking: 'COACH',
+              });
             }}
           >
             <FormControlLabel
@@ -245,12 +252,43 @@ function PlaceFields({
                     clubId: club?.id ?? null,
                     clubName: club?.name ?? '',
                     link: 'NONE',
+                    ...(club === null ? { booking: 'COACH' as const } : {}),
                   });
                 }}
               />
               <Typography variant="body2" color="text.secondary">
                 {t('training.editor.clubHint')}
               </Typography>
+              {canBookViaClub(row) && (
+                // Кто записывает и принимает оплату — решение владельца от
+                // 21.10.2026: в зале клуба тренер может работать через клуб.
+                <Box data-training-booking>
+                  <Typography id={`${row.key}-booking`} variant="body2" sx={{ fontWeight: 600 }}>
+                    {t('training.editor.booking')}
+                  </Typography>
+                  <RadioGroup
+                    row
+                    aria-labelledby={`${row.key}-booking`}
+                    value={row.booking}
+                    onChange={(event) => {
+                      onPatch({ booking: event.target.value as TrainingBooking });
+                    }}
+                  >
+                    <FormControlLabel
+                      value="COACH"
+                      control={<Radio size="small" />}
+                      label={t('training.editor.bookingCoach')}
+                      sx={{ minHeight: 44 }}
+                    />
+                    <FormControlLabel
+                      value="CLUB"
+                      control={<Radio size="small" />}
+                      label={t('training.editor.bookingClub')}
+                      sx={{ minHeight: 44 }}
+                    />
+                  </RadioGroup>
+                </Box>
+              )}
             </>
           ) : (
             <Box

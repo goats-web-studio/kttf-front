@@ -1867,6 +1867,9 @@ export const kk: Record<MessageKey, string> = {
   'training.editor.noClub': 'Клуб табылмады — «Басқа зал» таңдаңыз',
   'training.editor.clubHint':
     'Клуб сіздің онда жаттықтыратыныңызды растайды. Оған дейін жаттығу жарияланбайды.',
+  'training.editor.booking': 'Кім жазады және төлем қабылдайды',
+  'training.editor.bookingCoach': 'Өзім',
+  'training.editor.bookingClub': 'Клуб',
   'training.editor.venueName': 'Зал атауы',
   'training.editor.venueAddress': 'Мекенжайы',
   'training.editor.coach': 'Жаттықтырушы',
@@ -1886,7 +1889,7 @@ export const kk: Record<MessageKey, string> = {
   'training.detail.enrollsCoach': 'Жаттықтырушы {coach} жазады',
   'training.detail.notPublic': 'Жария көрсетілмейді',
   'manage.stats.coachTraining': 'Залдағы жаттықтырушыларға жазылу',
-  'manage.stats.clubGroup': 'Клуб топтарына жазылу',
+  'manage.stats.clubGroup': 'Клуб арқылы жазылу',
   'training.enroll': 'Жазылу',
   'training.details': 'Толығырақ',
   'training.enroll.message':

@@ -5,6 +5,7 @@ import {
   type CoachTrainingInput,
   type PriceUnit,
   type TrainingAudience,
+  type TrainingBooking,
   type TrainingCoachRef,
   type TrainingKind,
   type TrainingLink,
@@ -112,6 +113,16 @@ export interface CoachTrainingRow extends TrainingRowBase {
   readonly clubName: string;
   readonly venueName: string;
   readonly venueAddress: string;
+  /**
+   * Кто записывает и принимает оплату. «Клуб» — только у клуба KTTF; в
+   * зале вне KTTF, на выезде и онлайн — всегда тренер.
+   */
+  readonly booking: TrainingBooking;
+}
+
+/** Можно ли выбрать «записывает клуб»: место «в клубе» и выбран клуб KTTF. */
+export function canBookViaClub(row: Pick<CoachTrainingRow, 'place' | 'mode' | 'clubId'>): boolean {
+  return row.place === 'CLUB' && row.mode === 'club' && row.clubId !== null;
 }
 
 /**
@@ -130,6 +141,7 @@ export function coachTrainingRowsOf(trainings: readonly TrainingView[]): CoachTr
       clubName: training.club?.name ?? '',
       venueName: training.venue?.name ?? '',
       venueAddress: training.venue?.address ?? '',
+      booking: training.booking,
     }));
 }
 
@@ -142,6 +154,7 @@ export function emptyCoachTrainingRow(): CoachTrainingRow {
     clubName: '',
     venueName: '',
     venueAddress: '',
+    booking: 'COACH',
   };
 }
 
@@ -165,7 +178,13 @@ export function toCoachTrainingInputs(
               venueAddress: textOrNull(row.venueAddress),
             };
 
-    return { ...baseInput(row), place: row.place, ...place };
+    return {
+      ...baseInput(row),
+      place: row.place,
+      ...place,
+      // Запись через клуб — только в клубе KTTF; иначе записывает тренер.
+      booking: canBookViaClub(row) ? row.booking : 'COACH',
+    };
   });
 
   return setCoachTrainingsSchema.safeParse({ trainings }).success ? trainings : null;

@@ -228,9 +228,14 @@ export function TrainingRow({
           </Typography>
         )}
         {!fromClub && context === 'club' && (
-          // Своя тренировка тренера в зале клуба: пишут тренеру.
-          <Typography variant="body2" color="text.secondary" data-training-enroll="coach">
-            {t('training.via.coach')}
+          // Своя тренировка тренера в зале клуба: пишут тренеру или, если
+          // он так выбрал, клубу (решение владельца от 21.10.2026).
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            data-training-enroll={training.booking === 'CLUB' ? 'club' : 'coach'}
+          >
+            {t(training.booking === 'CLUB' ? 'training.via.club' : 'training.via.coach')}
           </Typography>
         )}
         <Typography
