@@ -55,6 +55,11 @@ function answer(url: string): Response {
     return reply(pageOf([TOURNAMENT]));
   }
 
+  // «Тренировки в клубе» — ADR-059.
+  if (/\/clubs\/[^/?]+\/trainings$/.test(url)) {
+    return reply([]);
+  }
+
   if (/\/clubs\/[^/?]+\/members$/.test(url)) {
     return reply([OWNER]);
   }

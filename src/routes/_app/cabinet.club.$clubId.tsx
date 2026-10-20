@@ -31,6 +31,8 @@ import {
   type ClubTournamentGroup,
 } from '@/features/clubs/club-tournaments';
 import MediaEditor from '@/features/club-content/media-editor';
+import ClubTrainingsPanel from '@/features/coaches/club/club-trainings-panel';
+import { clubTrainingsManageQuery } from '@/features/coaches/queries';
 import PostsEditor from '@/features/club-content/posts-editor';
 import FreshnessPanel from '@/features/clubs/page-editor/freshness-panel';
 import HallEditor from '@/features/clubs/page-editor/hall-editor';
@@ -54,6 +56,7 @@ import { tournamentsQuery } from '@/features/tournaments/queries';
 const MANAGE_TABS = [
   'tournaments',
   'page',
+  'trainings',
   'posts',
   'media',
   'stats',
@@ -66,6 +69,7 @@ type ManageTab = (typeof MANAGE_TABS)[number];
 const MANAGE_TAB_LABELS: Readonly<Record<ManageTab, MessageKey>> = {
   tournaments: 'club.tournaments.title',
   page: 'manage.page.title',
+  trainings: 'nav.trainings',
   posts: 'manage.posts.title',
   media: 'manage.media.title',
   stats: 'manage.stats.title',
@@ -144,6 +148,8 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
   const id = useId();
   const navigate = Route.useNavigate();
   const tab = Route.useSearch().tab ?? 'tournaments';
+  // Запросы тренеров ждут ответа клуба — число на вкладке (ADR-059).
+  const trainingRequests = useQuery(clubTrainingsManageQuery(club.id)).data?.requests.length ?? 0;
 
   return (
     <>
@@ -190,7 +196,11 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
           <Tab
             key={value}
             value={value}
-            label={t(MANAGE_TAB_LABELS[value])}
+            label={
+              value === 'trainings' && trainingRequests > 0
+                ? `${t(MANAGE_TAB_LABELS[value])} (${String(trainingRequests)})`
+                : t(MANAGE_TAB_LABELS[value])
+            }
             id={`${id}-tab-${value}`}
             aria-controls={`${id}-panel`}
           />
@@ -208,6 +218,7 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
       >
         {tab === 'tournaments' && <ClubTournaments club={club} />}
         {tab === 'page' && <ClubPage club={club} />}
+        {tab === 'trainings' && <ClubTrainingsPanel clubId={club.id} />}
         {tab === 'posts' && <PostsEditor club={club} />}
         {tab === 'media' && <MediaEditor club={club} />}
         {tab === 'stats' && <StatsPanel club={club} />}

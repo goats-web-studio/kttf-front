@@ -64,6 +64,10 @@ function answer(url: string, init: RequestInit | undefined): Response {
       name: 'Организаторова Ольга',
     });
   }
+  // Число запросов тренеров на вкладке «Тренировки» (ADR-059).
+  if (/\/clubs\/[^/]+\/trainings\/manage$/.test(url)) {
+    return reply({ trainings: [], requests: [], coachTrainings: [] });
+  }
   if (/\/clubs\/[^/?]+$/.test(url)) return reply(CLUB);
   if (url.includes('/clubs')) return reply(pageOf([CLUB]));
   if (url.includes('/tournaments')) return reply(pageOf([]));

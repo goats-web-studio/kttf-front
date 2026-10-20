@@ -22,6 +22,7 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
 import ClubGallery from '@/features/club-content/club-gallery';
 import ClubPosts from '@/features/club-content/club-posts';
+import ClubTrainingsSection from '@/features/coaches/club/club-trainings-section';
 import Amenities from '@/features/clubs/amenities';
 import { ClubNumbers, ClubResults } from '@/features/clubs/club-live';
 import ClubMark from '@/features/clubs/club-mark';
@@ -107,6 +108,9 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
         </Box>
       </Section>
     );
+  // Тренировки в клубе — рядом с ценами: и то и другое отвечает «сколько
+  // стоит и когда приходить» (ADR-059).
+  const trainings = <ClubTrainingsSection clubId={club.id} />;
   const posts = <ClubPosts clubId={club.id} />;
   const gallery = <ClubGallery clubId={club.id} />;
   const results = <ClubResults clubId={club.id} />;
@@ -211,6 +215,7 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
           <Box>
             {tournaments}
             {prices}
+            {trainings}
             {posts}
             {results}
             {gallery}
@@ -233,6 +238,7 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
         <Box>
           {tournaments}
           {prices}
+          {trainings}
           {posts}
           {hours !== null && <Box sx={{ mt: 4 }}>{hours}</Box>}
           {gallery}
