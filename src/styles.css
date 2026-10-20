@@ -343,6 +343,12 @@ body {
   outline-color: var(--night-red);
 }
 
+/* У поля MUI фокус показывает его собственная рамка; обводка самого ввода
+ * внутри неё рисовала вторую рамку. */
+.MuiInputBase-input:focus-visible {
+  outline: none;
+}
+
 /* Анимируется только то, что отвечает на действие человека. Кто просил
  * покоя — получает покой. */
 @media (prefers-reduced-motion: reduce) {
