@@ -95,6 +95,9 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
   if (path.startsWith('/auth/me')) return reply(me);
   if (/^\/trainings\/[^/]+\/(confirm|decline)$/.test(path)) return reply(undefined, 204);
+  if (path === `/trainings/${KIDS_GROUP.id}`) {
+    return reply({ ...KIDS_GROUP, booking: 'CLUB', more: [] });
+  }
   if (path === `/trainings/${CLUB_EVENING.id}`) {
     return reply({ ...CLUB_EVENING, description: 'Разминка.\nИгра на счёт.', more: [CLUB_INVITE] });
   }
@@ -584,10 +587,54 @@ describe('владелец тренировки и «Записаться»', ()
     expect(screen.getByText(CLUB_INVITE.title)).toBeDefined();
   });
 
+  it('тренер записывает через клуб: «запись через клуб» и «Записывает клуб»', async () => {
+    renderAt(`/trainings/${KIDS_GROUP.id}`);
+
+    const owner = await waitFor(() => element('[data-training-owner="COACH"]'));
+    expect(owner.textContent).toContain(`· ${ru['training.via.club'].toLowerCase()}`);
+    expect(element('[data-training-enrolls="CLUB"]').textContent).toBe(
+      `Записывает клуб ${CLUB.name}`,
+    );
+    const primary = element('[data-training-contacts]').querySelector('.MuiButton-contained');
+    expect(primary?.getAttribute('href')).toContain('https://wa.me/77770000000?text=');
+  });
+
   it('неизвестная тренировка — «тренировка не найдена»', async () => {
     renderAt('/trainings/00000000-0000-4000-8000-00000000ffff');
 
     expect(await screen.findByText(ru['training.notFound'])).toBeDefined();
+  });
+});
+
+describe('кто записывает — в редакторе тренера', () => {
+  it('переключатель только у клуба KTTF; «Клуб» уходит в теле, другой зал его сбрасывает', async () => {
+    renderAt('/cabinet/coach?tab=trainings', userWithCoach(COACH));
+
+    await screen.findByRole('button', { name: ru['manage.page.save'] });
+    // Из трёх своих тренировок клуб KTTF выбран только у детской группы.
+    expect(document.querySelectorAll('[data-training-booking]')).toHaveLength(1);
+
+    const booking = element('[data-training-booking]');
+    fireEvent.click(
+      within(booking).getByRole('radio', { name: ru['training.editor.bookingClub'] }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: ru['manage.page.save'] }));
+
+    await waitFor(() => {
+      const body = requests('PUT', `/coaches/${COACH.id}/trainings`)[0]?.body as {
+        trainings: { booking?: string }[];
+      };
+      expect(body.trainings.map((training) => training.booking)).toEqual([
+        'CLUB',
+        'COACH',
+        'COACH',
+      ]);
+    });
+
+    const kids = element('[data-training-row]');
+    fireEvent.click(within(kids).getByRole('radio', { name: ru['training.editor.modeVenue'] }));
+
+    expect(document.querySelectorAll('[data-training-booking]')).toHaveLength(0);
   });
 });
 

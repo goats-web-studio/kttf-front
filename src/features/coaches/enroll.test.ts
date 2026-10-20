@@ -147,3 +147,29 @@ describe('метка связи', () => {
     expect(linkStateKey({ author: 'COACH', link: 'NONE' })).toBeNull();
   });
 });
+
+describe('адресат по booking', () => {
+  const viaClub = { ...KIDS_GROUP, booking: 'CLUB' as const };
+
+  it('тренер записывает через клуб — пишут клубу, автор по-прежнему тренер', () => {
+    const action = enrollAction(viaClub, t);
+
+    expect(action?.owner.kind).toBe('CLUB');
+    expect(action?.href.startsWith('https://wa.me/77770000000?text=')).toBe(true);
+    expect(splitByOwner([viaClub]).coach).toHaveLength(1);
+  });
+
+  it('через клуб: клубу — канал, тренеру — CLUB_GROUP', () => {
+    const action = enrollAction(viaClub, t);
+    if (action === null) throw new Error('нет действия');
+
+    trackEnroll(action);
+
+    expect(trackClubContact.mock.calls).toEqual([[CLUB_REF.id, 'WHATSAPP']]);
+    expect(trackCoachContact.mock.calls).toEqual([[COACH_REF.id, 'CLUB_GROUP']]);
+  });
+
+  it('«через клуб» без клуба KTTF не действует — пишут тренеру', () => {
+    expect(enrollAction({ ...VENUE_TRAINING, booking: 'CLUB' }, t)?.owner.kind).toBe('COACH');
+  });
+});

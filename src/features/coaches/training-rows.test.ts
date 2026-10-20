@@ -14,6 +14,7 @@ import {
 
 import { placeText } from './labels';
 import {
+  canBookViaClub,
   clubTrainingRowsOf,
   coachTrainingRowsOf,
   emptyClubTrainingRow,
@@ -117,6 +118,7 @@ describe('тренировки тренера — в PUT /coaches/:id/trainings'
       clubId: null,
       venueName: null,
       venueAddress: null,
+      booking: 'COACH',
     });
     expect(toCoachTrainingInputs([row])?.[0]).toMatchObject({ priceKzt: null, unit: 'NONE' });
   });
@@ -171,5 +173,36 @@ describe('место строкой и клуб в адресе', () => {
       clubId: CLUB_REF.id,
     });
     expect(trainingsSearchSchema.parse({ clubId: 'abc' }).clubId).toBeUndefined();
+  });
+});
+
+describe('кто записывает — тренер или клуб', () => {
+  it('«через клуб» уходит только у тренировки в клубе KTTF', () => {
+    const [row] = coachTrainingRowsOf([KIDS_GROUP]);
+    if (row === undefined) throw new Error('нет строки');
+
+    expect(toCoachTrainingInputs([{ ...row, booking: 'CLUB' }])?.[0]?.booking).toBe('CLUB');
+    expect(toCoachTrainingInputs([row])?.[0]?.booking).toBe('COACH');
+  });
+
+  it('зал вне KTTF, выезд и онлайн — всегда тренер, даже если в форме остался «клуб»', () => {
+    const [club] = coachTrainingRowsOf([KIDS_GROUP]);
+    const [venue] = coachTrainingRowsOf([VENUE_TRAINING]);
+    if (club === undefined || venue === undefined) throw new Error('нет строки');
+
+    expect(toCoachTrainingInputs([{ ...venue, booking: 'CLUB' }])?.[0]?.booking).toBe('COACH');
+    expect(
+      toCoachTrainingInputs([{ ...club, place: 'VISIT', booking: 'CLUB' }])?.[0]?.booking,
+    ).toBe('COACH');
+  });
+
+  it('переключатель — только при выбранном клубе KTTF', () => {
+    const [club] = coachTrainingRowsOf([KIDS_GROUP]);
+    if (club === undefined) throw new Error('нет строки');
+
+    expect(canBookViaClub(club)).toBe(true);
+    expect(canBookViaClub({ ...club, clubId: null })).toBe(false);
+    expect(canBookViaClub({ ...club, mode: 'venue' })).toBe(false);
+    expect(canBookViaClub({ ...club, place: 'ONLINE' })).toBe(false);
   });
 });
