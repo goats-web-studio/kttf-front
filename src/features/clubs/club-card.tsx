@@ -63,6 +63,8 @@ export default function ClubCard({ club }: { readonly club: ClubListItemView }):
             </Tag>
           )}
           {club.amenities.includes('KIDS') && <Tag>{t('club.amenity.KIDS')}</Tag>}
+          {/* Опубликованная тренировка для детей или подростков (ADR-059, T2.1). */}
+          {club.kidsTrainings && <Tag>{t('clubs.card.kidsTrainings')}</Tag>}
         </Box>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           {club.address === null
@@ -72,6 +74,14 @@ export default function ClubCard({ club }: { readonly club: ClubListItemView }):
           <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
             {fill(t('club.tables'), { count: String(club.tableCount) })}
           </Box>
+          {club.coachesCount > 0 && (
+            <>
+              {' · '}
+              <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                {fill(t('clubs.card.coaches'), { count: String(club.coachesCount) })}
+              </Box>
+            </>
+          )}
         </Typography>
         <Box
           sx={{

@@ -64,6 +64,16 @@ const searchSchema = z.object({
   amenities: commaList(isAmenity),
   /** Только клубы с ближайшим турниром. */
   upcoming: z.literal(true).optional().catch(undefined),
+  /**
+   * Только клубы с детскими тренировками (ADR-059, T2.1). По ссылке
+   * `RouterLink` значение приходит строкой «true» — принимаются обе формы.
+   */
+  kids: z
+    .preprocess(
+      (value) => (value === true || value === 'true' ? true : undefined),
+      z.literal(true).optional(),
+    )
+    .catch(undefined),
   q: searchText,
   page: searchPage,
 });
@@ -163,6 +173,15 @@ function ClubsPage(): ReactNode {
       },
     });
   }
+  if (search.kids === true) {
+    active.push({
+      key: 'kids',
+      label: t('clubs.card.kidsTrainings'),
+      onRemove: () => {
+        filter({ kids: undefined });
+      },
+    });
+  }
   if (search.upcoming === true) {
     active.push({
       key: 'upcoming',
@@ -179,7 +198,11 @@ function ClubsPage(): ReactNode {
 
   const pages =
     clubs.data === undefined ? 1 : Math.max(1, Math.ceil(clubs.data.total / clubs.data.limit));
-  const extraCount = cities.length + amenities.length + (search.upcoming === true ? 1 : 0);
+  const extraCount =
+    cities.length +
+    amenities.length +
+    (search.upcoming === true ? 1 : 0) +
+    (search.kids === true ? 1 : 0);
 
   const chips = (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -190,6 +213,16 @@ function ClubsPage(): ReactNode {
         aria-pressed={search.upcoming === true}
         onClick={() => {
           filter({ upcoming: search.upcoming === true ? undefined : true });
+        }}
+        sx={{ height: 40 }}
+      />
+      <Chip
+        label={t('clubs.card.kidsTrainings')}
+        clickable
+        variant={search.kids === true ? 'filled' : 'outlined'}
+        aria-pressed={search.kids === true}
+        onClick={() => {
+          filter({ kids: search.kids === true ? undefined : true });
         }}
         sx={{ height: 40 }}
       />
@@ -330,5 +363,6 @@ function toQuery(search: Search, page: number): ListClubsRequest {
     ...(search.q === undefined ? {} : { search: search.q }),
     ...(amenities.length === 0 ? {} : { amenities }),
     ...(search.upcoming === true ? { upcoming: true } : {}),
+    ...(search.kids === true ? { kids: true } : {}),
   };
 }
