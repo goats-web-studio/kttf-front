@@ -113,6 +113,10 @@ function answer(url: string, init: RequestInit | undefined): Response {
   if (/^\/clubs\/[^/]+\/trainings$/.test(path)) {
     return method === 'PUT' ? reply(CLUB_MANAGE) : reply([CLUB_EVENING]);
   }
+  if (/^\/clubs\/[^/]+\/staff\/manage$/.test(path)) {
+    return reply({ active: [], invited: [], requests: [] });
+  }
+  if (/^\/clubs\/[^/]+\/staff$/.test(path)) return reply([]);
   if (/^\/clubs\/[^/]+\/members$/.test(path)) return reply([]);
   if (/^\/clubs\/[^/]+\/posts/.test(path)) return reply(pageOf([]));
   if (/^\/clubs\/[^/]+\/media/.test(path)) return reply([]);
@@ -120,6 +124,16 @@ function answer(url: string, init: RequestInit | undefined): Response {
     return reply({ matchesRecent: 0, activePlayersRecent: 0, tournamentsHeld: 0, podiums: [] });
   }
   if (/^\/coaches\/[^/]+\/events$/.test(path)) return reply(undefined, 204);
+  if (/^\/coaches\/[^/]+\/students$/.test(path)) {
+    return reply({
+      current: 0,
+      younger: 0,
+      former: 0,
+      top: [],
+      medals: { total: 0, recent: [] },
+      growth: [],
+    });
+  }
   if (path.startsWith('/coaches/by-slug/')) {
     return path.endsWith(`/${COACH_SLUG}`)
       ? reply(coach)

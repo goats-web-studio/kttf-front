@@ -55,6 +55,11 @@ function answer(url: string): Response {
     return reply(pageOf([TOURNAMENT]));
   }
 
+  // «Тренерский штаб» клуба — T2.1, ADR-059.
+  if (/\/clubs\/[^/?]+\/staff$/.test(url)) {
+    return reply([]);
+  }
+
   // «Тренировки в клубе» — ADR-059.
   if (/\/clubs\/[^/?]+\/trainings$/.test(url)) {
     return reply([]);
