@@ -28,7 +28,7 @@
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource-variable/oswald": "5.3.0",
     "@hookform/resolvers": "^5.9.1",
-    "@kttf/shared": "github:goats-web-studio/kttf-shared#610de5028470178ba5febbda26a1b015b6932b73",
+    "@kttf/shared": "github:goats-web-studio/kttf-shared#345db701068a9f5b3c8cf4284433506155095817",
     "@mui/material": "^9.4.0",
     "@mui/x-date-pickers": "^9.14.0",
     "@tanstack/react-query": "^5.102.8",
