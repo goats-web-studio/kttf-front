@@ -124,6 +124,9 @@ function answer(url: string, init: RequestInit | undefined): Response {
     return reply({ matchesRecent: 0, activePlayersRecent: 0, tournamentsHeld: 0, podiums: [] });
   }
   if (/^\/coaches\/[^/]+\/events$/.test(path)) return reply(undefined, 204);
+  // Новости и галерея тренера (T2.2) — пусто: блоки не выводятся.
+  if (/^\/coaches\/[^/]+\/posts/.test(path)) return reply(pageOf([]));
+  if (/^\/coaches\/[^/]+\/media/.test(path)) return reply([]);
   if (/^\/coaches\/[^/]+\/students$/.test(path)) {
     return reply({
       current: 0,

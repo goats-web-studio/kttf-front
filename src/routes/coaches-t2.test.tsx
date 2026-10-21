@@ -105,6 +105,9 @@ function answer(url: string, init: RequestInit | undefined): Response {
   if (/^\/coaches\/[^/]+\/students\/.+/.test(path)) return reply(undefined, 204);
   if (/^\/coaches\/[^/]+\/students$/.test(path)) return reply(students);
   if (/^\/coaches\/[^/]+\/(events|clubs)$/.test(path)) return reply(undefined, 204);
+  // Новости и галерея тренера (T2.2) — пусто: блоки не выводятся.
+  if (/^\/coaches\/[^/]+\/posts/.test(path)) return reply(pageOf([]));
+  if (/^\/coaches\/[^/]+\/media/.test(path)) return reply([]);
   if (/^\/coaches\/[^/?]+$/.test(path)) return reply(coach);
   if (path.startsWith('/coaches')) return reply(pageOf([COACH_LIST_ITEM]));
   if (/^\/clubs\/[^/]+\/staff\/manage$/.test(path)) {
