@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import type { PlayerStatsPeriod } from '@kttf/shared/types';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { isMissingResource } from '@/common/api';
@@ -16,12 +16,12 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { usePlaceName } from '@/features/places/place-name';
 import { useSessionStore } from '@/features/auth/session-store';
-import Awards from '@/features/players/awards';
 import BestWins from '@/features/players/best-wins';
 import HeadToHead from '@/features/players/head-to-head';
 import PlayerResults from '@/features/players/player-results';
 import { playerName } from '@/features/players/player-name';
 import PlayerSummary from '@/features/players/player-summary';
+import ProfileFacts from '@/features/players/profile-facts';
 import ProfileHeader from '@/features/players/profile-header';
 import {
   playerQuery,
@@ -35,11 +35,13 @@ export const Route = createFileRoute('/_public/players/$playerId')({
 });
 
 /**
- * Публичный профиль игрока — ТЗ 9.3, в структуре RTTF (ADR-048).
+ * Публичный профиль игрока — ТЗ 9.3, содержание RTTF (ADR-048), раскладка
+ * своя (ADR-060).
  *
- * Сверху вниз, как у RTTF: шапка с анкетой, «в сети» и рейтингом, кривая
- * рейтинга, общая статистика, лучшие победы, награды и результаты по
- * турнирам (ADR-048, ADR-050). Дизайн свой — карточки «Спорт-модерн».
+ * Сначала — кто он: шапка-визитка с плашкой рейтинга и «Формой», под ней
+ * три карточки — чем играет, достижения, об игроке. Потом — «История игры»:
+ * кривая рейтинга, статистика за период, лучшие победы и результаты по
+ * турнирам, свёрнутые до итога (ADR-048, ADR-050).
  *
  * Открыт без входа: результаты турниров — спортивный факт, а не персональные
  * данные. Свой профиль отличается только кнопками правки и кабинета: «Мой
@@ -76,10 +78,21 @@ function PlayerPage(): ReactNode {
     // Пока грузится другой период, видны прежние числа, а не скелетон.
     placeholderData: keepPreviousData,
   });
+  // Место, максимум, медали и первый турнир — за всё время, от периода
+  // статистики не зависят. При периоде «Всё время» это тот же запрос.
+  const overall = useQuery({ ...playerSummaryQuery(playerId, 'ALL'), enabled: isKnownId });
   const clubs = useQuery(clubDirectoryQuery);
 
   const [opponentId, setOpponentId] = useState<string | null>(null);
   const isOwn = user?.playerId === playerId;
+  const viewerId = user?.playerId ?? null;
+
+  useEffect(() => {
+    // Личный счёт открыли из шапки или из результатов — показать его.
+    // Переход без плавной прокрутки: движение здесь ничего не объясняет.
+    if (opponentId === null) return;
+    document.getElementById(HEAD_TO_HEAD_ID)?.scrollIntoView({ block: 'start' });
+  }, [opponentId]);
 
   if (!isKnownId || isMissingResource(player.error)) {
     return (
@@ -103,21 +116,29 @@ function PlayerPage(): ReactNode {
           <ProfileHeader
             player={player.data}
             cityName={placeName(player.data.city)}
-            clubName={
-              player.data.clubId === null
-                ? null
-                : (clubs.data?.get(player.data.clubId)?.name ?? null)
-            }
-            // Максимум — за всё время и от периода не зависит: берётся из
-            // любой пришедшей сводки.
-            maxRating={summary.data?.maxRating ?? null}
+            club={clubOf(player.data.clubId, clubs.data)}
+            summary={overall.data}
             isOwn={isOwn}
+            onCompare={
+              viewerId === null || isOwn
+                ? undefined
+                : () => {
+                    setOpponentId(viewerId);
+                  }
+            }
           />
         )}
       </QueryState>
 
       {player.data !== undefined && (
-        <Stack spacing={3} sx={{ mt: 3 }}>
+        <Box sx={{ mt: 2 }}>
+          <ProfileFacts player={player.data} summary={overall.data} />
+        </Box>
+      )}
+
+      {player.data !== undefined && (
+        <Stack spacing={3} sx={{ mt: { xs: 5, md: 6 } }}>
+          <Typography variant="h2">{t('profile.history.title')}</Typography>
           <QueryState
             isPending={history.isPending}
             error={history.error}
@@ -129,9 +150,9 @@ function PlayerPage(): ReactNode {
                 history={history.data}
                 // Максимум — за всё время, от периода сводки не зависит.
                 peak={
-                  summary.data === undefined
+                  overall.data === undefined
                     ? null
-                    : { rating: summary.data.maxRating, at: summary.data.maxRatingAt }
+                    : { rating: overall.data.maxRating, at: overall.data.maxRatingAt }
                 }
               />
             )}
@@ -139,18 +160,19 @@ function PlayerPage(): ReactNode {
 
           <PlayerSummary summary={summary} period={period} onPeriod={setPeriod} />
           <BestWins playerId={playerId} />
-          {summary.data !== undefined && <Awards awards={summary.data.awards} />}
 
           {/* Личный счёт — над результатами: это ответ на только что
               заданный вопрос, внизу страницы его пришлось бы искать. */}
           {opponentId !== null && (
-            <HeadToHead
-              playerId={playerId}
-              opponentId={opponentId}
-              onClose={() => {
-                setOpponentId(null);
-              }}
-            />
+            <Box id={HEAD_TO_HEAD_ID} sx={{ scrollMarginTop: 80 }}>
+              <HeadToHead
+                playerId={playerId}
+                opponentId={opponentId}
+                onClose={() => {
+                  setOpponentId(null);
+                }}
+              />
+            </Box>
           )}
 
           <PlayerResults
@@ -162,6 +184,18 @@ function PlayerPage(): ReactNode {
       )}
     </Container>
   );
+}
+
+const HEAD_TO_HEAD_ID = 'head-to-head';
+
+/** Клуб игрока ссылкой — имя из справочника клубов, пока он не пришёл — без клуба. */
+function clubOf(
+  clubId: string | null,
+  directory: ReadonlyMap<string, { readonly name: string }> | undefined,
+): { readonly id: string; readonly name: string } | null {
+  const name = clubId === null ? undefined : directory?.get(clubId)?.name;
+
+  return clubId === null || name === undefined ? null : { id: clubId, name };
 }
 
 /** Шапка профиля на время загрузки: имя, строка о человеке, рейтинг. */

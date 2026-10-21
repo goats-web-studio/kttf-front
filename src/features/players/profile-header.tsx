@@ -1,62 +1,65 @@
-import type { PlayerProfileView } from '@kttf/shared/types';
+import type { PlayerProfileView, PlayerSummaryView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { Building2, Cake, MapPin, Pencil, Settings, type LucideIcon } from 'lucide-react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import {
+  BadgeCheck,
+  Building2,
+  Cake,
+  Hand,
+  MapPin,
+  Pencil,
+  Settings,
+  Swords,
+  type LucideIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, formatCount, useLocale, useT, type MessageKey } from '@/common/i18n';
+import DeltaPill from '@/common/ui/delta-pill';
 import RatingValue from '@/common/ui/rating-value';
 
-import { sinceYear, tenureYears } from '@/features/coaches/staff/staff-model';
-
-import { equipmentValue as equipment } from './equipment-value';
-import { gripLabel, handLabel } from './player-labels';
+import FormStrip from './form-strip';
 import { playerName } from './player-name';
 import ProfilePhoto from './profile-photo';
+import { playerTournamentsQuery } from './queries';
 
 interface ProfileHeaderProps {
   readonly player: PlayerProfileView;
-  readonly clubName: string | null;
   readonly cityName: string;
-  /** Максимальный рейтинг из сводки; пока она не пришла — не показывается. */
-  readonly maxRating: string | null;
+  readonly club: { readonly id: string; readonly name: string } | null;
+  /** Сводка за всё время: место и максимум. Пока не пришла — их нет. */
+  readonly summary: PlayerSummaryView | undefined;
   /** Свой профиль: кнопки правки и кабинета. */
   readonly isOwn: boolean;
+  /** «Сравнить со мной» — у вошедшего игрока на чужом профиле. */
+  readonly onCompare?: (() => void) | undefined;
 }
 
 /**
- * Шапка профиля в структуре RTTF — ADR-048.
+ * Шапка профиля — визитка игрока (ADR-048, ADR-060).
  *
- * Слева человек: фото, имя, город, клуб, год рождения и анкета — рука,
- * хват, основание, накладки, «о себе». Справа рейтинг крупно и максимальный:
- * ради этого числа страницу и открывают. Анкета показывается только
- * заполненная — десять строк «не указано» это шум.
+ * Слева человек: фото, имя, «в сети», город, клуб, год рождения и метки —
+ * рука, хват, «Тренер KTTF». Под ними «Форма» — последние встречи точками.
+ * Справа тёмная плашка рейтинга — главный акцент страницы: число, место в
+ * рейтинге, максимум и изменение за последний турнир. Анкета списком
+ * «подпись — значение» ушла: инвентарь, тренер и «о себе» — в карточках
+ * под шапкой, где их видно сразу и крупно.
  */
 export default function ProfileHeader({
   player,
-  clubName,
   cityName,
-  maxRating,
+  club,
+  summary,
   isOwn,
+  onCompare,
 }: ProfileHeaderProps): ReactNode {
   const t = useT();
-  const locale = useLocale();
-
-  const details: readonly (readonly [MessageKey, ReactNode])[] = [
-    ['player.form.playingHand', handLabel(player.playingHand, t)],
-    ['player.form.grip', gripLabel(player.grip, t)],
-    ['player.form.blade', equipment(player.bladeProduct, player.blade)],
-    ['player.form.rubberForehand', equipment(player.rubberForehandProduct, player.rubberForehand)],
-    ['player.form.rubberBackhand', equipment(player.rubberBackhandProduct, player.rubberBackhand)],
-    ['player.form.coach', coach(player, t)],
-    ['profile.coachHistory', coachHistory(player)],
-    ['player.form.bio', player.bio],
-    ['profile.since', since(player, locale, t)],
-  ];
+  const chips = playerChips(player, t);
 
   return (
     <Paper
@@ -66,140 +69,309 @@ export default function ProfileHeader({
         p: { xs: 2.5, sm: 4 },
         display: 'grid',
         gap: { xs: 3, md: 4 },
-        gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) auto' },
-        alignItems: 'start',
-        backgroundImage: 'radial-gradient(circle at 100% 0%, var(--red-50) 0, transparent 38%)',
+        gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 296px' },
+        alignItems: 'stretch',
+        position: 'relative',
+        overflow: 'hidden',
+        // Фирменный штрих: косая красная полоса от плашки рейтинга.
+        backgroundImage: {
+          md: 'linear-gradient(105deg, transparent 0 67%, var(--red-50) 67% 71%, transparent 71%)',
+        },
       }}
     >
-      <Box sx={{ minWidth: 0 }}>
-        <Stack direction="row" spacing={{ xs: 2, sm: 3 }} sx={{ alignItems: 'center' }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={{ xs: 2, sm: 3 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, minWidth: 0 }}
+      >
+        <Box sx={{ position: 'relative', flexShrink: 0 }}>
           <ProfilePhoto
             lastName={player.lastName}
             firstName={player.firstName}
             photoUrl={player.photoUrl}
           />
-          <Box sx={{ minWidth: 0 }}>
-            <Stack
-              direction="row"
-              useFlexGap
-              spacing={1.5}
-              sx={{ alignItems: 'center', flexWrap: 'wrap' }}
-            >
-              <Typography
-                variant="h1"
-                sx={{ fontSize: { xs: 26, sm: 34 }, lineHeight: { xs: '30px', sm: '40px' } }}
-              >
-                {playerName(player)}
-              </Typography>
-              {player.online && <Online />}
-            </Stack>
-            <Stack
-              direction="row"
-              useFlexGap
-              spacing={2}
-              sx={{ mt: 1, flexWrap: 'wrap', color: 'text.secondary', typography: 'body2' }}
-            >
-              <Meta icon={MapPin}>{cityName}</Meta>
-              {clubName !== null && <Meta icon={Building2}>{clubName}</Meta>}
-              <Meta icon={Cake}>{String(player.birthYear)}</Meta>
-            </Stack>
-          </Box>
-        </Stack>
-
-        <Box
-          component="dl"
-          sx={{
-            mt: 3,
-            mb: 0,
-            display: 'grid',
-            gridTemplateColumns: 'max-content minmax(0, 1fr)',
-            columnGap: 3,
-            rowGap: 0.75,
-            typography: 'body2',
-            '& dt': { color: 'text.secondary' },
-            '& dd': { m: 0, overflowWrap: 'anywhere' },
-          }}
-        >
-          {details.map(([label, value]) =>
-            value === null || value === undefined || value === '' ? null : (
-              <Box key={label} sx={{ display: 'contents' }}>
-                <dt>{t(label)}</dt>
-                <dd>{value}</dd>
-              </Box>
-            ),
-          )}
+          {player.online && <OnlineDot />}
         </Box>
 
-        {isOwn && (
-          // Правка анкеты — в «Настройках», рабочий стол — в кабинете.
-          <Stack direction="row" useFlexGap spacing={1} sx={{ mt: 3, flexWrap: 'wrap' }}>
-            <Button href="/settings/profile" startIcon={<Pencil size={16} aria-hidden />}>
-              {t('profile.edit')}
-            </Button>
-            <Button
-              variant="text"
-              href="/cabinet"
-              startIcon={<Settings size={16} aria-hidden />}
-              sx={{ color: 'text.secondary' }}
+        <Box sx={{ minWidth: 0 }}>
+          <Stack
+            direction="row"
+            useFlexGap
+            spacing={1.5}
+            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+          >
+            <Typography
+              variant="h1"
+              sx={{ fontSize: { xs: 28, sm: 36 }, lineHeight: { xs: '32px', sm: '42px' } }}
             >
-              {t('profile.settings')}
-            </Button>
+              {playerName(player)}
+            </Typography>
+            {player.online && <Online />}
           </Stack>
-        )}
-      </Box>
 
-      {/* Рейтинг — главное число профиля, дисплейный набор (07, 3.5). */}
-      <Box
-        sx={{
-          px: 3,
-          py: 2.5,
-          borderRadius: 4,
-          bgcolor: 'var(--paper-sunken)',
-          textAlign: { md: 'right' },
-          minWidth: { md: 200 },
-        }}
-      >
-        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-          {t('ratings.column.rating')}
-        </Typography>
-        <Typography variant="h1" component="p" sx={{ fontSize: 48, lineHeight: '52px' }}>
-          <RatingValue value={player.rating} />
-        </Typography>
-        {maxRating !== null && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {t('profile.maxRating')} <RatingValue value={maxRating} sx={{ fontWeight: 600 }} />
-          </Typography>
-        )}
-        <Typography variant="body2" color="text.secondary">
-          {t('player.rating.matches')}{' '}
-          <Box component="span" sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-            {player.ratedMatches}
-          </Box>
-          {player.isProvisional && (
-            // Провизорный рейтинг двигается быстрее: сыграно меньше
-            // двадцати рейтинговых встреч (ТЗ 7.1).
-            <> · {t('ratings.provisional')}</>
+          <Stack
+            direction="row"
+            useFlexGap
+            spacing={2}
+            sx={{ mt: 1, flexWrap: 'wrap', color: 'text.secondary', typography: 'body2' }}
+          >
+            <Meta icon={MapPin}>{cityName}</Meta>
+            {club !== null && (
+              <Meta icon={Building2}>
+                <Link href={`/clubs/${club.id}`} color="inherit">
+                  {club.name}
+                </Link>
+              </Meta>
+            )}
+            <Meta icon={Cake}>{String(player.birthYear)}</Meta>
+          </Stack>
+
+          {(chips.length > 0 || player.ownCoachSlug !== null) && (
+            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+              {player.ownCoachSlug !== null && (
+                <Chip href={`/coaches/${player.ownCoachSlug}`} icon={BadgeCheck} accent>
+                  {t('profile.chip.coach')}
+                </Chip>
+              )}
+              {chips.map((chip) => (
+                <Chip key={chip} icon={Hand}>
+                  {chip}
+                </Chip>
+              ))}
+            </Box>
           )}
-        </Typography>
-      </Box>
+
+          <Box sx={{ mt: 2 }}>
+            <FormStrip playerId={player.id} />
+          </Box>
+
+          {isOwn ? (
+            // Правка анкеты — в «Настройках», рабочий стол — в кабинете.
+            <Stack direction="row" useFlexGap spacing={1} sx={{ mt: 2.5, flexWrap: 'wrap' }}>
+              <Button href="/settings/profile" startIcon={<Pencil size={16} aria-hidden />}>
+                {t('profile.edit')}
+              </Button>
+              <Button
+                variant="text"
+                href="/cabinet"
+                startIcon={<Settings size={16} aria-hidden />}
+                sx={{ color: 'text.secondary' }}
+              >
+                {t('profile.settings')}
+              </Button>
+            </Stack>
+          ) : (
+            onCompare !== undefined && (
+              <Button
+                onClick={onCompare}
+                startIcon={<Swords size={16} aria-hidden />}
+                sx={{ mt: 2.5, minHeight: 44 }}
+                data-compare
+              >
+                {t('profile.compare')}
+              </Button>
+            )
+          )}
+        </Box>
+      </Stack>
+
+      <RatingPlate player={player} summary={summary} />
     </Paper>
   );
 }
 
 /**
- * «На сайте с 12 марта 2025 (последнее посещение: 18 октября)». Посещение —
- * только у игрока с аккаунтом: у заведённого организатором его нет (ADR-050).
+ * Плашка рейтинга — тёмная, единственная на странице: якорь, к которому
+ * глаз идёт первым (07, 1.3). Число — моноширинным дисплейным кеглем.
  */
-function since(
-  player: PlayerProfileView,
-  locale: ReturnType<typeof useLocale>,
-  t: (key: MessageKey) => string,
-): string {
-  const joined = formatDate(player.createdAt, locale);
+function RatingPlate({
+  player,
+  summary,
+}: {
+  readonly player: PlayerProfileView;
+  readonly summary: PlayerSummaryView | undefined;
+}): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+  const results = useInfiniteQuery(playerTournamentsQuery(player.id));
+  // Изменение за последний турнир с итогом: у идущего его ещё нет.
+  const last = results.data?.pages[0]?.items.find((item) => item.delta !== null);
 
-  return player.lastSeenAt === null
-    ? joined
-    : `${joined} ${fill(t('profile.lastSeen'), { date: formatDate(player.lastSeenAt, locale) })}`;
+  return (
+    <Box
+      data-rating-plate
+      sx={{
+        position: 'relative',
+        px: 3,
+        py: 2.5,
+        borderRadius: 4,
+        bgcolor: 'var(--night)',
+        color: 'var(--night-ink-900)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+      }}
+    >
+      <Typography
+        variant="caption"
+        sx={{ color: 'var(--night-ink-500)', fontWeight: 600, letterSpacing: '0.06em' }}
+      >
+        {t('ratings.column.rating').toUpperCase()}
+      </Typography>
+      <Typography
+        component="p"
+        sx={{
+          fontFamily: 'var(--font-mono)',
+          fontWeight: 700,
+          fontSize: { xs: 48, sm: 56 },
+          lineHeight: { xs: '56px', sm: '64px' },
+        }}
+      >
+        <RatingValue value={player.rating} />
+      </Typography>
+      {summary !== undefined && summary.rankedPlayers > 0 && (
+        <Typography sx={{ fontWeight: 600 }} data-rank>
+          {fill(t('profile.plate.rank'), {
+            rank: formatCount(summary.rank, locale),
+            total: formatCount(summary.rankedPlayers, locale),
+          })}
+        </Typography>
+      )}
+
+      {player.isProvisional && (
+        // Провизорный рейтинг двигается быстрее: сыграно меньше двадцати
+        // рейтинговых встреч (ТЗ 7.1).
+        <Typography variant="body2" sx={{ color: 'var(--night-ink-500)' }} data-provisional>
+          {t('profile.plate.provisional')}
+        </Typography>
+      )}
+
+      <Box
+        sx={{
+          mt: 2,
+          pt: 2,
+          borderTop: '1px solid var(--night-line)',
+          display: 'grid',
+          gap: 0.75,
+          typography: 'body2',
+          color: 'var(--night-ink-700)',
+        }}
+      >
+        {summary !== undefined && (
+          <PlateRow label={t('profile.maxRating')}>
+            <RatingValue value={summary.maxRating} sx={{ fontWeight: 600 }} />
+          </PlateRow>
+        )}
+        <PlateRow label={t('profile.plate.matches')}>
+          {formatCount(player.ratedMatches, locale)}
+        </PlateRow>
+        {last?.delta != null && (
+          <PlateRow label={t('profile.plate.last')}>
+            <DeltaPill value={last.delta} />
+          </PlateRow>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+function PlateRow({
+  label,
+  children,
+}: {
+  readonly label: string;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+      <span>{label}</span>
+      <Box
+        component="span"
+        sx={{ color: 'var(--night-ink-900)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
+/** «Правша», «Европейский хват» — метки шапки. Незнакомое значение — как есть. */
+function playerChips(player: PlayerProfileView, t: (key: MessageKey) => string): string[] {
+  const hand =
+    player.playingHand === 'RIGHT' || player.playingHand === 'LEFT'
+      ? t(`profile.chip.hand.${player.playingHand}`)
+      : player.playingHand;
+  const grip =
+    player.grip === 'SHAKEHAND' || player.grip === 'PENHOLD'
+      ? t(`profile.chip.grip.${player.grip}`)
+      : player.grip;
+
+  return [hand, grip].filter((chip): chip is string => chip !== null && chip !== '');
+}
+
+/** Метка шапки; «Тренер KTTF» — красная и ссылкой на его страницу. */
+function Chip({
+  icon: Icon,
+  href,
+  accent = false,
+  children,
+}: {
+  readonly icon: LucideIcon;
+  readonly href?: string;
+  readonly accent?: boolean;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <Box
+      component={href === undefined ? 'span' : 'a'}
+      href={href}
+      data-chip
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.75,
+        height: 32,
+        px: 1.5,
+        borderRadius: 999,
+        typography: 'body2',
+        fontWeight: 600,
+        textDecoration: 'none',
+        ...(accent
+          ? {
+              bgcolor: 'var(--red-50)',
+              color: 'var(--red-700)',
+              boxShadow: 'inset 0 0 0 1px var(--red-200)',
+              '@media (hover: hover)': { '&:hover': { bgcolor: 'var(--red-100)' } },
+            }
+          : { bgcolor: 'var(--paper-sunken)', color: 'var(--ink-700)' }),
+        '&:focus-visible': { outline: '2px solid var(--red-600)', outlineOffset: '2px' },
+      }}
+    >
+      <Icon size={15} aria-hidden />
+      {children}
+    </Box>
+  );
+}
+
+/** Зелёная точка на фото — «в сети» видно и без слова рядом с именем. */
+function OnlineDot(): ReactNode {
+  return (
+    <Box
+      component="span"
+      aria-hidden
+      sx={{
+        position: 'absolute',
+        right: { xs: 6, sm: 10 },
+        bottom: { xs: 6, sm: 10 },
+        width: 18,
+        height: 18,
+        borderRadius: '50%',
+        bgcolor: 'var(--ok)',
+        border: '3px solid var(--paper)',
+        pointerEvents: 'none',
+      }}
+    />
+  );
 }
 
 /**
@@ -251,50 +423,5 @@ function Meta({
       <Icon size={15} aria-hidden />
       {children}
     </Box>
-  );
-}
-
-/**
- * Тренер: со страницей на KTTF — ссылкой на неё (ADR-059), иначе именем,
- * как в анкете (ADR-035); «с 2024» — из истории тренера (T2.1).
- */
-function coach(player: PlayerProfileView, t: (key: MessageKey) => string): ReactNode {
-  if (player.coachName === null) return null;
-
-  const since =
-    player.coachSince === null
-      ? null
-      : fill(t('profile.coachSince'), { year: sinceYear(player.coachSince) });
-
-  return (
-    <>
-      {player.coachSlug === null ? (
-        player.coachName
-      ) : (
-        <Link href={`/coaches/${player.coachSlug}`}>{player.coachName}</Link>
-      )}
-      {since !== null && ` ${since}`}
-    </>
-  );
-}
-
-/** «Раньше: Y, 2020–2024; Z, 2018–2020» — прежние тренеры, последние первыми. */
-function coachHistory(player: PlayerProfileView): ReactNode {
-  if (player.coachHistory.length === 0) return null;
-
-  return (
-    <span data-coach-history>
-      {player.coachHistory.map((tenure, index) => (
-        <span key={`${tenure.coachPlayerId}-${tenure.from}`}>
-          {index > 0 && '; '}
-          {tenure.slug === null ? (
-            tenure.name
-          ) : (
-            <Link href={`/coaches/${tenure.slug}`}>{tenure.name}</Link>
-          )}
-          {`, ${tenureYears(tenure)}`}
-        </span>
-      ))}
-    </span>
   );
 }

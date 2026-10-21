@@ -12,7 +12,6 @@ import { useId, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 
 import { fill, formatDate, useLocale, useT } from '@/common/i18n';
 import RankBadge from '@/common/ui/rank-badge';
-import Surface from '@/common/ui/surface';
 
 /** Заливка медали — только места 1–3 (07, 3.1). Цифра на ней — `--ink-900`. */
 const MEDAL: Readonly<Record<number, string>> = {
@@ -27,17 +26,18 @@ interface ClubAwards {
 }
 
 /**
- * «Награды» по концепции RTTF — ADR-050: строка на клуб, в ней медаль за
- * каждое призовое место. Видно сразу и сколько взято, и где.
+ * Награды по концепции RTTF — ADR-050: строка на клуб, в ней медаль за
+ * каждое призовое место. Видно сразу и сколько взято, и где. Живёт в
+ * карточке «Достижения» под шапкой профиля (ADR-060).
  *
  * Медаль — ссылка на турнир. Мышь видит турнир и дату наведением, палец —
  * первым касанием: второе касание открывает турнир. Иначе на телефоне
  * узнать, за что медаль, можно было бы только уйдя со страницы.
  *
- * Блок появляется, только когда есть что показать: пустые «Награды» у
- * новичка читаются как упрёк, а не сведения.
+ * Пустой список не рисуется: пустые «Награды» у новичка читаются как упрёк,
+ * а не сведения.
  */
-export default function Awards({
+export function AwardsByClub({
   awards,
 }: {
   readonly awards: readonly PlayerAwardView[];
@@ -50,31 +50,97 @@ export default function Awards({
     return null;
   }
 
+  const clubs = byClub(awards);
+
   return (
-    <Surface
-      title={t('profile.awards.title')}
-      action={
-        <Button
-          variant="text"
-          aria-expanded={open}
-          aria-controls={listId}
-          onClick={() => {
-            setOpen((value) => !value);
-          }}
-          sx={{ minHeight: 44, color: 'text.secondary' }}
-        >
-          {t(open ? 'profile.awards.hide' : 'profile.awards.all')}
-        </Button>
-      }
-    >
-      <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-        {byClub(awards).map((row) => (
-          <ClubRow key={row.club.id} row={row} />
-        ))}
-      </Box>
+    <Box data-awards>
+      {/* Медали одного клуба — повтор счётчика выше: строки по клубам нужны,
+          когда клубов больше одного. Список турниров — кнопкой ниже. */}
+      {clubs.length > 1 && (
+        <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none' }}>
+          {clubs.map((row) => (
+            <ClubRow key={row.club.id} row={row} />
+          ))}
+        </Box>
+      )}
+      <Button
+        variant="text"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => {
+          setOpen((value) => !value);
+        }}
+        sx={{ mt: 0.5, ml: -1, minHeight: 44, color: 'text.secondary' }}
+      >
+        {t(open ? 'profile.awards.hide' : 'profile.awards.all')}
+      </Button>
 
       {open && <AwardList id={listId} awards={awards} />}
-    </Surface>
+    </Box>
+  );
+}
+
+/**
+ * Сколько медалей каждого достоинства — крупно, кружком с числом рядом.
+ * Достоинство без медалей не выводится: «0 золотых» — не достижение.
+ */
+export function MedalTally({ awards }: { readonly awards: readonly PlayerAwardView[] }): ReactNode {
+  const t = useT();
+  const places = [1, 2, 3]
+    .map((place) => ({ place, count: awards.filter((award) => award.place === place).length }))
+    .filter((entry) => entry.count > 0);
+
+  if (places.length === 0) return null;
+
+  return (
+    <Box
+      component="ul"
+      data-medal-tally
+      sx={{ m: 0, p: 0, listStyle: 'none', display: 'flex', gap: 2.5 }}
+    >
+      {places.map(({ place, count }) => (
+        <Box
+          component="li"
+          key={place}
+          aria-label={fill(t('profile.medals.count'), {
+            place: String(place),
+            count: String(count),
+          })}
+          sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
+        >
+          <Box
+            component="span"
+            aria-hidden
+            sx={{
+              width: 40,
+              height: 40,
+              display: 'inline-grid',
+              placeItems: 'center',
+              borderRadius: '50%',
+              bgcolor: MEDAL[place],
+              color: 'var(--ink-900)',
+              fontWeight: 700,
+              fontSize: 16,
+              boxShadow: 'inset 0 -3px 0 rgb(31 31 29 / 0.12)',
+            }}
+          >
+            {place}
+          </Box>
+          <Box
+            component="span"
+            aria-hidden
+            sx={{
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              fontSize: 24,
+              lineHeight: '32px',
+            }}
+          >
+            {`×${String(count)}`}
+          </Box>
+        </Box>
+      ))}
+    </Box>
   );
 }
 
@@ -88,7 +154,7 @@ function ClubRow({ row }: { readonly row: ClubAwards }): ReactNode {
       sx={{
         py: 1,
         display: 'grid',
-        gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 220px) minmax(0, 1fr)' },
+        gridTemplateColumns: 'minmax(0, 1fr)',
         columnGap: 3,
         rowGap: 0.5,
         alignItems: 'center',

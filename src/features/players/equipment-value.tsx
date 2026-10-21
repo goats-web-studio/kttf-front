@@ -11,6 +11,7 @@ import { Thumb } from '@/features/market/product-picker';
 export function equipmentValue(
   product: ProductListItemView | null,
   text: string | null,
+  thumb = 24,
 ): ReactNode {
   if (product === null) return text;
 
@@ -19,7 +20,7 @@ export function equipmentValue(
       href={`/market/items/${product.slug}`}
       sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, verticalAlign: 'middle' }}
     >
-      <Thumb image={product.image} size={24} />
+      <Thumb image={product.image} size={thumb} />
       {`${product.brand.name} ${product.name}`}
     </Link>
   );

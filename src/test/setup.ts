@@ -22,6 +22,9 @@ if (typeof window !== 'undefined') {
   // прокрутку не реализует и пишет об этом при каждом рендере. Поведение,
   // которое проверяют тесты, от заглушки не зависит.
   window.scrollTo = () => undefined;
+  // Профиль прокручивает к открытому личному счёту (ADR-060);
+  // jsdom не реализует и `scrollIntoView`.
+  Element.prototype.scrollIntoView = () => undefined;
 
   // jsdom не реализует EventSource, а экран зала открывает поток при
   // монтировании (ТС 7.7). Без заглушки маршрут падает ReferenceError.

@@ -491,12 +491,17 @@ describe('кривая рейтинга', () => {
 });
 
 describe('общая статистика', () => {
-  it('место, игры и частый клуб — как посчитал сервер', async () => {
-    renderProfile();
+  it('место — в плашке рейтинга, игры с долей побед — в статистике, как посчитал сервер', async () => {
+    const { container } = renderProfile();
 
-    expect(await screen.findByText(ru['profile.stats.rank'])).toBeDefined();
+    await waitFor(() => {
+      expect(container.querySelector('[data-rank]')?.textContent).toBe('#8 из 120 в рейтинге');
+    });
     expect(screen.getByText(`${String(SUMMARY.wins)} — ${String(SUMMARY.losses)}`)).toBeDefined();
-    expect(screen.getByText(/из 120/)).toBeDefined();
+    const percent = Math.round((SUMMARY.wins / (SUMMARY.wins + SUMMARY.losses)) * 100);
+    expect(container.querySelector('[data-win-rate]')?.textContent).toBe(
+      `${String(percent)}% побед`,
+    );
   });
 
   it('период уходит запросом, а не режется на клиенте', async () => {
@@ -513,7 +518,9 @@ describe('общая статистика', () => {
   it('награды — строкой на клуб, медаль ведёт на турнир и называет его', async () => {
     const { container } = renderProfile();
 
-    await screen.findByText(ru['profile.awards.title']);
+    await waitFor(() => {
+      expect(container.querySelector('[data-fact="achievements"] [data-awards]')).not.toBeNull();
+    });
 
     expect(container.querySelectorAll('[data-award-club]')).toHaveLength(2);
     const medal = screen.getByRole('link', { name: /1 место — Кубок Алматы/ });
@@ -535,10 +542,13 @@ describe('общая статистика', () => {
   it('без призовых мест блока наград нет', async () => {
     summary = { ...SUMMARY, awards: [] };
 
-    renderProfile();
+    const { container } = renderProfile();
 
-    await screen.findByText(ru['profile.stats.rank']);
-    expect(screen.queryByText(ru['profile.awards.title'])).toBeNull();
+    await waitFor(() => {
+      expect(container.querySelector('[data-fact="achievements"]')).not.toBeNull();
+    });
+    expect(container.querySelector('[data-medal-tally]')).toBeNull();
+    expect(container.querySelector('[data-awards]')).toBeNull();
   });
 });
 
@@ -719,5 +729,120 @@ describe('личный счёт', () => {
     await screen.findByText(ru['profile.results.title']);
 
     expect(requested.some((url) => url.includes('/head-to-head/'))).toBe(false);
+  });
+});
+
+describe('шапка-визитка и карточки «кто он» (ADR-060)', () => {
+  it('«Форма» — точка на каждую встречу, победа и поражение различимы не только цветом', async () => {
+    const { container } = renderProfile();
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-form-strip] [data-form]')).toHaveLength(2);
+    });
+    // Свежая справа: в турнире последней сыграна проигранная встреча.
+    const dots = [...container.querySelectorAll('[data-form-strip] [data-form]')];
+    expect(dots.map((dot) => dot.getAttribute('data-form'))).toEqual(['win', 'loss']);
+    expect(dots[0]?.getAttribute('aria-label')).toContain(playerName(PLAYERS.second));
+  });
+
+  it('рука и хват — метками, своя страница тренера — красной меткой-ссылкой', async () => {
+    profile = {
+      ...PLAYER_PROFILE,
+      playingHand: 'LEFT',
+      grip: 'PENHOLD',
+      ownCoachSlug: 'smagulov-asan',
+    };
+
+    renderProfile();
+
+    const badge = await screen.findByRole('link', { name: ru['profile.chip.coach'] });
+    expect(badge.getAttribute('href')).toBe('/coaches/smagulov-asan');
+    expect(screen.getByText(ru['profile.chip.hand.LEFT'])).toBeDefined();
+    expect(screen.getByText(ru['profile.chip.grip.PENHOLD'])).toBeDefined();
+  });
+
+  it('без своей опубликованной страницы метки «Тренер KTTF» нет', async () => {
+    renderProfile();
+
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(screen.queryByText(ru['profile.chip.coach'])).toBeNull();
+  });
+
+  it('«Сравнить со мной» открывает личный счёт против вошедшего игрока', async () => {
+    renderProfile(PLAYER_ID, { ...USER_WITH_PROFILE, playerId: PLAYER_IDS.second });
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['profile.compare'] }));
+
+    expect(
+      await screen.findByText(`${String(HEAD_TO_HEAD.wins)} : ${String(HEAD_TO_HEAD.losses)}`),
+    ).toBeDefined();
+    expect(
+      requested.some((url) =>
+        url.includes(`/players/${PLAYER_ID}/head-to-head/${PLAYER_IDS.second}`),
+      ),
+    ).toBe(true);
+  });
+
+  it('без входа сравнивать не с кем — кнопки нет', async () => {
+    renderProfile();
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(screen.queryByRole('button', { name: ru['profile.compare'] })).toBeNull();
+  });
+
+  it('«Достижения» — медали по достоинству, победы с долей, первый турнир', async () => {
+    const { container } = renderProfile();
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-fact="achievements"]')).not.toBeNull();
+    });
+    const card = found(container, '[data-fact="achievements"]');
+    const golds = SUMMARY.awards.filter((award) => award.place === 1).length;
+
+    expect(
+      within(card).getByLabelText(`1 место — ${String(golds)}`, { selector: 'li' }),
+    ).toBeDefined();
+    expect(card.textContent).toContain(ru['profile.stats.first']);
+  });
+
+  it('«Об игроке» — «о себе» и с какого времени на сайте', async () => {
+    profile = { ...PLAYER_PROFILE, bio: 'Играю с детства' };
+    const { container } = renderProfile();
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-fact="about"] [data-bio]')?.textContent).toBe(
+        'Играю с детства',
+      );
+    });
+    expect(found(container, '[data-fact="about"]').textContent).toContain(ru['profile.since']);
+  });
+});
+
+describe('результаты свёрнуты до итога', () => {
+  const EARLIER: PlayerTournamentView = {
+    ...TOURNAMENT_ROW,
+    tournament: { ...TOURNAMENT_ROW.tournament, ...AUTUMN },
+  };
+
+  it('раскрыт последний турнир, у остальных — итог и кнопка встреч', async () => {
+    tournaments = [TOURNAMENT_ROW, EARLIER];
+    total = 2;
+    const { container } = renderProfile();
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-result]')).toHaveLength(2);
+    });
+    const [last, earlier] = [...container.querySelectorAll('[data-result]')];
+
+    expect(last?.querySelector('[data-result-cards]')).not.toBeNull();
+    expect(earlier?.querySelector('[data-result-cards]')).toBeNull();
+    expect(earlier?.querySelector('[data-result-summary]')?.textContent).toContain('1–1');
+
+    fireEvent.click(
+      within(required(earlier as HTMLElement | undefined)).getByRole('button', {
+        name: 'Встречи (2)',
+      }),
+    );
+
+    expect(earlier?.querySelector('[data-result-cards]')).not.toBeNull();
   });
 });

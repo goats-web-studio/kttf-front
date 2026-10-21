@@ -42,6 +42,7 @@ const profile: PlayerProfileView = {
   coachSlug: null,
   coachSince: null,
   coachHistory: [],
+  ownCoachSlug: null,
   lastSeenAt: null,
   online: false,
   birthYearOnly: true,

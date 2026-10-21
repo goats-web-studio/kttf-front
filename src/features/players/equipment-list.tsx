@@ -6,20 +6,27 @@ import { useT, type MessageKey } from '@/common/i18n';
 import { equipmentValue, type Equipment } from './equipment-value';
 
 /**
- * «Чем играет» — основание и накладки списком, для боковой колонки
- * (страница тренера, ADR-059). Незаполненное не показывается.
+ * «Чем играет» — основание и накладки списком: боковая колонка страницы
+ * тренера (ADR-059) и карточка под шапкой профиля, там фото крупнее
+ * (`thumb`). Незаполненное не показывается.
  */
-export default function EquipmentList({ player }: { readonly player: Equipment }): ReactNode {
+export default function EquipmentList({
+  player,
+  thumb,
+}: {
+  readonly player: Equipment;
+  readonly thumb?: number;
+}): ReactNode {
   const t = useT();
   const rows: readonly (readonly [MessageKey, ReactNode])[] = [
-    ['player.form.blade', equipmentValue(player.bladeProduct, player.blade)],
+    ['player.form.blade', equipmentValue(player.bladeProduct, player.blade, thumb)],
     [
       'player.form.rubberForehand',
-      equipmentValue(player.rubberForehandProduct, player.rubberForehand),
+      equipmentValue(player.rubberForehandProduct, player.rubberForehand, thumb),
     ],
     [
       'player.form.rubberBackhand',
-      equipmentValue(player.rubberBackhandProduct, player.rubberBackhand),
+      equipmentValue(player.rubberBackhandProduct, player.rubberBackhand, thumb),
     ],
   ];
 

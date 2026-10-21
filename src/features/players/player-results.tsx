@@ -18,7 +18,8 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { useId, useState, type ReactNode } from 'react';
 
 import { fill, formatDateTime, formatTime, useLocale, useT, type MessageKey } from '@/common/i18n';
 import { roundName } from '@/common/ui/bracket-model';
@@ -76,10 +77,12 @@ export default function PlayerResults({
             <EmptyState title={t('profile.results.empty')} />
           ) : (
             <Stack component="ol" spacing={2} sx={{ m: 0, p: 0, listStyle: 'none' }}>
-              {items.map((item) => (
+              {items.map((item, index) => (
                 <TournamentCard
                   key={item.tournament.id}
                   item={item}
+                  // Раскрыт последний турнир, остальные — строкой-итогом.
+                  defaultOpen={index === 0}
                   playerLabel={playerLabel}
                   onSelectOpponent={onSelectOpponent}
                 />
@@ -104,16 +107,29 @@ export default function PlayerResults({
 
 interface CardProps {
   readonly item: PlayerTournamentView;
+  readonly defaultOpen: boolean;
   readonly playerLabel: string;
   readonly onSelectOpponent: (opponentId: string) => void;
 }
 
-function TournamentCard({ item, playerLabel, onSelectOpponent }: CardProps): ReactNode {
+/**
+ * Карточка турнира. Свёрнутая — шапка с итогом: место, победы–поражения и
+ * изменение рейтинга; встречи раскрываются кнопкой (ADR-060).
+ * Все турниры раскрытыми давали страницу в несколько экранов таблиц.
+ */
+function TournamentCard({
+  item,
+  defaultOpen,
+  playerLabel,
+  onSelectOpponent,
+}: CardProps): ReactNode {
   const t = useT();
   const locale = useLocale();
   const theme = useTheme();
   const wide = useMediaQuery(theme.breakpoints.up('md'), { noSsr: true });
   const totals = totalsOf(item);
+  const [open, setOpen] = useState(defaultOpen);
+  const matchesId = useId();
 
   return (
     <Paper
@@ -122,59 +138,114 @@ function TournamentCard({ item, playerLabel, onSelectOpponent }: CardProps): Rea
       sx={{ overflow: 'hidden' }}
       data-result={item.tournament.id}
     >
-      <Box sx={{ px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 2.5 }, pb: 1.5 }}>
-        <Link
-          href={`/tournaments/${item.tournament.id}`}
-          color="inherit"
-          sx={{ typography: 'h3', display: 'block' }}
-        >
-          {item.tournament.name}
-        </Link>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-          {formatDateTime(item.tournament.startsAt, locale)}
-          {' · '}
-          {t(LEVEL[item.tournament.level])}
-          {' · '}
-          <Link href={`/clubs/${item.tournament.club.id}`} color="inherit">
-            {item.tournament.club.name}
+      <Box
+        sx={{
+          px: { xs: 2, sm: 3 },
+          pt: { xs: 2, sm: 2.5 },
+          pb: open ? 1.5 : { xs: 2, sm: 2.5 },
+          display: 'grid',
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(0, 1fr) auto' },
+          columnGap: 3,
+          rowGap: 1.5,
+          alignItems: 'center',
+        }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Link
+            href={`/tournaments/${item.tournament.id}`}
+            color="inherit"
+            sx={{ typography: 'h3', display: 'block' }}
+          >
+            {item.tournament.name}
           </Link>
-          {item.participants > 0 && (
-            <>
-              {' · '}
-              {fill(t('profile.results.participants'), { count: String(item.participants) })}
-            </>
-          )}
-        </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            {formatDateTime(item.tournament.startsAt, locale)}
+            {' · '}
+            {t(LEVEL[item.tournament.level])}
+            {' · '}
+            <Link href={`/clubs/${item.tournament.club.id}`} color="inherit">
+              {item.tournament.club.name}
+            </Link>
+            {item.participants > 0 && (
+              <>
+                {' · '}
+                {fill(t('profile.results.participants'), { count: String(item.participants) })}
+              </>
+            )}
+          </Typography>
 
-        <Stack
-          direction="row"
-          useFlexGap
-          spacing={1}
-          sx={{ mt: 1.5, alignItems: 'center', flexWrap: 'wrap', typography: 'body2' }}
-          data-result-me
+          <Stack
+            direction="row"
+            useFlexGap
+            spacing={1}
+            sx={{ mt: 1.5, alignItems: 'center', flexWrap: 'wrap', typography: 'body2' }}
+            data-result-me
+          >
+            <Box component="span" sx={{ fontWeight: 600 }}>
+              {playerLabel}
+            </Box>
+            {item.ratingBefore !== null && (
+              <>
+                <RatingValue value={item.ratingBefore} sx={{ fontWeight: 600 }} />
+                <Box component="span" sx={{ color: 'text.secondary' }}>
+                  {t('profile.results.atStart')}
+                </Box>
+              </>
+            )}
+            <Box component="span" aria-hidden sx={{ color: 'text.secondary' }}>
+              ·
+            </Box>
+            <Place item={item} />
+          </Stack>
+        </Box>
+
+        <Box
+          data-result-summary
+          sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}
         >
-          <Box component="span" sx={{ fontWeight: 600 }}>
-            {playerLabel}
-          </Box>
-          {item.ratingBefore !== null && (
-            <>
-              <RatingValue value={item.ratingBefore} sx={{ fontWeight: 600 }} />
-              <Box component="span" sx={{ color: 'text.secondary' }}>
-                {t('profile.results.atStart')}
-              </Box>
-            </>
+          {item.matches.length > 0 && (
+            <Box component="span" sx={{ ...NUM, typography: 'body2', fontWeight: 600 }}>
+              {fill(t('profile.results.short'), {
+                wins: String(totals.wins),
+                losses: String(totals.losses),
+              })}
+            </Box>
           )}
-          <Box component="span" aria-hidden sx={{ color: 'text.secondary' }}>
-            ·
-          </Box>
-          <Place item={item} />
-        </Stack>
+          {item.delta !== null && <DeltaPill value={item.delta} />}
+          {item.matches.length > 0 && (
+            <Button
+              variant="text"
+              aria-expanded={open}
+              aria-controls={matchesId}
+              onClick={() => {
+                setOpen((value) => !value);
+              }}
+              endIcon={
+                <ChevronDown
+                  size={16}
+                  aria-hidden
+                  style={{ transform: open ? 'rotate(180deg)' : undefined }}
+                />
+              }
+              sx={{ minHeight: 44, color: 'text.secondary' }}
+              data-result-toggle
+            >
+              {fill(t(open ? 'profile.results.hideMatches' : 'profile.results.showMatches'), {
+                count: String(item.matches.length),
+              })}
+            </Button>
+          )}
+        </Box>
       </Box>
 
-      {wide ? (
-        <MatchTable item={item} totals={totals} onSelectOpponent={onSelectOpponent} />
-      ) : (
-        <MatchCards item={item} totals={totals} onSelectOpponent={onSelectOpponent} />
+      {open && (
+        <Box id={matchesId}>
+          {wide ? (
+            <MatchTable item={item} totals={totals} onSelectOpponent={onSelectOpponent} />
+          ) : (
+            <MatchCards item={item} totals={totals} onSelectOpponent={onSelectOpponent} />
+          )}
+        </Box>
       )}
     </Paper>
   );
