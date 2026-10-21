@@ -178,6 +178,30 @@ describe('редактор расписания в кабинете тренер
     });
   });
 
+  it('старое расписание строкой без дней — подсказка перенести; с днями — нет', async () => {
+    coach = {
+      ...COACH,
+      trainings: [{ ...SCHEDULED, slots: [], schedule: 'пн, ср 18:00–19:30' }, SCHEDULED],
+    };
+    renderAt('/cabinet/coach?tab=trainings', userWithCoach(COACH));
+
+    const hint = await screen.findByText(ru['training.schedule.moveHint']);
+    expect(document.querySelectorAll('[data-schedule-move]')).toHaveLength(1);
+
+    // Вписали день и время — подсказка уходит.
+    const row = hint.closest<HTMLElement>('[data-training-row]');
+    if (row === null) throw new Error('нет строки тренировки');
+    const line = element('[data-schedule-line]', row);
+    fireEvent.click(within(line).getByRole('button', { name: 'пн' }));
+    fireEvent.change(within(line).getByLabelText(ru['training.schedule.from']), {
+      target: { value: '18:00' },
+    });
+    fireEvent.change(within(line).getByLabelText(ru['training.schedule.to']), {
+      target: { value: '19:30' },
+    });
+    expect(document.querySelector('[data-schedule-move]')).toBeNull();
+  });
+
   it('пересечение в тот же день — текстом у строки, сохранение не уходит', async () => {
     renderAt('/cabinet/coach?tab=trainings', userWithCoach(COACH));
 

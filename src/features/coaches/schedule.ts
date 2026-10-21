@@ -137,6 +137,17 @@ export function scheduleOf(lines: readonly ScheduleLine[]): ScheduleResult {
   return { slots, errors, valid: errors.every((error) => error === null) };
 }
 
+/**
+ * Расписание осталось строкой в примечании, а дней и времени нет: такую
+ * тренировку не найдут фильтры дней и времени — редактор просит перенести.
+ */
+export function needsScheduleMove(row: {
+  readonly scheduleLines: readonly ScheduleLine[];
+  readonly schedule: string;
+}): boolean {
+  return row.schedule.trim() !== '' && scheduleOf(row.scheduleLines).slots.length === 0;
+}
+
 /** «пн» — короткое имя дня, как в часах клуба. */
 export function weekdayShort(weekday: number, locale: Locale): string {
   return formatWeekday(weekdayDate(weekday), locale, 'short');

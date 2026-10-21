@@ -2030,4 +2030,6 @@ export const kk: Record<MessageKey, string> = {
   'trainings.filter.time.DAY': 'Күндіз, 17:00 дейін',
   'trainings.filter.time.EVENING': 'Кешке, 17:00 бастап',
   'trainings.filter.open': 'Қабылдау жүріп жатыр',
+  'training.schedule.moveHint':
+    'Кестені күндер мен уақытқа көшіріңіз — сонда жаттығуды күн мен уақыт сүзгілері табады',
 };

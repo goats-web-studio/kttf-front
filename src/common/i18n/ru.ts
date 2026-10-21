@@ -2015,4 +2015,6 @@ export const ru = {
   'trainings.filter.time.DAY': 'День, до 17:00',
   'trainings.filter.time.EVENING': 'Вечер, с 17:00',
   'trainings.filter.open': 'Идёт набор',
+  'training.schedule.moveHint':
+    'Перенесите расписание в дни и время — тогда тренировку найдут по фильтрам дней и времени',
 } as const satisfies Record<string, string>;

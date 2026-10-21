@@ -5,6 +5,7 @@ import { ru } from '@/common/i18n/ru';
 
 import {
   fullScheduleText,
+  needsScheduleMove,
   nextSessionText,
   scheduleLinesOf,
   scheduleOf,
@@ -85,6 +86,28 @@ describe('строки расписания и слоты', () => {
     ]);
 
     expect(result.errors).toEqual([null, null, 'many']);
+  });
+});
+
+describe('подсказка перенести расписание из примечания', () => {
+  it('примечание есть, дней и времени нет — просим перенести', () => {
+    expect(needsScheduleMove({ scheduleLines: [line([], '', '')], schedule: 'пн 18:00' })).toBe(
+      true,
+    );
+    // Строка недописана — слотов всё ещё нет.
+    expect(needsScheduleMove({ scheduleLines: [line([1], '18:00', '')], schedule: 'пн' })).toBe(
+      true,
+    );
+  });
+
+  it('есть дни и время или примечание пустое — подсказки нет', () => {
+    expect(
+      needsScheduleMove({
+        scheduleLines: [line([1], '18:00', '19:00')],
+        schedule: 'кроме праздников',
+      }),
+    ).toBe(false);
+    expect(needsScheduleMove({ scheduleLines: [line([], '', '')], schedule: '  ' })).toBe(false);
   });
 });
 

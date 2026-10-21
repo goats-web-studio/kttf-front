@@ -24,6 +24,7 @@ import {
 } from '../labels';
 import type { ClubTrainingRow, CoachTrainingRow } from '../training-rows';
 import { ToggleChips } from './page-editor';
+import { needsScheduleMove } from '../schedule';
 import ScheduleEditor, { EnrollmentPicker } from './schedule-editor';
 
 const AGES = Array.from({ length: 15 }, (_, index) => index + 3);
@@ -239,6 +240,22 @@ export default function TrainingFields({
             onPatch({ scheduleLines });
           }}
         />
+        {needsScheduleMove(row) && (
+          <Typography
+            variant="body2"
+            data-schedule-move
+            sx={{
+              mt: 1,
+              px: 1.5,
+              py: 0.75,
+              borderRadius: 1,
+              bgcolor: 'var(--warn-50)',
+              color: 'var(--warn-text)',
+            }}
+          >
+            {t('training.schedule.moveHint')}
+          </Typography>
+        )}
       </Box>
       <TextField
         size="small"
