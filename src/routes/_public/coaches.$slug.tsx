@@ -43,7 +43,13 @@ import { coachBySlugQuery } from '@/features/coaches/queries';
 import CoachStatusPlate from '@/features/coaches/status-plate';
 import StudentsBlock from '@/features/coaches/staff/students-block';
 import { trackCoachView } from '@/features/coaches/track';
+import Gallery from '@/features/content/gallery';
+import { coachOwner } from '@/features/content/owner';
+import Posts from '@/features/content/posts';
 import { usePlaceName } from '@/features/places/place-name';
+
+/** Отступ блоков основной колонки — как у блоков страницы тренера. */
+const SECTION_GAP = { xs: 4, md: 6 };
 
 /** `?training=<id>` — окно тренировки поверх страницы (ADR-059). */
 const searchSchema = z.object({ training: searchTraining });
@@ -134,6 +140,11 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
   // Ученики — после заслуг (T2.1, `docs/11` 3.2.1); в боковой колонке —
   // число ссылкой на этот блок.
   const studentsBlock = <StudentsBlock coach={coach} />;
+  // Новости и акции — над квалификацией, фото и видео — после учеников
+  // (T2.2, `docs/11` 3.2.2 и 5.3). Пустые не выводятся.
+  const owner = coachOwner(coach.id);
+  const posts = <Posts owner={owner} mt={SECTION_GAP} />;
+  const gallery = <Gallery owner={owner} layout={desktop ? 'grid' : 'strip'} mt={SECTION_GAP} />;
   const about = <AboutBlock coach={coach} />;
   const game = <GameStatsBlock coach={coach} />;
 
@@ -188,9 +199,11 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
         <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 8fr) minmax(0, 4fr)', gap: 4 }}>
           <Box>
             {services}
+            {posts}
             {qualification}
             {achievements}
             {studentsBlock}
+            {gallery}
             {about}
             {game}
           </Box>
@@ -209,11 +222,14 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
         // о себе, игровая статистика внизу.
         <Box data-coach-layout="phone">
           {services}
+          {posts}
           {qualification}
           {achievements}
           {where !== null && <Box sx={{ mt: 4 }}>{where}</Box>}
           {/* На телефоне блок учеников сам стоит здесь — число ссылкой не нужно. */}
           {studentsBlock}
+          {/* Видео лентой — прокруткой вбок, сразу за учениками. */}
+          {gallery}
           {about}
           {game}
           <Box sx={{ mt: 4, display: 'grid', gap: 2 }}>

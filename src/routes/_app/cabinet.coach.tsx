@@ -1,5 +1,6 @@
 import {
   canSubmitCoach,
+  coachLimits,
   coachMissing,
   isCoachPublic,
   type CoachStatus,
@@ -35,6 +36,9 @@ import CoachQualificationEditor from '@/features/coaches/editor/qualification-ed
 import CoachTrainingsTab from '@/features/coaches/editor/trainings-tab';
 import CoachClubsTab from '@/features/coaches/staff/coach-clubs-tab';
 import CoachStudentsTab from '@/features/coaches/staff/coach-students-tab';
+import MediaEditor from '@/features/content/media-editor';
+import { coachOwner } from '@/features/content/owner';
+import PostsEditor from '@/features/content/posts-editor';
 import CoachStatsPanel from '@/features/coaches/editor/stats-panel';
 import { COACH_REQUIREMENT_KEYS, coachFullName } from '@/features/coaches/labels';
 import { coachKeys, coachQuery } from '@/features/coaches/queries';
@@ -45,7 +49,16 @@ import CoachStatusPlate from '@/features/coaches/status-plate';
  * тренера. «Клубы» — этап T2. Вкладка и, у администратора, чья страница —
  * в адресе.
  */
-const COACH_TABS = ['page', 'trainings', 'qualification', 'clubs', 'students', 'stats'] as const;
+const COACH_TABS = [
+  'page',
+  'trainings',
+  'qualification',
+  'posts',
+  'media',
+  'clubs',
+  'students',
+  'stats',
+] as const;
 type CoachTab = (typeof COACH_TABS)[number];
 
 const TAB_LABELS: Readonly<Record<CoachTab, MessageKey>> = {
@@ -54,6 +67,8 @@ const TAB_LABELS: Readonly<Record<CoachTab, MessageKey>> = {
   clubs: 'coach.tab.clubs',
   students: 'coach.tab.students',
   qualification: 'coach.tab.qualification',
+  posts: 'coach.tab.posts',
+  media: 'coach.tab.media',
   stats: 'manage.stats.title',
 };
 
@@ -238,6 +253,10 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
         )}
         {tab === 'trainings' && <CoachTrainingsTab coach={coach} />}
         {tab === 'qualification' && <CoachQualificationEditor coach={coach} />}
+        {tab === 'posts' && <PostsEditor owner={coachOwner(coach.id)} />}
+        {tab === 'media' && (
+          <MediaEditor owner={coachOwner(coach.id)} limits={coachLimits('FREE')} />
+        )}
         {tab === 'clubs' && <CoachClubsTab coach={coach} />}
         {tab === 'students' && <CoachStudentsTab coach={coach} />}
         {tab === 'stats' && <CoachStatsPanel coach={coach} />}
