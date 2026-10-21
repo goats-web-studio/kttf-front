@@ -2017,4 +2017,22 @@ export const ru = {
   'trainings.filter.open': 'Идёт набор',
   'training.schedule.moveHint':
     'Перенесите расписание в дни и время — тогда тренировку найдут по фильтрам дней и времени',
+  // T3 — тренер участника в записи на турнир (ADR-059).
+  'error.api.REGISTRATION_COACH_LOCKED': 'Тренера на турнире можно поменять только до старта',
+  'registration.coach.label': 'Тренер на турнире:',
+  'registration.coach.none': 'Тренер не указан',
+  'registration.coach.edit': 'Изменить',
+  'registration.coach.hint':
+    'Берётся из вашего профиля. До старта турнира его можно поменять: медали засчитываются этому тренеру.',
+  'registration.coach.title': 'Тренер на турнире',
+  'registration.coach.lead':
+    'По нему медали ученика засчитываются на странице тренера. Оставьте пустым, если тренера нет.',
+  'registration.coach.save': 'Сохранить',
+  'registration.coach.cancel': 'Отмена',
+  'participants.coach': 'тренер',
+  'participants.editCoach': 'Сменить тренера',
+  'students.tournaments': 'Ученики на турнирах',
+  'students.tournaments.hint': 'По тренеру, указанному при записи на турнир',
+  'students.tournaments.count': 'Учеников: {count}',
+  'students.tournaments.place': '{place} место: {count}',
 } as const satisfies Record<string, string>;

@@ -2032,4 +2032,23 @@ export const kk: Record<MessageKey, string> = {
   'trainings.filter.open': 'Қабылдау жүріп жатыр',
   'training.schedule.moveHint':
     'Кестені күндер мен уақытқа көшіріңіз — сонда жаттығуды күн мен уақыт сүзгілері табады',
+  // T3 — тренер участника в записи на турнир (ADR-059).
+  'error.api.REGISTRATION_COACH_LOCKED':
+    'Турнирдегі жаттықтырушыны тек турнир басталғанға дейін өзгертуге болады',
+  'registration.coach.label': 'Турнирдегі жаттықтырушы:',
+  'registration.coach.none': 'Жаттықтырушы көрсетілмеген',
+  'registration.coach.edit': 'Өзгерту',
+  'registration.coach.hint':
+    'Профиліңізден алынады. Турнир басталғанға дейін өзгертуге болады: медальдар осы жаттықтырушыға есептеледі.',
+  'registration.coach.title': 'Турнирдегі жаттықтырушы',
+  'registration.coach.lead':
+    'Шәкірттің медальдары жаттықтырушы бетінде осы бойынша есептеледі. Жаттықтырушы болмаса, бос қалдырыңыз.',
+  'registration.coach.save': 'Сақтау',
+  'registration.coach.cancel': 'Болдырмау',
+  'participants.coach': 'жаттықтырушы',
+  'participants.editCoach': 'Жаттықтырушыны ауыстыру',
+  'students.tournaments': 'Турнирлердегі шәкірттер',
+  'students.tournaments.hint': 'Турнирге жазылғанда көрсетілген жаттықтырушы бойынша',
+  'students.tournaments.count': 'Шәкірттер: {count}',
+  'students.tournaments.place': '{place} орын: {count}',
 };

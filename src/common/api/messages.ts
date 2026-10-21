@@ -51,6 +51,9 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   TRAINING_LINK_INVALID: 'error.api.TRAINING_LINK_INVALID',
   CLUB_COACH_INVALID: 'error.api.CLUB_COACH_INVALID',
   COACH_PLAN_LIMIT: 'error.api.COACH_PLAN_LIMIT',
+
+  // Тренер на турнире — ADR-059, T3.
+  REGISTRATION_COACH_LOCKED: 'error.api.REGISTRATION_COACH_LOCKED',
 };
 
 /**
