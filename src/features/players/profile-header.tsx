@@ -11,6 +11,8 @@ import type { ReactNode } from 'react';
 import { fill, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import RatingValue from '@/common/ui/rating-value';
 
+import { sinceYear, tenureYears } from '@/features/coaches/staff/staff-model';
+
 import { equipmentValue as equipment } from './equipment-value';
 import { gripLabel, handLabel } from './player-labels';
 import { playerName } from './player-name';
@@ -50,7 +52,8 @@ export default function ProfileHeader({
     ['player.form.blade', equipment(player.bladeProduct, player.blade)],
     ['player.form.rubberForehand', equipment(player.rubberForehandProduct, player.rubberForehand)],
     ['player.form.rubberBackhand', equipment(player.rubberBackhandProduct, player.rubberBackhand)],
-    ['player.form.coach', coach(player)],
+    ['player.form.coach', coach(player, t)],
+    ['profile.coachHistory', coachHistory(player)],
     ['player.form.bio', player.bio],
     ['profile.since', since(player, locale, t)],
   ];
@@ -253,11 +256,45 @@ function Meta({
 
 /**
  * Тренер: со страницей на KTTF — ссылкой на неё (ADR-059), иначе именем,
- * как в анкете (ADR-035).
+ * как в анкете (ADR-035); «с 2024» — из истории тренера (T2.1).
  */
-function coach(player: PlayerProfileView): ReactNode {
+function coach(player: PlayerProfileView, t: (key: MessageKey) => string): ReactNode {
   if (player.coachName === null) return null;
-  if (player.coachSlug === null) return player.coachName;
 
-  return <Link href={`/coaches/${player.coachSlug}`}>{player.coachName}</Link>;
+  const since =
+    player.coachSince === null
+      ? null
+      : fill(t('profile.coachSince'), { year: sinceYear(player.coachSince) });
+
+  return (
+    <>
+      {player.coachSlug === null ? (
+        player.coachName
+      ) : (
+        <Link href={`/coaches/${player.coachSlug}`}>{player.coachName}</Link>
+      )}
+      {since !== null && ` ${since}`}
+    </>
+  );
+}
+
+/** «Раньше: Y, 2020–2024; Z, 2018–2020» — прежние тренеры, последние первыми. */
+function coachHistory(player: PlayerProfileView): ReactNode {
+  if (player.coachHistory.length === 0) return null;
+
+  return (
+    <span data-coach-history>
+      {player.coachHistory.map((tenure, index) => (
+        <span key={`${tenure.coachPlayerId}-${tenure.from}`}>
+          {index > 0 && '; '}
+          {tenure.slug === null ? (
+            tenure.name
+          ) : (
+            <Link href={`/coaches/${tenure.slug}`}>{tenure.name}</Link>
+          )}
+          {`, ${tenureYears(tenure)}`}
+        </span>
+      ))}
+    </span>
+  );
 }

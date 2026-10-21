@@ -2,6 +2,7 @@ import { coachImageVariant, isCoachPublic, type CoachView } from '@kttf/shared/t
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
@@ -40,6 +41,7 @@ import CoachContactActions, { CoachContactList } from '@/features/coaches/contac
 import { coachFullName, coachPhoto, hasWhere, headerBadges } from '@/features/coaches/labels';
 import { coachBySlugQuery } from '@/features/coaches/queries';
 import CoachStatusPlate from '@/features/coaches/status-plate';
+import StudentsBlock from '@/features/coaches/staff/students-block';
 import { trackCoachView } from '@/features/coaches/track';
 import { usePlaceName } from '@/features/places/place-name';
 
@@ -129,6 +131,9 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
   const services = <TrainingsBlock coach={coach} />;
   const qualification = <QualificationBlock coach={coach} />;
   const achievements = <AchievementsBlock coach={coach} />;
+  // Ученики — после заслуг (T2.1, `docs/11` 3.2.1); в боковой колонке —
+  // число ссылкой на этот блок.
+  const studentsBlock = <StudentsBlock coach={coach} />;
   const about = <AboutBlock coach={coach} />;
   const game = <GameStatsBlock coach={coach} />;
 
@@ -144,20 +149,22 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
   );
   const students =
     coach.studentsCount === 0 ? null : (
-      <AsideCard
-        title={fill(t('coach.students.title'), {
-          count: formatCount(coach.studentsCount, locale),
-        })}
-      >
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+      <Paper variant="outlined" component="section" sx={{ p: 2.5 }}>
+        <Link
+          // Якорь на блок учеников на этой же странице — мимо роутера.
+          component="a"
+          href="#students"
+          variant="h3"
+          color="inherit"
+          sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
         >
-          <Users size={16} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} />
+          <Users size={18} aria-hidden />
+          {fill(t('coach.students.title'), { count: formatCount(coach.studentsCount, locale) })}
+        </Link>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {t('coach.students.text')}
         </Typography>
-      </AsideCard>
+      </Paper>
     );
   const equipment = <EquipmentCard playerId={coach.player.id} />;
   const fresh = <CoachFreshness reviewedAt={coach.profileReviewedAt} />;
@@ -183,6 +190,7 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
             {services}
             {qualification}
             {achievements}
+            {studentsBlock}
             {about}
             {game}
           </Box>
@@ -203,12 +211,9 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
           {services}
           {qualification}
           {achievements}
-          {(where !== null || students !== null) && (
-            <Box sx={{ mt: 4, display: 'grid', gap: 2 }}>
-              {where}
-              {students}
-            </Box>
-          )}
+          {where !== null && <Box sx={{ mt: 4 }}>{where}</Box>}
+          {/* На телефоне блок учеников сам стоит здесь — число ссылкой не нужно. */}
+          {studentsBlock}
           {about}
           {game}
           <Box sx={{ mt: 4, display: 'grid', gap: 2 }}>

@@ -33,6 +33,8 @@ import CoachImagesEditor from '@/features/coaches/editor/images-editor';
 import CoachPageEditor from '@/features/coaches/editor/page-editor';
 import CoachQualificationEditor from '@/features/coaches/editor/qualification-editor';
 import CoachTrainingsTab from '@/features/coaches/editor/trainings-tab';
+import CoachClubsTab from '@/features/coaches/staff/coach-clubs-tab';
+import CoachStudentsTab from '@/features/coaches/staff/coach-students-tab';
 import CoachStatsPanel from '@/features/coaches/editor/stats-panel';
 import { COACH_REQUIREMENT_KEYS, coachFullName } from '@/features/coaches/labels';
 import { coachKeys, coachQuery } from '@/features/coaches/queries';
@@ -43,12 +45,14 @@ import CoachStatusPlate from '@/features/coaches/status-plate';
  * тренера. «Клубы» — этап T2. Вкладка и, у администратора, чья страница —
  * в адресе.
  */
-const COACH_TABS = ['page', 'trainings', 'qualification', 'stats'] as const;
+const COACH_TABS = ['page', 'trainings', 'qualification', 'clubs', 'students', 'stats'] as const;
 type CoachTab = (typeof COACH_TABS)[number];
 
 const TAB_LABELS: Readonly<Record<CoachTab, MessageKey>> = {
   page: 'coach.tab.page',
   trainings: 'coach.tab.services',
+  clubs: 'coach.tab.clubs',
+  students: 'coach.tab.students',
   qualification: 'coach.tab.qualification',
   stats: 'manage.stats.title',
 };
@@ -172,6 +176,10 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
   const id = useId();
   const navigate = Route.useNavigate();
   const tab = Route.useSearch().tab ?? 'page';
+  const counts: Partial<Record<CoachTab, number>> = {
+    trainings: coach.trainingRequests.length,
+    clubs: coach.clubInvites.length,
+  };
 
   return (
     <>
@@ -202,9 +210,10 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
             key={value}
             value={value}
             label={
-              // Приглашения от клубов ждут ответа — число на вкладке.
-              value === 'trainings' && coach.trainingRequests.length > 0
-                ? `${t(TAB_LABELS[value])} (${String(coach.trainingRequests.length)})`
+              // Ждущие ответа тренера — числом на вкладке: приглашения в
+              // тренировки клубов и в штаб.
+              (counts[value] ?? 0) > 0
+                ? `${t(TAB_LABELS[value])} (${String(counts[value])})`
                 : t(TAB_LABELS[value])
             }
             id={`${id}-tab-${value}`}
@@ -229,6 +238,8 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
         )}
         {tab === 'trainings' && <CoachTrainingsTab coach={coach} />}
         {tab === 'qualification' && <CoachQualificationEditor coach={coach} />}
+        {tab === 'clubs' && <CoachClubsTab coach={coach} />}
+        {tab === 'students' && <CoachStudentsTab coach={coach} />}
         {tab === 'stats' && <CoachStatsPanel coach={coach} />}
       </Box>
     </>
