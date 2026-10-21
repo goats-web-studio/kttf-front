@@ -1,30 +1,43 @@
-import { clubImageVariant, type ClubContentItem } from '@kttf/shared/types';
+import type { ClubContentItem, CoachContentItem } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { Play } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { errorMessageKey } from '@/common/api';
-import { formatDateTime, useLocale, useT } from '@/common/i18n';
+import { formatDateTime, useLocale, useT, type MessageKey } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
 import { BackLink } from '@/common/ui/page-header';
 import Pagination from '@/common/ui/pagination';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
-import { hideClubContent } from '@/features/club-content/api';
-import { clubContentFeedQuery, clubContentKeys } from '@/features/club-content/queries';
+import { hideContent } from '@/features/content/api';
+import { contentImageVariant, hiddenNote, type ContentOwnerKind } from '@/features/content/owner';
+import {
+  clubContentFeedQuery,
+  coachContentFeedQuery,
+  contentKeys,
+} from '@/features/content/queries';
 
-const searchSchema = z.object({ page: z.coerce.number().int().positive().catch(1) });
+const CONTENT_TABS = ['clubs', 'coaches'] as const;
+type ContentTab = (typeof CONTENT_TABS)[number];
+
+const searchSchema = z.object({
+  tab: z.coerce.string().pipe(z.enum(CONTENT_TABS)).optional().catch(undefined),
+  page: z.coerce.number().int().positive().catch(1),
+});
 
 export const Route = createFileRoute('/_app/cabinet/content')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
@@ -33,15 +46,68 @@ export const Route = createFileRoute('/_app/cabinet/content')({
 
 const PAGE_SIZE = 20;
 
+/** Чей контент на вкладке и тексты, где это названо. */
+interface TabScope {
+  readonly scope: ContentOwnerKind;
+  readonly label: MessageKey;
+  readonly lead: MessageKey;
+  readonly empty: MessageKey;
+  readonly reason: MessageKey;
+}
+
+const TAB_SCOPE: Readonly<Record<ContentTab, TabScope>> = {
+  clubs: {
+    scope: 'club',
+    label: 'content.tab.clubs',
+    lead: 'content.lead',
+    empty: 'content.empty.text',
+    reason: 'content.reason',
+  },
+  coaches: {
+    scope: 'coach',
+    label: 'content.tab.coaches',
+    lead: 'content.coaches.lead',
+    empty: 'content.coaches.empty',
+    reason: 'content.coaches.reason',
+  },
+};
+
+/** Строка ленты — общая для клуба и тренера: чьё и куда ведёт ссылка. */
+interface ModerationItem {
+  readonly kind: 'POST' | 'MEDIA';
+  readonly id: string;
+  readonly ownerName: string;
+  readonly ownerHref: string;
+  readonly createdAt: string;
+  readonly title: string | null;
+  readonly excerpt: string | null;
+  readonly imageUrl: string | null;
+  readonly youtubeId: string | null;
+  readonly hidden: boolean;
+  readonly hiddenReason: string | null;
+}
+
+function clubItem({ club, ...item }: ClubContentItem): ModerationItem {
+  return { ...item, ownerName: club.name, ownerHref: `/clubs/${club.id}` };
+}
+
+function coachItem({ coach, ...item }: CoachContentItem): ModerationItem {
+  return { ...item, ownerName: coach.name, ownerHref: `/coaches/${coach.slug}` };
+}
+
 /**
- * Контент клубов — модерация, ADR-055 (постмодерация).
+ * Контент клубов (ADR-055) и тренеров (ADR-059, T2.2) — постмодерация.
  *
- * Свежие записи и фото всех клубов одной лентой. Скрытое пропадает со
- * страницы клуба, а клуб видит в кабинете причину. Вернуть — той же кнопкой.
+ * Свежие записи и фото одной лентой на вкладку. Скрытое пропадает со
+ * страницы, а клуб или тренер видит в кабинете причину. Вернуть — той же
+ * кнопкой.
  */
 function ContentPage(): ReactNode {
   const t = useT();
+  const id = useId();
   const user = useSessionStore((state) => state.user);
+  const { tab = 'clubs' } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
@@ -51,10 +117,35 @@ function ContentPage(): ReactNode {
       </Typography>
       {user?.isAdmin === true ? (
         <>
-          <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 680 }}>
-            {t('content.lead')}
-          </Typography>
-          <Feed />
+          <Tabs
+            value={tab}
+            onChange={(_, next: ContentTab) => {
+              void navigate({
+                search: { tab: next === 'clubs' ? undefined : next, page: 1 },
+                replace: true,
+              });
+            }}
+            aria-label={t('page.content.title')}
+            variant="scrollable"
+            scrollButtons={false}
+            sx={{ mt: 3 }}
+          >
+            {CONTENT_TABS.map((value) => (
+              <Tab
+                key={value}
+                value={value}
+                label={t(TAB_SCOPE[value].label)}
+                id={`${id}-tab-${value}`}
+                aria-controls={`${id}-panel`}
+              />
+            ))}
+          </Tabs>
+          <Box role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${tab}`}>
+            <Typography color="text.secondary" sx={{ mt: 2, maxWidth: 680 }}>
+              {t(TAB_SCOPE[tab].lead)}
+            </Typography>
+            {tab === 'clubs' ? <ClubFeed /> : <CoachFeed />}
+          </Box>
         </>
       ) : (
         <Box sx={{ mt: 3 }}>
@@ -69,12 +160,41 @@ function ContentPage(): ReactNode {
   );
 }
 
-function Feed(): ReactNode {
+function ClubFeed(): ReactNode {
+  const { page } = Route.useSearch();
+  const feed = useQuery(clubContentFeedQuery({ page, limit: PAGE_SIZE }));
+
+  return <Feed tab="clubs" feed={feed} items={feed.data?.items.map(clubItem)} />;
+}
+
+function CoachFeed(): ReactNode {
+  const { page } = Route.useSearch();
+  const feed = useQuery(coachContentFeedQuery({ page, limit: PAGE_SIZE }));
+
+  return <Feed tab="coaches" feed={feed} items={feed.data?.items.map(coachItem)} />;
+}
+
+interface FeedState {
+  readonly isPending: boolean;
+  readonly error: Error | null;
+  readonly refetch: () => Promise<unknown>;
+  readonly data?: { readonly total: number } | undefined;
+}
+
+function Feed({
+  tab,
+  feed,
+  items,
+}: {
+  readonly tab: ContentTab;
+  readonly feed: FeedState;
+  readonly items: readonly ModerationItem[] | undefined;
+}): ReactNode {
   const t = useT();
   const { page } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const feed = useQuery(clubContentFeedQuery({ page, limit: PAGE_SIZE }));
   const pages = feed.data === undefined ? 1 : Math.max(1, Math.ceil(feed.data.total / PAGE_SIZE));
+  const scope = TAB_SCOPE[tab];
 
   return (
     <Box sx={{ mt: 3 }}>
@@ -84,12 +204,17 @@ function Feed(): ReactNode {
         onRetry={() => void feed.refetch()}
         loading={<RowsSkeleton rows={3} />}
       >
-        {feed.data?.items.length === 0 ? (
-          <EmptyState title={t('content.empty.title')} text={t('content.empty.text')} />
+        {items?.length === 0 ? (
+          <EmptyState title={t('content.empty.title')} text={t(scope.empty)} />
         ) : (
           <Box sx={{ display: 'grid', gap: 1.5 }}>
-            {(feed.data?.items ?? []).map((item) => (
-              <ContentRow key={`${item.kind}-${item.id}`} item={item} />
+            {(items ?? []).map((item) => (
+              <ContentRow
+                key={`${item.kind}-${item.id}`}
+                scope={scope.scope}
+                reasonLabel={scope.reason}
+                item={item}
+              />
             ))}
           </Box>
         )}
@@ -98,33 +223,42 @@ function Feed(): ReactNode {
         page={page}
         pages={pages}
         onPage={(next) => {
-          void navigate({ search: { page: next } });
+          void navigate({ search: (previous) => ({ ...previous, page: next }) });
         }}
       />
     </Box>
   );
 }
 
-function ContentRow({ item }: { readonly item: ClubContentItem }): ReactNode {
+function ContentRow({
+  scope,
+  reasonLabel,
+  item,
+}: {
+  readonly scope: ContentOwnerKind;
+  readonly reasonLabel: MessageKey;
+  readonly item: ModerationItem;
+}): ReactNode {
   const t = useT();
   const locale = useLocale();
   const queryClient = useQueryClient();
   const [reason, setReason] = useState('');
   const hide = useMutation({
     mutationFn: (hidden: boolean) =>
-      hideClubContent(item.kind, item.id, {
+      hideContent(scope, item.kind, item.id, {
         hidden,
         reason: hidden && reason.trim() !== '' ? reason.trim() : null,
       }),
     onSuccess: async () => {
       setReason('');
-      await queryClient.invalidateQueries({ queryKey: clubContentKeys.all });
+      await queryClient.invalidateQueries({ queryKey: contentKeys.all });
     },
   });
 
   return (
     <Paper
       variant="outlined"
+      data-content-item={item.id}
       sx={{
         p: 2,
         display: 'grid',
@@ -139,7 +273,7 @@ function ContentRow({ item }: { readonly item: ClubContentItem }): ReactNode {
         <Box sx={{ position: 'relative' }}>
           <Box
             component="img"
-            src={clubImageVariant(item.imageUrl, 480)}
+            src={contentImageVariant(item.imageUrl, 480)}
             alt=""
             loading="lazy"
             sx={{
@@ -159,7 +293,7 @@ function ContentRow({ item }: { readonly item: ClubContentItem }): ReactNode {
       )}
       <Box sx={{ minWidth: 0 }}>
         <Typography variant="body2" color="text.secondary">
-          <Link href={`/clubs/${item.club.id}`}>{item.club.name}</Link>
+          <Link href={item.ownerHref}>{item.ownerName}</Link>
           {' · '}
           {t(item.kind === 'POST' ? 'content.kind.post' : 'content.kind.media')}
           {' · '}
@@ -175,16 +309,14 @@ function ContentRow({ item }: { readonly item: ClubContentItem }): ReactNode {
         )}
         {item.hidden && (
           <Alert severity="warning" sx={{ mt: 1 }}>
-            {item.hiddenReason === null
-              ? t('manage.content.hidden')
-              : `${t('manage.content.hidden')}: ${item.hiddenReason}`}
+            {hiddenNote(t, item)}
           </Alert>
         )}
         <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
           {!item.hidden && (
             <TextField
               size="small"
-              label={t('content.reason')}
+              label={t(reasonLabel)}
               value={reason}
               onChange={(event) => {
                 setReason(event.target.value);
