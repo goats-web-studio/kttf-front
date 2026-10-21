@@ -40,6 +40,8 @@ const profile: PlayerProfileView = {
   coachPlayerId: null,
   coachName: 'Сериков Тимур',
   coachSlug: null,
+  coachSince: null,
+  coachHistory: [],
   lastSeenAt: null,
   online: false,
   birthYearOnly: true,

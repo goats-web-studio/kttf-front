@@ -2,11 +2,15 @@ import type { CoachStatus, ListCoachesRequest, ListTrainingsRequest } from '@ktt
 import { queryOptions } from '@tanstack/react-query';
 
 import {
+  fetchClubStaff,
+  fetchClubStaffManage,
   fetchClubTrainings,
   fetchClubTrainingsManage,
   fetchCoach,
   fetchCoachBySlug,
   fetchCoachStats,
+  fetchCoachStudents,
+  fetchCoachStudentsManage,
   fetchTraining,
   listCoachApplications,
   listCoaches,
@@ -28,6 +32,11 @@ export const coachKeys = {
   stats: (id: string, days: number) => ['coaches', 'stats', id, days] as const,
   clubTrainings: (clubId: string) => ['coaches', 'club-trainings', clubId] as const,
   clubTrainingsManage: (clubId: string) => ['coaches', 'club-trainings-manage', clubId] as const,
+  clubStaff: (clubId: string) => ['coaches', 'club-staff', clubId] as const,
+  clubStaffManage: (clubId: string) => ['coaches', 'club-staff-manage', clubId] as const,
+  students: (coachId: string) => ['coaches', 'students', coachId] as const,
+  studentsManage: (coachId: string, page: number) =>
+    ['coaches', 'students-manage', coachId, page] as const,
   applications: (status: CoachStatus | undefined, page: number) =>
     ['coaches', 'applications', status ?? 'all', page] as const,
 };
@@ -103,3 +112,36 @@ export const pendingCoachesCountQuery = queryOptions({
   queryKey: [...coachKeys.all, 'pending-count'] as const,
   queryFn: async () => (await listCoachApplications({ status: 'PENDING', limit: 1 })).total,
 });
+
+/** Тренерский штаб на странице клуба (T2). Под корнем тренеров: связи меняют обе стороны. */
+export function clubStaffQuery(clubId: string) {
+  return queryOptions({
+    queryKey: coachKeys.clubStaff(clubId),
+    queryFn: () => fetchClubStaff(clubId),
+  });
+}
+
+export function clubStaffManageQuery(clubId: string) {
+  return queryOptions({
+    queryKey: coachKeys.clubStaffManage(clubId),
+    queryFn: () => fetchClubStaffManage(clubId),
+  });
+}
+
+/** Ученики на странице тренера (T2). */
+export function coachStudentsQuery(coachId: string) {
+  return queryOptions({
+    queryKey: coachKeys.students(coachId),
+    queryFn: () => fetchCoachStudents(coachId),
+  });
+}
+
+/** Сколько учеников на странице кабинета. */
+export const STUDENTS_PAGE = 20;
+
+export function coachStudentsManageQuery(coachId: string, page: number) {
+  return queryOptions({
+    queryKey: coachKeys.studentsManage(coachId, page),
+    queryFn: () => fetchCoachStudentsManage(coachId, { page, limit: STUDENTS_PAGE }),
+  });
+}

@@ -1,5 +1,12 @@
 import type {
+  ClubCoachView,
+  ClubStaffManageView,
   CoachApplicationView,
+  CoachStudentRow,
+  CoachStudentsView,
+  InviteClubCoachInput,
+  RequestClubCoachInput,
+  UpdateClubCoachInput,
   CoachEventKind,
   CoachListItemView,
   CoachStatsView,
@@ -223,4 +230,78 @@ export function verifyCoachCredential(
     method: 'PATCH',
     body: { verified },
   });
+}
+
+// ---------------------------------------------------------------- штаб клуба (T2)
+
+/** Публично: тренеры штаба клуба (`ACTIVE`, страница опубликована). */
+export function fetchClubStaff(clubId: string): Promise<ClubCoachView[]> {
+  return apiRequest<ClubCoachView[]>(`/clubs/${clubId}/staff`);
+}
+
+/** Кабинет клуба: состав, приглашённые клубом и запросы тренеров. */
+export function fetchClubStaffManage(clubId: string): Promise<ClubStaffManageView> {
+  return apiRequest<ClubStaffManageView>(`/clubs/${clubId}/staff/manage`);
+}
+
+/** Клуб приглашает тренера. */
+export async function inviteClubCoach(clubId: string, input: InviteClubCoachInput): Promise<void> {
+  await apiRequest<unknown>(`/clubs/${clubId}/staff`, { method: 'POST', body: input });
+}
+
+/** Должность тренера в штабе — правит клуб. */
+export async function updateClubCoach(
+  clubId: string,
+  coachId: string,
+  input: UpdateClubCoachInput,
+): Promise<void> {
+  await apiRequest<unknown>(`/clubs/${clubId}/staff/${coachId}`, { method: 'PATCH', body: input });
+}
+
+/** Тренер просится в клуб. */
+export async function requestClubCoach(
+  coachId: string,
+  input: RequestClubCoachInput,
+): Promise<void> {
+  await apiRequest<unknown>(`/coaches/${coachId}/clubs`, { method: 'POST', body: input });
+}
+
+/** Вторая сторона принимает: клуб — запрос тренера, тренер — приглашение клуба. */
+export async function confirmClubCoach(clubId: string, coachId: string): Promise<void> {
+  await apiRequest<unknown>(`/club-coaches/${clubId}/${coachId}/confirm`, { method: 'POST' });
+}
+
+/** Отклонить, отозвать или выйти из штаба — любая сторона, один маршрут. */
+export async function removeClubCoach(clubId: string, coachId: string): Promise<void> {
+  await apiRequest<unknown>(`/club-coaches/${clubId}/${coachId}`, { method: 'DELETE' });
+}
+
+// ---------------------------------------------------------------- ученики (T2)
+
+export function fetchCoachStudents(coachId: string): Promise<CoachStudentsView> {
+  return apiRequest<CoachStudentsView>(`/coaches/${coachId}/students`);
+}
+
+export function fetchCoachStudentsManage(
+  coachId: string,
+  query: { readonly page: number; readonly limit: number },
+): Promise<Page<CoachStudentRow>> {
+  return apiRequest<Page<CoachStudentRow>>(
+    `/coaches/${coachId}/students/manage${queryString(query)}`,
+  );
+}
+
+/** Тренер убирает ссылку на себя из анкеты игрока. */
+export async function removeCoachStudent(coachId: string, playerId: string): Promise<void> {
+  await apiRequest<unknown>(`/coaches/${coachId}/students/${playerId}`, { method: 'DELETE' });
+}
+
+/** «Я ученик» — тренер встаёт в анкету вошедшего игрока. */
+export async function becomeStudent(coachId: string): Promise<void> {
+  await apiRequest<unknown>(`/coaches/${coachId}/students/me`, { method: 'POST' });
+}
+
+/** «Больше не ученик». */
+export async function leaveStudent(coachId: string): Promise<void> {
+  await apiRequest<unknown>(`/coaches/${coachId}/students/me`, { method: 'DELETE' });
 }
