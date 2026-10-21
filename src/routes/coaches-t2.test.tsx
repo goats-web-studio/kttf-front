@@ -62,6 +62,7 @@ const STUDENTS: CoachStudentsView = {
   top: [{ ...PLAYERS.second, photoUrl: null }],
   medals: { total: 3, recent: [] },
   growth: [],
+  tournaments: [],
 };
 
 let sent: Sent[] = [];

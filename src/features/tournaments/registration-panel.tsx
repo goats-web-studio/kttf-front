@@ -17,8 +17,11 @@ import { isClubStaff } from '@/features/clubs/roles';
 import { playerQuery } from '@/features/players/queries';
 
 import { registerForTournament, removeRegistration } from './api';
+import CoachDialog from './coach-dialog';
+import { CoachName } from './coach-note';
 import { eligibilityProblems, problemKeys } from './eligibility-problems';
 import { tournamentKeys } from './queries';
+import { isCoachEditable } from './registration-coach';
 
 /**
  * Кнопка-ссылка роутера с параметрами поиска: адрес возврата после входа
@@ -145,6 +148,9 @@ export default function RegistrationPanel({
         {mine !== undefined ? (
           <>
             <Typography>{t(ownStatusKey(mine.status))}</Typography>
+            {mine.status === 'REJECTED' ? null : (
+              <OwnCoach registration={mine} editable={isCoachEditable(tournament.status)} />
+            )}
             {mine.status === 'REJECTED' ? null : isExpired ? (
               // Отмена только до дедлайна — ТЗ 4.3. После него снять участника
               // может организатор, и просить об этом придётся его.
@@ -187,6 +193,62 @@ export default function RegistrationPanel({
         )}
       </Box>
     </Paper>
+  );
+}
+
+/**
+ * Тренер на турнире — ADR-059, T3. Взят из анкеты при записи; до старта
+ * его можно поменять, после — это история, по ней считаются медали.
+ */
+function OwnCoach({
+  registration,
+  editable,
+}: {
+  readonly registration: RegistrationView;
+  readonly editable: boolean;
+}): ReactNode {
+  const t = useT();
+  const [editing, setEditing] = useState(false);
+  const coach = registration.coach;
+
+  return (
+    <Box data-own-coach sx={{ mt: 1.5 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 1 }}>
+        <Typography>
+          {coach === null ? (
+            t('registration.coach.none')
+          ) : (
+            <>
+              {t('registration.coach.label')} <CoachName coach={coach} />
+            </>
+          )}
+        </Typography>
+        {editable && (
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => {
+              setEditing(true);
+            }}
+            sx={{ minHeight: 44 }}
+          >
+            {t('registration.coach.edit')}
+          </Button>
+        )}
+      </Box>
+      {editable && (
+        <Typography variant="body2" color="text.secondary">
+          {t('registration.coach.hint')}
+        </Typography>
+      )}
+      <CoachDialog
+        registration={registration}
+        open={editing}
+        onClose={() => {
+          setEditing(false);
+        }}
+      />
+    </Box>
   );
 }
 

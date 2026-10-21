@@ -12,7 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
@@ -23,8 +23,11 @@ import { playerName } from '@/features/players/player-name';
 
 import AddParticipant from './add-participant';
 import { removeRegistration, updateRegistration } from './api';
+import CoachDialog from './coach-dialog';
+import CoachNote from './coach-note';
 import { REGISTRATION_STATUS_KEYS } from './labels';
 import { tournamentKeys } from './queries';
+import { isCoachEditable } from './registration-coach';
 
 /** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
 const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
@@ -151,6 +154,8 @@ function Row({
     onSuccess: refresh,
   });
 
+  const [editingCoach, setEditingCoach] = useState(false);
+
   const isWithdrawn = registration.status === 'WITHDRAWN' || registration.status === 'NO_SHOW';
   const error = update.error ?? remove.error;
 
@@ -173,6 +178,7 @@ function Row({
             {t('participants.unrated')}
           </Typography>
         )}
+        <CoachNote coach={registration.coach} />
         {error !== null && (
           <Typography role="alert" variant="body2" color="error" sx={{ mt: 0.5 }}>
             {t(errorMessageKey(error))}
@@ -218,6 +224,21 @@ function Row({
               {isWithdrawn ? t('participants.restore') : t('participants.withdraw')}
             </Button>
 
+            {/* Тренер на турнире — до старта (ADR-059, T3): после него по
+                записи уже считаются медали учеников. */}
+            {isCoachEditable(tournament.status) && (
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setEditingCoach(true);
+                }}
+                sx={ROW_ACTION}
+              >
+                {t('participants.editCoach')}
+              </Button>
+            )}
+
             {/* Удалить запись можно только до старта: после него участник
                 снимается, а не исчезает — его встречи уже в таблице (ADR-009). */}
             {tournament.startedAt === null && (
@@ -253,6 +274,13 @@ function Row({
               sx={{ width: 88 }}
             />
           </Stack>
+          <CoachDialog
+            registration={registration}
+            open={editingCoach}
+            onClose={() => {
+              setEditingCoach(false);
+            }}
+          />
         </TableCell>
       )}
     </TableRow>

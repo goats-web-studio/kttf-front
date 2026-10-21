@@ -176,6 +176,7 @@ const PARTICIPANTS: ResultParticipantView[] = [
     status: 'PLAYING',
     isRated: true,
     seed: 1,
+    coach: null,
   },
   {
     player: PLAYERS.second,
@@ -184,6 +185,7 @@ const PARTICIPANTS: ResultParticipantView[] = [
     status: 'PLAYING',
     isRated: true,
     seed: 2,
+    coach: null,
   },
   // Выбыл на групповом этапе: за места не играл вовсе.
   {
@@ -193,6 +195,7 @@ const PARTICIPANTS: ResultParticipantView[] = [
     status: 'PLAYING',
     isRated: true,
     seed: 3,
+    coach: null,
   },
   // Снялся и играл вне зачёта: место не определено по другой причине.
   {
@@ -202,6 +205,7 @@ const PARTICIPANTS: ResultParticipantView[] = [
     status: 'WITHDRAWN',
     isRated: false,
     seed: null,
+    coach: null,
   },
 ];
 
@@ -510,6 +514,7 @@ export const CONSOLE_SNAPSHOT: TournamentSnapshotView = {
       matchesAtStart: player.ratedMatches,
       createdAt: '2026-09-01T00:00:00.000Z',
       player,
+      coach: null,
     }),
   ),
   standings: RESULTS.standings,
@@ -677,6 +682,7 @@ export const OWN_REGISTRATION: RegistrationView = {
   matchesAtStart: null,
   createdAt: '2026-09-01T10:00:00.000Z',
   player: PLAYERS.first,
+  coach: null,
 };
 
 export const REGISTRATIONS: RegistrationView[] = [
@@ -691,6 +697,7 @@ export const REGISTRATIONS: RegistrationView[] = [
     matchesAtStart: null,
     createdAt: '2026-09-01T10:05:00.000Z',
     player: PLAYERS.third,
+    coach: null,
   },
 ];
 

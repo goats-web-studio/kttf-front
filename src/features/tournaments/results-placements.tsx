@@ -13,6 +13,7 @@ import PlayerAvatar from '@/common/ui/player-avatar';
 import Surface from '@/common/ui/surface';
 import { playerName } from '@/features/players/player-name';
 
+import CoachNote from './coach-note';
 import { PLACEMENT_REASON_KEYS, REGISTRATION_STATUS_KEYS } from './labels';
 import Podium from './podium';
 import ResultsTies from './results-ties';
@@ -95,6 +96,7 @@ export default function ResultsPlacements({
                     />
                     <Box sx={{ minWidth: 0 }}>
                       {playerName(participant.player)}
+                      <CoachNote coach={participant.coach} />
                       {/* На телефоне примечание — подписью под именем: третья
                           колонка мяла фамилии в две строки. */}
                       <Box

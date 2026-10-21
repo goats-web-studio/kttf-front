@@ -54,8 +54,28 @@ describe('годы тренера и пустой блок учеников', ()
     );
   });
 
-  it('учеников нет ни сейчас, ни раньше — блока нет', () => {
-    expect(hasStudents({ current: 0, former: 0 })).toBe(false);
-    expect(hasStudents({ current: 0, former: 3 })).toBe(true);
+  it('учеников нет ни сейчас, ни раньше, ни на турнирах — блока нет', () => {
+    expect(hasStudents({ current: 0, former: 0, tournaments: [] })).toBe(false);
+    expect(hasStudents({ current: 0, former: 3, tournaments: [] })).toBe(true);
+    // Заявились с этим тренером, но в анкете его нет (T3).
+    expect(
+      hasStudents({
+        current: 0,
+        former: 0,
+        tournaments: [
+          {
+            tournament: {
+              id: '00000000-0000-4000-8000-000000000001',
+              name: 'Кубок зала',
+              startsAt: '2026-10-18T12:00:00.000Z',
+            },
+            students: 2,
+            gold: 1,
+            silver: 0,
+            bronze: 0,
+          },
+        ],
+      }),
+    ).toBe(true);
   });
 });

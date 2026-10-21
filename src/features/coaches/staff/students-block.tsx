@@ -10,7 +10,7 @@ import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Medal, TrendingUp, Users } from 'lucide-react';
+import { Medal, Trophy, TrendingUp, Users } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
@@ -19,6 +19,7 @@ import DeltaPill from '@/common/ui/delta-pill';
 import RankBadge from '@/common/ui/rank-badge';
 import RatingValue from '@/common/ui/rating-value';
 import StatTile from '@/common/ui/stat-tile';
+import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 import { useSessionStore } from '@/features/auth/session-store';
 import { playerKeys, playerQuery } from '@/features/players/queries';
 
@@ -29,7 +30,8 @@ import { hasStudents, studentState } from './staff-model';
 
 /**
  * «Ученики» на странице тренера (T2.1, `docs/11` 3.2.1): числа, топ по
- * рейтингу, медали за месяц и лучший рост. Младшие 14 — только числом:
+ * рейтингу, медали за месяц, лучший рост и последние турниры учеников
+ * (T3). Младшие 14 — только числом:
  * сервер их по имени и не отдаёт. Пустые части не выводятся (ADR-042).
  */
 export default function StudentsBlock({ coach }: { readonly coach: CoachView }): ReactNode {
@@ -162,6 +164,48 @@ export function StudentsContent({ view }: { readonly view: CoachStudentsView }):
         </Paper>
       )}
 
+      {view.tournaments.length > 0 && (
+        <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }} data-students-tournaments>
+          <Typography variant="h3" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Trophy size={18} aria-hidden />
+            {t('students.tournaments')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
+            {t('students.tournaments.hint')}
+          </Typography>
+          <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 1.5 }}>
+            {view.tournaments.map((row) => (
+              <Box
+                component="li"
+                key={row.tournament.id}
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  columnGap: 2,
+                  rowGap: 0.75,
+                  minWidth: 0,
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Link href={`/tournaments/${row.tournament.id}`} sx={{ fontWeight: 600 }}>
+                    {row.tournament.name}
+                  </Link>
+                  <Typography variant="body2" color="text.secondary">
+                    {`${formatDate(row.tournament.startsAt, locale)} · ${fill(
+                      t('students.tournaments.count'),
+                      { count: formatCount(row.students, locale) },
+                    )}`}
+                  </Typography>
+                </Box>
+                <MedalCounts gold={row.gold} silver={row.silver} bronze={row.bronze} />
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+      )}
+
       {view.growth.length > 0 && (
         <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }} data-students-growth>
           <Typography variant="h3" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -184,6 +228,64 @@ export function StudentsContent({ view }: { readonly view: CoachStudentsView }):
           </Box>
         </Paper>
       )}
+    </Box>
+  );
+}
+
+/**
+ * Медали учеников на турнире — тем же кружком цвета медали, что места в
+ * таблицах (`RankBadge`), и числом рядом. Без медалей — ничего: строка
+ * «0 · 0 · 0» читалась бы упрёком.
+ */
+function MedalCounts({
+  gold,
+  silver,
+  bronze,
+}: {
+  readonly gold: number;
+  readonly silver: number;
+  readonly bronze: number;
+}): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+  const medals = [
+    { place: 1, count: gold },
+    { place: 2, count: silver },
+    { place: 3, count: bronze },
+  ].filter((medal) => medal.count > 0);
+
+  if (medals.length === 0) return null;
+
+  return (
+    <Box
+      component="ul"
+      data-students-tournament-medals
+      sx={{ m: 0, p: 0, listStyle: 'none', display: 'flex', gap: 1.5 }}
+    >
+      {medals.map((medal) => (
+        <Box
+          component="li"
+          key={medal.place}
+          data-medal={medal.place}
+          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+        >
+          <Box component="span" aria-hidden sx={{ display: 'inline-flex', alignItems: 'center' }}>
+            <RankBadge rank={medal.place} />
+            <Box
+              component="span"
+              sx={{ ml: 0.5, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+            >
+              {`×${formatCount(medal.count, locale)}`}
+            </Box>
+          </Box>
+          <Box component="span" sx={VISUALLY_HIDDEN}>
+            {fill(t('students.tournaments.place'), {
+              place: String(medal.place),
+              count: formatCount(medal.count, locale),
+            })}
+          </Box>
+        </Box>
+      ))}
     </Box>
   );
 }

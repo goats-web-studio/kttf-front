@@ -66,7 +66,13 @@ export function tenureYears(tenure: Pick<CoachTenureView, 'from' | 'to'>): strin
   return to === null || to === from ? String(from) : `${String(from)}–${String(to)}`;
 }
 
-/** Есть ли в блоке «Ученики» что показать, кроме кнопки «Я ученик». */
-export function hasStudents(view: Pick<CoachStudentsView, 'current' | 'former'>): boolean {
-  return view.current > 0 || view.former > 0;
+/**
+ * Есть ли в блоке «Ученики» что показать, кроме кнопки «Я ученик». Турниры
+ * считаются по тренеру в записи на турнир (T3): заявиться с тренером мог и
+ * тот, у кого в анкете его нет.
+ */
+export function hasStudents(
+  view: Pick<CoachStudentsView, 'current' | 'former' | 'tournaments'>,
+): boolean {
+  return view.current > 0 || view.former > 0 || view.tournaments.length > 0;
 }
