@@ -32,7 +32,8 @@ import {
 } from '@/features/clubs/club-tournaments';
 import MediaEditor from '@/features/club-content/media-editor';
 import ClubTrainingsPanel from '@/features/coaches/club/club-trainings-panel';
-import { clubTrainingsManageQuery } from '@/features/coaches/queries';
+import { clubStaffManageQuery, clubTrainingsManageQuery } from '@/features/coaches/queries';
+import ClubStaffPanel from '@/features/coaches/staff/club-staff-panel';
 import PostsEditor from '@/features/club-content/posts-editor';
 import FreshnessPanel from '@/features/clubs/page-editor/freshness-panel';
 import HallEditor from '@/features/clubs/page-editor/hall-editor';
@@ -57,6 +58,7 @@ const MANAGE_TABS = [
   'tournaments',
   'page',
   'trainings',
+  'coaches',
   'posts',
   'media',
   'stats',
@@ -70,6 +72,7 @@ const MANAGE_TAB_LABELS: Readonly<Record<ManageTab, MessageKey>> = {
   tournaments: 'club.tournaments.title',
   page: 'manage.page.title',
   trainings: 'nav.trainings',
+  coaches: 'staff.tab',
   posts: 'manage.posts.title',
   media: 'manage.media.title',
   stats: 'manage.stats.title',
@@ -150,6 +153,12 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
   const tab = Route.useSearch().tab ?? 'tournaments';
   // Запросы тренеров ждут ответа клуба — число на вкладке (ADR-059).
   const trainingRequests = useQuery(clubTrainingsManageQuery(club.id)).data?.requests.length ?? 0;
+  // Запросы тренеров в штаб — тоже числом на вкладке (T2.1).
+  const staffRequests = useQuery(clubStaffManageQuery(club.id)).data?.requests.length ?? 0;
+  const counts: Partial<Record<ManageTab, number>> = {
+    trainings: trainingRequests,
+    coaches: staffRequests,
+  };
 
   return (
     <>
@@ -197,8 +206,8 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
             key={value}
             value={value}
             label={
-              value === 'trainings' && trainingRequests > 0
-                ? `${t(MANAGE_TAB_LABELS[value])} (${String(trainingRequests)})`
+              (counts[value] ?? 0) > 0
+                ? `${t(MANAGE_TAB_LABELS[value])} (${String(counts[value])})`
                 : t(MANAGE_TAB_LABELS[value])
             }
             id={`${id}-tab-${value}`}
@@ -219,6 +228,7 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
         {tab === 'tournaments' && <ClubTournaments club={club} />}
         {tab === 'page' && <ClubPage club={club} />}
         {tab === 'trainings' && <ClubTrainingsPanel clubId={club.id} />}
+        {tab === 'coaches' && <ClubStaffPanel clubId={club.id} />}
         {tab === 'posts' && <PostsEditor club={club} />}
         {tab === 'media' && <MediaEditor club={club} />}
         {tab === 'stats' && <StatsPanel club={club} />}

@@ -142,8 +142,14 @@ export function hasWhere(coach: {
   readonly city: unknown;
   readonly formats: readonly TrainingPlace[];
   readonly visitAreas: string | null;
+  readonly clubs?: readonly unknown[];
 }): boolean {
-  return coach.city !== null || coach.formats.length > 0 || coach.visitAreas !== null;
+  return (
+    coach.city !== null ||
+    coach.formats.length > 0 ||
+    coach.visitAreas !== null ||
+    (coach.clubs?.length ?? 0) > 0
+  );
 }
 
 /** Имя в карточке: фамилия и имя, как в списках игроков. */

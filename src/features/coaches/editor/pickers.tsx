@@ -73,14 +73,17 @@ export function ClubPicker({
 
 /**
  * Тренер со страницей — поиском по `GET /coaches?search=`. Пусто — тренировка
- * клуба без тренера (ADR-059).
+ * клуба без тренера (ADR-059). Вне тренировки (штаб клуба) подсказка о
+ * тренировке не нужна — `noneHint={false}`.
  */
 export function CoachPicker({
   value,
   onChange,
+  noneHint = true,
 }: {
   readonly value: TrainingCoachRef | null;
   readonly onChange: (coach: TrainingCoachRef | null) => void;
+  readonly noneHint?: boolean;
 }): ReactNode {
   const t = useT();
   const [input, setInput] = useState('');
@@ -124,7 +127,7 @@ export function CoachPicker({
         <TextField
           {...params}
           label={t('training.editor.coach')}
-          helperText={value === null ? t('training.editor.coachNone') : undefined}
+          helperText={noneHint && value === null ? t('training.editor.coachNone') : undefined}
         />
       )}
     />

@@ -28,6 +28,8 @@ export default function CoachDesk({ user }: { readonly user: AuthUserView }): Re
   // Приглашения от клубов — число на карточке: их ждут, как заявки.
   const page = useQuery({ ...coachQuery(coach?.id ?? ''), enabled: coach !== null });
   const requests = page.data?.trainingRequests.length ?? 0;
+  // Приглашения клубов в штаб (T2.1) — своей строкой.
+  const invites = page.data?.clubInvites.length ?? 0;
 
   if (coach === null) {
     return (
@@ -56,6 +58,11 @@ export default function CoachDesk({ user }: { readonly user: AuthUserView }): Re
       <Typography data-coach-desk-status={coach.status} sx={{ fontWeight: 600 }}>
         {t(COACH_STATUS_KEYS[coach.status])}
       </Typography>
+      {invites > 0 && (
+        <Typography data-coach-desk-invites sx={{ mt: 0.5, color: 'var(--warn-text)' }}>
+          {fill(t('staff.coach.invitesCount'), { count: String(invites) })}
+        </Typography>
+      )}
       {requests > 0 && (
         <Typography data-coach-desk-requests sx={{ mt: 0.5, color: 'var(--warn-text)' }}>
           {fill(t('training.requests.count'), { count: String(requests) })}
@@ -63,7 +70,13 @@ export default function CoachDesk({ user }: { readonly user: AuthUserView }): Re
       )}
       <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         <Button
-          href={requests > 0 ? '/cabinet/coach?tab=trainings' : '/cabinet/coach'}
+          href={
+            requests > 0
+              ? '/cabinet/coach?tab=trainings'
+              : invites > 0
+                ? '/cabinet/coach?tab=clubs'
+                : '/cabinet/coach'
+          }
           sx={{ minHeight: 44 }}
         >
           {t('coach.edit')}

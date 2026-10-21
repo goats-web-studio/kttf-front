@@ -338,6 +338,24 @@ export function WhereContent({ coach }: { readonly coach: CoachView }): ReactNod
           {`${t('coach.field.visitAreas')}: ${coach.visitAreas}`}
         </Typography>
       )}
+      {coach.clubs.length > 0 && (
+        // Тренерский штаб (T2.1): клубы, где он работает, с должностью.
+        <Box data-coach-clubs>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+            {t('staff.public.worksIn')}
+          </Typography>
+          <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 0.5 }}>
+            {coach.clubs.map((entry) => (
+              <Typography component="li" variant="body2" key={entry.club.id}>
+                <Link href={`/clubs/${entry.club.id}`} sx={{ fontWeight: 600 }}>
+                  {entry.club.name}
+                </Link>
+                {entry.position === null ? '' : ` · ${entry.position}`}
+              </Typography>
+            ))}
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }
