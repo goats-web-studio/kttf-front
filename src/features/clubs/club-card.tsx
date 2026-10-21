@@ -62,7 +62,6 @@ export default function ClubCard({ club }: { readonly club: ClubListItemView }):
               {fill(t('clubs.card.next'), { date: formatDate(club.nextTournamentAt, locale) })}
             </Tag>
           )}
-          {club.amenities.includes('KIDS') && <Tag>{t('club.amenity.KIDS')}</Tag>}
           {/* Опубликованная тренировка для детей или подростков (ADR-059, T2.1). */}
           {club.kidsTrainings && <Tag>{t('clubs.card.kidsTrainings')}</Tag>}
         </Box>
@@ -93,12 +92,7 @@ export default function ClubCard({ club }: { readonly club: ClubListItemView }):
             gap: 1,
           }}
         >
-          <Amenities
-            amenities={club.amenities
-              .filter((amenity) => amenity !== 'KIDS')
-              .slice(0, CARD_AMENITIES)}
-            compact
-          />
+          <Amenities amenities={club.amenities.slice(0, CARD_AMENITIES)} compact />
           {days !== null && (
             <Typography variant="caption" color="text.secondary">
               {fill(t('club.fresh.updated'), { when: freshnessWhen(t, days) })}

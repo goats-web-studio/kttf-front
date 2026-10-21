@@ -299,7 +299,6 @@ export const kk: Record<MessageKey, string> = {
   'club.amenity.WIFI': 'Wi‑Fi',
   'club.amenity.CAFE': 'Кафе',
   'club.amenity.SHOP': 'Құрал-жабдық дүкені',
-  'club.amenity.KIDS': 'Балалар секциясы',
   'club.floor.SPORT_COVER': 'Спорттық жабын',
   'club.floor.LINOLEUM': 'Линолеум',
   'club.floor.WOOD': 'Паркет',

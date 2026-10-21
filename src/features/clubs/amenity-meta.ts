@@ -1,6 +1,5 @@
 import type { ClubAmenity } from '@kttf/shared/types';
 import {
-  Baby,
   CircleParking,
   Coffee,
   Shirt,
@@ -22,7 +21,6 @@ export const AMENITY_ICONS: Readonly<Record<ClubAmenity, LucideIcon>> = {
   WIFI: Wifi,
   CAFE: Coffee,
   SHOP: ShoppingBag,
-  KIDS: Baby,
 };
 
 export const amenityLabel = (amenity: ClubAmenity): MessageKey => `club.amenity.${amenity}`;

@@ -293,7 +293,6 @@ export const ru = {
   'club.amenity.WIFI': 'Wi‑Fi',
   'club.amenity.CAFE': 'Кафе',
   'club.amenity.SHOP': 'Магазин инвентаря',
-  'club.amenity.KIDS': 'Детская секция',
   'club.floor.SPORT_COVER': 'Спортивное покрытие',
   'club.floor.LINOLEUM': 'Линолеум',
   'club.floor.WOOD': 'Паркет',
