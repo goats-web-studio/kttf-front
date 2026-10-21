@@ -31,10 +31,8 @@ export const coachOwner = (id: string): ContentOwner => ({ kind: 'coach', id });
 
 /** Запись без поля владельца: у клуба `clubId`, у тренера `coachId`. */
 export type ContentPostView = Omit<ClubPostView, 'clubId'>;
-/** Причину скрытия медиа отдаёт только тренерский контракт; у клуба её нет. */
-export type ContentMediaView = Omit<ClubMediaView, 'clubId'> & {
-  readonly hiddenReason?: string | null;
-};
+/** Медиа без поля владельца. */
+export type ContentMediaView = Omit<ClubMediaView, 'clubId'>;
 
 /** Корень маршрутов владельца. */
 export function ownerPath(owner: ContentOwner): string {
