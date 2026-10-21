@@ -7,6 +7,7 @@ import type {
   Page,
   RegisterInput,
   RegistrationView,
+  SetRegistrationCoachInput,
   TournamentResultsView,
   TournamentListItemView,
   TournamentView,
@@ -111,6 +112,22 @@ export function updateRegistration(
   return apiRequest<RegistrationView>(
     `/tournaments/${tournamentId}/registrations/${registrationId}`,
     { method: 'PATCH', body: input },
+  );
+}
+
+/**
+ * Тренер на турнире — ADR-059, T3. Правят сам игрок и организатор, до
+ * старта: после него запись — история, по ней считаются медали учеников.
+ * Оба поля `null` — без тренера.
+ */
+export function setRegistrationCoach(
+  tournamentId: string,
+  registrationId: string,
+  input: SetRegistrationCoachInput,
+): Promise<RegistrationView> {
+  return apiRequest<RegistrationView>(
+    `/tournaments/${tournamentId}/registrations/${registrationId}/coach`,
+    { method: 'PUT', body: input },
   );
 }
 
