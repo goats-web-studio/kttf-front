@@ -56,6 +56,8 @@ import {
   priceText,
 } from './labels';
 import { trainingQuery } from './queries';
+import { fullScheduleText } from './schedule';
+import { EnrollmentBadge, NextSession } from './schedule-view';
 import { CoachChip } from './training-list';
 
 type Channel = 'WHATSAPP' | 'PHONE' | 'TELEGRAM';
@@ -196,16 +198,19 @@ function Details({
         >
           {training.title}
         </Typography>
-        <Typography
-          sx={{
-            mt: 1,
-            fontWeight: 600,
-            fontVariantNumeric: 'tabular-nums',
-            color: training.priceKzt === null ? 'text.secondary' : 'text.primary',
-          }}
-        >
-          {priceText(training, t, locale)}
-        </Typography>
+        <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontVariantNumeric: 'tabular-nums',
+              color: training.priceKzt === null ? 'text.secondary' : 'text.primary',
+            }}
+          >
+            {priceText(training, t, locale)}
+          </Typography>
+          {/* Набор — рядом с ценой: решают вместе, идти ли. */}
+          <EnrollmentBadge enrollment={training.enrollment} />
+        </Box>
         {linkState !== null && (
           <Box sx={{ mt: 1.5 }}>
             <Badge tone="warn">
@@ -248,7 +253,8 @@ function Details({
  */
 function BookingBlock({ training }: { readonly training: TrainingView }): ReactNode {
   const t = useT();
-  const enroll = enrollAction(training, t);
+  const locale = useLocale();
+  const enroll = enrollAction(training, t, locale);
   const target = trainingBookingTarget(training);
   const caption = bookingCaption(training, t);
   const titleId = useId();
@@ -322,8 +328,9 @@ function ContactButtons({
   readonly enroll: NonNullable<ReturnType<typeof enrollAction>>;
 }): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const contacts = ownerContacts(enroll.owner);
-  const message = enrollMessage(training, t);
+  const message = enrollMessage(training, t, locale);
   const others: { kind: Channel; href: string; external: boolean }[] = [];
 
   if (contacts.whatsapp !== null && enroll.kind !== 'WHATSAPP') {
@@ -404,6 +411,8 @@ function Row({ label, value }: { readonly label: string; readonly value: ReactNo
 /** Для кого, возраст, расписание, примечание и описание. */
 function Facts({ training }: { readonly training: TrainingView }): ReactNode {
   const t = useT();
+  const locale = useLocale();
+  const schedule = fullScheduleText(training, locale);
 
   return (
     <Box component="section">
@@ -439,7 +448,19 @@ function Facts({ training }: { readonly training: TrainingView }): ReactNode {
               : null
           }
         />
-        <Row label={t('coach.editor.schedule')} value={training.schedule} />
+        <Row
+          label={t('training.schedule.title')}
+          value={
+            schedule === null ? null : (
+              <Box component="span" sx={{ display: 'grid', gap: 0.25 }}>
+                <span data-training-schedule>{schedule}</span>
+                <Typography component="span" variant="body2" color="text.secondary">
+                  <NextSession slots={training.slots} />
+                </Typography>
+              </Box>
+            )
+          }
+        />
         <Row label={t('manage.prices.note')} value={training.note} />
       </Box>
       {training.description !== null && (
@@ -581,11 +602,11 @@ function More({
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                 >
                   {t(TRAINING_KIND_KEYS[other.kind])}
-                  {other.schedule !== null && (
+                  {fullScheduleText(other, locale) !== null && (
                     <>
                       {' · '}
                       <CalendarClock size={14} aria-hidden style={{ flexShrink: 0 }} />
-                      {other.schedule}
+                      {fullScheduleText(other, locale)}
                     </>
                   )}
                 </Typography>

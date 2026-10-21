@@ -5,7 +5,7 @@ import {
   type TrainingView,
 } from '@kttf/shared/types';
 
-import { fill, type MessageKey } from '@/common/i18n';
+import { fill, type Locale, type MessageKey } from '@/common/i18n';
 import { phoneHref, telegramHref, whatsappHref } from '@/features/clubs/contacts';
 import { trackClubContact } from '@/features/clubs/track';
 
@@ -15,6 +15,7 @@ import {
   TRAINING_PLACE_KEYS,
   coachShortName,
 } from './labels';
+import { fullScheduleText } from './schedule';
 import { trackCoachContact } from './track';
 
 /**
@@ -91,12 +92,14 @@ function placeForMessage(training: Pick<TrainingView, 'place' | 'club' | 'venue'
  * какую тренировку речь, а мы не храним ничьих контактов.
  */
 export function enrollMessage(
-  training: Pick<TrainingView, 'title' | 'schedule' | 'place' | 'club' | 'venue'>,
+  training: Pick<TrainingView, 'title' | 'slots' | 'schedule' | 'place' | 'club' | 'venue'>,
   t: T,
+  locale: Locale,
 ): string {
+  const schedule = fullScheduleText(training, locale);
   const parts = [
     fill(t('training.enroll.message'), { title: training.title }),
-    ...(training.schedule === null ? [] : [training.schedule]),
+    ...(schedule === null ? [] : [schedule]),
     placeForMessage(training, t),
   ];
 
@@ -111,9 +114,10 @@ export function enrollMessage(
 export function enrollAction(
   training: Pick<
     TrainingView,
-    'author' | 'booking' | 'club' | 'coach' | 'title' | 'schedule' | 'place' | 'venue'
+    'author' | 'booking' | 'club' | 'coach' | 'title' | 'slots' | 'schedule' | 'place' | 'venue'
   >,
   t: T,
+  locale: Locale,
 ): EnrollAction | null {
   const owner = trainingBookingTarget(training);
 
@@ -125,7 +129,7 @@ export function enrollAction(
   if (contacts.whatsapp !== null) {
     return {
       kind: 'WHATSAPP',
-      href: whatsappHref(contacts.whatsapp, enrollMessage(training, t)),
+      href: whatsappHref(contacts.whatsapp, enrollMessage(training, t, locale)),
       external: true,
       owner,
       partner,

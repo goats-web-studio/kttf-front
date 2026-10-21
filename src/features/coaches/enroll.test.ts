@@ -32,7 +32,7 @@ function textOf(href: string): string {
 
 describe('«Записаться» — владельцу тренировки', () => {
   it('группа клуба — пишут клубу, тренер в ней только указан', () => {
-    const action = enrollAction(CLUB_EVENING, t);
+    const action = enrollAction(CLUB_EVENING, t, 'ru');
 
     expect(action?.owner.kind).toBe('CLUB');
     expect(action?.kind).toBe('WHATSAPP');
@@ -40,23 +40,23 @@ describe('«Записаться» — владельцу тренировки',
   });
 
   it('своя тренировка тренера в клубе — пишут тренеру, клуб в ней — место', () => {
-    const action = enrollAction(KIDS_GROUP, t);
+    const action = enrollAction(KIDS_GROUP, t, 'ru');
 
     expect(action?.owner.kind).toBe('COACH');
     expect(action?.href.startsWith('https://wa.me/77011234567?text=')).toBe(true);
   });
 
   it('готовый текст: название, расписание и место', () => {
-    expect(enrollMessage(CLUB_EVENING, t)).toBe(
+    expect(enrollMessage(CLUB_EVENING, t, 'ru')).toBe(
       `Здравствуйте! Пишу с KTTF: хочу записаться на «Вечерняя группа», вт, чт 19:00, ${CLUB_REF.name}`,
     );
-    expect(enrollMessage(VENUE_TRAINING, t)).toBe(
+    expect(enrollMessage(VENUE_TRAINING, t, 'ru')).toBe(
       'Здравствуйте! Пишу с KTTF: хочу записаться на «Спарринг», Спортзал школы №5',
     );
-    expect(enrollMessage(VISIT_TRAINING, t)).toBe(
+    expect(enrollMessage(VISIT_TRAINING, t, 'ru')).toBe(
       'Здравствуйте! Пишу с KTTF: хочу записаться на «Индивидуальная тренировка», выезд',
     );
-    expect(textOf(enrollAction(KIDS_GROUP, t)?.href ?? '')).toContain(
+    expect(textOf(enrollAction(KIDS_GROUP, t, 'ru')?.href ?? '')).toContain(
       '«Детская группа», пн, ср, пт 18:00–19:30',
     );
   });
@@ -67,21 +67,23 @@ describe('«Записаться» — владельцу тренировки',
       coach: { ...COACH_REF, ...contacts },
     });
 
-    expect(enrollAction(coach({ whatsapp: null }), t)).toMatchObject({
+    expect(enrollAction(coach({ whatsapp: null }), t, 'ru')).toMatchObject({
       kind: 'PHONE',
       href: 'tel:+77011234567',
       external: false,
     });
-    expect(enrollAction(coach({ whatsapp: null, phone: null }), t)).toMatchObject({
+    expect(enrollAction(coach({ whatsapp: null, phone: null }), t, 'ru')).toMatchObject({
       kind: 'TELEGRAM',
       href: 'https://t.me/coach_ivanov',
     });
-    expect(enrollAction(coach({ whatsapp: null, phone: null, telegram: null }), t)).toBeNull();
+    expect(
+      enrollAction(coach({ whatsapp: null, phone: null, telegram: null }), t, 'ru'),
+    ).toBeNull();
   });
 
   it('владельца не видно — кнопки нет', () => {
-    expect(enrollAction({ ...CLUB_EVENING, club: null }, t)).toBeNull();
-    expect(enrollAction({ ...VISIT_TRAINING, coach: null }, t)).toBeNull();
+    expect(enrollAction({ ...CLUB_EVENING, club: null }, t, 'ru')).toBeNull();
+    expect(enrollAction({ ...VISIT_TRAINING, coach: null }, t, 'ru')).toBeNull();
   });
 
   it('разделение по владельцу: группы клуба и тренировки тренеров', () => {
@@ -94,7 +96,7 @@ describe('«Записаться» — владельцу тренировки',
 
 describe('нажатие «Записаться» — обеим сторонам', () => {
   it('группа клуба: клубу — канал, тренеру группы — CLUB_GROUP', () => {
-    const action = enrollAction(CLUB_EVENING, t);
+    const action = enrollAction(CLUB_EVENING, t, 'ru');
     if (action === null) throw new Error('нет действия');
 
     trackEnroll(action);
@@ -104,7 +106,7 @@ describe('нажатие «Записаться» — обеим сторона�
   });
 
   it('тренировка тренера в клубе KTTF: тренеру — канал, клубу — COACH_TRAINING', () => {
-    const action = enrollAction(KIDS_GROUP, t);
+    const action = enrollAction(KIDS_GROUP, t, 'ru');
     if (action === null) throw new Error('нет действия');
 
     trackEnroll(action);
@@ -114,9 +116,9 @@ describe('нажатие «Записаться» — обеим сторона�
   });
 
   it('выезд или зал вне KTTF — только тренеру; группа без тренера — только клубу', () => {
-    const visit = enrollAction(VISIT_TRAINING, t);
-    const venue = enrollAction(VENUE_TRAINING, t);
-    const alone = enrollAction({ ...CLUB_EVENING, coach: null }, t);
+    const visit = enrollAction(VISIT_TRAINING, t, 'ru');
+    const venue = enrollAction(VENUE_TRAINING, t, 'ru');
+    const alone = enrollAction({ ...CLUB_EVENING, coach: null }, t, 'ru');
     if (visit === null || venue === null || alone === null) throw new Error('нет действия');
 
     trackEnroll(visit);
@@ -152,7 +154,7 @@ describe('адресат по booking', () => {
   const viaClub = { ...KIDS_GROUP, booking: 'CLUB' as const };
 
   it('тренер записывает через клуб — пишут клубу, автор по-прежнему тренер', () => {
-    const action = enrollAction(viaClub, t);
+    const action = enrollAction(viaClub, t, 'ru');
 
     expect(action?.owner.kind).toBe('CLUB');
     expect(action?.href.startsWith('https://wa.me/77770000000?text=')).toBe(true);
@@ -160,7 +162,7 @@ describe('адресат по booking', () => {
   });
 
   it('через клуб: клубу — канал, тренеру — CLUB_GROUP', () => {
-    const action = enrollAction(viaClub, t);
+    const action = enrollAction(viaClub, t, 'ru');
     if (action === null) throw new Error('нет действия');
 
     trackEnroll(action);
@@ -170,6 +172,6 @@ describe('адресат по booking', () => {
   });
 
   it('«через клуб» без клуба KTTF не действует — пишут тренеру', () => {
-    expect(enrollAction({ ...VENUE_TRAINING, booking: 'CLUB' }, t)?.owner.kind).toBe('COACH');
+    expect(enrollAction({ ...VENUE_TRAINING, booking: 'CLUB' }, t, 'ru')?.owner.kind).toBe('COACH');
   });
 });

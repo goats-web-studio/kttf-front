@@ -15,6 +15,8 @@ import { usePlaceName } from '@/features/places/place-name';
 
 import { Badge } from './coach-cards';
 import { enrollAction, linkStateKey, splitByOwner, trackEnroll } from './enroll';
+import { fullScheduleText } from './schedule';
+import { EnrollmentBadge, NextSession } from './schedule-view';
 import { useTrainingDialog } from './training-dialog-context';
 import {
   TRAINING_AUDIENCE_KEYS,
@@ -96,8 +98,9 @@ export function TrainingActions({
   readonly details?: boolean;
 }): ReactNode {
   const t = useT();
+  const locale = useLocale();
   const dialog = useTrainingDialog();
-  const action = enrollAction(training, t);
+  const action = enrollAction(training, t, locale);
   const Icon = action === null ? null : CHANNEL_ICONS[action.kind];
 
   return (
@@ -177,6 +180,8 @@ export function TrainingRow({
   // Связь ждёт ответа или отклонена — такую строку видят только стороны и
   // администратор, и она не должна выглядеть опубликованной.
   const linkState = linkStateKey(training);
+  // Дни и время по слотам, за ними примечание; без слотов — строка, как раньше.
+  const schedule = fullScheduleText(training, locale);
 
   return (
     <Box
@@ -282,14 +287,20 @@ export function TrainingRow({
               )}
             </Box>
           )}
-          {training.schedule !== null && (
-            <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+          {schedule !== null && (
+            <Box
+              component="span"
+              data-training-schedule
+              sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+            >
               <CalendarClock size={14} aria-hidden style={{ flexShrink: 0 }} />
-              {training.schedule}
+              {schedule}
             </Box>
           )}
+          <NextSession slots={training.slots} />
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+          <EnrollmentBadge enrollment={training.enrollment} />
           {training.kidsFromAge !== null && isForChildren(training.audiences) && (
             <Badge>{kidsFromText(training.kidsFromAge, t)}</Badge>
           )}
