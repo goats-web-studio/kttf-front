@@ -7,6 +7,7 @@ import {
   type TrainingAudience,
   type TrainingBooking,
   type TrainingCoachRef,
+  type TrainingEnrollment,
   type TrainingKind,
   type TrainingLink,
   type TrainingPlace,
@@ -15,6 +16,7 @@ import {
 
 import { newRowKey, parseInteger, textOrNull } from './editor/form-model';
 import { isForChildren } from './labels';
+import { emptyScheduleLine, scheduleLinesOf, scheduleOf, type ScheduleLine } from './schedule';
 
 /**
  * Строки тренировок в формах кабинета — тренера и клуба (ADR-059,
@@ -34,7 +36,11 @@ interface TrainingRowBase {
   readonly audiences: readonly TrainingAudience[];
   readonly kidsFromAge: string;
   readonly title: string;
+  /** Расписание строками «дни + время» (T3); пустая строка ничего не значит. */
+  readonly scheduleLines: readonly ScheduleLine[];
+  /** Примечание к расписанию. */
   readonly schedule: string;
+  readonly enrollment: TrainingEnrollment | null;
   readonly price: string;
   readonly unit: PriceUnit;
   readonly note: string;
@@ -52,7 +58,12 @@ function baseOf(training: TrainingView): TrainingRowBase {
     audiences: training.audiences,
     kidsFromAge: training.kidsFromAge === null ? '' : String(training.kidsFromAge),
     title: training.title,
+    // Слоты собираются обратно в строки; без них — одна пустая, чтобы
+    // было куда вписать.
+    scheduleLines:
+      training.slots.length === 0 ? [emptyScheduleLine()] : scheduleLinesOf(training.slots),
     schedule: training.schedule ?? '',
+    enrollment: training.enrollment,
     price: training.priceKzt === null ? '' : String(training.priceKzt),
     unit: training.unit,
     note: training.note ?? '',
@@ -69,7 +80,9 @@ function emptyBase(): TrainingRowBase {
     audiences: [],
     kidsFromAge: '',
     title: '',
+    scheduleLines: [emptyScheduleLine()],
     schedule: '',
+    enrollment: null,
     price: '',
     unit: 'MONTH',
     note: '',
@@ -92,12 +105,23 @@ function baseInput(row: TrainingRowBase) {
     audiences: [...row.audiences],
     kidsFromAge: isForChildren(row.audiences) ? parseInteger(row.kidsFromAge) : null,
     title: row.title.trim(),
+    // Строка с несколькими днями уходит слотами по одному на день.
+    slots: scheduleOf(row.scheduleLines).slots,
     schedule: textOrNull(row.schedule),
+    enrollment: row.enrollment,
     priceKzt: price,
     unit: price === null ? ('NONE' as const) : row.unit,
     note: textOrNull(row.note),
     description: textOrNull(row.description),
   };
+}
+
+/**
+ * Строки расписания без ошибок. Схема ловит пересечения слотов, но не
+ * строку без дней: такая не дала бы ни одного слота и пропала бы молча.
+ */
+function schedulesValid(rows: readonly TrainingRowBase[]): boolean {
+  return rows.every((row) => scheduleOf(row.scheduleLines).valid);
 }
 
 // ---------------------------------------------------------------- тренер
@@ -187,7 +211,9 @@ export function toCoachTrainingInputs(
     };
   });
 
-  return setCoachTrainingsSchema.safeParse({ trainings }).success ? trainings : null;
+  return schedulesValid(rows) && setCoachTrainingsSchema.safeParse({ trainings }).success
+    ? trainings
+    : null;
 }
 
 // ---------------------------------------------------------------- клуб
@@ -212,5 +238,7 @@ export function toClubTrainingInputs(rows: readonly ClubTrainingRow[]): ClubTrai
     coachId: row.coach?.id ?? null,
   }));
 
-  return setClubTrainingsSchema.safeParse({ trainings }).success ? trainings : null;
+  return schedulesValid(rows) && setClubTrainingsSchema.safeParse({ trainings }).success
+    ? trainings
+    : null;
 }

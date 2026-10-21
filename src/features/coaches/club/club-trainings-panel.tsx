@@ -147,6 +147,7 @@ function ClubTrainingsEditor({
             onRemove={() => {
               update(rows.filter((item) => item.key !== row.key));
             }}
+            showErrors={invalid !== null}
             status={<LinkStatus link={row.link} keys={LINK_KEYS_FOR_CLUB} />}
           >
             <Box sx={{ maxWidth: { md: 480 } }}>

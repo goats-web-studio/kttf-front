@@ -10,6 +10,7 @@ import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -23,6 +24,7 @@ import {
 } from '../labels';
 import type { ClubTrainingRow, CoachTrainingRow } from '../training-rows';
 import { ToggleChips } from './page-editor';
+import ScheduleEditor, { EnrollmentPicker } from './schedule-editor';
 
 const AGES = Array.from({ length: 15 }, (_, index) => index + 3);
 
@@ -35,7 +37,9 @@ type Common = Pick<
   | 'audiences'
   | 'kidsFromAge'
   | 'title'
+  | 'scheduleLines'
   | 'schedule'
+  | 'enrollment'
   | 'price'
   | 'unit'
   | 'note'
@@ -53,6 +57,8 @@ interface TrainingFieldsProps {
   readonly children: ReactNode;
   /** Статус связи со второй стороной. */
   readonly status: ReactNode;
+  /** После неудачного «Сохранить» — ошибки расписания всех строк. */
+  readonly showErrors?: boolean;
 }
 
 /**
@@ -69,6 +75,7 @@ export default function TrainingFields({
   onRemove,
   children,
   status,
+  showErrors = false,
 }: TrainingFieldsProps): ReactNode {
   const t = useT();
   const forChildren = isForChildren(row.audiences);
@@ -221,6 +228,18 @@ export default function TrainingFields({
 
       <Box sx={{ gridColumn: '1 / -1' }}>{children}</Box>
 
+      <Box sx={{ gridColumn: '1 / -1' }}>
+        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, mb: 0.5 }}>
+          {t('training.schedule.title')}
+        </Typography>
+        <ScheduleEditor
+          lines={row.scheduleLines}
+          showErrors={showErrors}
+          onChange={(scheduleLines) => {
+            onPatch({ scheduleLines });
+          }}
+        />
+      </Box>
       <TextField
         size="small"
         label={t('coach.editor.schedule')}
@@ -242,6 +261,14 @@ export default function TrainingFields({
         slotProps={{ htmlInput: { maxLength: 200 } }}
         sx={{ gridColumn: { xs: '1 / -1', md: '3 / -1' } }}
       />
+      <Box sx={{ gridColumn: '1 / -1' }}>
+        <EnrollmentPicker
+          value={row.enrollment}
+          onChange={(enrollment) => {
+            onPatch({ enrollment });
+          }}
+        />
+      </Box>
       <TextField
         size="small"
         label={t('training.editor.description')}

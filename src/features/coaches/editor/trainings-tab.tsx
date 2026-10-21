@@ -140,6 +140,7 @@ function CoachTrainingsEditor({ coach }: { readonly coach: CoachView }): ReactNo
             onRemove={() => {
               update(rows.filter((item) => item.key !== row.key));
             }}
+            showErrors={invalid !== null}
             status={<LinkStatus link={row.link} keys={LINK_KEYS_FOR_COACH} />}
           >
             <PlaceFields
