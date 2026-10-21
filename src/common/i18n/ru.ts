@@ -490,7 +490,7 @@ export const ru = {
   'manage.media.delete': 'Удалить',
   'manage.media.deleteConfirm': 'Удалить из галереи?',
   'manage.content.hidden': 'Скрыто администратором',
-  'page.content.title': 'Контент клубов',
+  'page.content.title': 'Контент',
   'content.lead':
     'Свежие записи, фото и видео всех клубов. Скрытое пропадает со страницы клуба, клуб видит причину в кабинете.',
   'content.empty.title': 'Пока пусто',
@@ -1965,4 +1965,27 @@ export const ru = {
   'students.manage.removeTitle': 'Убрать {name} из учеников?',
   'students.manage.removeText':
     'Из анкеты игрока уберётся ссылка на вас как на тренера. Игрок сможет указать вас снова.',
+  // T2.2 — фото, видео и новости тренера (ADR-059, docs/11 3.2.2).
+  'error.api.COACH_PLAN_LIMIT': 'Достигнут предел: больше добавить нельзя. Удалите лишнее.',
+  'coach.tab.posts': 'Новости',
+  'coach.tab.media': 'Фото и видео',
+  'coach.posts.title': 'Новости и акции',
+  'coach.posts.lead':
+    'Новости и акции видны на странице тренера сразу после публикации. Закреплённая запись — первой.',
+  'coach.posts.expired': 'Акция завершилась — на странице тренера её больше не видно.',
+  'coach.posts.empty':
+    'Записей пока нет. Расскажите о наборе в группу, сборах или скидке на первое занятие.',
+  'coach.gallery.photo': 'Фото тренера',
+  'coach.gallery.video': 'Видео тренера',
+  'coach.media.empty':
+    'В галерее пока пусто. Видео с тренировки и фото учеников на турнирах — то, что смотрят первым.',
+  'manage.media.countOf': 'Фото: {photos} из {maxPhotos} · видео: {videos} из {maxVideos}',
+  'manage.media.tooMany':
+    'Столько фото не поместится в галерею. Выберите меньше или удалите лишние.',
+  'content.tab.clubs': 'Клубы',
+  'content.tab.coaches': 'Тренеры',
+  'content.coaches.lead':
+    'Свежие записи, фото и видео всех тренеров. Скрытое пропадает со страницы тренера, тренер видит причину в кабинете.',
+  'content.coaches.empty': 'Тренеры ещё ничего не публиковали.',
+  'content.coaches.reason': 'Причина (увидит тренер)',
 } as const satisfies Record<string, string>;
