@@ -135,6 +135,7 @@ function answer(url: string, init: RequestInit | undefined): Response {
       top: [],
       medals: { total: 0, recent: [] },
       growth: [],
+      tournaments: [],
     });
   }
   if (path.startsWith('/coaches/by-slug/')) {

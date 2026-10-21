@@ -11,6 +11,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
 import {
@@ -311,6 +312,7 @@ describe('страница тренера: ученики и «Я ученик»
     expect(within(block).queryByText(ru['students.former'])).toBeNull();
     expect(block.querySelector('[data-students-growth]')).toBeNull();
     expect(block.querySelector('[data-students-medals]')).toBeNull();
+    expect(block.querySelector('[data-students-tournaments]')).toBeNull();
     expect(
       within(element('[data-students-top]'))
         .getByRole('link', { name: `${PLAYERS.second.lastName} ${PLAYERS.second.firstName}` })
@@ -318,6 +320,40 @@ describe('страница тренера: ученики и «Я ученик»
     ).toBe(`/players/${PLAYERS.second.id}`);
     // Без входа «Я ученик» нет.
     expect(document.querySelector('[data-student-state]')).toBeNull();
+  });
+
+  it('ученики на турнирах: турнир ссылкой, дата, число учеников и медали', async () => {
+    const tournamentId = '00000000-0000-4000-8000-0000000000e1';
+    students = {
+      ...STUDENTS,
+      tournaments: [
+        {
+          tournament: {
+            id: tournamentId,
+            name: 'Кубок зала',
+            startsAt: '2026-10-18T12:00:00.000Z',
+          },
+          students: 3,
+          gold: 1,
+          silver: 0,
+          bronze: 2,
+        },
+      ],
+    };
+    renderAt(`/coaches/${COACH_SLUG}`);
+
+    const block = await waitFor(() => element('[data-students-tournaments]'));
+    expect(within(block).getByText(ru['students.tournaments'])).toBeDefined();
+    expect(within(block).getByRole('link', { name: 'Кубок зала' }).getAttribute('href')).toBe(
+      `/tournaments/${tournamentId}`,
+    );
+    expect(block.textContent).toContain(fill(ru['students.tournaments.count'], { count: '3' }));
+    // Медали — только те, что есть: серебра нет — кружка нет.
+    expect(block.querySelector('[data-medal="1"]')).not.toBeNull();
+    expect(block.querySelector('[data-medal="2"]')).toBeNull();
+    expect(block.querySelector('[data-medal="3"]')?.textContent).toContain(
+      fill(ru['students.tournaments.place'], { place: '3', count: '2' }),
+    );
   });
 
   it('игрок, у которого тренер другой, — «Я занимаюсь» с подтверждением', async () => {

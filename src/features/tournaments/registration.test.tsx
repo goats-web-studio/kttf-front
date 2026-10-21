@@ -6,13 +6,15 @@ import type {
 } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
 import { playerName } from '@/features/players/player-name';
+import { COACH_LIST_ITEM } from '@/test/coach-fixtures';
 import {
   CLUB,
   pageOf,
@@ -109,6 +111,11 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
   if (url.includes('/clubs')) {
     return reply(pageOf([CLUB]));
+  }
+
+  // Подсказки поля «Тренер» в диалоге тренера на турнире.
+  if (url.includes('/coaches')) {
+    return reply(pageOf([COACH_LIST_ITEM]));
   }
 
   // Свой профиль читается ради допуска до нажатия, поиск организатором — ради
@@ -450,5 +457,127 @@ describe('панель организатора', () => {
     const link = await screen.findByRole('link', { name: playerName(PLAYERS.first) });
 
     expect(link.getAttribute('href')).toBe(`/players/${PLAYERS.first.id}`);
+  });
+});
+
+describe('тренер на турнире — ADR-059, T3', () => {
+  const COACHED: RegistrationView = {
+    ...OWN_REGISTRATION,
+    coach: { playerId: PLAYERS.second.id, name: 'Ким Ольга', slug: 'kim' },
+  };
+
+  /** Строка «Тренер на турнире» в своей записи. */
+  async function ownCoach(): Promise<HTMLElement> {
+    const label = await screen.findByText(ru['registration.coach.label'], { exact: false });
+    const line = label.closest<HTMLElement>('[data-own-coach]');
+
+    if (line === null) throw new Error('Строка тренера в записи не найдена');
+    return line;
+  }
+
+  const coachRequests = (): Sent[] =>
+    sent.filter((request) => request.method === 'PUT' && request.url.endsWith('/coach'));
+
+  it('записанный видит тренера ссылкой и вписывает другого — уходит PUT', async () => {
+    registrations = [COACHED];
+
+    renderTournament({ ...USER_WITH_PROFILE, clubRoles: [] });
+
+    const line = await ownCoach();
+    expect(within(line).getByRole('link', { name: 'Ким Ольга' }).getAttribute('href')).toBe(
+      '/coaches/kim',
+    );
+    expect(within(line).getByText(ru['registration.coach.hint'])).toBeDefined();
+
+    fireEvent.click(within(line).getByRole('button', { name: ru['registration.coach.edit'] }));
+
+    const dialog = await screen.findByRole('dialog');
+    const input = within(dialog).getByRole('combobox', { name: ru['player.form.coachFind'] });
+    // Поле начинается с тренера записи.
+    expect((input as HTMLInputElement).value).toBe('Ким Ольга');
+
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Сериков Тимур' } });
+    fireEvent.click(
+      await screen.findByText(fill(ru['player.form.coachTyped'], { name: 'Сериков Тимур' })),
+    );
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['registration.coach.save'] }));
+
+    await waitFor(() => {
+      expect(coachRequests()).toHaveLength(1);
+    });
+    const [request] = coachRequests();
+    expect(request?.url).toContain(
+      `/tournaments/${TOURNAMENT_ID}/registrations/${OWN_REGISTRATION.id}/coach`,
+    );
+    expect(request?.body).toEqual({ coachPlayerId: null, coachName: 'Сериков Тимур' });
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
+  it('без тренера — «Тренер не указан»', async () => {
+    registrations = [OWN_REGISTRATION];
+
+    renderTournament({ ...USER_WITH_PROFILE, clubRoles: [] });
+
+    expect(await screen.findByText(ru['registration.coach.none'])).toBeDefined();
+    expect(screen.getByRole('button', { name: ru['registration.coach.edit'] })).toBeDefined();
+  });
+
+  it('организатор убирает тренера у участника — оба поля null', async () => {
+    registrations = [COACHED];
+
+    renderTournament(USER_WITH_PROFILE);
+
+    const [edit] = await screen.findAllByRole('button', { name: ru['participants.editCoach'] });
+    if (edit === undefined) throw new Error('Кнопка тренера в составе не найдена');
+    fireEvent.click(edit);
+
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByLabelText(ru['player.form.coachClear']));
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['registration.coach.save'] }));
+
+    await waitFor(() => {
+      expect(coachRequests()).toHaveLength(1);
+    });
+    expect(coachRequests()[0]?.body).toEqual({ coachPlayerId: null, coachName: null });
+  });
+
+  it('после старта тренер виден, но не правится ни игроком, ни организатором', async () => {
+    tournament = { ...tournament, status: 'RUNNING', startedAt: new Date().toISOString() };
+    registrations = [COACHED];
+
+    renderTournament(USER_WITH_PROFILE);
+
+    const line = await ownCoach();
+    expect(within(line).getByRole('link', { name: 'Ким Ольга' })).toBeDefined();
+    expect(within(line).queryByText(ru['registration.coach.hint'])).toBeNull();
+    expect(screen.queryByRole('button', { name: ru['registration.coach.edit'] })).toBeNull();
+    expect(screen.queryByRole('button', { name: ru['participants.editCoach'] })).toBeNull();
+  });
+
+  it('состав: «тренер X» у участника, ссылкой — только со страницей тренера', async () => {
+    const [, second] = REGISTRATIONS;
+
+    if (second === undefined) throw new Error('Нет второго участника в фикстуре');
+    registrations = [
+      COACHED,
+      { ...second, coach: { playerId: null, name: 'Сериков Тимур', slug: null } },
+    ];
+
+    renderTournament(null);
+
+    const link = await screen.findByRole('link', { name: 'Ким Ольга' });
+    expect(link.getAttribute('href')).toBe('/coaches/kim');
+    expect(link.closest('[data-registration-coach]')?.textContent).toBe(
+      `${ru['participants.coach']} Ким Ольга`,
+    );
+
+    const typed = screen.getByText('Сериков Тимур', { exact: false });
+    expect(typed.closest('[data-registration-coach]')).not.toBeNull();
+    expect(screen.queryByRole('link', { name: 'Сериков Тимур' })).toBeNull();
+    // Гостю править нечего.
+    expect(screen.queryByRole('button', { name: ru['participants.editCoach'] })).toBeNull();
   });
 });

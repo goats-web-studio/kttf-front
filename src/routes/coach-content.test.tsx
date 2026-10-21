@@ -152,6 +152,7 @@ function answer(url: string, init: RequestInit | undefined): Response {
       top: [],
       medals: { total: 0, recent: [] },
       growth: [],
+      tournaments: [],
     });
   }
   if (/^\/coaches\/[^/]+\/events$/.test(path)) return reply(undefined, 204);

@@ -44,10 +44,10 @@ function row(text: string): HTMLElement {
 }
 
 describe('итоговые места', () => {
-  function renderPlacements(): void {
+  function renderPlacements(participants = RESULTS.participants): void {
     render(
       <ResultsPlacements
-        participants={RESULTS.participants}
+        participants={participants}
         shared={RESULTS.shared}
         unresolved={RESULTS.unresolved}
         names={NAMES}
@@ -77,6 +77,34 @@ describe('итоговые места', () => {
 
     expect(fourth).toContain(ru['registration.status.WITHDRAWN']);
     expect(fourth).toContain(ru['results.notRated']);
+  });
+
+  it('тренер на турнире — подписью к игроку, ссылкой только со страницей', () => {
+    renderPlacements(
+      RESULTS.participants.map((participant, index) =>
+        index === 0
+          ? {
+              ...participant,
+              coach: { playerId: PLAYERS.second.id, name: 'Ким Ольга', slug: 'kim' },
+            }
+          : index === 1
+            ? { ...participant, coach: { playerId: null, name: 'Сериков Тимур', slug: null } }
+            : participant,
+      ),
+    );
+
+    const first = row(playerName(PLAYERS.first));
+    expect(first.textContent).toContain(`${ru['participants.coach']} Ким Ольга`);
+    expect(within(first).getByRole('link', { name: 'Ким Ольга' }).getAttribute('href')).toBe(
+      '/coaches/kim',
+    );
+
+    const second = row(playerName(PLAYERS.second));
+    expect(second.textContent).toContain(`${ru['participants.coach']} Сериков Тимур`);
+    expect(within(second).queryByRole('link')).toBeNull();
+
+    // Без тренера — без подписи.
+    expect(row(playerName(PLAYERS.third)).textContent).not.toContain(ru['participants.coach']);
   });
 
   it('показывает делёжку мест диапазоном', () => {
