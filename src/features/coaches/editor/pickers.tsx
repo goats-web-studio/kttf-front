@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useDeferredValue, useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
-import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { clubsQuery } from '@/features/clubs/queries';
 import { usePlaceName } from '@/features/places/place-name';
 
 import { coachShortName } from '../labels';
@@ -18,8 +18,9 @@ interface ClubOption {
 }
 
 /**
- * Клуб KTTF для тренировки «в клубе» — поиском по справочнику клубов.
- * Клубов десятки, справочник приходит одним запросом и ищется на месте.
+ * Клуб KTTF — поиском по `GET /clubs?search=`: для тренировки «в клубе» и
+ * для запроса в штаб. Справочник клубов здесь не подходит — в нём только
+ * первая сотня.
  */
 export function ClubPicker({
   value,
@@ -28,15 +29,19 @@ export function ClubPicker({
   onChange,
 }: {
   readonly value: string | null;
-  /** Название выбранного — пока справочник не пришёл, поле не пустое. */
+  /** Название выбранного — пока поиск не вернул клуб, поле не пустое. */
   readonly name: string;
   readonly error: boolean;
   readonly onChange: (club: { readonly id: string; readonly name: string } | null) => void;
 }): ReactNode {
   const t = useT();
   const placeName = usePlaceName();
-  const directory = useQuery(clubDirectoryQuery);
-  const options: ClubOption[] = [...(directory.data?.values() ?? [])].map((club) => ({
+  const [input, setInput] = useState('');
+  const search = useDeferredValue(input.trim());
+  const clubs = useQuery(
+    clubsQuery({ page: 1, limit: 20, ...(search.length < 2 ? {} : { search }) }),
+  );
+  const found: ClubOption[] = (clubs.data?.items ?? []).map((club) => ({
     id: club.id,
     name: club.name,
     city: placeName(club.city),
@@ -44,7 +49,11 @@ export function ClubPicker({
   const selected =
     value === null
       ? null
-      : (options.find((option) => option.id === value) ?? { id: value, name, city: '' });
+      : (found.find((option) => option.id === value) ?? { id: value, name, city: '' });
+  const options =
+    selected === null || found.some((club) => club.id === selected.id)
+      ? found
+      : [selected, ...found];
 
   return (
     <Autocomplete
@@ -54,6 +63,11 @@ export function ClubPicker({
       onChange={(_, club) => {
         onChange(club === null ? null : { id: club.id, name: club.name });
       }}
+      onInputChange={(_, next) => {
+        setInput(next);
+      }}
+      // Ищет сервер.
+      filterOptions={(list) => list}
       getOptionLabel={(option) => option.name}
       renderOption={(props, option) => (
         <li {...props} key={option.id}>
@@ -61,7 +75,7 @@ export function ClubPicker({
         </li>
       )}
       isOptionEqualToValue={(option, chosen) => option.id === chosen.id}
-      loading={directory.isPending}
+      loading={clubs.isPending}
       loadingText={t('common.loading')}
       noOptionsText={t('training.editor.noClub')}
       renderInput={(params) => (
