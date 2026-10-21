@@ -1,11 +1,7 @@
 import {
-  createClubPostSchema,
   isPromoExpired,
   rejectPhoto,
   CLUB_IMAGE_MAX_BYTES,
-  clubImageVariant,
-  type ClubPostView,
-  type ClubView,
   type CreateClubPostInput,
   type PostKind,
 } from '@kttf/shared/types';
@@ -24,12 +20,20 @@ import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
-import { uploadClubImage } from '@/features/clubs/api';
 import { clubTodayIso } from '@/features/clubs/club-time';
 
-import { createClubPost, deleteClubPost, updateClubPost } from './api';
-import { PostCard } from './club-posts';
-import { allClubPostsQuery, clubContentKeys } from './queries';
+import { createPost, deletePost, updatePost } from './api';
+import {
+  OWNER_TEXTS,
+  contentImageVariant,
+  hiddenNote,
+  parsePost,
+  uploadOwnerImage,
+  type ContentOwner,
+  type ContentPostView,
+} from './owner';
+import { PostCard } from './posts';
+import { allPostsQuery, contentKeys } from './queries';
 
 interface Draft {
   readonly kind: PostKind;
@@ -41,7 +45,7 @@ interface Draft {
 
 const EMPTY: Draft = { kind: 'NEWS', title: '', body: '', imageUrl: null, validUntil: '' };
 
-const draftOf = (post: ClubPostView): Draft => ({
+const draftOf = (post: ContentPostView): Draft => ({
   kind: post.kind,
   title: post.title,
   body: post.body,
@@ -50,26 +54,29 @@ const draftOf = (post: ClubPostView): Draft => ({
 });
 
 /**
- * Новости и акции в кабинете клуба — ADR-055, `docs/09` 3.2.
+ * Новости и акции в кабинете клуба (ADR-055, `docs/09` 3.2) и тренера
+ * (ADR-059, T2.2).
  *
  * Публикуется сразу (постмодерация). Скрытое администратором видно здесь с
- * причиной. Закреп у клуба один: новый снимает старый.
+ * причиной, завершившаяся акция — с пометкой «в архиве». Закреп один: новый
+ * снимает старый.
  */
-export default function PostsEditor({ club }: { readonly club: ClubView }): ReactNode {
+export default function PostsEditor({ owner }: { readonly owner: ContentOwner }): ReactNode {
   const t = useT();
   const queryClient = useQueryClient();
-  const posts = useQuery(allClubPostsQuery(club.id, { page: 1, limit: 50 }));
-  const [editing, setEditing] = useState<ClubPostView | 'new' | null>(null);
+  const texts = OWNER_TEXTS[owner.kind];
+  const posts = useQuery(allPostsQuery(owner, { page: 1, limit: 50 }));
+  const [editing, setEditing] = useState<ContentPostView | 'new' | null>(null);
   const refresh = async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: clubContentKeys.all });
+    await queryClient.invalidateQueries({ queryKey: contentKeys.all });
   };
 
   const pin = useMutation({
-    mutationFn: (post: ClubPostView) => updateClubPost(club.id, post.id, { pinned: !post.pinned }),
+    mutationFn: (post: ContentPostView) => updatePost(owner, post.id, { pinned: !post.pinned }),
     onSuccess: refresh,
   });
   const remove = useMutation({
-    mutationFn: (post: ClubPostView) => deleteClubPost(club.id, post.id),
+    mutationFn: (post: ContentPostView) => deletePost(owner, post.id),
     onSuccess: refresh,
   });
   const today = clubTodayIso();
@@ -86,7 +93,7 @@ export default function PostsEditor({ club }: { readonly club: ClubView }): Reac
         }}
       >
         <Typography color="text.secondary" sx={{ maxWidth: 680 }}>
-          {t('manage.posts.lead')}
+          {t(texts.postsLead)}
         </Typography>
         {editing === null && (
           <Button
@@ -104,7 +111,7 @@ export default function PostsEditor({ club }: { readonly club: ClubView }): Reac
 
       {editing !== null && (
         <PostForm
-          club={club}
+          owner={owner}
           post={editing === 'new' ? null : editing}
           onDone={() => {
             setEditing(null);
@@ -126,21 +133,19 @@ export default function PostsEditor({ club }: { readonly club: ClubView }): Reac
           loading={<RowsSkeleton rows={2} />}
         >
           {posts.data?.items.length === 0 ? (
-            <Typography color="text.secondary">{t('manage.posts.empty')}</Typography>
+            <Typography color="text.secondary">{t(texts.postsEmpty)}</Typography>
           ) : (
             <Box sx={{ display: 'grid', gap: 2 }}>
               {(posts.data?.items ?? []).map((post) => (
-                <Box key={post.id}>
+                <Box key={post.id} data-post={post.id}>
                   {post.hidden && (
                     <Alert severity="warning" sx={{ mb: 1 }}>
-                      {post.hiddenReason === null
-                        ? t('manage.content.hidden')
-                        : `${t('manage.content.hidden')}: ${post.hiddenReason}`}
+                      {hiddenNote(t, post)}
                     </Alert>
                   )}
                   {isPromoExpired(post, today) && (
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      {t('manage.posts.expired')}
+                      {t(texts.postsExpired)}
                     </Typography>
                   )}
                   <PostCard
@@ -202,12 +207,12 @@ export default function PostsEditor({ club }: { readonly club: ClubView }): Reac
 
 /** Форма записи: новая или правка. Картинка загружается сразу, сохраняется вместе с записью. */
 function PostForm({
-  club,
+  owner,
   post,
   onDone,
 }: {
-  readonly club: ClubView;
-  readonly post: ClubPostView | null;
+  readonly owner: ContentOwner;
+  readonly post: ContentPostView | null;
   readonly onDone: () => void;
 }): ReactNode {
   const t = useT();
@@ -221,7 +226,7 @@ function PostForm({
   };
 
   const upload = useMutation({
-    mutationFn: (file: File) => uploadClubImage(club.id, file),
+    mutationFn: (file: File) => uploadOwnerImage(owner, file),
     onSuccess: (image) => {
       change({ imageUrl: image.url });
     },
@@ -230,14 +235,14 @@ function PostForm({
   const save = useMutation({
     mutationFn: (values: CreateClubPostInput) =>
       post === null
-        ? createClubPost(club.id, values)
-        : updateClubPost(club.id, post.id, {
+        ? createPost(owner, values)
+        : updatePost(owner, post.id, {
             ...values,
             imageUrl: values.imageUrl ?? null,
             validUntil: values.validUntil ?? null,
           }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: clubContentKeys.all });
+      await queryClient.invalidateQueries({ queryKey: contentKeys.all });
       onDone();
     },
   });
@@ -302,7 +307,7 @@ function PostForm({
         {draft.imageUrl !== null && (
           <Box
             component="img"
-            src={clubImageVariant(draft.imageUrl, 480)}
+            src={contentImageVariant(draft.imageUrl, 480)}
             alt=""
             sx={{ width: 160, aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: 2 }}
           />
@@ -377,15 +382,15 @@ function PostForm({
               validUntil:
                 draft.kind === 'PROMO' && draft.validUntil !== '' ? draft.validUntil : null,
             };
-            const parsed = createClubPostSchema.safeParse(values);
+            const parsed = parsePost(owner, values);
 
-            if (!parsed.success) {
+            if (parsed === null) {
               setInvalid('manage.posts.invalid');
               return;
             }
 
             setInvalid(null);
-            save.mutate(parsed.data);
+            save.mutate(parsed);
           }}
         >
           {save.isPending ? t('common.loading') : t('manage.posts.publish')}

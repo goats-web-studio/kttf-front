@@ -30,11 +30,12 @@ import {
   groupClubTournaments,
   type ClubTournamentGroup,
 } from '@/features/clubs/club-tournaments';
-import MediaEditor from '@/features/club-content/media-editor';
 import ClubTrainingsPanel from '@/features/coaches/club/club-trainings-panel';
 import { clubStaffManageQuery, clubTrainingsManageQuery } from '@/features/coaches/queries';
 import ClubStaffPanel from '@/features/coaches/staff/club-staff-panel';
-import PostsEditor from '@/features/club-content/posts-editor';
+import MediaEditor from '@/features/content/media-editor';
+import { clubOwner } from '@/features/content/owner';
+import PostsEditor from '@/features/content/posts-editor';
 import FreshnessPanel from '@/features/clubs/page-editor/freshness-panel';
 import HallEditor from '@/features/clubs/page-editor/hall-editor';
 import HoursEditor from '@/features/clubs/page-editor/hours-editor';
@@ -229,8 +230,8 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
         {tab === 'page' && <ClubPage club={club} />}
         {tab === 'trainings' && <ClubTrainingsPanel clubId={club.id} />}
         {tab === 'coaches' && <ClubStaffPanel clubId={club.id} />}
-        {tab === 'posts' && <PostsEditor club={club} />}
-        {tab === 'media' && <MediaEditor club={club} />}
+        {tab === 'posts' && <PostsEditor owner={clubOwner(club.id)} />}
+        {tab === 'media' && <MediaEditor owner={clubOwner(club.id)} />}
         {tab === 'stats' && <StatsPanel club={club} />}
         {tab === 'settings' && <ClubSettings club={club} />}
         {tab === 'staff' && <StaffPanel clubId={club.id} />}

@@ -23,10 +23,11 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
 import TrainingDialogHost from '@/features/coaches/training-dialog-host';
 import { searchTraining } from '@/features/coaches/trainings-search';
-import ClubGallery from '@/features/club-content/club-gallery';
-import ClubPosts from '@/features/club-content/club-posts';
 import ClubTrainingsSection from '@/features/coaches/club/club-trainings-section';
 import ClubStaffSection from '@/features/coaches/staff/club-staff-section';
+import Gallery from '@/features/content/gallery';
+import { clubOwner } from '@/features/content/owner';
+import Posts from '@/features/content/posts';
 import Amenities from '@/features/clubs/amenities';
 import { ClubNumbers, ClubResults } from '@/features/clubs/club-live';
 import ClubMark from '@/features/clubs/club-mark';
@@ -142,8 +143,8 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
   const trainings = <ClubTrainingsSection club={club} />;
   // Тренерский штаб — сразу после тренировок (T2.1).
   const coachStaff = <ClubStaffSection clubId={club.id} />;
-  const posts = <ClubPosts clubId={club.id} />;
-  const gallery = <ClubGallery clubId={club.id} />;
+  const posts = <Posts owner={clubOwner(club.id)} />;
+  const gallery = <Gallery owner={clubOwner(club.id)} />;
   const results = <ClubResults clubId={club.id} />;
   const about =
     club.description === null ? null : (

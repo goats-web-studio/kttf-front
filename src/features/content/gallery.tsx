@@ -1,4 +1,3 @@
-import { clubImageVariant, type ClubMediaView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonBase from '@mui/material/ButtonBase';
@@ -13,56 +12,90 @@ import { useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
 
-import { clubMediaQuery } from './queries';
+import {
+  OWNER_TEXTS,
+  contentImageVariant,
+  type ContentMediaView,
+  type ContentOwner,
+} from './owner';
+import { mediaQuery } from './queries';
 
 /** Сколько видно сразу; остальное — «Показать все». */
 const PREVIEW = 6;
 
+/** Сетка с «Показать все» или лента с прокруткой вбок — видео лентой на телефоне. */
+export type GalleryLayout = 'grid' | 'strip';
+
 /**
- * Фото и видео клуба — ADR-055, `docs/09` 3.2.
+ * Фото и видео клуба (ADR-055, `docs/09` 3.2) и тренера (ADR-059, T2.2).
  *
  * Сетка миниатюр — узкий вариант картинки и ленивая загрузка: галерея ниже
  * первого экрана и не должна тормозить его (`docs/09` 6). Нажатие открывает
  * просмотр во весь экран. Видео — своя обложка с кнопкой: плеер YouTube
  * (`youtube-nocookie.com`) грузится только по нажатию, до этого Google не
- * знает о посетителе страницы клуба.
+ * знает о посетителе страницы. Пустая галерея не выводится.
  */
-export default function ClubGallery({ clubId }: { readonly clubId: string }): ReactNode {
+export default function Gallery({
+  owner,
+  layout = 'grid',
+  mt = 6,
+}: {
+  readonly owner: ContentOwner;
+  readonly layout?: GalleryLayout;
+  readonly mt?: number | Readonly<Record<string, number>>;
+}): ReactNode {
   const t = useT();
-  const media = useQuery(clubMediaQuery(clubId));
+  const media = useQuery(mediaQuery(owner));
   const [all, setAll] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
   const items = media.data ?? [];
+  const texts = OWNER_TEXTS[owner.kind];
 
   if (items.length === 0) return null;
 
-  const shown = all ? items : items.slice(0, PREVIEW);
+  const strip = layout === 'strip';
+  const shown = all || strip ? items : items.slice(0, PREVIEW);
 
   return (
-    <Box component="section" sx={{ mt: 6 }}>
+    <Box component="section" data-gallery={layout} sx={{ mt }}>
       <Typography variant="h2" sx={{ mb: 2 }}>
         {t('club.gallery.title')}
       </Typography>
       <Box
         component="ul"
-        sx={{
-          m: 0,
-          p: 0,
-          listStyle: 'none',
-          display: 'grid',
-          gap: 1,
-          gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' },
-        }}
+        sx={
+          strip
+            ? {
+                m: 0,
+                p: 0,
+                listStyle: 'none',
+                display: 'grid',
+                gap: 1,
+                gridAutoFlow: 'column',
+                gridAutoColumns: '78%',
+                overflowX: 'auto',
+                scrollSnapType: 'x mandatory',
+                overscrollBehaviorX: 'contain',
+                pb: 1,
+              }
+            : {
+                m: 0,
+                p: 0,
+                listStyle: 'none',
+                display: 'grid',
+                gap: 1,
+                gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' },
+              }
+        }
       >
         {shown.map((item, index) => (
-          <Box component="li" key={item.id}>
+          <Box component="li" key={item.id} sx={strip ? { scrollSnapAlign: 'start' } : undefined}>
             <ButtonBase
               onClick={() => {
                 setOpen(index);
               }}
               aria-label={
-                item.caption ??
-                t(item.kind === 'VIDEO' ? 'club.gallery.video' : 'club.gallery.photo')
+                item.caption ?? t(item.kind === 'VIDEO' ? texts.galleryVideo : texts.galleryPhoto)
               }
               sx={{
                 display: 'block',
@@ -74,7 +107,7 @@ export default function ClubGallery({ clubId }: { readonly clubId: string }): Re
             >
               <Box
                 component="img"
-                src={clubImageVariant(item.imageUrl, 480)}
+                src={contentImageVariant(item.imageUrl, 480)}
                 alt=""
                 loading="lazy"
                 width={item.width}
@@ -93,7 +126,7 @@ export default function ClubGallery({ clubId }: { readonly clubId: string }): Re
           </Box>
         ))}
       </Box>
-      {!all && items.length > PREVIEW && (
+      {!all && !strip && items.length > PREVIEW && (
         <Button
           onClick={() => {
             setAll(true);
@@ -106,6 +139,7 @@ export default function ClubGallery({ clubId }: { readonly clubId: string }): Re
       {open !== null && (
         <Viewer
           items={items}
+          videoLabel={t(texts.galleryVideo)}
           index={open}
           onIndex={setOpen}
           onClose={() => {
@@ -149,11 +183,13 @@ function PlayBadge(): ReactNode {
 /** Просмотр во весь экран: стрелки, клавиатура, подпись. На телефоне — на весь экран. */
 function Viewer({
   items,
+  videoLabel,
   index,
   onIndex,
   onClose,
 }: {
-  readonly items: readonly ClubMediaView[];
+  readonly items: readonly ContentMediaView[];
+  readonly videoLabel: string;
   readonly index: number;
   readonly onIndex: (index: number) => void;
   readonly onClose: () => void;
@@ -186,12 +222,12 @@ function Viewer({
       <Box sx={{ position: 'relative', display: 'grid', placeItems: 'center', minHeight: 240 }}>
         {item.kind === 'VIDEO' && item.youtubeId !== null ? (
           // Ключ по ролику: перелистнули — старый плеер выгружается.
-          <Video key={item.id} item={item} youtubeId={item.youtubeId} />
+          <Video key={item.id} item={item} youtubeId={item.youtubeId} label={videoLabel} />
         ) : (
           <Box
             component="img"
-            src={clubImageVariant(item.imageUrl, 1600)}
-            srcSet={`${clubImageVariant(item.imageUrl, 960)} 960w, ${clubImageVariant(item.imageUrl, 1600)} 1600w`}
+            src={contentImageVariant(item.imageUrl, 1600)}
+            srcSet={`${contentImageVariant(item.imageUrl, 960)} 960w, ${contentImageVariant(item.imageUrl, 1600)} 1600w`}
             sizes="(min-width: 1200px) 1200px, 100vw"
             alt={item.caption ?? ''}
             sx={{ display: 'block', maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }}
@@ -254,9 +290,11 @@ function Viewer({
 function Video({
   item,
   youtubeId,
+  label,
 }: {
-  readonly item: ClubMediaView;
+  readonly item: ContentMediaView;
   readonly youtubeId: string;
+  readonly label: string;
 }): ReactNode {
   const t = useT();
   const [playing, setPlaying] = useState(false);
@@ -267,7 +305,7 @@ function Video({
         <Box
           component="iframe"
           src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0`}
-          title={item.caption ?? t('club.gallery.video')}
+          title={item.caption ?? label}
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           allowFullScreen
           referrerPolicy="strict-origin-when-cross-origin"
@@ -283,7 +321,7 @@ function Video({
         >
           <Box
             component="img"
-            src={clubImageVariant(item.imageUrl, 1600)}
+            src={contentImageVariant(item.imageUrl, 1600)}
             alt=""
             sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />

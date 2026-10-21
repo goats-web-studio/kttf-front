@@ -1,4 +1,4 @@
-import { MAX_PAGE_SIZE, clubImageVariant, type ClubPostView } from '@kttf/shared/types';
+import { MAX_PAGE_SIZE } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
@@ -9,20 +9,28 @@ import { useState, type ReactNode } from 'react';
 
 import { fill, formatDate, useLocale, useT } from '@/common/i18n';
 
+import { OWNER_TEXTS, contentImageVariant, type ContentOwner, type ContentPostView } from './owner';
 import PostText from './post-text';
-import { clubPostsQuery } from './queries';
+import { postsQuery } from './queries';
 
 /** Сколько записей сразу и сколько добавляет «Показать ещё». */
 const STEP = 3;
 
 /**
- * Акции и новости клуба — ADR-055, `docs/09` 3.2. Закреплённая — первой,
- * прошедшие акции сервер сам уводит в архив. Пустой раздел не показывается.
+ * Акции и новости клуба (ADR-055, `docs/09` 3.2) и тренера (ADR-059, T2.2).
+ * Закреплённая — первой, прошедшие акции сервер сам уводит в архив. Пустой
+ * раздел не показывается.
  */
-export default function ClubPosts({ clubId }: { readonly clubId: string }): ReactNode {
+export default function Posts({
+  owner,
+  mt = 6,
+}: {
+  readonly owner: ContentOwner;
+  readonly mt?: number | Readonly<Record<string, number>>;
+}): ReactNode {
   const t = useT();
   const [limit, setLimit] = useState(STEP);
-  const posts = useQuery(clubPostsQuery(clubId, { page: 1, limit }));
+  const posts = useQuery(postsQuery(owner, { page: 1, limit }));
   const items = posts.data?.items ?? [];
 
   if (items.length === 0) return null;
@@ -30,9 +38,9 @@ export default function ClubPosts({ clubId }: { readonly clubId: string }): Reac
   const more = (posts.data?.total ?? 0) > items.length;
 
   return (
-    <Box component="section" sx={{ mt: 6 }}>
+    <Box component="section" data-posts sx={{ mt }}>
       <Typography variant="h2" sx={{ mb: 2 }}>
-        {t('club.posts.title')}
+        {t(OWNER_TEXTS[owner.kind].postsTitle)}
       </Typography>
       <Box sx={{ display: 'grid', gap: 2 }}>
         {items.map((post) => (
@@ -58,7 +66,7 @@ export function PostCard({
   post,
   actions,
 }: {
-  readonly post: ClubPostView;
+  readonly post: ContentPostView;
   readonly actions?: ReactNode;
 }): ReactNode {
   const t = useT();
@@ -70,8 +78,8 @@ export function PostCard({
       {post.imageUrl !== null && (
         <Box
           component="img"
-          src={clubImageVariant(post.imageUrl, 960)}
-          srcSet={`${clubImageVariant(post.imageUrl, 480)} 480w, ${clubImageVariant(post.imageUrl, 960)} 960w`}
+          src={contentImageVariant(post.imageUrl, 960)}
+          srcSet={`${contentImageVariant(post.imageUrl, 480)} 480w, ${contentImageVariant(post.imageUrl, 960)} 960w`}
           sizes="(min-width: 900px) 760px, 100vw"
           alt=""
           loading="lazy"

@@ -1,11 +1,4 @@
-import {
-  CLUB_IMAGE_MAX_BYTES,
-  clubImageVariant,
-  parseYoutubeId,
-  rejectPhoto,
-  type ClubMediaView,
-  type ClubView,
-} from '@kttf/shared/types';
+import { CLUB_IMAGE_MAX_BYTES, parseYoutubeId, rejectPhoto } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -22,54 +15,69 @@ import { fill, useT, type MessageKey } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 
+import { addVideo as addVideoTo, deleteMedia, reorderMedia, updateMedia, uploadPhoto } from './api';
 import {
-  addClubVideo,
-  deleteClubMedia,
-  reorderClubMedia,
-  updateClubMedia,
-  uploadClubPhoto,
-} from './api';
-import { allClubMediaQuery, clubContentKeys } from './queries';
+  OWNER_TEXTS,
+  contentImageVariant,
+  hiddenNote,
+  type ContentMediaView,
+  type ContentOwner,
+} from './owner';
+import { allMediaQuery, contentKeys } from './queries';
+
+/** Пределы галереи — у тренера `coachLimits` (T2.2); у клуба их держит сервер. */
+export interface MediaLimits {
+  readonly photos: number;
+  readonly videos: number;
+}
 
 /**
- * Фото и видео в кабинете клуба — ADR-055, `docs/09` 3.2.
+ * Фото и видео в кабинете клуба (ADR-055, `docs/09` 3.2) и тренера
+ * (ADR-059, T2.2).
  *
  * Фото — сразу в галерею, можно выбрать несколько за раз: они уходят по
  * одному, чтобы ошибка одного не теряла остальные. Видео — ссылкой на
- * YouTube. Порядок — стрелками, как в прайсе.
+ * YouTube. Порядок — стрелками, как в прайсе. Скрытое администратором видно
+ * с причиной.
  */
-export default function MediaEditor({ club }: { readonly club: ClubView }): ReactNode {
+export default function MediaEditor({
+  owner,
+  limits,
+}: {
+  readonly owner: ContentOwner;
+  readonly limits?: MediaLimits;
+}): ReactNode {
   const t = useT();
   const queryClient = useQueryClient();
-  const media = useQuery(allClubMediaQuery(club.id));
+  const media = useQuery(allMediaQuery(owner));
   const input = useRef<HTMLInputElement>(null);
   const [video, setVideo] = useState('');
   const [rejected, setRejected] = useState<MessageKey | null>(null);
   const refresh = async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: clubContentKeys.all });
+    await queryClient.invalidateQueries({ queryKey: contentKeys.all });
   };
 
   const photos = useMutation({
     mutationFn: async (files: readonly File[]) => {
       for (const file of files) {
-        await uploadClubPhoto(club.id, file, '');
+        await uploadPhoto(owner, file, '');
       }
     },
     onSettled: refresh,
   });
   const addVideo = useMutation({
-    mutationFn: (url: string) => addClubVideo(club.id, { url }),
+    mutationFn: (url: string) => addVideoTo(owner, { url }),
     onSuccess: async () => {
       setVideo('');
       await refresh();
     },
   });
   const reorder = useMutation({
-    mutationFn: (ids: readonly string[]) => reorderClubMedia(club.id, ids),
+    mutationFn: (ids: readonly string[]) => reorderMedia(owner, ids),
     onSuccess: refresh,
   });
   const remove = useMutation({
-    mutationFn: (id: string) => deleteClubMedia(club.id, id),
+    mutationFn: (id: string) => deleteMedia(owner, id),
     onSuccess: refresh,
   });
 
@@ -84,6 +92,10 @@ export default function MediaEditor({ club }: { readonly club: ClubView }): Reac
     }
   };
   const error = photos.error ?? addVideo.error ?? reorder.error ?? remove.error;
+  const photoCount = items.filter((item) => item.kind === 'PHOTO').length;
+  const videoCount = items.length - photoCount;
+  const photosFull = limits !== undefined && photoCount >= limits.photos;
+  const videosFull = limits !== undefined && videoCount >= limits.videos;
 
   return (
     <Box sx={{ mt: 3 }}>
@@ -117,6 +129,11 @@ export default function MediaEditor({ club }: { readonly club: ClubView }): Reac
                   .map((file) => rejectPhoto(file, CLUB_IMAGE_MAX_BYTES))
                   .find((rejection) => rejection !== null);
 
+                if (limits !== undefined && photoCount + files.length > limits.photos) {
+                  setRejected('manage.media.tooMany');
+                  return;
+                }
+
                 if (bad !== undefined) {
                   setRejected(bad === 'SIZE' ? 'manage.page.imageTooBig' : 'manage.page.imageType');
                   return;
@@ -129,7 +146,7 @@ export default function MediaEditor({ club }: { readonly club: ClubView }): Reac
             <Button
               variant="outlined"
               startIcon={<ImagePlus size={18} aria-hidden />}
-              disabled={photos.isPending}
+              disabled={photos.isPending || photosFull}
               onClick={() => input.current?.click()}
               sx={{ minHeight: 48 }}
             >
@@ -164,7 +181,7 @@ export default function MediaEditor({ club }: { readonly club: ClubView }): Reac
             <Button
               type="submit"
               variant="outlined"
-              disabled={addVideo.isPending || video.trim() === ''}
+              disabled={addVideo.isPending || videosFull || video.trim() === ''}
               sx={{ minHeight: 40, flexShrink: 0 }}
             >
               {addVideo.isPending ? t('common.loading') : t('manage.media.addVideo')}
@@ -191,11 +208,18 @@ export default function MediaEditor({ club }: { readonly club: ClubView }): Reac
           loading={<RowsSkeleton rows={2} />}
         >
           {items.length === 0 ? (
-            <Typography color="text.secondary">{t('manage.media.empty')}</Typography>
+            <Typography color="text.secondary">{t(OWNER_TEXTS[owner.kind].mediaEmpty)}</Typography>
           ) : (
             <>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                {fill(t('manage.media.count'), { count: String(items.length) })}
+                {limits === undefined
+                  ? fill(t('manage.media.count'), { count: String(items.length) })
+                  : fill(t('manage.media.countOf'), {
+                      photos: String(photoCount),
+                      maxPhotos: String(limits.photos),
+                      videos: String(videoCount),
+                      maxVideos: String(limits.videos),
+                    })}
               </Typography>
               <Box
                 component="ul"
@@ -211,7 +235,7 @@ export default function MediaEditor({ club }: { readonly club: ClubView }): Reac
                 {items.map((item, index) => (
                   <MediaItem
                     key={item.id}
-                    clubId={club.id}
+                    owner={owner}
                     item={item}
                     first={index === 0}
                     last={index === items.length - 1}
@@ -234,7 +258,7 @@ export default function MediaEditor({ club }: { readonly club: ClubView }): Reac
 }
 
 function MediaItem({
-  clubId,
+  owner,
   item,
   first,
   last,
@@ -242,8 +266,8 @@ function MediaItem({
   onMove,
   onRemove,
 }: {
-  readonly clubId: string;
-  readonly item: ClubMediaView;
+  readonly owner: ContentOwner;
+  readonly item: ContentMediaView;
   readonly first: boolean;
   readonly last: boolean;
   readonly busy: boolean;
@@ -255,18 +279,18 @@ function MediaItem({
   const [caption, setCaption] = useState(item.caption ?? '');
   const save = useMutation({
     mutationFn: () =>
-      updateClubMedia(clubId, item.id, { caption: caption.trim() === '' ? null : caption.trim() }),
+      updateMedia(owner, item.id, { caption: caption.trim() === '' ? null : caption.trim() }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: clubContentKeys.all });
+      await queryClient.invalidateQueries({ queryKey: contentKeys.all });
     },
   });
 
   return (
-    <Paper variant="outlined" component="li" sx={{ overflow: 'hidden' }}>
+    <Paper variant="outlined" component="li" data-media-item={item.id} sx={{ overflow: 'hidden' }}>
       <Box sx={{ position: 'relative' }}>
         <Box
           component="img"
-          src={clubImageVariant(item.imageUrl, 480)}
+          src={contentImageVariant(item.imageUrl, 480)}
           alt=""
           loading="lazy"
           sx={{ display: 'block', width: '100%', aspectRatio: '4 / 3', objectFit: 'cover' }}
@@ -297,7 +321,7 @@ function MediaItem({
       <Box sx={{ p: 1.5 }}>
         {item.hidden && (
           <Alert severity="warning" sx={{ mb: 1 }}>
-            {t('manage.content.hidden')}
+            {hiddenNote(t, item)}
           </Alert>
         )}
         <TextField

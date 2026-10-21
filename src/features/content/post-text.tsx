@@ -12,7 +12,7 @@ const PREVIEW = 320;
 
 /**
  * Текст записи: переносы строк как вписаны, ссылки кликабельны и помечены
- * `nofollow ugc` — их пишет клуб, а не мы. Длинный текст свёрнут.
+ * `nofollow ugc` — их пишет клуб или тренер, а не мы. Длинный текст свёрнут.
  */
 export default function PostText({ text }: { readonly text: string }): ReactNode {
   const t = useT();
