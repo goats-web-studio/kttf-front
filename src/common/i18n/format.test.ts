@@ -30,6 +30,10 @@ describe('formatDelta', () => {
     expect(formatDelta('-7.9')).toBe('-7.90');
   });
 
+  it('пришедший плюс не удваивается', () => {
+    expect(formatDelta('+42.1')).toBe('+42.10');
+  });
+
   it('ноль — без знака', () => {
     expect(formatDelta('0')).toBe('0.00');
     expect(formatDelta('0.00')).toBe('0.00');

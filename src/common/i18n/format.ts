@@ -64,7 +64,9 @@ export function formatMoney(amount: number, locale: Locale): string {
  * дописывается, ноль остаётся без знака.
  */
 export function formatDelta(delta: string): string {
-  const value = padHundredths(delta);
+  // Сервер может прислать прирост уже со знаком («+42.10», ADR-059): второй
+  // плюс не дописывается.
+  const value = padHundredths(delta.replace(/^\+/, ''));
 
   if (value.startsWith('-') || /^0(\.0+)?$/.test(value)) {
     return value;
