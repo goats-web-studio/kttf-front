@@ -11,7 +11,9 @@
  * `z.stringbool()` — в адресной строке других значений не бывает.
  */
 export function queryString(
-  params: Readonly<Record<string, string | number | boolean | readonly string[] | undefined>>,
+  params: Readonly<
+    Record<string, string | number | boolean | readonly (string | number)[] | undefined>
+  >,
 ): string {
   const search = new URLSearchParams();
 

@@ -125,3 +125,36 @@ describe('«Фильтры (N)» на телефоне', () => {
     expect(toggleIn(['GROUP', 'SPLIT'], 'GROUP')).toEqual(['SPLIT']);
   });
 });
+
+describe('расписание в фильтрах — день, время, набор (T3)', () => {
+  it('дни и время из адреса: строкой по ссылке и числом, набранным руками', () => {
+    expect(
+      trainingsSearchSchema.parse({ day: '1,3', time: 'EVENING', open: 'true' }),
+    ).toMatchObject({ day: '1,3', time: 'EVENING', open: true });
+    // Один день роутер читает числом, «true» — булевым.
+    expect(trainingsSearchSchema.parse({ day: 6, open: true })).toMatchObject({
+      day: '6',
+      open: true,
+    });
+  });
+
+  it('кривое выпадает: день 8, неизвестное время, open не true', () => {
+    const search = trainingsSearchSchema.parse({ day: '8,2,x', time: 'NIGHT', open: 'yes' });
+
+    expect(search.day).toBe('2');
+    expect(search.time).toBeUndefined();
+    expect(search.open).toBeUndefined();
+  });
+
+  it('в запрос — числами дни по порядку, время списком, open только когда включён', () => {
+    const search = trainingsSearchSchema.parse({ day: '5,1', time: 'MORNING,DAY', open: 'true' });
+
+    expect(toTrainingsQuery(search, 1)).toMatchObject({
+      day: [1, 5],
+      time: ['MORNING', 'DAY'],
+      open: true,
+    });
+    expect(toTrainingsQuery(trainingsSearchSchema.parse({}), 1)).not.toHaveProperty('open');
+    expect(hiddenFilterCount(search, 'trainings')).toBe(5);
+  });
+});

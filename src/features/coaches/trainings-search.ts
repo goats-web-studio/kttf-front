@@ -2,11 +2,13 @@ import {
   COACH_LANGUAGES,
   DEFAULT_PAGE_SIZE,
   PRICE_KZT_MAX,
+  TIMES_OF_DAY,
   TRAINING_AUDIENCES,
   TRAINING_KINDS,
   TRAINING_PLACES,
   type ListCoachesRequest,
   type ListTrainingsRequest,
+  type TimeOfDay,
   type TrainingAudience,
   type TrainingKind,
   type TrainingPlace,
@@ -60,6 +62,9 @@ const isKind = oneOf(TRAINING_KINDS);
 const isAudience = oneOf(TRAINING_AUDIENCES);
 const isPlace = oneOf(TRAINING_PLACES);
 const isUuid = (part: string): boolean => z.uuid().safeParse(part).success;
+const isTime = oneOf(TIMES_OF_DAY);
+/** День недели: «1» — понедельник … «7» — воскресенье. */
+const isDay = (part: string): boolean => /^[1-7]$/.test(part);
 
 export const trainingsSearchSchema = z.object({
   view: z.coerce.string().pipe(z.literal('coaches')).optional().catch(undefined),
@@ -74,6 +79,20 @@ export const trainingsSearchSchema = z.object({
   city: commaList(isUuid),
   priceTo: z.coerce.number().int().min(0).max(PRICE_KZT_MAX).optional().catch(undefined),
   language: z.coerce.string().pipe(z.enum(COACH_LANGUAGES)).optional().catch(undefined),
+  /** Дни недели занятий (T3): `day=1,3` — понедельник и среда. */
+  day: commaList(isDay),
+  /** Время суток начала занятия: утро, день, вечер. */
+  time: commaList(isTime),
+  /**
+   * Только где идёт набор. По ссылке `RouterLink` значение приходит строкой
+   * «true» — принимаются обе формы.
+   */
+  open: z
+    .preprocess(
+      (value) => (value === true || value === 'true' ? true : undefined),
+      z.literal(true).optional(),
+    )
+    .catch(undefined),
   /** Поиск тренера по имени — только у вида «Тренеры». */
   q: searchText,
   page: searchPage,
@@ -93,6 +112,13 @@ export const audiencesOf = (search: TrainingsSearch): TrainingAudience[] =>
   listOf(search.audience).filter(isAudience);
 export const placesOf = (search: TrainingsSearch): TrainingPlace[] =>
   listOf(search.place).filter(isPlace);
+/** Дни по порядку недели — так их и показывают чипы. */
+export const daysOf = (search: TrainingsSearch): number[] =>
+  listOf(search.day)
+    .filter(isDay)
+    .map(Number)
+    .sort((a, b) => a - b);
+export const timesOf = (search: TrainingsSearch): TimeOfDay[] => listOf(search.time).filter(isTime);
 
 /** Список в значение адреса: пустой — отсутствие поля. */
 export function joinList(values: readonly string[]): string | undefined {
@@ -110,6 +136,8 @@ export function toTrainingsQuery(search: TrainingsSearch, page: number): ListTra
   const audience = audiencesOf(search);
   const place = placesOf(search);
   const city = listOf(search.city);
+  const day = daysOf(search);
+  const time = timesOf(search);
 
   return {
     page,
@@ -122,6 +150,9 @@ export function toTrainingsQuery(search: TrainingsSearch, page: number): ListTra
     ...(city.length === 0 ? {} : { cityId: city }),
     ...(search.priceTo === undefined ? {} : { priceTo: search.priceTo }),
     ...(search.language === undefined ? {} : { language: search.language }),
+    ...(day.length === 0 ? {} : { day }),
+    ...(time.length === 0 ? {} : { time }),
+    ...(search.open === true ? { open: true } : {}),
   };
 }
 
@@ -154,7 +185,10 @@ export function hiddenFilterCount(search: TrainingsSearch, view: TrainingsView):
     placesOf(search).length +
     (search.clubId === undefined ? 0 : 1) +
     (search.age === undefined ? 0 : 1) +
-    (search.priceTo === undefined ? 0 : 1)
+    (search.priceTo === undefined ? 0 : 1) +
+    daysOf(search).length +
+    timesOf(search).length +
+    (search.open === true ? 1 : 0)
   );
 }
 

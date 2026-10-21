@@ -4,7 +4,9 @@ import {
   TRAINING_KINDS,
   TRAINING_PLACES,
   MAX_PAGE_SIZE,
+  TIMES_OF_DAY,
   type CoachLanguage,
+  type TimeOfDay,
   type TrainingGroupView,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
@@ -19,7 +21,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { SlidersHorizontal } from 'lucide-react';
 import { Fragment, useCallback, useId, useState, type ReactNode } from 'react';
 
-import { fill, formatMoney, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, formatMoney, useLocale, useT, type Locale, type MessageKey } from '@/common/i18n';
 import { orUndefined } from '@/common/search';
 import AdSlot from '@/common/ui/ad-slot';
 import EmptyState from '@/common/ui/empty-state';
@@ -37,17 +39,20 @@ import {
   TRAINING_PLACE_KEYS,
 } from '@/features/coaches/labels';
 import { coachesQuery, trainingsQuery } from '@/features/coaches/queries';
+import { weekdayShort } from '@/features/coaches/schedule';
 import TrainingDialogHost from '@/features/coaches/training-dialog-host';
 import { TrainingGroupBlock } from '@/features/coaches/training-list';
 import { clubsQuery } from '@/features/clubs/queries';
 import {
   audiencesOf,
+  daysOf,
   hasFilters,
   hiddenFilterCount,
   joinList,
   kindsOf,
   listOf,
   placesOf,
+  timesOf,
   toCoachesQuery,
   toTrainingsQuery,
   toggleIn,
@@ -73,6 +78,16 @@ const VIEW_OPTIONS = [
   ['trainings', 'trainings.view.trainings'],
   ['coaches', 'trainings.view.coaches'],
 ] as const satisfies readonly (readonly [TrainingsView, MessageKey])[];
+
+/** Дни недели в фильтре — значениями адреса: «1» — понедельник. */
+const DAY_VALUES = ['1', '2', '3', '4', '5', '6', '7'] as const;
+
+/** Время суток: утро — до 12:00, день — до 17:00, вечер — с 17:00. */
+const TIME_OF_DAY_KEYS: Readonly<Record<TimeOfDay, MessageKey>> = {
+  MORNING: 'trainings.filter.time.MORNING',
+  DAY: 'trainings.filter.time.DAY',
+  EVENING: 'trainings.filter.time.EVENING',
+};
 
 /** Возраст ребёнка в фильтре: от трёх до семнадцати, как в контракте. */
 const AGES = Array.from({ length: 15 }, (_, index) => index + 3);
@@ -101,6 +116,8 @@ function TrainingsPage(): ReactNode {
   const audiences = audiencesOf(search);
   const places = placesOf(search);
   const cities = listOf(search.city);
+  const days = daysOf(search);
+  const times = timesOf(search);
 
   // Смена фильтра возвращает на первую страницу.
   const filter = useCallback(
@@ -173,6 +190,7 @@ function TrainingsPage(): ReactNode {
     clubs.data?.items.find((club) => club.id === clubId)?.name ?? t('trainings.filter.club');
   const active = activeFilters(search, view, {
     t,
+    locale,
     cityLabel,
     clubName,
     money: (amount) => formatMoney(amount, locale),
@@ -185,7 +203,7 @@ function TrainingsPage(): ReactNode {
     label: MessageKey,
     values: readonly T[],
     selected: readonly T[],
-    keys: Readonly<Record<T, MessageKey>>,
+    labelOf: (value: T) => string,
     onChange: (next: T[]) => void,
   ): ReactNode => (
     <Box role="group" aria-label={t(label)}>
@@ -199,7 +217,7 @@ function TrainingsPage(): ReactNode {
           return (
             <Chip
               key={value}
-              label={t(keys[value])}
+              label={labelOf(value)}
               clickable
               variant={on ? 'filled' : 'outlined'}
               aria-pressed={on}
@@ -302,9 +320,56 @@ function TrainingsPage(): ReactNode {
           />
           {language}
         </Box>
-        {chipGroup('trainings.filter.kind', TRAINING_KINDS, kinds, TRAINING_KIND_KEYS, (next) => {
-          filter({ kind: joinList(next) });
-        })}
+        {chipGroup(
+          'trainings.filter.kind',
+          TRAINING_KINDS,
+          kinds,
+          (kind) => t(TRAINING_KIND_KEYS[kind]),
+          (next) => {
+            filter({ kind: joinList(next) });
+          },
+        )}
+        {/* Дни, время и набор — расписание по дням (T3, `docs/11` 3.3.1). */}
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 2,
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 3fr) minmax(0, 2fr)' },
+          }}
+        >
+          {chipGroup(
+            'trainings.filter.days',
+            DAY_VALUES,
+            days.map(String),
+            (day) => weekdayShort(Number(day), locale),
+            (next) => {
+              filter({ day: joinList([...next].sort()) });
+            },
+          )}
+          <Box sx={{ display: 'grid', gap: 1.5, alignContent: 'start' }}>
+            {chipGroup(
+              'trainings.filter.time',
+              TIMES_OF_DAY,
+              times,
+              (time) => t(TIME_OF_DAY_KEYS[time]),
+              (next) => {
+                filter({ time: joinList(next) });
+              },
+            )}
+            <Box>
+              <Chip
+                label={t('trainings.filter.open')}
+                clickable
+                variant={search.open === true ? 'filled' : 'outlined'}
+                aria-pressed={search.open === true}
+                onClick={() => {
+                  filter({ open: search.open === true ? undefined : true });
+                }}
+                sx={{ height: { xs: 44, sm: 40 } }}
+              />
+            </Box>
+          </Box>
+        </Box>
         <Box
           sx={{
             display: 'grid',
@@ -316,7 +381,7 @@ function TrainingsPage(): ReactNode {
             'trainings.filter.audience',
             TRAINING_AUDIENCES,
             audiences,
-            TRAINING_AUDIENCE_KEYS,
+            (audience) => t(TRAINING_AUDIENCE_KEYS[audience]),
             (next) => {
               filter({ audience: joinList(next) });
             },
@@ -326,7 +391,7 @@ function TrainingsPage(): ReactNode {
               'trainings.filter.place',
               TRAINING_PLACES,
               places,
-              TRAINING_PLACE_KEYS,
+              (place) => t(TRAINING_PLACE_KEYS[place]),
               (next) => {
                 filter({ place: joinList(next) });
               },
@@ -559,13 +624,14 @@ function activeFilters(
   view: TrainingsView,
   helpers: {
     readonly t: (key: MessageKey) => string;
+    readonly locale: Locale;
     readonly cityLabel: (id: string) => string;
     readonly clubName: (id: string) => string;
     readonly money: (amount: number) => string;
     readonly filter: (patch: Partial<TrainingsSearch>) => void;
   },
 ): ActiveFilter[] {
-  const { t, cityLabel, clubName, money, filter } = helpers;
+  const { t, locale, cityLabel, clubName, money, filter } = helpers;
   const chip = (label: MessageKey, value: string): string =>
     fill(t('filter.chip'), { label: t(label), value });
   const active: ActiveFilter[] = [];
@@ -660,6 +726,36 @@ function activeFilters(
       label: chip('trainings.filter.priceTo', money(search.priceTo)),
       onRemove: () => {
         filter({ priceTo: undefined });
+      },
+    });
+  }
+  const days = daysOf(search);
+  const times = timesOf(search);
+
+  for (const day of days) {
+    active.push({
+      key: `day-${String(day)}`,
+      label: weekdayShort(day, locale),
+      onRemove: () => {
+        filter({ day: joinList(days.filter((item) => item !== day).map(String)) });
+      },
+    });
+  }
+  for (const time of times) {
+    active.push({
+      key: `time-${time}`,
+      label: t(TIME_OF_DAY_KEYS[time]),
+      onRemove: () => {
+        filter({ time: joinList(toggleIn(times, time)) });
+      },
+    });
+  }
+  if (search.open === true) {
+    active.push({
+      key: 'open',
+      label: t('trainings.filter.open'),
+      onRemove: () => {
+        filter({ open: undefined });
       },
     });
   }
