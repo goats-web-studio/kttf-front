@@ -185,7 +185,9 @@ function GroupTable({
                       </Box>
                     )}
                   </TableCell>
-                  <TableCell sx={{ ...STICKY, fontWeight: 500, whiteSpace: 'nowrap' }}>
+                  <TableCell
+                    sx={{ ...STICKY, fontWeight: 500, whiteSpace: { xs: 'normal', sm: 'nowrap' } }}
+                  >
                     <Box
                       component="span"
                       sx={{
@@ -203,7 +205,13 @@ function GroupTable({
                     {model.ratings.has(row.participant) && (
                       <RatingValue
                         value={model.ratings.get(row.participant) ?? ''}
-                        sx={{ ml: 1, typography: 'caption', color: 'text.secondary' }}
+                        sx={{
+                          // На телефоне — строкой под фамилией: место нужно числам.
+                          display: { xs: 'block', sm: 'inline' },
+                          ml: { xs: 0, sm: 1 },
+                          typography: 'caption',
+                          color: 'text.secondary',
+                        }}
                       />
                     )}
                   </TableCell>
@@ -227,7 +235,10 @@ function GroupTable({
                     {row.points}
                   </TableCell>
                   <TableCell align="right" sx={{ ...NUM, whiteSpace: 'nowrap' }}>
-                    {row.setsWon}:{row.setsLost} <Diff value={row.setDiff} />
+                    {row.setsWon}:{row.setsLost}{' '}
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                      <Diff value={row.setDiff} />
+                    </Box>
                   </TableCell>
                   {balls && (
                     <TableCell
