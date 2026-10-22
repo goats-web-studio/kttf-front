@@ -48,8 +48,14 @@ export default function SiteFooter(): ReactNode {
               sx={{ width: 'auto', height: 36, display: 'block' }}
             />
             <Typography
+              lang="en"
+              sx={{ mt: 1.5, fontSize: 15, fontWeight: 500, color: 'var(--night-ink-900)' }}
+            >
+              {t('app.fullName')}
+            </Typography>
+            <Typography
               sx={{
-                mt: 2,
+                mt: 1,
                 fontSize: 13,
                 fontWeight: 700,
                 letterSpacing: '0.12em',

@@ -9,13 +9,14 @@ import type { MessageKey } from './locale';
  */
 export const kk: Record<MessageKey, string> = {
   'app.name': 'KTTF',
+  'app.fullName': 'Kazakh Table Tennis Forum',
   'app.tagline': 'Қазақстан үстел теннисі',
   'app.logo': 'KTTF — Қазақстан үстел теннисі',
   'footer.instagram': 'Инстаграм',
   'footer.brandLine': 'Турнирлер · рейтинг · клубтар · ойыншылар',
   'footer.sections': 'Сайт бөлімдері',
   'footer.contact': 'Бізге жазыңыз',
-  'footer.copy': '© 2026 KTTF — Қазақстан үстел теннисі',
+  'footer.copy': '© 2026 KTTF — Kazakh Table Tennis Forum',
 
   'nav.home': 'Басты бет',
   'nav.ratings': 'Рейтинг',
@@ -125,6 +126,7 @@ export const kk: Record<MessageKey, string> = {
   'home.hero.find': 'Табу',
   'home.hero.titleWhite': 'Қазақстан',
   'home.hero.titleRed': 'үстел теннисі',
+  'home.hero.forum': 'KTTF — Қазақстан үстел теннисі форумы',
   'home.hero.placeholder': 'Ойыншының тегі',
   'home.counts.players': 'Ойыншылар',
   'home.counts.clubs': 'Клубтар',

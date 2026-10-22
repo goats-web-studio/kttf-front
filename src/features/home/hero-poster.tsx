@@ -20,6 +20,12 @@ interface Figure {
   /** Сторона и отступ от края первого экрана; отрицательный — фигура за краем. */
   readonly side: 'left' | 'right';
   readonly offset: string;
+  /**
+   * С `lg` — от центра до ближнего к заголовку края фигуры, px. От краёв
+   * экрана композиция расползалась: на 1920 левый игрок уходил за край, а
+   * правый стоял у текста. От центра обе стороны одинаковы на любой ширине.
+   */
+  readonly inner: number;
   /** Высота фигуры на широком экране. */
   readonly size: number;
   /** Дальняя фигура — темнее и мягче, как на постере. */
@@ -38,7 +44,8 @@ const FIGURES: readonly Figure[] = [
     height: 640,
     side: 'left',
     offset: '-4%',
-    size: 440,
+    inner: 520,
+    size: 470,
     back: true,
   },
   {
@@ -47,7 +54,8 @@ const FIGURES: readonly Figure[] = [
     height: 640,
     side: 'right',
     offset: '-14%',
-    size: 430,
+    inner: 360,
+    size: 400,
     back: true,
   },
   {
@@ -56,7 +64,8 @@ const FIGURES: readonly Figure[] = [
     height: 759,
     side: 'left',
     offset: '-9%',
-    size: 420,
+    inner: 240,
+    size: 390,
   },
   {
     src: '/home/player-fist.webp',
@@ -64,7 +73,8 @@ const FIGURES: readonly Figure[] = [
     height: 880,
     side: 'right',
     offset: '5%',
-    size: 470,
+    inner: 240,
+    size: 450,
   },
 ];
 
@@ -106,7 +116,7 @@ export default function HeroPoster(): ReactNode {
           inset: 0,
           pointerEvents: 'none',
           background:
-            'linear-gradient(to right, var(--night) 0%, transparent 10%, transparent 90%, var(--night) 100%), linear-gradient(to top, var(--night) 0%, transparent 32%)',
+            'linear-gradient(to right, var(--night) 0%, transparent 5%, transparent 95%, var(--night) 100%), linear-gradient(to top, var(--night) 0%, transparent 32%)',
         }}
       />
 
@@ -120,6 +130,26 @@ export default function HeroPoster(): ReactNode {
           textAlign: 'center',
         }}
       >
+        <Typography
+          sx={{
+            mb: { xs: 2, sm: 2.5 },
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1,
+            fontWeight: 700,
+            fontSize: { xs: 11, sm: 13 },
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: 'var(--night-ink-700)',
+          }}
+        >
+          <Box
+            component="span"
+            aria-hidden
+            sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'var(--red-500)' }}
+          />
+          {t('home.hero.forum')}
+        </Typography>
         <Typography
           component="h1"
           sx={{
@@ -211,7 +241,11 @@ function FigureImage({ figure }: { readonly figure: Figure }): ReactNode {
       sx={{
         position: 'absolute',
         bottom: 0,
-        [figure.side]: figure.offset,
+        [figure.side]: { xs: figure.offset, lg: 'auto' },
+        [figure.side === 'left' ? 'right' : 'left']: {
+          xs: 'auto',
+          lg: `calc(50% + ${String(figure.inner)}px)`,
+        },
         width: 'auto',
         height: {
           xs: figure.back === true ? 0 : 230,

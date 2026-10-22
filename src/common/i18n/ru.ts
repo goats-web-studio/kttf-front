@@ -7,13 +7,14 @@
  */
 export const ru = {
   'app.name': 'KTTF',
+  'app.fullName': 'Kazakh Table Tennis Forum',
   'app.tagline': 'Настольный теннис Казахстана',
   'app.logo': 'KTTF — настольный теннис Казахстана',
   'footer.instagram': 'Инстаграм',
   'footer.brandLine': 'Турниры · рейтинг · клубы · игроки',
   'footer.sections': 'Разделы сайта',
   'footer.contact': 'Напишите нам',
-  'footer.copy': '© 2026 KTTF — настольный теннис Казахстана',
+  'footer.copy': '© 2026 KTTF — Kazakh Table Tennis Forum',
 
   'nav.home': 'Главная',
   'nav.ratings': 'Рейтинг',
@@ -123,6 +124,7 @@ export const ru = {
   'home.hero.find': 'Найти',
   'home.hero.titleWhite': 'Настольный теннис',
   'home.hero.titleRed': 'Казахстана',
+  'home.hero.forum': 'KTTF — форум настольного тенниса Казахстана',
   'home.hero.placeholder': 'Фамилия игрока',
   'home.counts.players': 'Игроки',
   'home.counts.clubs': 'Клубы',
