@@ -54,6 +54,11 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
 
   // Тренер на турнире — ADR-059, T3.
   REGISTRATION_COACH_LOCKED: 'error.api.REGISTRATION_COACH_LOCKED',
+
+  // Заявка на пробную с сайта — ADR-059, T3.
+  TRIAL_REQUEST_EXISTS: 'error.api.TRIAL_REQUEST_EXISTS',
+  TRIAL_REQUEST_LIMIT: 'error.api.TRIAL_REQUEST_LIMIT',
+  TRIAL_REQUEST_INVALID: 'error.api.TRIAL_REQUEST_INVALID',
 };
 
 /**
