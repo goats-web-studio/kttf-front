@@ -70,7 +70,7 @@ export default function RunningSettings({
 
   return (
     <ConsoleDialog caption={tournament.name} title={t('console.settings.title')} onClose={onClose}>
-      <Typography variant="body2" color="text.secondary" component="p">
+      <Typography variant="body2" color="text.secondary" component="p" sx={{ mb: 2 }}>
         {t('console.settings.lead')}
       </Typography>
 
