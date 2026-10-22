@@ -10,7 +10,7 @@ import { BRACKET_PAGE, isPlacement, roundName, type BracketSize } from './bracke
 interface BracketProps {
   readonly matches: readonly MatchView[];
   /** Что написано на стороне встречи: имя или кого встреча ждёт. */
-  readonly sideLabel: (match: MatchView, side: 'A' | 'B') => string;
+  readonly sideLabel: (match: MatchView, side: 'A' | 'B') => ReactNode;
   readonly size?: BracketSize;
   /**
    * Касание встречи — в консоли открывает окно встречи. Без него сетка
@@ -191,7 +191,7 @@ function MatchBox({
   onClick,
 }: {
   readonly match: MatchView;
-  readonly sideLabel: (match: MatchView, side: 'A' | 'B') => string;
+  readonly sideLabel: (match: MatchView, side: 'A' | 'B') => ReactNode;
   readonly size: BracketSize;
   readonly onClick: ((match: MatchView) => void) | undefined;
 }): ReactNode {
@@ -253,7 +253,7 @@ function Side({
 }: {
   readonly match: MatchView;
   readonly side: 'A' | 'B';
-  readonly sideLabel: (match: MatchView, side: 'A' | 'B') => string;
+  readonly sideLabel: (match: MatchView, side: 'A' | 'B') => ReactNode;
   readonly size: BracketSize;
 }): ReactNode {
   const id = side === 'A' ? match.playerAId : match.playerBId;

@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 import { formatDelta, formatRating, useT } from '@/common/i18n';
 import DeltaPill from '@/common/ui/delta-pill';
 import RatingValue from '@/common/ui/rating-value';
+import PlayerLink from '@/features/players/player-link';
 
 /** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
 const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
@@ -63,7 +64,9 @@ export default function ResultsRatings({ ratings, names }: ResultsRatingsProps):
           {ratings.map((rating) => (
             <TableRow key={rating.playerId} sx={{ verticalAlign: 'top' }}>
               <TableCell sx={{ fontWeight: 500 }}>
-                {names.get(rating.playerId) ?? rating.playerId}
+                <PlayerLink id={rating.playerId}>
+                  {names.get(rating.playerId) ?? rating.playerId}
+                </PlayerLink>
                 <Events rating={rating} />
               </TableCell>
               <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
