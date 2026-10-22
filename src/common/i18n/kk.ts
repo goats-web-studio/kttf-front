@@ -165,17 +165,78 @@ export const kk: Record<MessageKey, string> = {
   'home.top.title': 'Рейтинг көшбасшылары',
   'home.top.all': 'Толық рейтинг',
   'home.top.country': 'Бүкіл ел',
-  'home.clubs.title': 'Турнирлерді KTTF-те өткізіңіз',
-  'home.clubs.offline.title': 'Интернетсіз зал',
-  'home.clubs.offline.text':
-    'Төреші консолі желісіз жұмыс істейді және байланыс пайда болғанда есепті жібереді.',
-  'home.clubs.rating.title': 'Рейтинг өздігінен',
-  'home.clubs.rating.text':
-    'Турнирден кейін қатысушылардың рейтингі автоматты түрде қайта есептеледі — кестесіз және қолмен санаусыз.',
-  'home.clubs.screen.title': 'Залға арналған экран',
-  'home.clubs.screen.text':
-    'Үстелдер, кезек және кестелер үлкен экранда — көрермендер турнир барысын көреді.',
-  'home.clubs.action': 'Бізге жазыңыз',
+  'home.clubs.eyebrow': 'Клубтарға',
+  'home.clubs.title': 'Сіздің клубыңыз KTTF-те',
+  'home.clubs.lead':
+    'Кестесіз турнирлер, ойыншыларды әкелетін парақ және сынақ жаттығуға өтінімдер — бәрі бір кабинетте.',
+  'home.clubs.points.offline.title': 'Интернетсіз турнирлер',
+  'home.clubs.points.offline.text':
+    'Төреші консолі офлайн жұмыс істейді, ал залдағы экран көрерменге үстелдер мен кестелерді көрсетеді.',
+  'home.clubs.points.rating.title': 'Рейтинг өздігінен',
+  'home.clubs.points.rating.text':
+    'Тіркелу, тор және қорытынды — жүйеде. Турнирден кейін рейтинг автоматты түрде қайта есептеледі.',
+  'home.clubs.points.page.title': 'Клуб парағы',
+  'home.clubs.points.page.text':
+    'Логотип пен мұқаба, «23:00-ге дейін ашық» уақыты, ₸ бағалары, зал және ыңғайлылықтар.',
+  'home.clubs.points.contact.title': 'Бір басумен байланыс',
+  'home.clubs.points.contact.text':
+    'Дайын мәтінмен WhatsApp және Telegram, қоңырау және 2GIS бағыты.',
+  'home.clubs.points.requests.title': 'Сынақ жаттығуға өтінімдер',
+  'home.clubs.points.requests.text':
+    'Ойыншы сайтта өтінім қалдырады — ол хабарламамен кабинетке түседі.',
+  'home.clubs.points.trainings.title': 'Жаттығулар мен жаттықтырушылар',
+  'home.clubs.points.trainings.text':
+    'Топтар кестесі, балалар секциялары және клуб жаттықтырушылары бір парақта.',
+  'home.clubs.points.content.title': 'Жаңалықтар, фото және видео',
+  'home.clubs.points.content.text':
+    'Акциялар мұрағатқа өздігінен кетеді, жаңалықты бекітуге болады, видео — YouTube-тан.',
+  'home.clubs.points.stats.title': 'Статистика',
+  'home.clubs.points.stats.text':
+    'Күн бойынша қаралымдар, қоңыраулар мен өтінімдер — KTTF жарнамасынан келгендер бөлек.',
+  'home.clubs.steps.title': 'Клубты қалай қосуға болады',
+  'home.clubs.steps.1.title': 'Өтінім',
+  'home.clubs.steps.1.text': 'Сайттағы форма, кіру қажет емес.',
+  'home.clubs.steps.2.title': 'Қосу',
+  'home.clubs.steps.2.text': 'KTTF клубты тіркеп, сізге кабинет ашады.',
+  'home.clubs.steps.3.title': 'Парақ',
+  'home.clubs.steps.3.text': 'Логотипті, уақытты, бағалар мен байланыстарды өзіңіз толтырасыз.',
+  'home.clubs.steps.4.title': 'Алғашқы турнир',
+  'home.clubs.steps.4.text': 'Тіркелу, тор және рейтинг өздігінен есептеледі.',
+  'home.coachCta.eyebrow': 'Жаттықтырушыларға',
+  'home.coachCta.title': 'KTTF жаттықтырушысы болыңыз',
+  'home.coachCta.lead':
+    'Жаттығулары, бағалары мен шәкірттері бар өз парағыңыз. Тек ойыншы профилі қажет.',
+  'home.coachCta.points.page.title': 'Жаттықтырушы парағы',
+  'home.coachCta.points.page.text':
+    'Фото, «бастап» бағалары, жетістіктер және рейтингтегі ойын статистикасы.',
+  'home.coachCta.points.verified.title': 'KTTF тексерген',
+  'home.coachCta.points.verified.text':
+    'KTTF біліктілік құжаттарын тексереді. Сканерлерді тек сіз көресіз.',
+  'home.coachCta.points.trainings.title': 'Жаттығулар',
+  'home.coachCta.points.trainings.text':
+    'KTTF клубында немесе өз мекенжайыңызда: топтық, жеке, балалар.',
+  'home.coachCta.points.requests.title': 'Сынақ жаттығуға өтінімдер',
+  'home.coachCta.points.requests.text': 'Ойыншы сайтта өтінім қалдырады — сізге хабарлама келеді.',
+  'home.coachCta.points.students.title': 'Шәкірттер мен медальдар',
+  'home.coachCta.points.students.text':
+    'Шәкірттердің рейтинг өсуі мен медальдары — жаттықтырушы турнир өтінімінде көрсетіледі.',
+  'home.coachCta.points.content.title': 'Жаңалықтар, фото және видео',
+  'home.coachCta.points.content.text': 'Жиындар мен нәтижелер туралы өз парағыңызда айтыңыз.',
+  'home.coachCta.points.contact.title': 'Бір басумен байланыс',
+  'home.coachCta.points.contact.text': 'Дайын мәтінмен WhatsApp және Telegram — формасыз.',
+  'home.coachCta.points.stats.title': 'Статистика',
+  'home.coachCta.points.stats.text':
+    'Күн бойынша қаралымдар, басулар мен өтінімдер — не жұмыс істейтіні көрінеді.',
+  'home.coachCta.steps.title': 'Жаттықтырушы қалай болуға болады',
+  'home.coachCta.steps.1.title': 'Ойыншы профилі',
+  'home.coachCta.steps.1.text': 'Тіркеліп, профильді толтырыңыз.',
+  'home.coachCta.steps.2.title': '«Жаттықтырушы болу»',
+  'home.coachCta.steps.2.text': 'Кабинеттегі батырма сіздің парағыңызды жасайды.',
+  'home.coachCta.steps.3.title': 'Парақ және жаттығу',
+  'home.coachCta.steps.3.text': 'Қала, бағалар және кемінде бір жаттығу.',
+  'home.coachCta.steps.4.title': 'KTTF тексеруі',
+  'home.coachCta.steps.4.text': 'Мақұлданғаннан кейін парақ каталогта пайда болады.',
+  'home.coachCta.action': 'Жаттықтырушы болу',
   // Клуб өтінімі «Бізге жазыңыз» — ADR-047.
   'page.feedback.title': 'Бізге жазыңыз',
   'apply.lead':

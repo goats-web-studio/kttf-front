@@ -163,16 +163,79 @@ export const ru = {
   'home.top.title': 'Лидеры рейтинга',
   'home.top.all': 'Весь рейтинг',
   'home.top.country': 'Вся страна',
-  'home.clubs.title': 'Проводите турниры в KTTF',
-  'home.clubs.offline.title': 'Зал без интернета',
-  'home.clubs.offline.text': 'Консоль судьи работает офлайн и досылает счёт, когда появится связь.',
-  'home.clubs.rating.title': 'Рейтинг сам',
-  'home.clubs.rating.text':
-    'После турнира рейтинг участников пересчитывается автоматически — без таблиц и ручного счёта.',
-  'home.clubs.screen.title': 'Экран для зала',
-  'home.clubs.screen.text':
-    'Столы, очередь и таблицы на большом экране — зрители видят ход турнира.',
-  'home.clubs.action': 'Напишите нам',
+  'home.clubs.eyebrow': 'Для клубов',
+  'home.clubs.title': 'Ваш клуб в KTTF',
+  'home.clubs.lead':
+    'Турниры без таблиц, страница, которая приводит игроков, и заявки на пробную — всё в одном кабинете.',
+  'home.clubs.points.offline.title': 'Турниры без интернета',
+  'home.clubs.points.offline.text':
+    'Консоль судьи работает офлайн, а экран в зале показывает зрителям столы и таблицы.',
+  'home.clubs.points.rating.title': 'Рейтинг сам',
+  'home.clubs.points.rating.text':
+    'Запись, сетка и итоги — в системе. После турнира рейтинг пересчитывается автоматически.',
+  'home.clubs.points.page.title': 'Страница клуба',
+  'home.clubs.points.page.text':
+    'Логотип и обложка, часы с «открыто до 23:00», цены в ₸, зал и удобства.',
+  'home.clubs.points.contact.title': 'Связь в одно нажатие',
+  'home.clubs.points.contact.text':
+    'WhatsApp и Telegram с готовым текстом, звонок и маршрут в 2GIS.',
+  'home.clubs.points.requests.title': 'Заявки на пробную',
+  'home.clubs.points.requests.text':
+    'Игрок оставляет заявку на сайте — она приходит в кабинет с уведомлением.',
+  'home.clubs.points.trainings.title': 'Тренировки и тренеры',
+  'home.clubs.points.trainings.text':
+    'Расписание групп, детские секции и тренеры клуба на одной странице.',
+  'home.clubs.points.content.title': 'Новости, фото и видео',
+  'home.clubs.points.content.text':
+    'Акции уходят в архив сами, новость можно закрепить, видео — с YouTube.',
+  'home.clubs.points.stats.title': 'Статистика',
+  'home.clubs.points.stats.text':
+    'Просмотры, звонки и заявки по дням — отдельно пришедшие с рекламы KTTF.',
+  'home.clubs.steps.title': 'Как подключить клуб',
+  'home.clubs.steps.1.title': 'Заявка',
+  'home.clubs.steps.1.text': 'Форма на сайте, вход не нужен.',
+  'home.clubs.steps.2.title': 'Подключение',
+  'home.clubs.steps.2.text': 'KTTF заводит клуб и открывает вам кабинет.',
+  'home.clubs.steps.3.title': 'Страница',
+  'home.clubs.steps.3.text': 'Логотип, часы, цены и контакты заполняете сами.',
+  'home.clubs.steps.4.title': 'Первый турнир',
+  'home.clubs.steps.4.text': 'Запись, сетка и рейтинг посчитаются сами.',
+  'home.coachCta.eyebrow': 'Для тренеров',
+  'home.coachCta.title': 'Станьте тренером KTTF',
+  'home.coachCta.lead':
+    'Своя страница с тренировками, ценами и учениками. Нужен только профиль игрока.',
+  'home.coachCta.points.page.title': 'Страница тренера',
+  'home.coachCta.points.page.text': 'Фото, цены «от», достижения и игровая статистика из рейтинга.',
+  'home.coachCta.points.verified.title': 'Проверено KTTF',
+  'home.coachCta.points.verified.text':
+    'KTTF проверяет документы о квалификации. Сканы видите только вы.',
+  'home.coachCta.points.trainings.title': 'Тренировки',
+  'home.coachCta.points.trainings.text':
+    'В клубе KTTF или по своему адресу: группы, индивидуальные, детские.',
+  'home.coachCta.points.requests.title': 'Заявки на пробную',
+  'home.coachCta.points.requests.text':
+    'Игрок оставляет заявку на сайте — вам приходит уведомление.',
+  'home.coachCta.points.students.title': 'Ученики и медали',
+  'home.coachCta.points.students.text':
+    'Рост рейтинга учеников и их медали — тренер указан в заявке на турнир.',
+  'home.coachCta.points.content.title': 'Новости, фото и видео',
+  'home.coachCta.points.content.text':
+    'Рассказывайте о сборах и результатах прямо на своей странице.',
+  'home.coachCta.points.contact.title': 'Связь в одно нажатие',
+  'home.coachCta.points.contact.text':
+    'WhatsApp и Telegram с готовым текстом — без форм и звонков наугад.',
+  'home.coachCta.points.stats.title': 'Статистика',
+  'home.coachCta.points.stats.text': 'Просмотры, нажатия и заявки по дням — видно, что работает.',
+  'home.coachCta.steps.title': 'Как стать тренером',
+  'home.coachCta.steps.1.title': 'Профиль игрока',
+  'home.coachCta.steps.1.text': 'Зарегистрируйтесь и заполните профиль.',
+  'home.coachCta.steps.2.title': '«Стать тренером»',
+  'home.coachCta.steps.2.text': 'Кнопка в кабинете создаёт вашу страницу.',
+  'home.coachCta.steps.3.title': 'Страница и тренировка',
+  'home.coachCta.steps.3.text': 'Город, цены и хотя бы одна тренировка.',
+  'home.coachCta.steps.4.title': 'Проверка KTTF',
+  'home.coachCta.steps.4.text': 'После одобрения страница появится в каталоге.',
+  'home.coachCta.action': 'Стать тренером',
   // Заявка клуба «Напишите нам» — ADR-047.
   'page.feedback.title': 'Напишите нам',
   'apply.lead':

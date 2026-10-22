@@ -1,8 +1,6 @@
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ClubView, TournamentView } from '@kttf/shared/types';
@@ -10,11 +8,18 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
   ArrowRight,
-  MonitorPlay,
+  BadgeCheck,
+  BarChart3,
+  Building2,
+  CalendarClock,
+  Inbox,
+  Medal,
+  Megaphone,
+  MessageCircle,
   TrendingUp,
-  Trophy,
+  UserRound,
+  Users,
   WifiOff,
-  type LucideIcon,
 } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 import { z } from 'zod';
@@ -23,7 +28,6 @@ import { useLocale, useT } from '@/common/i18n';
 import { searchId } from '@/common/search';
 import AdSlot from '@/common/ui/ad-slot';
 import { RowsSkeleton } from '@/common/ui/skeleton';
-import TableArt from '@/common/ui/table-art';
 import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 import { clubCities } from '@/features/clubs/cities';
 import { clubDirectoryQuery, clubsQuery } from '@/features/clubs/queries';
@@ -33,6 +37,7 @@ import HeroPoster from '@/features/home/hero-poster';
 import InterestTiles from '@/features/home/interest-tiles';
 import { latestNewsQuery } from '@/features/home/news';
 import NewsFeed from '@/features/home/news-feed';
+import PartnerCallout, { type PartnerPoint } from '@/features/home/partner-callout';
 import PopularClubs from '@/features/home/popular-clubs';
 import { railSx } from '@/features/home/rail';
 import TopPlayers from '@/features/home/top-players';
@@ -55,6 +60,33 @@ const CARDS = 4;
 /** Клубов — два ряда по три; тренеров и товаров — один ряд по четыре. */
 const CLUBS = 6;
 const ROW = 4;
+
+/**
+ * Что клуб получает в KTTF — только то, что уже работает (`05-state` 4):
+ * турниры, страница, связь, заявки, тренировки, контент, статистика.
+ */
+const CLUB_POINTS: readonly PartnerPoint[] = [
+  { key: 'offline', icon: WifiOff },
+  { key: 'rating', icon: TrendingUp },
+  { key: 'page', icon: Building2 },
+  { key: 'contact', icon: MessageCircle },
+  { key: 'requests', icon: Inbox },
+  { key: 'trainings', icon: Users },
+  { key: 'content', icon: Megaphone },
+  { key: 'stats', icon: BarChart3 },
+];
+
+/** Что тренер получает в KTTF — ADR-059, `docs/11` 3.1–3.3, сделанное. */
+const COACH_POINTS: readonly PartnerPoint[] = [
+  { key: 'page', icon: UserRound },
+  { key: 'verified', icon: BadgeCheck },
+  { key: 'trainings', icon: CalendarClock },
+  { key: 'requests', icon: Inbox },
+  { key: 'students', icon: Medal },
+  { key: 'content', icon: Megaphone },
+  { key: 'contact', icon: MessageCircle },
+  { key: 'stats', icon: BarChart3 },
+];
 
 /**
  * Главная — вход в продукт для игрока, новичка с рекламы и клуба.
@@ -205,6 +237,16 @@ function HomePage(): ReactNode {
             </Section>
           )}
 
+          {/* Сразу под тренерами: кто смотрит тренеров, сам может им быть.
+              Кнопка ведёт в кабинет; гостя страница входа вернёт обратно. */}
+          <PartnerCallout
+            prefix="home.coachCta"
+            points={COACH_POINTS}
+            steps={4}
+            action={{ href: '/cabinet/coach', label: 'home.coachCta.action' }}
+            more={{ href: '/trainings?view=coaches', label: 'home.coaches.all' }}
+          />
+
           {gearItems.length > 0 && (
             <Section
               title={t('home.gear.title')}
@@ -214,7 +256,14 @@ function HomePage(): ReactNode {
             </Section>
           )}
 
-          <ClubsCallout />
+          {/* Заявка клуба — своей страницей с формой (ADR-047), без входа. */}
+          <PartnerCallout
+            prefix="home.clubs"
+            points={CLUB_POINTS}
+            steps={4}
+            action={{ href: '/feedback', label: 'clubs.apply' }}
+            more={{ href: '/clubs', label: 'home.popularClubs.all' }}
+          />
         </Stack>
       </Container>
     </>
@@ -311,118 +360,6 @@ function TournamentList({
           <TournamentCard tournament={tournament} club={clubs?.get(tournament.clubId)} />
         </Box>
       ))}
-    </Box>
-  );
-}
-
-/**
- * Для клубов: зачем проводить турниры здесь. Три довода — ровно то, чего нет
- * у таблицы в мессенджере: зал без интернета, рейтинг без ручного счёта,
- * экран для зрителей. Справа — стол сверху тем же рисунком, что под верхом
- * страниц: блок про зал, и рисунок про зал.
- */
-function ClubsCallout(): ReactNode {
-  const t = useT();
-
-  return (
-    <Paper
-      variant="outlined"
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        p: { xs: 3, sm: 5 },
-        backgroundImage:
-          'radial-gradient(ellipse 50% 80% at 100% 0%, var(--red-50) 0, transparent 70%)',
-      }}
-    >
-      <CalloutTable />
-      <Stack direction="row" spacing={1.5} sx={{ position: 'relative', alignItems: 'center' }}>
-        <IconTile icon={Trophy} />
-        <Typography variant="h2">{t('home.clubs.title')}</Typography>
-      </Stack>
-      <Box
-        component="ul"
-        sx={{
-          position: 'relative',
-          mt: 3,
-          mb: 0,
-          p: 0,
-          listStyle: 'none',
-          display: 'grid',
-          gap: 1.5,
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
-          maxWidth: { md: '78%' },
-        }}
-      >
-        {(
-          [
-            ['offline', WifiOff],
-            ['rating', TrendingUp],
-            ['screen', MonitorPlay],
-          ] as const
-        ).map(([point, icon]) => (
-          <Box
-            component="li"
-            key={point}
-            sx={{ p: 2.5, borderRadius: 3, bgcolor: 'var(--paper-sunken)' }}
-          >
-            <IconTile icon={icon} />
-            <Typography variant="h3" sx={{ mt: 1.5 }}>
-              {t(`home.clubs.${point}.title`)}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {t(`home.clubs.${point}.text`)}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-      {/* Заявка клуба — своей страницей с формой (ADR-047): раньше кнопка
-          уводила в Instagram, и заявка терялась в личных сообщениях. */}
-      <Button href="/feedback" sx={{ position: 'relative', mt: 3, minHeight: 44 }}>
-        {t('home.clubs.action')}
-      </Button>
-    </Paper>
-  );
-}
-
-/** Стол сверху в углу блока для клубов. Декор, только на широком экране. */
-function CalloutTable(): ReactNode {
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        display: { xs: 'none', md: 'block' },
-        position: 'absolute',
-        right: -40,
-        bottom: -30,
-        width: 300,
-        pointerEvents: 'none',
-        '& svg': { display: 'block', width: '100%', height: 'auto' },
-      }}
-    >
-      <TableArt />
-    </Box>
-  );
-}
-
-/** Иконка в белой плашке — довод в блоке для клубов. Декоративна. */
-function IconTile({ icon: Icon }: { readonly icon: LucideIcon }): ReactNode {
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        width: 40,
-        height: 40,
-        flexShrink: 0,
-        borderRadius: 3,
-        display: 'grid',
-        placeItems: 'center',
-        bgcolor: 'var(--paper)',
-        color: 'var(--red-600)',
-        boxShadow: '0 1px 2px rgb(31 31 29 / 0.08), 0 2px 8px rgb(31 31 29 / 0.06)',
-      }}
-    >
-      <Icon size={20} strokeWidth={2} />
     </Box>
   );
 }
