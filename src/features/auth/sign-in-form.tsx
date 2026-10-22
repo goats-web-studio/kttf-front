@@ -18,6 +18,8 @@ import { useSessionStore } from './session-store';
 
 interface SignInFormProps {
   readonly onSignedIn: () => void;
+  /** Ссылка «Зарегистрироваться» — с адресом возврата, если он есть. */
+  readonly signUpHref?: string;
 }
 
 /**
@@ -29,7 +31,10 @@ interface SignInFormProps {
  * Тексты ошибок берутся из словаря, а не из схемы: сообщения внутри схем
  * общие с сервером и не локализуются — бриф 3.4.
  */
-export default function SignInForm({ onSignedIn }: SignInFormProps): ReactNode {
+export default function SignInForm({
+  onSignedIn,
+  signUpHref = '/sign-up',
+}: SignInFormProps): ReactNode {
   const t = useT();
   const signedIn = useSessionStore((state) => state.signedIn);
 
@@ -101,7 +106,7 @@ export default function SignInForm({ onSignedIn }: SignInFormProps): ReactNode {
       </Button>
 
       <Typography variant="body2" color="text.secondary">
-        {t('login.noAccount')} <Link href="/sign-up">{t('login.signUp')}</Link>
+        {t('login.noAccount')} <Link href={signUpHref}>{t('login.signUp')}</Link>
       </Typography>
     </Stack>
   );
