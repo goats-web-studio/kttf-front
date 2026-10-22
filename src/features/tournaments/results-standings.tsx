@@ -33,6 +33,13 @@ const NUM = { fontVariantNumeric: 'tabular-nums' } as const;
  */
 const STICKY = { position: 'sticky', left: 0, zIndex: 1, bgcolor: 'background.paper' } as const;
 
+/**
+ * На телефоне — место, игрок, очки, сеты и рейтинг: то, ради чего таблицу
+ * открывают. Матрица и подробные колонки — с планшета, иначе очки уезжали за
+ * край экрана.
+ */
+const WIDE = { display: { xs: 'none', sm: 'table-cell' } } as const;
+
 interface ResultsStandingsProps {
   readonly standings: TournamentStandingsView;
   readonly stages: readonly StageView[];
@@ -119,7 +126,7 @@ function GroupTable({
   return (
     <Surface title={group.label} component="div" flush>
       <TableContainer>
-        <Table size="small" sx={{ minWidth: 640 }}>
+        <Table size="small" sx={{ minWidth: { sm: 640 } }}>
           <TableHead>
             <TableRow>
               <TableCell align="right" sx={{ width: 48 }}>
@@ -130,18 +137,28 @@ function GroupTable({
                 <TableCell
                   key={id}
                   align="center"
-                  sx={{ ...NUM, width: 52, px: 0.5 }}
+                  sx={{ ...WIDE, ...NUM, width: 52, px: 0.5 }}
                   title={model.names.get(id)}
                 >
                   {index + 1}
                 </TableCell>
               ))}
-              <TableCell align="right">{t('standings.played')}</TableCell>
-              <TableCell align="right">{t('standings.wins')}</TableCell>
-              <TableCell align="right">{t('standings.losses')}</TableCell>
+              <TableCell align="right" sx={WIDE}>
+                {t('standings.played')}
+              </TableCell>
+              <TableCell align="right" sx={WIDE}>
+                {t('standings.wins')}
+              </TableCell>
+              <TableCell align="right" sx={WIDE}>
+                {t('standings.losses')}
+              </TableCell>
               <TableCell align="right">{t('standings.points')}</TableCell>
               <TableCell align="right">{t('standings.sets')}</TableCell>
-              {balls && <TableCell align="right">{t('standings.balls')}</TableCell>}
+              {balls && (
+                <TableCell align="right" sx={WIDE}>
+                  {t('standings.balls')}
+                </TableCell>
+              )}
               <TableCell align="right">{t('results.col.delta')}</TableCell>
             </TableRow>
           </TableHead>
@@ -169,7 +186,15 @@ function GroupTable({
                     )}
                   </TableCell>
                   <TableCell sx={{ ...STICKY, fontWeight: 500, whiteSpace: 'nowrap' }}>
-                    <Box component="span" sx={{ color: 'text.disabled', mr: 1, ...NUM }}>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: { xs: 'none', sm: 'inline' },
+                        color: 'text.disabled',
+                        mr: 1,
+                        ...NUM,
+                      }}
+                    >
                       {index + 1}
                     </Box>
                     <PlayerLink id={row.participant}>
@@ -189,13 +214,13 @@ function GroupTable({
                       result={meeting(matches, row.participant, other)}
                     />
                   ))}
-                  <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
+                  <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                     {row.played}
                   </TableCell>
-                  <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
+                  <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                     {row.wins}
                   </TableCell>
-                  <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
+                  <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
                     {row.losses}
                   </TableCell>
                   <TableCell align="right" sx={{ ...NUM, fontWeight: 700, fontSize: 16 }}>
@@ -207,7 +232,7 @@ function GroupTable({
                   {balls && (
                     <TableCell
                       align="right"
-                      sx={{ ...NUM, color: 'text.secondary', whiteSpace: 'nowrap' }}
+                      sx={{ ...WIDE, ...NUM, color: 'text.secondary', whiteSpace: 'nowrap' }}
                     >
                       {row.ballsWon}:{row.ballsLost} <Diff value={row.ballDiff} />
                     </TableCell>
@@ -301,12 +326,12 @@ function MatrixCell({
   readonly result: Meeting | null;
 }): ReactNode {
   if (self) {
-    return <TableCell sx={{ bgcolor: 'var(--ink-100)', p: 0 }} aria-hidden />;
+    return <TableCell sx={{ ...WIDE, bgcolor: 'var(--ink-100)', p: 0 }} aria-hidden />;
   }
 
   if (result === null) {
     return (
-      <TableCell align="center" sx={{ color: 'text.disabled', px: 0.5 }}>
+      <TableCell align="center" sx={{ ...WIDE, color: 'text.disabled', px: 0.5 }}>
         ·
       </TableCell>
     );
@@ -332,7 +357,7 @@ function MatrixCell({
   );
 
   return (
-    <TableCell align="center" sx={{ ...NUM, px: 0.5 }}>
+    <TableCell align="center" sx={{ ...WIDE, ...NUM, px: 0.5 }}>
       {result.note === '' ? cell : <Tooltip title={result.note}>{cell}</Tooltip>}
     </TableCell>
   );
