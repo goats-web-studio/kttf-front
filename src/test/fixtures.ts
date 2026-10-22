@@ -516,6 +516,7 @@ export const CONSOLE_SNAPSHOT: TournamentSnapshotView = {
       createdAt: '2026-09-01T00:00:00.000Z',
       player,
       coach: null,
+      paid: null,
     }),
   ),
   standings: RESULTS.standings,
@@ -684,6 +685,7 @@ export const OWN_REGISTRATION: RegistrationView = {
   createdAt: '2026-09-01T10:00:00.000Z',
   player: PLAYERS.first,
   coach: null,
+  paid: null,
 };
 
 export const REGISTRATIONS: RegistrationView[] = [
@@ -699,6 +701,7 @@ export const REGISTRATIONS: RegistrationView[] = [
     createdAt: '2026-09-01T10:05:00.000Z',
     player: PLAYERS.third,
     coach: null,
+    paid: null,
   },
 ];
 
