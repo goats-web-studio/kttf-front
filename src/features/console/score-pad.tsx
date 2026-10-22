@@ -204,8 +204,9 @@ function ScoreButton({ children, onClick, filled, small, label }: ScoreButtonPro
         minWidth: 0,
         px: 1,
         fontFamily: 'var(--font-mono)',
-        fontSize: small === true ? 15 : 22,
-        lineHeight: small === true ? '20px' : '26px',
+        // «Техпобеда» в клетке на 390px шириной впритык: подпись мельче счёта.
+        fontSize: small === true ? 13 : 22,
+        lineHeight: small === true ? '16px' : '26px',
         fontWeight: 600,
         fontVariantNumeric: 'tabular-nums',
         textTransform: 'none',
