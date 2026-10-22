@@ -2,8 +2,11 @@ import TextField, { type TextFieldProps } from '@mui/material/TextField';
 import { useState, type ReactNode } from 'react';
 
 type IntegerFieldProps = Omit<TextFieldProps, 'value' | 'onChange' | 'type'> & {
-  /** Применённое число. Пока поле пусто, оно остаётся прежним. */
-  readonly value: number;
+  /**
+   * Применённое число. Пока поле пусто, оно остаётся прежним. `null` —
+   * числа ещё нет, поле пустое: необязательный возраст и подобное.
+   */
+  readonly value: number | null;
   readonly onChange: (value: number) => void;
 };
 
@@ -20,15 +23,15 @@ type IntegerFieldProps = Omit<TextFieldProps, 'value' | 'onChange' | 'type'> & {
  * в разных браузерах.
  */
 export default function IntegerField({ value, onChange, ...props }: IntegerFieldProps): ReactNode {
-  const [text, setText] = useState(String(value));
+  const [text, setText] = useState(value === null ? '' : String(value));
   const [seen, setSeen] = useState(value);
 
   // Число поменяли снаружи — например, сменой схемы. Набранное заменяется,
   // если оно о другом числе.
   if (value !== seen) {
     setSeen(value);
-    if (Number(text) !== value) {
-      setText(String(value));
+    if (value === null || Number(text) !== value) {
+      setText(value === null ? '' : String(value));
     }
   }
 
@@ -48,7 +51,7 @@ export default function IntegerField({ value, onChange, ...props }: IntegerField
         }
       }}
       onBlur={(event) => {
-        setText(String(value));
+        setText(value === null ? '' : String(value));
         props.onBlur?.(event);
       }}
       slotProps={{

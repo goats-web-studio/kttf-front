@@ -18,13 +18,15 @@ const TanStackAnchor = createLink(Anchor);
 
 const RouterLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnchorElement>>(
   function RouterLink({ href, ...props }, ref) {
-    if (href === undefined || /^([a-z]+:|\/\/)/i.test(href)) {
+    if (href === undefined || href.startsWith('#') || /^([a-z]+:|\/\/)/i.test(href)) {
       return <a ref={ref} href={href} {...props} />;
     }
 
     // Атрибуты якоря роутер пропускает к <a> как есть; разница только в
     // строгости необязательных полей, поэтому приведение, а не перечисление.
-    const [path = '/', query] = href.split('?', 2);
+    // Якорь `#…` — отдельно: «Мои заявки» на рабочем столе (T3).
+    const [address = '/', hash] = href.split('#', 2);
+    const [path = '/', query] = address.split('?', 2);
     const search = query === undefined ? undefined : Object.fromEntries(new URLSearchParams(query));
 
     return (
@@ -32,6 +34,7 @@ const RouterLink = forwardRef<HTMLAnchorElement, AnchorHTMLAttributes<HTMLAnchor
         ref={ref}
         to={path}
         {...(search === undefined ? {} : { search })}
+        {...(hash === undefined ? {} : { hash })}
         {...(props as object)}
       />
     );

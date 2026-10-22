@@ -35,6 +35,7 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import ClubMark from '@/features/clubs/club-mark';
 import { phoneHref, routeHref, telegramHref, whatsappHref } from '@/features/clubs/contacts';
 import { usePlaceName } from '@/features/places/place-name';
+import TrialAction from '@/features/trial-requests/trial-action';
 
 import { Badge } from './coach-cards';
 import {
@@ -85,9 +86,9 @@ interface TrainingDialogProps {
  * Тренировка в окне поверх страницы — «Подробнее» (ADR-059, замечание
  * владельца: отдельная страница выглядела пустой, связь с клубом или
  * тренером должна быть явной). Сверху — что за тренировка и блок «Запись
- * и оплата» с адресатом и единственной главной кнопкой «Записаться»;
- * ниже — факты, место, тренер и другие тренировки того же владельца.
- * На телефоне — во весь экран.
+ * и оплата» с адресатом, единственной главной кнопкой «Записаться» и
+ * заявкой на сайте (T3); ниже — факты, место, тренер и другие тренировки
+ * того же владельца. На телефоне — во весь экран.
  */
 export default function TrainingDialog({
   trainingId,
@@ -249,7 +250,8 @@ function Details({
  * «Запись и оплата» — главный блок окна: кто записывает и принимает
  * оплату (`trainingBookingTarget`), как он связан со второй стороной и
  * его способы связи. «Записаться» — единственная главная кнопка экрана
- * (07, запрет 2); нажатия — адресату и второй стороне.
+ * (07, запрет 2); нажатия — адресату и второй стороне. Заявка на сайте —
+ * текстовой кнопкой ниже: второй путь, а не спор с главным.
  */
 function BookingBlock({ training }: { readonly training: TrainingView }): ReactNode {
   const t = useT();
@@ -315,6 +317,10 @@ function BookingBlock({ training }: { readonly training: TrainingView }): ReactN
         ) : (
           <ContactButtons training={training} enroll={enroll} />
         )}
+      </Box>
+      {/* Второй путь — заявка на сайте (T3): для тех, кто не хочет писать сам. */}
+      <Box sx={{ mt: 1.5 }}>
+        <TrialAction training={training} />
       </Box>
     </Paper>
   );
