@@ -11,7 +11,6 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
@@ -21,7 +20,7 @@ import RatingValue from '@/common/ui/rating-value';
 import Surface from '@/common/ui/surface';
 import PlayerLink from '@/features/players/player-link';
 
-import { hasBalls, setScoresLine, type ResultsModel } from './results-model';
+import type { ResultsModel } from './results-model';
 import ResultsTies from './results-ties';
 
 /** Числа — одной ширины цифр, чтобы разряды стояли столбиком (раздел 6.1). */
@@ -55,6 +54,7 @@ interface ResultsStandingsProps {
  *
  * Как протокол группы в зале: матрица «каждый с каждым» со счётом встреч,
  * рейтинг у фамилии, очки, сеты с разницей и изменение рейтинга за турнир.
+ * Мячей нет: счёт по партиям клубы не ведут, и колонка была бы нулями.
  * Выходящие дальше отмечены полосой слева.
  *
  * Места, очки и разницы приходят от сервера ровно такими, какими их
@@ -74,8 +74,6 @@ export default function ResultsStandings({
   if (standings.groups.length === 0) {
     return null;
   }
-
-  const balls = hasBalls(standings);
 
   return (
     <Box component="section" sx={{ mt: 6, display: 'grid', gap: 2 }}>
@@ -100,7 +98,6 @@ export default function ResultsStandings({
           }
           model={model}
           advance={advance}
-          balls={balls}
         />
       ))}
     </Box>
@@ -112,13 +109,11 @@ function GroupTable({
   matches,
   model,
   advance,
-  balls,
 }: {
   readonly group: GroupStandingsView;
   readonly matches: readonly MatchView[];
   readonly model: ResultsModel;
   readonly advance: number | null;
-  readonly balls: boolean;
 }): ReactNode {
   const t = useT();
   const order = group.rows.map((row) => row.participant);
@@ -154,11 +149,6 @@ function GroupTable({
               </TableCell>
               <TableCell align="right">{t('standings.points')}</TableCell>
               <TableCell align="right">{t('standings.sets')}</TableCell>
-              {balls && (
-                <TableCell align="right" sx={WIDE}>
-                  {t('standings.balls')}
-                </TableCell>
-              )}
               <TableCell align="right">{t('results.col.delta')}</TableCell>
             </TableRow>
           </TableHead>
@@ -240,14 +230,6 @@ function GroupTable({
                       <Diff value={row.setDiff} />
                     </Box>
                   </TableCell>
-                  {balls && (
-                    <TableCell
-                      align="right"
-                      sx={{ ...WIDE, ...NUM, color: 'text.secondary', whiteSpace: 'nowrap' }}
-                    >
-                      {row.ballsWon}:{row.ballsLost} <Diff value={row.ballDiff} />
-                    </TableCell>
-                  )}
                   <TableCell align="right" sx={NUM}>
                     {delta?.ratingAfter == null ? (
                       <Box component="span" sx={{ color: 'text.disabled' }}>
@@ -304,7 +286,6 @@ function GroupTable({
 interface Meeting {
   readonly mine: number;
   readonly theirs: number;
-  readonly note: string;
 }
 
 /** Сыгранная встреча двоих глазами `self`: его сеты первыми. */
@@ -313,12 +294,11 @@ function meeting(matches: readonly MatchView[], self: string, other: string): Me
     if (match.setsA === null || match.setsB === null) continue;
 
     if (match.playerAId === self && match.playerBId === other) {
-      return { mine: match.setsA, theirs: match.setsB, note: setScoresLine(match) };
+      return { mine: match.setsA, theirs: match.setsB };
     }
 
     if (match.playerAId === other && match.playerBId === self) {
-      const flipped = (match.setScores ?? []).map(([a, b]) => `${String(b)}:${String(a)}`);
-      return { mine: match.setsB, theirs: match.setsA, note: flipped.join(', ') };
+      return { mine: match.setsB, theirs: match.setsA };
     }
   }
 
@@ -327,7 +307,7 @@ function meeting(matches: readonly MatchView[], self: string, other: string): Me
 
 /**
  * Клетка матрицы: счёт встречи строки со столбцом. Победа — зелёная, поражение
- * — красная заливка, цифры дублируют цвет. Счёт по партиям — подсказкой.
+ * — красная заливка, цифры дублируют цвет.
  */
 function MatrixCell({
   self,
@@ -369,7 +349,7 @@ function MatrixCell({
 
   return (
     <TableCell align="center" sx={{ ...WIDE, ...NUM, px: 0.5 }}>
-      {result.note === '' ? cell : <Tooltip title={result.note}>{cell}</Tooltip>}
+      {cell}
     </TableCell>
   );
 }

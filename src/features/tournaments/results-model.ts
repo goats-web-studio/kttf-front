@@ -221,11 +221,6 @@ export function orderPlacements(
     .map((entry) => entry.participant);
 }
 
-/** Счёт по партиям одной строкой: «11:7, 9:11, 11:5». Без счёта — пусто. */
-export function setScoresLine(match: MatchView): string {
-  return (match.setScores ?? []).map(([a, b]) => `${String(a)}:${String(b)}`).join(', ');
-}
-
 /** Сколько минут шла встреча; `null`, если время не записано. */
 export function matchMinutes(match: MatchView): number | null {
   if (match.startedAt === null || match.finishedAt === null) return null;
@@ -235,13 +230,6 @@ export function matchMinutes(match: MatchView): number | null {
   );
 
   return minutes > 0 ? minutes : null;
-}
-
-/** Были ли у турнира мячи: без счёта по партиям колонка «Мячи» — одни нули. */
-export function hasBalls(standings: TournamentStandingsView): boolean {
-  return standings.groups.some((group) =>
-    group.rows.some((row) => row.ballsWon > 0 || row.ballsLost > 0),
-  );
 }
 
 /** Всё, что страница турнира показывает сверх ответа сервера, — одним разом. */

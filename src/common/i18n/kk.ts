@@ -700,7 +700,7 @@ export const kk: Record<MessageKey, string> = {
   'results.unresolved.title': 'Төреші шешпеген теңдіктер',
   'results.standings.title': 'Топтық кестелер',
   'results.standings.rule.diff':
-    'Ұпай теңдігін жеке кездесу, содан кейін тең ойыншылар арасындағы сеттер мен доптар айырмасы шешеді',
+    'Ұпай теңдігін жеке кездесу, содан кейін тең ойыншылар арасындағы сеттер айырмасы, содан кейін бүкіл кесте шешеді',
   'results.standings.rule.ratio':
     'Ұпай теңдігін жеке кездесу, содан кейін тең ойыншылар арасындағы сеттер қатынасы шешеді',
   'results.standings.advance': 'Әрі қарай шығады: топтағы алғашқы {count}',
@@ -1122,12 +1122,12 @@ export const kk: Record<MessageKey, string> = {
   'tournament.form.groupSetsToWin': 'Топтағы кездесу ұзақтығы',
   'tournament.form.koSetsToWin': 'Плей-офф кездесу ұзақтығы',
   'tournament.form.tieBreak': 'Кестедегі ұпай теңдігі',
-  'tournament.form.tieBreak.diff': 'Сеттер мен доптар айырмасы',
+  'tournament.form.tieBreak.diff': 'Сеттер айырмасы',
   'tournament.form.tieBreak.ratio': 'Тең ойыншылар арасындағы сеттер қатынасы',
   'tournament.form.tieBreak.diffHint':
-    'Жеке кездесуден кейін — тең ойыншылар арасындағы сеттер мен доптар айырмасы, содан кейін бүкіл кесте бойынша (ITTF)',
+    'Жеке кездесуден кейін — тең ойыншылар арасындағы сеттер айырмасы, содан кейін бүкіл кесте бойынша (ITTF)',
   'tournament.form.tieBreak.ratioHint':
-    'Жеке кездесуден кейін — тек тең ойыншылар арасындағы ұтылған және ұтқан сеттер қатынасы; доптар есептелмейді',
+    'Жеке кездесуден кейін — тек тең ойыншылар арасындағы ұтылған және ұтқан сеттер қатынасы',
   'tournament.form.bo3': '2 жеңіске дейін (bo3)',
   'tournament.form.bo5': '3 жеңіске дейін (bo5)',
   'tournament.form.bo7': '4 жеңіске дейін (bo7)',

@@ -14,12 +14,10 @@ import {
   buildResultsModel,
   deltasByMatch,
   finishes,
-  hasBalls,
   matchMinutes,
   matchProgress,
   orderPlacements,
   placeLabel,
-  setScoresLine,
   startRatings,
   tallies,
 } from './results-model';
@@ -273,21 +271,6 @@ describe('итоговая таблица', () => {
 });
 
 describe('встреча', () => {
-  it('счёт по партиям одной строкой', () => {
-    expect(
-      setScoresLine(
-        match({
-          id: 'm',
-          setScores: [
-            [11, 7],
-            [9, 11],
-          ],
-        }),
-      ),
-    ).toBe('11:7, 9:11');
-    expect(setScoresLine(match({ id: 'm' }))).toBe('');
-  });
-
   it('длительность в минутах, без времени — нет', () => {
     expect(
       matchMinutes(
@@ -308,17 +291,6 @@ describe('встреча', () => {
         }),
       ),
     ).toBeNull();
-  });
-
-  it('колонка мячей — только когда мячи были', () => {
-    const [group] = standings.groups;
-    const [row] = group?.rows ?? [];
-    if (group === undefined || row === undefined) throw new Error('нет таблицы');
-
-    expect(hasBalls(standings)).toBe(false);
-    expect(
-      hasBalls({ ...standings, groups: [{ ...group, rows: [{ ...row, ballsWon: 33 }] }] }),
-    ).toBe(true);
   });
 });
 

@@ -10,7 +10,7 @@ import Surface from '@/common/ui/surface';
 import PlayerLink from '@/features/players/player-link';
 
 import { MATCH_STATUS_KEYS, RESULT_TYPE_KEYS, stageTitle } from './labels';
-import { matchMinutes, setScoresLine, type ResultsModel } from './results-model';
+import { matchMinutes, type ResultsModel } from './results-model';
 
 interface ResultsMatchesProps {
   readonly stages: readonly StageView[];
@@ -21,9 +21,8 @@ interface ResultsMatchesProps {
  * Все встречи со счётом — ТЗ 9.4.
  *
  * Как протокол турнира: в группах — карточки групп по турам, в сетке —
- * круги по порядку от первого к финалу. У встречи — рейтинги игроков, счёт
- * по партиям, если его вводили, стол, длительность и изменение рейтинга
- * каждого за эту встречу.
+ * круги по порядку от первого к финалу. У встречи — рейтинги игроков, стол,
+ * длительность и изменение рейтинга каждого за эту встречу.
  */
 export default function ResultsMatches({ stages, model }: ResultsMatchesProps): ReactNode {
   const t = useT();
@@ -146,7 +145,6 @@ function Row({
   const t = useT();
   const played = match.setsA !== null && match.setsB !== null;
   const minutes = matchMinutes(match);
-  const sets = setScoresLine(match);
 
   const meta = [
     tour === null ? null : fill(t('results.match.tour'), { n: String(tour) }),
@@ -213,14 +211,7 @@ function Row({
       <Side id={match.playerBId} model={model} won={wonB} played={played} right />
 
       <MatchDelta id={match.playerAId} matchId={match.id} model={model} />
-      <Typography
-        component="span"
-        variant="caption"
-        color="text.secondary"
-        sx={{ textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
-      >
-        {sets}
-      </Typography>
+      <span />
       <MatchDelta id={match.playerBId} matchId={match.id} model={model} right />
     </Box>
   );
