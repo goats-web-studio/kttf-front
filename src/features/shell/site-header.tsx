@@ -21,6 +21,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import NotificationsBell from '@/features/notifications/bell';
 import { playerQuery } from '@/features/players/queries';
 
+import NavDropdown from './nav-dropdown';
 import { SECTIONS } from './sections';
 
 /**
@@ -67,10 +68,9 @@ export default function SiteHeader(): ReactNode {
             aria-label={t('nav.sections')}
             sx={{ display: { xs: 'none', sm: 'flex' } }}
           >
+            {/* У каждого раздела — меню быстрых переходов (nav-menus.ts). */}
             {SECTIONS.map((section) => (
-              <NavButton key={section.to} to={section.to}>
-                {t(section.label)}
-              </NavButton>
+              <NavDropdown key={section.to} to={section.to} label={t(section.label)} />
             ))}
           </Stack>
           <Box sx={{ flexGrow: 1 }} />
@@ -197,7 +197,7 @@ function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                {t('nav.ratings')} <RatingValue value={player.rating} />
+                {t('nav.ratings')} <RatingValue value={player.rating} animate={false} />
               </Box>
             </Box>
           </>

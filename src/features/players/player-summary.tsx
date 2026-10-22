@@ -6,6 +6,8 @@ import { Building2, Flag, Swords } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { fill, formatCount, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { Count } from '@/common/ui/motion';
+import { useMotionGroup } from '@/common/ui/motion-hooks';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import StatTile from '@/common/ui/stat-tile';
@@ -80,7 +82,7 @@ function Stats({ summary }: { readonly summary: PlayerSummaryView }): ReactNode 
       <StatTile
         icon={Flag}
         label={t('profile.stats.tournaments')}
-        value={<Value main={formatCount(summary.tournaments, locale)} />}
+        value={<Value main={<Count value={summary.tournaments} />} />}
       />
       <StatTile
         icon={Swords}
@@ -88,7 +90,7 @@ function Stats({ summary }: { readonly summary: PlayerSummaryView }): ReactNode 
         value={
           <>
             <Value
-              main={formatCount(games, locale)}
+              main={<Count value={games} />}
               note={`${formatCount(summary.wins, locale)} — ${formatCount(summary.losses, locale)}`}
             />
             {games > 0 && <WinRate wins={summary.wins} games={games} />}
@@ -126,10 +128,14 @@ function Stats({ summary }: { readonly summary: PlayerSummaryView }): ReactNode 
 function WinRate({ wins, games }: { readonly wins: number; readonly games: number }): ReactNode {
   const t = useT();
   const percent = Math.round((wins / games) * 100);
+  // Полоска наполняется слева при первом показе — доля читается как рост.
+  const [motionRef, motion] = useMotionGroup();
 
   return (
     <Box data-win-rate sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1 }}>
       <Box
+        ref={motionRef}
+        data-motion={motion}
         aria-hidden
         sx={{
           flex: 1,
@@ -140,7 +146,10 @@ function WinRate({ wins, games }: { readonly wins: number; readonly games: numbe
           overflow: 'hidden',
         }}
       >
-        <Box sx={{ width: `${String(percent)}%`, height: '100%', bgcolor: 'var(--ok)' }} />
+        <Box
+          className="motion-grow-x"
+          sx={{ width: `${String(percent)}%`, height: '100%', bgcolor: 'var(--ok)' }}
+        />
       </Box>
       <Box component="span" sx={{ typography: 'body2', color: 'text.secondary' }}>
         {fill(t('profile.stats.winRate'), { percent: String(percent) })}

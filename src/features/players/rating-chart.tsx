@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
@@ -14,6 +15,7 @@ import {
 
 import { formatCount, formatDate, formatTimeTick, useLocale, useT } from '@/common/i18n';
 import DeltaPill from '@/common/ui/delta-pill';
+import { useMotionGroup } from '@/common/ui/motion-hooks';
 import RatingValue from '@/common/ui/rating-value';
 
 import { buildRatingScale, nearestPoint, type RatingChartPoint } from './rating-scale';
@@ -56,6 +58,9 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
   const height = width < NARROW ? HEIGHT.narrow : HEIGHT.wide;
   const scale = buildRatingScale(points, { width, height });
   const [active, setActive] = useState<number | null>(null);
+  // Линия рисуется слева направо при первом показе, заливка и точки
+  // проявляются следом — история читается как путь, а не как картинка.
+  const [motionRef, motion] = useMotionGroup();
 
   if (scale === null) {
     return null;
@@ -115,6 +120,8 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
         viewBox={`0 0 ${String(scale.width)} ${String(scale.height)}`}
         aria-hidden="true"
         data-rating-chart
+        ref={motionRef}
+        data-motion={motion}
         style={{ display: 'block', touchAction: 'pan-y', userSelect: 'none' }}
         onPointerMove={pick}
         onPointerDown={pick}
@@ -195,10 +202,19 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
           })}
         </g>
 
-        {scale.area !== '' && <path d={scale.area} fill={`url(#${gradient})`} />}
+        {scale.area !== '' && (
+          <path
+            d={scale.area}
+            fill={`url(#${gradient})`}
+            className="motion-fade"
+            style={{ '--motion-delay': '500ms' } as CSSProperties}
+          />
+        )}
         {scale.line !== '' && (
           <polyline
             points={scale.line}
+            pathLength={1}
+            className="motion-draw"
             fill="none"
             stroke="var(--red-500)"
             strokeWidth={2}
@@ -229,6 +245,15 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
               // Белое кольцо отделяет точку от линии и сетки под ней.
               stroke="var(--paper)"
               strokeWidth={2}
+              // Постоянные точки появляются, когда до них дотянулась линия.
+              className={dots ? 'motion-pop' : undefined}
+              style={
+                dots
+                  ? ({
+                      '--motion-delay': `${String(Math.round(200 + (900 * index) / scale.points.length))}ms`,
+                    } as CSSProperties)
+                  : undefined
+              }
             />
           ) : null,
         )}
@@ -283,7 +308,7 @@ function Tip({
         {point.tournamentName ?? t('player.history.adjustment')}
       </Typography>
       <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <RatingValue value={point.rating} sx={{ fontWeight: 700, fontSize: 18 }} />
+        <RatingValue value={point.rating} sx={{ fontWeight: 700, fontSize: 18 }} animate={false} />
         <DeltaPill value={point.delta} />
       </Box>
     </Box>

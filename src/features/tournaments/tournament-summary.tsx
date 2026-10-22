@@ -8,6 +8,7 @@ import { CalendarDays, Trophy, Users, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { formatDateTime, formatMoney, useLocale, useT } from '@/common/i18n';
+import { Count } from '@/common/ui/motion';
 import StatTile from '@/common/ui/stat-tile';
 
 import { TOURNAMENT_LEVEL_KEYS } from './labels';
@@ -67,7 +68,7 @@ export default function TournamentSummary({
         <StatTile
           icon={Users}
           label={t('tournament.participants')}
-          value={tournament.participantCount}
+          value={<Count value={tournament.participantCount} />}
         />
         <StatTile
           icon={Trophy}

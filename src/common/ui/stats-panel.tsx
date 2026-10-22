@@ -2,9 +2,11 @@ import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import type { UseQueryResult } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { fill, formatCount, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { CountUp } from '@/common/ui/motion';
+import { useMotionGroup } from '@/common/ui/motion-hooks';
 import PillTabs from '@/common/ui/pill-tabs';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
@@ -101,7 +103,10 @@ export default function StatsPanel<M extends string>({
                         fontVariantNumeric: 'tabular-nums',
                       }}
                     >
-                      {formatCount(summary.totals[metric].total, locale)}
+                      <CountUp
+                        value={summary.totals[metric].total}
+                        format={(shown) => formatCount(Math.round(shown), locale)}
+                      />
                     </Typography>
                     {summary.totals[metric].campaign > 0 && (
                       <Typography variant="caption" color="text.secondary">
@@ -146,6 +151,9 @@ function ViewsChart({
 }): ReactNode {
   const max = Math.max(1, ...days.map((day) => day.organic + day.campaign));
   const width = 100 / days.length;
+  // Столбики вырастают снизу по очереди слева направо — дни читаются как
+  // ход времени. Вся очередь укладывается в 400 мс при любом периоде.
+  const [motionRef, motion] = useMotionGroup();
 
   return (
     <Box component="figure" sx={{ m: 0, mt: 4 }}>
@@ -157,6 +165,8 @@ function ViewsChart({
         viewBox={`0 0 100 ${String(CHART_HEIGHT)}`}
         preserveAspectRatio="none"
         aria-hidden
+        ref={motionRef}
+        data-motion={motion}
         sx={{ display: 'block', width: '100%', height: CHART_HEIGHT }}
       >
         {days.map((day, index) => {
@@ -166,7 +176,15 @@ function ViewsChart({
           const barWidth = width * 0.7;
 
           return (
-            <g key={day.date}>
+            <g
+              key={day.date}
+              className="motion-grow-y"
+              style={
+                {
+                  '--motion-delay': `${String(Math.round((400 * index) / days.length))}ms`,
+                } as CSSProperties
+              }
+            >
               <rect
                 x={x}
                 y={CHART_HEIGHT - organic - campaign}

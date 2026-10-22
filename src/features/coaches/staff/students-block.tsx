@@ -15,6 +15,7 @@ import { useId, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { fill, formatCount, formatDate, useLocale, useT } from '@/common/i18n';
+import { Count } from '@/common/ui/motion';
 import DeltaPill from '@/common/ui/delta-pill';
 import RankBadge from '@/common/ui/rank-badge';
 import RatingValue from '@/common/ui/rating-value';
@@ -81,27 +82,27 @@ export function StudentsContent({ view }: { readonly view: CoachStudentsView }):
         <StatTile
           icon={Users}
           label={t('students.current')}
-          value={formatCount(view.current, locale)}
+          value={<Count value={view.current} />}
         />
         {view.younger > 0 && (
           <StatTile
             icon={Users}
             label={t('students.younger')}
-            value={formatCount(view.younger, locale)}
+            value={<Count value={view.younger} />}
           />
         )}
         {view.former > 0 && (
           <StatTile
             icon={Users}
             label={t('students.former')}
-            value={formatCount(view.former, locale)}
+            value={<Count value={view.former} />}
           />
         )}
         {view.medals.total > 0 && (
           <StatTile
             icon={Medal}
             label={t('students.medals')}
-            value={formatCount(view.medals.total, locale)}
+            value={<Count value={view.medals.total} />}
           />
         )}
       </Box>

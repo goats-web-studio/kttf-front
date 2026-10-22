@@ -181,6 +181,10 @@
   --dur-base: 180ms; /* дропдаун, вкладка, аккордеон */
   --dur-slow: 260ms; /* модалка, лист снизу */
   --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* Проявление и рисование: быстрый старт, мягкая посадка (out-quint). */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-reveal: 560ms; /* блок проявляется при прокрутке */
+  --dur-draw: 1200ms; /* линия графика тянется слева направо */
 
   /* Слои. Индикатор офлайна выше всего: он должен быть виден всегда */
   --z-base: 0;
@@ -378,4 +382,185 @@ body {
 
 .tab-panel-in {
   animation: kttf-tab-in var(--dur-base) var(--ease) both;
+}
+
+/* На телефоне всё движение на 20% короче: экран меньше, путь глаза короче. */
+@media (max-width: 639.95px) {
+  :root {
+    --dur-reveal: 450ms;
+    --dur-draw: 960ms;
+  }
+}
+
+/* Проявление блока при первом показе (`Reveal` в common/ui/motion.tsx).
+ * Только opacity и transform. Атрибут ставится, лишь когда двигать можно,
+ * поэтому без JS и с «уменьшить движение» блок виден сразу. */
+[data-reveal] {
+  transition:
+    opacity var(--dur-reveal) var(--ease-out),
+    transform var(--dur-reveal) var(--ease-out);
+}
+
+[data-reveal='wait'] {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+/* Движение внутри группы (`useMotionGroup`): график, полоса, ряд точек.
+ * `wait` — исходное положение до показа, `in` — проигрывание. */
+@keyframes kttf-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes kttf-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes kttf-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes kttf-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes kttf-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Линия рисуется по своей длине: у линии `pathLength="1"`. */
+[data-motion] .motion-draw {
+  stroke-dasharray: 1;
+}
+
+[data-motion='wait'] .motion-draw {
+  stroke-dashoffset: 1;
+}
+
+[data-motion='in'] .motion-draw {
+  animation: kttf-draw var(--dur-draw) var(--ease-out) both;
+}
+
+[data-motion='wait'] .motion-fade,
+[data-motion='wait'] .motion-pop {
+  opacity: 0;
+}
+
+[data-motion='in'] .motion-fade {
+  animation: kttf-fade var(--dur-reveal) var(--ease-out) both;
+  animation-delay: var(--motion-delay, 0ms);
+}
+
+.motion-grow-x {
+  transform-origin: left center;
+}
+
+/* В SVG масштаб считается от рамки самой фигуры, а не от угла холста. */
+svg .motion-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.motion-grow-y {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+[data-motion='wait'] .motion-grow-x {
+  transform: scaleX(0);
+}
+
+[data-motion='wait'] .motion-grow-y {
+  transform: scaleY(0);
+}
+
+[data-motion='in'] .motion-grow-x {
+  animation: kttf-grow-x var(--dur-draw) var(--ease-out) both;
+}
+
+[data-motion='in'] .motion-grow-y {
+  animation: kttf-grow-y var(--dur-reveal) var(--ease-out) both;
+  animation-delay: var(--motion-delay, 0ms);
+}
+
+[data-motion='in'] .motion-pop {
+  animation: kttf-pop var(--dur-base) var(--ease-out) both;
+  animation-delay: var(--motion-delay, 0ms);
+}
+
+/* Первый экран главной: заголовок и поиск поднимаются, игроки входят с
+ * боков. Один раз при загрузке — это и есть фирменный жест страницы. */
+@keyframes kttf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes kttf-enter-left {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes kttf-enter-right {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-rise {
+  animation: kttf-rise var(--dur-reveal) var(--ease-out) both;
+  animation-delay: var(--motion-delay, 0ms);
+}
+
+.hero-enter-left,
+.hero-enter-right {
+  animation: kttf-enter-left calc(var(--dur-reveal) * 1.6) var(--ease-out) both;
+  animation-delay: var(--motion-delay, 0ms);
+}
+
+.hero-enter-right {
+  animation-name: kttf-enter-right;
 }

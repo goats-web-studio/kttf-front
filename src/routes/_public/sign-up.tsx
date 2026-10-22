@@ -3,9 +3,12 @@ import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 import AuthCard from '@/common/ui/auth-card';
+import { redirectSearchSchema } from '@/features/auth/redirect';
 import SignUpForm from '@/features/auth/sign-up-form';
 
+/** Куда вернуться после регистрации — приходит со страницы входа. */
 export const Route = createFileRoute('/_public/sign-up')({
+  validateSearch: (search: Record<string, unknown>) => redirectSearchSchema.parse(search),
   component: SignUpPage,
 });
 
@@ -18,14 +21,17 @@ export const Route = createFileRoute('/_public/sign-up')({
 function SignUpPage(): ReactNode {
   const t = useT();
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
 
   return (
     <AuthCard title={t('page.signUp.title')}>
       <SignUpForm
         onSignedUp={() => {
-          // После регистрации человек попадает в кабинет: там он дозаполняет
-          // профиль, если игроком себя не назвал (ТЗ 2.2).
-          void navigate({ to: '/cabinet' });
+          // Пришёл с адресом возврата — туда: гость нажал «Стать тренером»
+          // или «Оставить заявку» и зарегистрировался по дороге. Без адреса —
+          // в кабинет: там он дозаполняет профиль, если игроком себя не
+          // назвал (ТЗ 2.2).
+          void navigate({ href: redirect ?? '/cabinet' });
         }}
       />
     </AuthCard>

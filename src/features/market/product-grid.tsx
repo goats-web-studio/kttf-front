@@ -5,6 +5,7 @@ import { Fragment, type ReactNode } from 'react';
 import AdSlot from '@/common/ui/ad-slot';
 import Pagination from '@/common/ui/pagination';
 import QueryState from '@/common/ui/query-state';
+import { Reveal } from '@/common/ui/motion';
 
 import ProductCard, { ProductCardSkeleton } from './product-card';
 
@@ -41,9 +42,11 @@ export default function ProductGrid({
     <Box component="ul" sx={GRID}>
       {products.map((product, index) => (
         <Fragment key={product.id}>
-          <Box component="li" sx={{ minWidth: 0 }}>
+          {/* Плитки проявляются по очереди в ряду; очередь по столбцу,
+              а не по номеру, — иначе двадцатая ждала бы секунду. */}
+          <Reveal component="li" sx={{ minWidth: 0 }} delay={(index % 4) * 60}>
             <ProductCard product={product} eager={index < EAGER} showPlayers={showPlayers} />
-          </Box>
+          </Reveal>
           {withAd && index === AD_AFTER - 1 && <AdSlot placement="market-inline" />}
         </Fragment>
       ))}
