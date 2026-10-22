@@ -36,6 +36,10 @@ interface Figure {
    * поясу выше края экрана; правый край — у дальней девушки рука упирается
    * в край исходного снимка. Людей не дорисовываем (правила бренда,
    * `kttf-marketing/CLAUDE.md`), поэтому обрез уходит в темноту.
+   *
+   * Маска режет и размытие дальней фигуры по краю картинки: рука у самого
+   * края файла получала прямой срез. Поэтому у такой вырезки в файле
+   * прозрачные поля слева и сверху — размытию есть куда растечься.
    */
   readonly fade?: { readonly bottom?: boolean; readonly right?: boolean };
 }
@@ -69,12 +73,12 @@ const FIGURES: readonly Figure[] = [
   },
   {
     src: '/home/player-reach.webp',
-    width: 724,
-    height: 640,
+    width: 764,
+    height: 680,
     side: 'right',
     offset: '-14%',
-    size: 400,
-    lg: { inner: 324, size: 404, bottom: 86 },
+    size: 425,
+    lg: { inner: 299, size: 429, bottom: 86 },
     back: true,
     fade: { bottom: true, right: true },
   },
