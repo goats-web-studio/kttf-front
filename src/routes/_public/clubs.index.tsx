@@ -62,8 +62,16 @@ const searchSchema = z.object({
   city: commaList((part) => z.uuid().safeParse(part).success),
   /** Удобства — все сразу, а не любое из них. */
   amenities: commaList(isAmenity),
-  /** Только клубы с ближайшим турниром. */
-  upcoming: z.literal(true).optional().catch(undefined),
+  /**
+   * Только клубы с ближайшим турниром. Ссылка «Скоро турнир» из меню шапки
+   * приходит через `RouterLink` строкой «true» — принимаются обе формы.
+   */
+  upcoming: z
+    .preprocess(
+      (value) => (value === true || value === 'true' ? true : undefined),
+      z.literal(true).optional(),
+    )
+    .catch(undefined),
   /**
    * Только клубы с детскими тренировками (ADR-059, T2.1). По ссылке
    * `RouterLink` значение приходит строкой «true» — принимаются обе формы.
