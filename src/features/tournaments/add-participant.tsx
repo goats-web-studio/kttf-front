@@ -20,6 +20,7 @@ import { playersQuery } from '@/features/players/queries';
 
 import { registerForTournament } from './api';
 import { eligibilityProblems } from './eligibility-problems';
+import NewParticipant from './new-participant';
 import { tournamentKeys } from './queries';
 
 interface AddParticipantProps {
@@ -37,10 +38,9 @@ interface AddParticipantProps {
  * каждой строки, и перестраивать его под пальцем, пока человек печатает,
  * значит промахиваться мимо «Добавить».
  *
- * Заведение нового игрока прямо отсюда (ТЗ 4.3) не сделано: форма профиля
- * живёт в кабинете, и второй её экземпляр здесь означал бы два места, где
- * список полей обязан совпадать. Организатор заводит игрока в кабинете и
- * находит его тем же поиском.
+ * Кого в базе нет, организатор заводит здесь же — «Новый игрок» со
+ * стартовым рейтингом (ADR-062). Это не вторая анкета: только поля, без
+ * которых профиль не заводится, остальное игрок заполнит сам в кабинете.
  */
 export default function AddParticipant({
   tournament,
@@ -156,6 +156,8 @@ export default function AddParticipant({
           )}
         </List>
       )}
+
+      <NewParticipant key={search} tournament={tournament} lastName={search} />
     </Paper>
   );
 }

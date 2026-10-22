@@ -648,6 +648,15 @@ export const ru = {
   'participants.search': 'Фамилия игрока',
   'participants.find': 'Найти',
   'participants.add': 'Добавить',
+  'participants.new.open': 'Нет в базе? Новый игрок',
+  'participants.new.title': 'Новый игрок',
+  'participants.new.lead':
+    'Профиль заведётся в клубе турнира, игрок сразу будет записан. Остальную анкету он заполнит сам.',
+  'participants.new.rating': 'Стартовый рейтинг',
+  'participants.new.ratingHint':
+    'Ваша оценка силы игрока: по ней он посеется. Первые 20 встреч её поправят',
+  'participants.new.submit': 'Завести и записать',
+  'participants.new.cancel': 'Отмена',
 
   'registration.status.REGISTERED': 'Зарегистрирован',
   'registration.status.WAITLIST': 'Лист ожидания',

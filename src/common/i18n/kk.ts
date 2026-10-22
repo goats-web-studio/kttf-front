@@ -657,6 +657,15 @@ export const kk: Record<MessageKey, string> = {
   'participants.search': 'Ойыншының тегі',
   'participants.find': 'Табу',
   'participants.add': 'Қосу',
+  'participants.new.open': 'Базада жоқ па? Жаңа ойыншы',
+  'participants.new.title': 'Жаңа ойыншы',
+  'participants.new.lead':
+    'Профиль турнир клубында ашылады, ойыншы бірден жазылады. Қалған сауалнаманы өзі толтырады.',
+  'participants.new.rating': 'Бастапқы рейтинг',
+  'participants.new.ratingHint':
+    'Ойыншы күшін сіздің бағалауыңыз: себу соған қарай. Алғашқы 20 кездесу оны түзетеді',
+  'participants.new.submit': 'Ашу және жазу',
+  'participants.new.cancel': 'Болдырмау',
 
   'registration.status.REGISTERED': 'Тіркелген',
   'registration.status.WAITLIST': 'Кезек тізімі',
