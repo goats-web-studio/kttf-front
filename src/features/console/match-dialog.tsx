@@ -1,4 +1,5 @@
 import type { MatchResultInput, MatchView } from '@kttf/shared/types';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -32,7 +33,14 @@ interface MatchDialogProps {
   /** `correcting` — правка уже введённого, уходит в журнал (ТЗ 6.3). */
   readonly onResult: (input: MatchResultInput, correcting: boolean) => void;
   readonly onCancel: () => void;
+  /**
+   * Снятие участника по ходу турнира — ADR-061: неявка или снятие. Все его
+   * несыгранные встречи становятся техническими поражениями.
+   */
+  readonly onWithdraw: (playerId: string, status: WithdrawStatus) => void;
 }
+
+export type WithdrawStatus = 'WITHDRAWN' | 'NO_SHOW';
 
 /**
  * Всё, что судья делает со встречей, — в одном окне.
@@ -44,6 +52,9 @@ interface MatchDialogProps {
  *   перенос на другой стол и возврат в очередь;
  * - сыграна — исправление результата, спрятанное за кнопкой: правка идёт
  *   в журнал, и случайно попасть в неё касанием не должно быть возможно.
+ *
+ * У несыгранной встречи внизу — «Игрок выбыл» (ADR-061): неявка и снятие
+ * с турнира, каждое с подтверждением. Отказ по ходу встречи — в вводе счёта.
  */
 export default function MatchDialog(props: MatchDialogProps): ReactNode {
   const { match, label, names, ratings, onClose } = props;
@@ -155,6 +166,7 @@ function QueuedBody({
   setsToWin,
   onAssign,
   onResult,
+  onWithdraw,
 }: MatchDialogProps): ReactNode {
   const t = useT();
   const [scoring, setScoring] = useState(false);
@@ -183,6 +195,9 @@ function QueuedBody({
               onSubmit={(input) => {
                 onResult(input, false);
               }}
+              onRetire={(input, retiree, withdraw) => {
+                retire(match, input, retiree, withdraw, onResult, onWithdraw);
+              }}
             />
           </DialogSection>
         ) : (
@@ -198,7 +213,140 @@ function QueuedBody({
           </Button>
         )}
       </Box>
+
+      <Dropout match={match} names={names} noShow onWithdraw={onWithdraw} />
     </>
+  );
+}
+
+/**
+ * Отказ: сначала счёт, потом, если отмечено, снятие. В очереди операций
+ * порядок тот же — сервер запишет встречу и только затем снимет игрока.
+ */
+function retire(
+  match: MatchView,
+  input: MatchResultInput,
+  retiree: 'A' | 'B',
+  withdraw: boolean,
+  onResult: MatchDialogProps['onResult'],
+  onWithdraw: MatchDialogProps['onWithdraw'],
+): void {
+  onResult(input, false);
+
+  const playerId = retiree === 'A' ? match.playerAId : match.playerBId;
+
+  if (withdraw && playerId !== null) onWithdraw(playerId, 'WITHDRAWN');
+}
+
+/**
+ * «Игрок выбыл» — ADR-061.
+ *
+ * Свёрнуто за кнопкой и с подтверждением: действие задевает все оставшиеся
+ * встречи игрока, а не одну эту. Неявка — только у встречи в очереди: кто
+ * уже сел за стол, тот явился. Вернуть снятого можно в составе турнира.
+ */
+function Dropout({
+  match,
+  names,
+  noShow,
+  onWithdraw,
+}: {
+  readonly match: MatchView;
+  readonly names: ReadonlyMap<string, string>;
+  readonly noShow: boolean;
+  readonly onWithdraw: MatchDialogProps['onWithdraw'];
+}): ReactNode {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [chosen, setChosen] = useState<{ playerId: string; status: WithdrawStatus } | null>(null);
+  const players = [match.playerAId, match.playerBId].filter((id) => id !== null);
+
+  return (
+    <Box sx={{ mt: 3, pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
+      {!open ? (
+        <Button
+          variant="text"
+          size="large"
+          onClick={() => {
+            setOpen(true);
+          }}
+          sx={{ minHeight: 56, color: 'text.secondary' }}
+        >
+          {t('console.dropout.open')}
+        </Button>
+      ) : chosen === null ? (
+        <DialogSection title={t('console.dropout.title')}>
+          <Typography variant="body2" color="text.secondary" component="p" sx={{ mb: 1 }}>
+            {t('console.dropout.lead')}
+          </Typography>
+          {players.map((playerId) => (
+            <Box
+              key={playerId}
+              sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}
+            >
+              <Typography sx={{ flex: '1 1 160px', minWidth: 0, overflowWrap: 'anywhere' }}>
+                {names.get(playerId) ?? t('console.match.unknownPlayer')}
+              </Typography>
+              {noShow && (
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setChosen({ playerId, status: 'NO_SHOW' });
+                  }}
+                  sx={{ minHeight: 48 }}
+                >
+                  {t('console.dropout.noShow')}
+                </Button>
+              )}
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setChosen({ playerId, status: 'WITHDRAWN' });
+                }}
+                sx={{ minHeight: 48 }}
+              >
+                {t('console.dropout.withdraw')}
+              </Button>
+            </Box>
+          ))}
+        </DialogSection>
+      ) : (
+        <Alert
+          severity="warning"
+          variant="outlined"
+          action={
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              <Button
+                color="warning"
+                onClick={() => {
+                  setChosen(null);
+                }}
+                sx={{ minHeight: 44 }}
+              >
+                {t('console.dropout.back')}
+              </Button>
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={() => {
+                  onWithdraw(chosen.playerId, chosen.status);
+                }}
+                sx={{ minHeight: 44 }}
+              >
+                {chosen.status === 'NO_SHOW'
+                  ? t('console.dropout.confirmNoShow')
+                  : t('console.dropout.confirmWithdraw')}
+              </Button>
+            </Box>
+          }
+          sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+        >
+          {fill(t('console.dropout.confirm'), {
+            name: names.get(chosen.playerId) ?? t('console.match.unknownPlayer'),
+          })}
+        </Alert>
+      )}
+    </Box>
   );
 }
 
@@ -212,6 +360,7 @@ function PlayingBody({
   onAssign,
   onResult,
   onCancel,
+  onWithdraw,
 }: MatchDialogProps): ReactNode {
   const t = useT();
   const [moving, setMoving] = useState(false);
@@ -232,6 +381,9 @@ function PlayingBody({
           nameB={nameOf(names, match.playerBId)}
           onSubmit={(input) => {
             onResult(input, false);
+          }}
+          onRetire={(input, retiree, withdraw) => {
+            retire(match, input, retiree, withdraw, onResult, onWithdraw);
           }}
         />
       </DialogSection>
@@ -279,6 +431,8 @@ function PlayingBody({
           {t('console.match.returnToQueue')}
         </Button>
       </Box>
+
+      <Dropout match={match} names={names} noShow={false} onWithdraw={onWithdraw} />
     </>
   );
 }

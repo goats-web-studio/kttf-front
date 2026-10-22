@@ -8,7 +8,7 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
-import { ChevronLeft, Copy, Tv } from 'lucide-react';
+import { ChevronLeft, Copy, SlidersHorizontal, Tv } from 'lucide-react';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
@@ -18,7 +18,7 @@ import BracketZone from '@/features/console/bracket-zone';
 import FinishDialog from '@/features/console/finish-dialog';
 import FinishedPanel from '@/features/console/finished-panel';
 import { isPlayedOut, matchesOf } from '@/features/console/group-matches';
-import MatchDialog from '@/features/console/match-dialog';
+import MatchDialog, { type WithdrawStatus } from '@/features/console/match-dialog';
 import PlayedZone from '@/features/console/played-zone';
 import {
   allPlayed,
@@ -30,9 +30,10 @@ import {
   suggestedTable,
 } from '@/features/console/queue';
 import QueueZone from '@/features/console/queue-zone';
+import RunningSettings from '@/features/console/running-settings';
 import { matchSetsToWin } from '@/features/console/score';
 import StandingsPanel from '@/features/console/standings-panel';
-import { namesOf, ratingsOf } from '@/features/console/state';
+import { namesOf, ratingsOf, withdrawnOf } from '@/features/console/state';
 import SyncBadge, { SyncRejections } from '@/features/console/sync-badge';
 import TableDialog from '@/features/console/table-dialog';
 import TablesZone from '@/features/console/tables-zone';
@@ -81,7 +82,8 @@ interface Toast {
 function ConsoleScreen(): ReactNode {
   const t = useT();
   const { tournamentId } = Route.useParams();
-  const { state, assign, result, cancel, tie, finish, queue } = useConsole(tournamentId);
+  const { state, assign, result, cancel, tie, withdraw, online, finish, queue } =
+    useConsole(tournamentId);
   const now = useNow(30_000);
 
   const standingsRef = useRef<HTMLElement>(null);
@@ -89,6 +91,7 @@ function ConsoleScreen(): ReactNode {
   const [lower, setLower] = useState<Lower>('standings');
   const [toast, setToast] = useState<Toast | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [settings, setSettings] = useState(false);
 
   const snapshot = state.data;
   // Счёт принимает только идущий турнир: сервер отклонит любое действие
@@ -100,20 +103,25 @@ function ConsoleScreen(): ReactNode {
       return null;
     }
 
-    const tables = buildTables(snapshot.tournament.tableCount, snapshot.stages);
+    // Снявшиеся и не явившиеся (ADR-061): их встречи не зовутся к столу,
+    // не занимают его и не держат ни панель равенства, ни завершение.
+    const withdrawn = withdrawnOf(snapshot);
+    const tables = buildTables(snapshot.tournament.tableCount, snapshot.stages, withdrawn);
 
     return {
       tables,
-      queue: buildQueue(snapshot.stages, t),
+      withdrawn,
+      queue: buildQueue(snapshot.stages, t, withdrawn),
       played: playedMatches(snapshot.stages),
       suggested: suggestedTable(tables),
       names: namesOf(snapshot),
       ratings: ratingsOf(snapshot),
-      progress: progressOf(snapshot.stages),
-      done: allPlayed(snapshot.stages),
+      progress: progressOf(snapshot.stages, withdrawn),
+      done: allPlayed(snapshot.stages, withdrawn),
       bracket: hasBracket(snapshot.stages),
       ties: snapshot.standings.groups.some(
-        (group) => group.unresolved.length > 0 && isPlayedOut(matchesOf(snapshot.stages, group)),
+        (group) =>
+          group.unresolved.length > 0 && isPlayedOut(matchesOf(snapshot.stages, group), withdrawn),
       ),
     };
   }, [snapshot, t]);
@@ -176,6 +184,26 @@ function ConsoleScreen(): ReactNode {
         label: t('console.toast.edit'),
         run: () => {
           setOpened({ kind: 'match', matchId: match.id });
+        },
+      },
+    );
+  }
+
+  function doWithdraw(playerId: string, status: WithdrawStatus): void {
+    const registration = snapshot?.registrations.find((entry) => entry.player.id === playerId);
+
+    if (registration === undefined) return;
+
+    setOpened(null);
+    withdraw(registration.id, status);
+    notify(
+      fill(t(status === 'NO_SHOW' ? 'console.toast.noShow' : 'console.toast.withdrawn'), {
+        name: view?.names.get(playerId) ?? '',
+      }),
+      {
+        label: t('console.toast.undo'),
+        run: () => {
+          withdraw(registration.id, 'CONFIRMED');
         },
       },
     );
@@ -286,6 +314,17 @@ function ConsoleScreen(): ReactNode {
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+            {running && (
+              <Button
+                onClick={() => {
+                  setSettings(true);
+                }}
+                startIcon={<SlidersHorizontal size={18} aria-hidden />}
+                sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
+              >
+                {t('console.settings.open')}
+              </Button>
+            )}
             {snapshot !== undefined && (
               <TvLink
                 token={snapshot.tournament.publicToken}
@@ -438,6 +477,7 @@ function ConsoleScreen(): ReactNode {
                         <TiePanel
                           groups={snapshot.standings.groups}
                           stages={snapshot.stages}
+                          withdrawn={view.withdrawn}
                           names={view.names}
                           onDecide={(input) => {
                             tie(input);
@@ -558,6 +598,24 @@ function ConsoleScreen(): ReactNode {
           onCancel={() => {
             setOpened(null);
             cancel(openedMatch.id);
+          }}
+          onWithdraw={doWithdraw}
+        />
+      )}
+
+      {settings && running && (
+        <RunningSettings
+          tournament={snapshot.tournament}
+          stages={snapshot.stages}
+          participants={snapshot.registrations.length}
+          online={online && queue.connection !== 'OFFLINE'}
+          onClose={() => {
+            setSettings(false);
+          }}
+          onSaved={() => {
+            setSettings(false);
+            queue.syncNow();
+            notify(t('console.settings.saved'), null);
           }}
         />
       )}

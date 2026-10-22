@@ -1,6 +1,8 @@
 import type { MatchResultInput } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -9,7 +11,7 @@ import { useId, useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
 
-import { quickResults } from './score';
+import { quickResults, retiredResult } from './score';
 
 interface ScorePadProps {
   readonly setsToWin: number;
@@ -17,6 +19,12 @@ interface ScorePadProps {
   /** Фамилии сторон: ряд кнопок подписан тем, кто в нём побеждает. */
   readonly nameA?: string | undefined;
   readonly nameB?: string | undefined;
+  /**
+   * Отказ по ходу встречи (ADR-061). Если задан, у счёта появляется третий
+   * путь: кто отказался и сколько сетов успел взять. `withdraw` — снять
+   * отказавшегося и с остальных встреч турнира.
+   */
+  readonly onRetire?: (input: MatchResultInput, retiree: 'A' | 'B', withdraw: boolean) => void;
 }
 
 /**
@@ -29,9 +37,15 @@ interface ScorePadProps {
  * Ни одна кнопка не ждёт ответа сервера: обработчик применяет результат
  * к снимку сразу, запрос уходит следом (запрет №1).
  */
-export default function ScorePad({ setsToWin, onSubmit, nameA, nameB }: ScorePadProps): ReactNode {
+export default function ScorePad({
+  setsToWin,
+  onSubmit,
+  nameA,
+  nameB,
+  onRetire,
+}: ScorePadProps): ReactNode {
   const t = useT();
-  const [detailed, setDetailed] = useState(false);
+  const [mode, setMode] = useState<'quick' | 'sets' | 'retired'>('quick');
 
   const quick = quickResults(setsToWin);
   const wonByA = quick.filter((result) => result.setsA > result.setsB);
@@ -90,18 +104,35 @@ export default function ScorePad({ setsToWin, onSubmit, nameA, nameB }: ScorePad
         </ScoreButton>
       </ScoreRow>
 
-      <ToggleButton
-        value="detailed"
-        selected={detailed}
-        onChange={() => {
-          setDetailed(!detailed);
-        }}
-        sx={{ mt: 1.5, minHeight: 56, px: 2, textTransform: 'none', color: 'text.secondary' }}
-      >
-        {t('console.score.bySets')}
-      </ToggleButton>
+      <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        <ToggleButton
+          value="sets"
+          selected={mode === 'sets'}
+          onChange={() => {
+            setMode(mode === 'sets' ? 'quick' : 'sets');
+          }}
+          sx={{ minHeight: 56, px: 2, textTransform: 'none', color: 'text.secondary' }}
+        >
+          {t('console.score.bySets')}
+        </ToggleButton>
+        {onRetire !== undefined && (
+          <ToggleButton
+            value="retired"
+            selected={mode === 'retired'}
+            onChange={() => {
+              setMode(mode === 'retired' ? 'quick' : 'retired');
+            }}
+            sx={{ minHeight: 56, px: 2, textTransform: 'none', color: 'text.secondary' }}
+          >
+            {t('console.retired.toggle')}
+          </ToggleButton>
+        )}
+      </Box>
 
-      {detailed && <SetScores setsToWin={setsToWin} onSubmit={onSubmit} />}
+      {mode === 'sets' && <SetScores setsToWin={setsToWin} onSubmit={onSubmit} />}
+      {mode === 'retired' && onRetire !== undefined && (
+        <Retirement setsToWin={setsToWin} nameA={nameA} nameB={nameB} onRetire={onRetire} />
+      )}
     </Box>
   );
 }
@@ -184,6 +215,108 @@ function ScoreButton({ children, onClick, filled, small, label }: ScoreButtonPro
     >
       {children}
     </Button>
+  );
+}
+
+/**
+ * Отказ по ходу встречи — ADR-061.
+ *
+ * Три вопроса подряд, без клавиатуры: кто отказался, сколько сетов успел
+ * взять, снимать ли его с остального турнира. Оставшиеся сеты получает
+ * соперник (`retiredResult`), и встреча закрывается при любом счёте на
+ * момент отказа.
+ */
+function Retirement({
+  setsToWin,
+  nameA,
+  nameB,
+  onRetire,
+}: {
+  readonly setsToWin: number;
+  readonly nameA: string | undefined;
+  readonly nameB: string | undefined;
+  readonly onRetire: NonNullable<ScorePadProps['onRetire']>;
+}): ReactNode {
+  const t = useT();
+  const [retiree, setRetiree] = useState<'A' | 'B' | null>(null);
+  const [won, setWon] = useState(0);
+  const [withdraw, setWithdraw] = useState(false);
+  const result = retiree === null ? null : retiredResult(setsToWin, retiree, won);
+
+  return (
+    <Paper variant="outlined" sx={{ mt: 1.5, p: 1.5 }}>
+      <Typography variant="body2" color="text.secondary" component="p" sx={{ mb: 1 }}>
+        {t('console.retired.who')}
+      </Typography>
+      <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: '1fr 1fr' }}>
+        {(['A', 'B'] as const).map((side) => (
+          <ToggleButton
+            key={side}
+            value={side}
+            selected={retiree === side}
+            onChange={() => {
+              setRetiree(side);
+            }}
+            sx={{ minHeight: 56, textTransform: 'none', overflowWrap: 'anywhere' }}
+          >
+            {(side === 'A' ? nameA : nameB) ?? side}
+          </ToggleButton>
+        ))}
+      </Box>
+
+      <Typography variant="body2" color="text.secondary" component="p" sx={{ mt: 1.5, mb: 1 }}>
+        {t('console.retired.sets')}
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1,
+          gridTemplateColumns: `repeat(${String(setsToWin)}, minmax(56px, 1fr))`,
+        }}
+      >
+        {Array.from({ length: setsToWin }, (_unused, count) => (
+          <ToggleButton
+            key={count}
+            value={count}
+            selected={won === count}
+            onChange={() => {
+              setWon(count);
+            }}
+            sx={{ minHeight: 56, fontVariantNumeric: 'tabular-nums' }}
+          >
+            {count}
+          </ToggleButton>
+        ))}
+      </Box>
+
+      <FormControlLabel
+        sx={{ mt: 1, minHeight: 44 }}
+        control={
+          <Checkbox
+            checked={withdraw}
+            onChange={(event) => {
+              setWithdraw(event.target.checked);
+            }}
+          />
+        }
+        label={t('console.retired.withdraw')}
+      />
+
+      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          size="large"
+          disabled={result === null || retiree === null}
+          onClick={() => {
+            if (result !== null && retiree !== null) onRetire(result, retiree, withdraw);
+          }}
+          sx={{ minHeight: 56, fontVariantNumeric: 'tabular-nums' }}
+        >
+          {result === null
+            ? t('console.retired.submit')
+            : `${t('console.retired.submit')} ${String(result.setsA)}:${String(result.setsB)}`}
+        </Button>
+      </Box>
+    </Paper>
   );
 }
 

@@ -1,5 +1,5 @@
 import { playoffSetsToWin } from '@kttf/shared/brackets';
-import type { FormatConfig, MatchView, StageType } from '@kttf/shared/types';
+import type { FormatConfig, MatchResultInput, MatchView, StageType } from '@kttf/shared/types';
 
 /**
  * Быстрые кнопки счёта — ТЗ 6.3.
@@ -87,4 +87,27 @@ export function quickResults(setsToWin: number): readonly QuickResult[] {
     ...wins.map((lost) => ({ setsA: setsToWin, setsB: lost })),
     ...wins.map((lost) => ({ setsA: lost, setsB: setsToWin })),
   ];
+}
+
+/**
+ * Отказ по ходу встречи — ADR-061.
+ *
+ * Оставшиеся сеты засчитываются сопернику: у него ровно `setsToWin`, у
+ * отказавшегося — сколько он успел взять. Так встреча закрывается при любом
+ * счёте на момент отказа, даже если отказавшийся вёл, а разница сетов в
+ * таблице отражает сыгранное. Рейтинг отказ не меняет (ТЗ 7, `M = 0`).
+ *
+ * @param retiree Кто отказался.
+ * @param won Сколько сетов отказавшийся выиграл до отказа: от нуля до `setsToWin − 1`.
+ */
+export function retiredResult(
+  setsToWin: number,
+  retiree: 'A' | 'B',
+  won: number,
+): MatchResultInput {
+  const kept = Math.min(Math.max(0, won), setsToWin - 1);
+
+  return retiree === 'A'
+    ? { setsA: kept, setsB: setsToWin, resultType: 'RETIRED' }
+    : { setsA: setsToWin, setsB: kept, resultType: 'RETIRED' };
 }

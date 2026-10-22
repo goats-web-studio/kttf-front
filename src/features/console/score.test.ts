@@ -1,8 +1,9 @@
+import { validateMatchResult } from '@kttf/shared/brackets';
 import { describe, expect, it } from 'vitest';
 
 import type { MatchView } from '@kttf/shared/types';
 
-import { matchSetsToWin, quickResults, setsToWinFor } from './score';
+import { matchSetsToWin, quickResults, retiredResult, setsToWinFor } from './score';
 
 describe('длина встречи по схеме', () => {
   it('у групп и плей-офф она разная', () => {
@@ -89,5 +90,25 @@ describe('быстрые кнопки', () => {
     // и требование «не более двух действий» перестало бы выполняться.
     expect(quickResults(2)).toHaveLength(4);
     expect(quickResults(4)).toHaveLength(8);
+  });
+});
+
+describe('отказ по ходу встречи — ADR-061', () => {
+  it('оставшиеся сеты уходят сопернику', () => {
+    expect(retiredResult(3, 'B', 1)).toEqual({ setsA: 3, setsB: 1, resultType: 'RETIRED' });
+    expect(retiredResult(2, 'A', 0)).toEqual({ setsA: 0, setsB: 2, resultType: 'RETIRED' });
+  });
+
+  it('отказавшийся, который вёл, всё равно проигрывает', () => {
+    // 2:1 в его пользу при игре до трёх — запишется 2:3.
+    expect(retiredResult(3, 'A', 2)).toEqual({ setsA: 2, setsB: 3, resultType: 'RETIRED' });
+  });
+
+  it('счёт проходит ту же проверку, что на сервере', () => {
+    for (const setsToWin of [2, 3, 4]) {
+      for (let won = 0; won < setsToWin; won += 1) {
+        expect(validateMatchResult(retiredResult(setsToWin, 'A', won), setsToWin)).toBeNull();
+      }
+    }
   });
 });

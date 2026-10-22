@@ -380,7 +380,7 @@ function RoundsField({
 }
 
 /** До скольких побед идёт встреча — ТЗ 5.2: bo3, bo5, bo7. */
-function SetsField({
+export function SetsField({
   label,
   value,
   onChange,

@@ -1,5 +1,6 @@
 import type {
   MatchResultInput,
+  RegistrationStatus,
   TieDecisionInput,
   TournamentSnapshotView,
 } from '@kttf/shared/types';
@@ -226,6 +227,20 @@ export function useConsole(tournamentId: string) {
     tie: (input: TieDecisionInput) => {
       push({ type: 'TIE_DECISION', payload: input });
     },
+    /**
+     * Снятие, неявка или возврат в игру — ADR-061.
+     *
+     * Через очередь, как счёт: снять не явившегося нужно и без сети, иначе
+     * его встречи стоят в очереди до возвращения связи. Оптимистично
+     * меняется только статус записи — техпобеды посчитает сервер.
+     */
+    withdraw: (
+      registrationId: string,
+      status: Extract<RegistrationStatus, 'WITHDRAWN' | 'NO_SHOW' | 'CONFIRMED'>,
+    ) => {
+      push({ type: 'PLAYER_WITHDRAW', registrationId, payload: { status } });
+    },
+    online,
     finish,
     queue: {
       connection: !online
