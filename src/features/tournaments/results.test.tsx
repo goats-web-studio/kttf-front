@@ -6,6 +6,7 @@ import { playerName } from '@/features/players/player-name';
 import { PLAYERS, RESULTS } from '@/test/fixtures';
 
 import ResultsBracket from './results-bracket';
+import { buildResultsModel } from './results-model';
 import ResultsMatches from './results-matches';
 import ResultsPlacements from './results-placements';
 import ResultsRatings from './results-ratings';
@@ -24,6 +25,8 @@ const NAMES = new Map(
     playerName(participant.player),
   ]),
 );
+
+const MODEL = buildResultsModel(RESULTS, NAMES);
 
 function row(text: string): HTMLElement {
   // Имя ищется в таблице мест: призёры названы ещё и на пьедестале над ней.
@@ -50,7 +53,7 @@ describe('итоговые места', () => {
         participants={participants}
         shared={RESULTS.shared}
         unresolved={RESULTS.unresolved}
-        names={NAMES}
+        model={MODEL}
       />,
     );
   }
@@ -110,7 +113,11 @@ describe('итоговые места', () => {
   it('показывает делёжку мест диапазоном', () => {
     renderPlacements();
 
-    const shared = screen.getByText('3–4').closest('li');
+    // Диапазон стоит и в колонке места, и в списке делящих под таблицей.
+    const shared = screen
+      .getAllByText('3–4')
+      .map((cell) => cell.closest('li'))
+      .find((item) => item !== null);
 
     expect(shared?.textContent).toContain(PLAYERS.third.lastName);
     expect(shared?.textContent).toContain(PLAYERS.fourth.lastName);
@@ -119,7 +126,15 @@ describe('итоговые места', () => {
 
 describe('групповые таблицы', () => {
   function renderStandings(): void {
-    render(<ResultsStandings standings={RESULTS.standings} names={NAMES} />);
+    render(
+      <ResultsStandings
+        standings={RESULTS.standings}
+        stages={RESULTS.stages}
+        model={MODEL}
+        advance={2}
+        tieBreak="SET_DIFF"
+      />,
+    );
   }
 
   it('называет игрока по идентификатору из строки таблицы', () => {
@@ -146,7 +161,7 @@ describe('групповые таблицы', () => {
 
 describe('встречи', () => {
   function renderMatches(): void {
-    render(<ResultsMatches stages={RESULTS.stages} names={NAMES} />);
+    render(<ResultsMatches stages={RESULTS.stages} model={MODEL} />);
   }
 
   it('показывает счёт сыгранной встречи', () => {
@@ -158,7 +173,7 @@ describe('встречи', () => {
   it('называет техническую победу', () => {
     renderMatches();
 
-    expect(screen.getByText(ru['match.resultType.WALKOVER'])).toBeDefined();
+    expect(screen.getByText(new RegExp(ru['match.resultType.WALKOVER']))).toBeDefined();
   });
 
   it('не выдумывает участников встречи, которая их ещё ждёт', () => {
@@ -189,14 +204,15 @@ describe('сетка', () => {
 
 describe('изменения рейтинга', () => {
   function renderRatings(): void {
-    render(<ResultsRatings ratings={RESULTS.ratings} names={NAMES} />);
+    render(<ResultsRatings ratings={RESULTS.ratings} stages={RESULTS.stages} model={MODEL} />);
   }
 
   it('показывает прибавку со знаком, а убыль как есть', () => {
     renderRatings();
 
-    expect(screen.getByText('+20.00')).toBeDefined();
-    expect(screen.getByText('-10.00')).toBeDefined();
+    // Итог — значком, и та же цифра в раскрытии по встречам.
+    expect(screen.getAllByText('+20.00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('-10.00').length).toBeGreaterThan(0);
   });
 
   it('не выдаёт неначисленный рейтинг за ноль', () => {
@@ -222,12 +238,20 @@ describe('имя игрока ведёт в профиль', () => {
     screen.getAllByRole('link', { name }).map((link) => link.getAttribute('href') ?? '');
 
   it('в групповой таблице', () => {
-    render(<ResultsStandings standings={RESULTS.standings} names={NAMES} />);
+    render(
+      <ResultsStandings
+        standings={RESULTS.standings}
+        stages={RESULTS.stages}
+        model={MODEL}
+        advance={2}
+        tieBreak="SET_DIFF"
+      />,
+    );
     expect(links()).toContain(href);
   });
 
   it('во встречах', () => {
-    render(<ResultsMatches stages={RESULTS.stages} names={NAMES} />);
+    render(<ResultsMatches stages={RESULTS.stages} model={MODEL} />);
     expect(links()).toContain(href);
   });
 
@@ -237,14 +261,14 @@ describe('имя игрока ведёт в профиль', () => {
         participants={RESULTS.participants}
         shared={RESULTS.shared}
         unresolved={RESULTS.unresolved}
-        names={NAMES}
+        model={MODEL}
       />,
     );
     expect(links()).toContain(href);
   });
 
   it('в изменениях рейтинга', () => {
-    render(<ResultsRatings ratings={RESULTS.ratings} names={NAMES} />);
+    render(<ResultsRatings ratings={RESULTS.ratings} stages={RESULTS.stages} model={MODEL} />);
     expect(links()).toContain(href);
   });
 });

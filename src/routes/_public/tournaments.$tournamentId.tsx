@@ -30,6 +30,12 @@ import ResultsPlacements from '@/features/tournaments/results-placements';
 import ResultsRatings from '@/features/tournaments/results-ratings';
 import ResultsStandings from '@/features/tournaments/results-standings';
 import {
+  averageRating,
+  buildResultsModel,
+  matchProgress,
+  type ResultsModel,
+} from '@/features/tournaments/results-model';
+import {
   availableResultTabs,
   RESULT_TAB_LABELS,
   searchResultTab,
@@ -77,6 +83,11 @@ function TournamentPage(): ReactNode {
   );
 
   const data = results.data;
+  // Сводки для таблиц — один раз на ответ, а не в каждой вкладке.
+  const model = useMemo(
+    () => (data === undefined ? null : buildResultsModel(data, names)),
+    [data, names],
+  );
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
@@ -102,6 +113,15 @@ function TournamentPage(): ReactNode {
                 <TournamentSummary
                   tournament={data.tournament}
                   clubName={clubs.data?.get(data.tournament.clubId)?.name ?? null}
+                  facts={
+                    model === null || data.tournament.startedAt === null
+                      ? null
+                      : {
+                          average: averageRating(model.ratings),
+                          progress: matchProgress(data.stages),
+                          champion: championOf(data, names),
+                        }
+                  }
                 />
                 {/* Проведение турнира — ТЗ 4.1. Панель показывается только
                     организатору клуба-хозяина и молчит у всех остальных. */}
@@ -150,12 +170,13 @@ function TournamentPage(): ReactNode {
                       tournament={data.tournament}
                       registrations={registrations.data ?? []}
                     />
-                    <ResultTabs data={data} names={names} participants={null} />
+                    <ResultTabs data={data} names={names} model={model} participants={null} />
                   </>
                 ) : (
                   <ResultTabs
                     data={data}
                     names={names}
+                    model={model}
                     participants={
                       <ParticipantsPanel
                         tournament={data.tournament}
@@ -176,6 +197,7 @@ function TournamentPage(): ReactNode {
 interface ResultTabsProps {
   readonly data: TournamentResultsView;
   readonly names: ReadonlyMap<string, string>;
+  readonly model: ResultsModel | null;
   /** Состав во вкладке; `null` — состав показан над вкладками. */
   readonly participants: ReactNode;
 }
@@ -186,7 +208,7 @@ interface ResultTabsProps {
  * Вкладка живёт в адресе: «смотри сетку» пересылают ссылкой. Недоступная
  * вкладка из старой ссылки (у олимпийки нет групп) открывает первую.
  */
-function ResultTabs({ data, names, participants }: ResultTabsProps): ReactNode {
+function ResultTabs({ data, names, model: given, participants }: ResultTabsProps): ReactNode {
   const t = useT();
   const id = useId();
   const strip = useRef<HTMLDivElement>(null);
@@ -194,6 +216,8 @@ function ResultTabs({ data, names, participants }: ResultTabsProps): ReactNode {
   const { tab: requested } = Route.useSearch();
 
   const tabs = availableResultTabs(data, { withPlayers: participants !== null });
+  const model = given ?? buildResultsModel(data, names);
+  const config = data.tournament.formatConfig;
   const first = tabs[0] ?? 'places';
   const current: ResultTab =
     requested !== undefined && tabs.includes(requested) ? requested : first;
@@ -275,15 +299,45 @@ function ResultTabs({ data, names, participants }: ResultTabsProps): ReactNode {
             participants={data.participants}
             shared={data.shared}
             unresolved={data.unresolved}
-            names={names}
+            model={model}
           />
         )}
-        {current === 'groups' && <ResultsStandings standings={data.standings} names={names} />}
+        {current === 'groups' && (
+          <ResultsStandings
+            standings={data.standings}
+            stages={data.stages}
+            model={model}
+            advance={
+              config.type === 'GROUPS_KNOCKOUT' || config.type === 'GROUPS_FINAL_GROUPS'
+                ? config.advancePerGroup
+                : null
+            }
+            tieBreak={
+              config.type !== 'KNOCKOUT' && config.tieBreak === 'SET_RATIO'
+                ? 'SET_RATIO'
+                : 'SET_DIFF'
+            }
+          />
+        )}
         {current === 'bracket' && <ResultsBracket stages={data.stages} names={names} />}
-        {current === 'matches' && <ResultsMatches stages={data.stages} names={names} />}
-        {current === 'ratings' && <ResultsRatings ratings={data.ratings} names={names} />}
+        {current === 'matches' && <ResultsMatches stages={data.stages} model={model} />}
+        {current === 'ratings' && (
+          <ResultsRatings ratings={data.ratings} stages={data.stages} model={model} />
+        )}
         {current === 'players' && participants}
       </Box>
     </Box>
   );
+}
+
+/** Победитель турнира — занявший первое место, если оно определено. */
+function championOf(
+  data: TournamentResultsView,
+  names: ReadonlyMap<string, string>,
+): { readonly id: string; readonly name: string } | null {
+  const first = data.participants.find((participant) => participant.place === 1);
+
+  return first === undefined
+    ? null
+    : { id: first.player.id, name: names.get(first.player.id) ?? '' };
 }
