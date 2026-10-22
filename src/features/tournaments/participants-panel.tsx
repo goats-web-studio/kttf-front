@@ -15,7 +15,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
-import { useT } from '@/common/i18n';
+import { fill, formatMoney, useLocale, useT } from '@/common/i18n';
 import RatingValue from '@/common/ui/rating-value';
 import { useSessionStore } from '@/features/auth/session-store';
 import { isClubStaff } from '@/features/clubs/roles';
@@ -26,6 +26,8 @@ import { removeRegistration, updateRegistration } from './api';
 import CoachDialog from './coach-dialog';
 import CoachNote from './coach-note';
 import { REGISTRATION_STATUS_KEYS } from './labels';
+import ReplaceParticipant from './replace-participant';
+import { paymentSummary } from './payment-summary';
 import { tournamentKeys } from './queries';
 import { isCoachEditable } from './registration-coach';
 
@@ -66,6 +68,10 @@ export default function ParticipantsPanel({
     (registration) => registration.status !== 'PENDING' && registration.status !== 'REJECTED',
   );
 
+  const locale = useLocale();
+  // Оплата видна только организатору: сервер отдаёт `paid` ему одному.
+  const payment = isStaff ? paymentSummary(participants, tournament.entryFee) : null;
+
   if (participants.length === 0 && !isStaff) {
     return null;
   }
@@ -83,6 +89,19 @@ export default function ParticipantsPanel({
           {participants.length}
         </Typography>
       </Typography>
+
+      {payment !== null && participants.length > 0 && (
+        <Typography color="text.secondary" sx={{ mt: 0.5, ...NUM }}>
+          {fill(t('participants.paid.summary'), {
+            paid: String(payment.paid),
+            total: String(payment.total),
+          })}
+          {tournament.entryFee > 0 &&
+            ` · ${fill(t('participants.paid.collected'), {
+              amount: formatMoney(payment.collected, locale),
+            })}`}
+        </Typography>
+      )}
 
       {isStaff && applications.length > 0 && (
         <Applications tournament={tournament} applications={applications} />
@@ -107,6 +126,7 @@ export default function ParticipantsPanel({
                 <TableCell>{t('participants.player')}</TableCell>
                 <TableCell align="right">{t('participants.rating')}</TableCell>
                 <TableCell>{t('participants.status')}</TableCell>
+                {payment !== null && <TableCell>{t('participants.paid')}</TableCell>}
                 {isStaff && <TableCell>{t('participants.actions')}</TableCell>}
               </TableRow>
             </TableHead>
@@ -155,6 +175,12 @@ function Row({
   });
 
   const [editingCoach, setEditingCoach] = useState(false);
+  const [replacing, setReplacing] = useState(false);
+  // Заменить можно, пока расстановка есть, а турнир не закончен (ADR-062);
+  // сыгравшего сервер заменить не даст.
+  const replaceable =
+    (tournament.status === 'REG_CLOSED' || tournament.status === 'RUNNING') &&
+    registration.status !== 'WAITLIST';
 
   const isWithdrawn = registration.status === 'WITHDRAWN' || registration.status === 'NO_SHOW';
   const error = update.error ?? remove.error;
@@ -192,6 +218,25 @@ function Row({
       <TableCell sx={{ color: 'text.secondary' }}>
         {t(REGISTRATION_STATUS_KEYS[registration.status])}
       </TableCell>
+      {isStaff && registration.paid !== null && (
+        <TableCell>
+          {/* Учёт наличных в зале, не платёж (ADR-062): одно касание
+              ставит и снимает, сервер пишет каждое в журнал. */}
+          <Button
+            variant={registration.paid ? 'contained' : 'outlined'}
+            color={registration.paid ? 'success' : 'secondary'}
+            size="small"
+            disabled={update.isPending}
+            aria-pressed={registration.paid}
+            onClick={() => {
+              update.mutate({ paid: !registration.paid });
+            }}
+            sx={{ ...ROW_ACTION, whiteSpace: 'nowrap' }}
+          >
+            {registration.paid ? t('participants.paid.yes') : t('participants.paid.no')}
+          </Button>
+        </TableCell>
+      )}
       {isStaff && (
         <TableCell>
           <Stack
@@ -223,6 +268,19 @@ function Row({
             >
               {isWithdrawn ? t('participants.restore') : t('participants.withdraw')}
             </Button>
+
+            {replaceable && !replacing && (
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setReplacing(true);
+                }}
+                sx={ROW_ACTION}
+              >
+                {t('participants.replace')}
+              </Button>
+            )}
 
             {/* Тренер на турнире — до старта (ADR-059, T3): после него по
                 записи уже считаются медали учеников. */}
@@ -274,6 +332,15 @@ function Row({
               sx={{ width: 88 }}
             />
           </Stack>
+          {replacing && (
+            <ReplaceParticipant
+              tournament={tournament}
+              registration={registration}
+              onClose={() => {
+                setReplacing(false);
+              }}
+            />
+          )}
           <CoachDialog
             registration={registration}
             open={editingCoach}

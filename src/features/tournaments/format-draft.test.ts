@@ -125,3 +125,24 @@ describe('конфигурация обратно в черновик — пра
     }
   });
 });
+
+describe('правило равенства в таблицах — ADR-062', () => {
+  it('по умолчанию не задаётся: таблица считается как раньше', () => {
+    expect('tieBreak' in toFormatConfig(DEFAULT_DRAFT)).toBe(false);
+  });
+
+  it('отношение сетов уходит в схемы с таблицами и возвращается в черновик', () => {
+    for (const type of ['ROUND_ROBIN', 'GROUPS_KNOCKOUT', 'GROUPS_FINAL_GROUPS'] as const) {
+      const config = toFormatConfig({ ...DEFAULT_DRAFT, type, tieBreak: 'SET_RATIO' });
+
+      expect(formatConfigSchema.safeParse(config).success, type).toBe(true);
+      expect(fromFormatConfig(config).tieBreak, type).toBe('SET_RATIO');
+    }
+  });
+
+  it('у сетки таблиц нет — правило не пишется', () => {
+    const config = toFormatConfig({ ...DEFAULT_DRAFT, type: 'KNOCKOUT', tieBreak: 'SET_RATIO' });
+
+    expect('tieBreak' in config).toBe(false);
+  });
+});

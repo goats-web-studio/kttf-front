@@ -174,6 +174,28 @@ export default function FormatEditor({
           />
         )}
 
+        {/* Как разводится равенство очков в таблицах — ADR-062. У сетки
+            таблиц нет. */}
+        {draft.type !== 'KNOCKOUT' && (
+          <TextField
+            select
+            label={t('tournament.form.tieBreak')}
+            value={draft.tieBreak}
+            helperText={t(
+              draft.tieBreak === 'SET_RATIO'
+                ? 'tournament.form.tieBreak.ratioHint'
+                : 'tournament.form.tieBreak.diffHint',
+            )}
+            onChange={(event) => {
+              set('tieBreak', event.target.value === 'SET_RATIO' ? 'SET_RATIO' : 'SET_DIFF');
+            }}
+            sx={{ gridColumn: { sm: 'span 2' } }}
+          >
+            <MenuItem value="SET_DIFF">{t('tournament.form.tieBreak.diff')}</MenuItem>
+            <MenuItem value="SET_RATIO">{t('tournament.form.tieBreak.ratio')}</MenuItem>
+          </TextField>
+        )}
+
         {/* Не вышедшие из групп доигрывают за места — ADR-045. */}
         {draft.type === 'GROUPS_KNOCKOUT' && (
           <FormControlLabel
