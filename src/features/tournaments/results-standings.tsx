@@ -208,6 +208,7 @@ function GroupTable({
                         sx={{
                           // На телефоне — строкой под фамилией: место нужно числам.
                           display: { xs: 'block', sm: 'inline' },
+                          whiteSpace: 'nowrap',
                           ml: { xs: 0, sm: 1 },
                           typography: 'caption',
                           color: 'text.secondary',
