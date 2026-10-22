@@ -13,7 +13,8 @@ export type { StatDay, StatTotal };
 /**
  * `coachTraining` — «Записаться» к тренерам, которые проводят свои
  * тренировки в зале клуба: писали тренеру, клубу — отдельной строкой
- * (ADR-059, решение владельца от 21.10.2026).
+ * (ADR-059, решение владельца от 21.10.2026). `trialRequests` — заявки на
+ * пробную с сайта (T3, `docs/11` 3.3.3).
  */
 export const STAT_METRICS = [
   'views',
@@ -23,6 +24,7 @@ export const STAT_METRICS = [
   'route',
   'links',
   'coachTraining',
+  'trialRequests',
 ] as const;
 export type StatMetric = (typeof STAT_METRICS)[number];
 
@@ -38,5 +40,6 @@ export function summarizeStats(view: ClubStatsView): StatsSummary {
     route: row.route,
     links: row.website + row.instagram,
     coachTraining: row.coachTraining,
+    trialRequests: row.trialRequests,
   }));
 }

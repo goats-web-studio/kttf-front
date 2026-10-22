@@ -10,6 +10,7 @@ import { summarizeStatRows, type StatsSummary } from '@/common/ui/stats-model';
 /**
  * `clubGroup` — «Записаться» в группы клубов, где он тренер: писали клубу,
  * тренеру — отдельной строкой (ADR-059, решение владельца от 21.10.2026).
+ * `trialRequests` — заявки на пробную с сайта (T3, `docs/11` 3.3.3).
  */
 export const COACH_STAT_METRICS = [
   'views',
@@ -18,6 +19,7 @@ export const COACH_STAT_METRICS = [
   'telegram',
   'instagram',
   'clubGroup',
+  'trialRequests',
 ] as const;
 export type CoachStatMetric = (typeof COACH_STAT_METRICS)[number];
 
@@ -28,6 +30,7 @@ export const COACH_STAT_LABELS: Readonly<Record<CoachStatMetric, MessageKey>> = 
   telegram: 'manage.stats.telegram',
   instagram: 'club.contact.instagram',
   clubGroup: 'manage.stats.clubGroup',
+  trialRequests: 'manage.stats.trialRequests',
 };
 
 export function summarizeCoachStats(view: CoachStatsView): StatsSummary<CoachStatMetric> {
@@ -38,5 +41,6 @@ export function summarizeCoachStats(view: CoachStatsView): StatsSummary<CoachSta
     telegram: row.telegram,
     instagram: row.instagram,
     clubGroup: row.clubGroup,
+    trialRequests: row.trialRequests,
   }));
 }

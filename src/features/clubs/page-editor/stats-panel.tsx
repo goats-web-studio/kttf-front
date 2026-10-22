@@ -17,6 +17,7 @@ const METRIC_LABELS: Readonly<Record<StatMetric, MessageKey>> = {
   route: 'manage.stats.route',
   links: 'manage.stats.links',
   coachTraining: 'manage.stats.coachTraining',
+  trialRequests: 'manage.stats.trialRequests',
 };
 
 /**

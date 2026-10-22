@@ -140,6 +140,7 @@ describe('статистика тренера', () => {
       telegram: 1,
       instagram: 0,
       clubGroup: 3,
+      trialRequests: 1,
     };
     const summary = summarizeCoachStats({
       from: '2026-10-18',
@@ -155,6 +156,8 @@ describe('статистика тренера', () => {
     expect(summary.totals.telegram).toEqual({ total: 2, campaign: 1 });
     // Записи в группы клуба — своей строкой, не в прямых обращениях.
     expect(summary.totals.clubGroup).toEqual({ total: 6, campaign: 3 });
+    // Заявки с сайта — тоже своей строкой (T3).
+    expect(summary.totals.trialRequests).toEqual({ total: 2, campaign: 1 });
     expect(summary.days).toEqual([
       { date: '2026-10-18', organic: 5, campaign: 0 },
       { date: '2026-10-19', organic: 0, campaign: 0 },
