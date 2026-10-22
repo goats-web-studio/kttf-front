@@ -219,11 +219,15 @@ function ScreenPage(): ReactNode {
         ),
       ) ?? view.stages.at(-1);
 
+    // Снявшиеся (ADR-061): их встречи не стоят в «Кто следующий» — правило
+    // то же, что у очереди судьи.
+    const withdrawn = new Set(view.withdrawn);
+
     return {
-      tables: buildTables(view.tournament.tableCount, view.stages),
-      queue: buildQueue(view.stages, t),
+      tables: buildTables(view.tournament.tableCount, view.stages, withdrawn),
+      queue: buildQueue(view.stages, t, withdrawn),
       played: playedMatches(view.stages),
-      progress: progressOf(view.stages),
+      progress: progressOf(view.stages, withdrawn),
       names: namesOf(view.players),
       ratings: ratingsOf(view.players),
       pages:

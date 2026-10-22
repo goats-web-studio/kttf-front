@@ -78,3 +78,12 @@ describe('доигранность группы', () => {
     expect(isPlayedOut([])).toBe(false);
   });
 });
+
+describe('доигранность группы со снявшимся — ADR-061', () => {
+  it('встреча снявшегося не держит панель равенства', () => {
+    const matches = [match('m1', 'FINISHED', GROUP_ID), match('m2', 'PENDING', GROUP_ID)];
+
+    expect(isPlayedOut(matches)).toBe(false);
+    expect(isPlayedOut(matches, new Set(['b']))).toBe(true);
+  });
+});

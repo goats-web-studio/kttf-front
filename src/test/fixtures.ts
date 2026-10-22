@@ -487,6 +487,7 @@ export const SCREEN_TOKEN = 'FDgV6mQ1xKq8yZ2pW7nR4tL0sB3cH5jE';
 export const SCREEN_STATE: ScreenView = {
   tournament: CONSOLE_STATE.tournament,
   players: [PLAYERS.first, PLAYERS.second, PLAYERS.third, PLAYERS.fourth],
+  withdrawn: [],
   standings: RESULTS.standings,
   stages: CONSOLE_STATE.stages,
   updatedAt: '2026-09-05T10:30:00.000Z',

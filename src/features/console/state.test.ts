@@ -13,9 +13,11 @@ import {
 import {
   namesOf,
   ratingsOf,
+  withdrawnOf,
   withOptimisticAssign,
   withOptimisticCancel,
   withOptimisticResult,
+  withOptimisticWithdraw,
 } from './state';
 
 const NOW = '2026-09-05T11:00:00.000Z';
@@ -127,5 +129,38 @@ describe('участники снимка', () => {
     expect(ratingsOf(CONSOLE_SNAPSHOT).get(PLAYER_IDS.first)).toBe(
       formatRating(PLAYERS.first.rating),
     );
+  });
+});
+
+describe('снятие участника до ответа сервера — ADR-061', () => {
+  it('статус записи меняется сразу, и консоль видит снявшегося', () => {
+    const registration = CONSOLE_SNAPSHOT.registrations[0];
+    if (registration === undefined) throw new Error('В снимке нет участников');
+
+    const state = withOptimisticWithdraw(CONSOLE_SNAPSHOT, registration.id, 'NO_SHOW');
+
+    expect(state.registrations[0]?.status).toBe('NO_SHOW');
+    expect(withdrawnOf(state).has(registration.player.id)).toBe(true);
+    expect(withdrawnOf(CONSOLE_SNAPSHOT).has(registration.player.id)).toBe(false);
+  });
+
+  it('встречи и таблицы не трогаются: техпобеды посчитает сервер', () => {
+    const registration = CONSOLE_SNAPSHOT.registrations[0];
+    if (registration === undefined) throw new Error('В снимке нет участников');
+
+    const state = withOptimisticWithdraw(CONSOLE_SNAPSHOT, registration.id, 'WITHDRAWN');
+
+    expect(state.stages).toBe(CONSOLE_SNAPSHOT.stages);
+    expect(state.standings).toBe(CONSOLE_SNAPSHOT.standings);
+  });
+
+  it('возврат в игру снимает отметку', () => {
+    const registration = CONSOLE_SNAPSHOT.registrations[0];
+    if (registration === undefined) throw new Error('В снимке нет участников');
+
+    const out = withOptimisticWithdraw(CONSOLE_SNAPSHOT, registration.id, 'WITHDRAWN');
+    const back = withOptimisticWithdraw(out, registration.id, 'CONFIRMED');
+
+    expect(withdrawnOf(back).has(registration.player.id)).toBe(false);
   });
 });

@@ -1,4 +1,9 @@
-import type { MatchResultInput, MatchView, TournamentSnapshotView } from '@kttf/shared/types';
+import type {
+  MatchResultInput,
+  MatchView,
+  RegistrationStatus,
+  TournamentSnapshotView,
+} from '@kttf/shared/types';
 
 import { formatRating } from '@/common/i18n';
 
@@ -83,6 +88,40 @@ export function withOptimisticCancel(
           finishedAt: null,
         }
       : match,
+  );
+}
+
+/**
+ * Снятие участника или возврат в игру до ответа сервера — ADR-061.
+ *
+ * Меняется только статус записи. Техпобеды в таблице и в сетке считает
+ * сервер и пришлёт снимком; консоль по статусу лишь перестаёт ждать встречи
+ * снявшегося (`isSettled`). Возврат после старта сервер записывает как
+ * «играет» — так же и здесь.
+ */
+export function withOptimisticWithdraw(
+  state: TournamentSnapshotView,
+  registrationId: string,
+  status: RegistrationStatus,
+): TournamentSnapshotView {
+  const next = status === 'CONFIRMED' && state.tournament.status === 'RUNNING' ? 'PLAYING' : status;
+
+  return {
+    ...state,
+    registrations: state.registrations.map((registration) =>
+      registration.id === registrationId ? { ...registration, status: next } : registration,
+    ),
+  };
+}
+
+/** Снявшиеся и не явившиеся: их несыгранные встречи решены снятием. */
+export function withdrawnOf(state: TournamentSnapshotView): ReadonlySet<string> {
+  return new Set(
+    state.registrations
+      .filter(
+        (registration) => registration.status === 'WITHDRAWN' || registration.status === 'NO_SHOW',
+      )
+      .map((registration) => registration.player.id),
   );
 }
 

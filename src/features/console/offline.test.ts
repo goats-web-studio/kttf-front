@@ -265,3 +265,21 @@ describe('наложение очереди на снимок', () => {
     expect(applyPending(CONSOLE_SNAPSHOT, [item])).toEqual(CONSOLE_SNAPSHOT);
   });
 });
+
+describe('снятие участника в очереди — ADR-061', () => {
+  it('применяется к снимку сразу, как счёт', async () => {
+    const registration = CONSOLE_SNAPSHOT.registrations[0];
+    if (registration === undefined) throw new Error('В снимке нет участников');
+
+    const item = await enqueue(
+      TOURNAMENT_ID,
+      newOperation({
+        type: 'PLAYER_WITHDRAW',
+        registrationId: registration.id,
+        payload: { status: 'WITHDRAWN' },
+      }),
+    );
+
+    expect(applyPending(CONSOLE_SNAPSHOT, [item]).registrations[0]?.status).toBe('WITHDRAWN');
+  });
+});

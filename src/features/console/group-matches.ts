@@ -1,5 +1,7 @@
 import type { GroupStandingsView, MatchView, StageView } from '@kttf/shared/types';
 
+import { isSettled } from './queue';
+
 /**
  * Встречи группы и её доигранность — ТЗ 6.6.
  *
@@ -20,13 +22,15 @@ export function matchesOf(
 /**
  * Сыграны ли все встречи группы.
  *
- * Снятая встреча тоже сыграна: результата у неё нет, но и ждать её нечего
- * (ADR-009). Это не правило предметной области, а вопрос «осталось ли ещё
- * что-то сыграть»: места и равенства до конца группы не окончательны.
+ * Снятая встреча тоже сыграна: результата у неё нет, но и ждать её нечего.
+ * Так же и встреча снявшегося участника (ADR-009, ADR-061): её исход даёт
+ * расчёт таблицы на сервере. Это не правило предметной области, а вопрос
+ * «осталось ли ещё что-то сыграть»: места и равенства до конца группы не
+ * окончательны.
  */
-export function isPlayedOut(matches: readonly MatchView[]): boolean {
-  return (
-    matches.length > 0 &&
-    matches.every((match) => match.status === 'FINISHED' || match.status === 'CANCELLED')
-  );
+export function isPlayedOut(
+  matches: readonly MatchView[],
+  withdrawn?: ReadonlySet<string>,
+): boolean {
+  return matches.length > 0 && matches.every((match) => isSettled(match, withdrawn));
 }

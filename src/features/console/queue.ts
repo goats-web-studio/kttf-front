@@ -1,3 +1,4 @@
+import { isDecidedByWithdrawal } from '@kttf/shared/brackets';
 import type { MatchView, StageView } from '@kttf/shared/types';
 
 import type { MessageKey } from '@/common/i18n';
@@ -13,7 +14,28 @@ import { finalRound, isPlacement, roundName } from '@/common/ui/bracket-model';
  *
  * Серверу эти правила не нужны и на нём их нет: столы назначает судья, а не
  * система. Дублирования логики между клиентом и сервером здесь не возникает.
+ *
+ * Снявшиеся и не явившиеся (`withdrawn`) — ADR-061. Их несыгранные встречи
+ * решены снятием, и вопрос «решена ли» задаёт общее правило
+ * `isDecidedByWithdrawal`, то же, по которому сервер считает этап сыгранным.
+ * Такая встреча не зовётся к столу и не держит завершение.
  */
+
+const NOBODY: ReadonlySet<string> = new Set();
+
+/**
+ * Закрыта ли встреча: сыграна, вычеркнута или решена снятием участника.
+ *
+ * В сетке решённую снятием сервер закрывает технической победой сам; до
+ * синхронизации консоль просто не ждёт её.
+ */
+export function isSettled(match: MatchView, withdrawn: ReadonlySet<string> = NOBODY): boolean {
+  return (
+    match.status === 'FINISHED' ||
+    match.status === 'CANCELLED' ||
+    isDecidedByWithdrawal({ a: match.playerAId, b: match.playerBId }, withdrawn)
+  );
+}
 
 /** Встреча вместе с этапом, из которого она пришла: в зале это разные очереди. */
 export interface QueuedMatch {
@@ -39,17 +61,26 @@ export interface QueuedMatch {
   readonly busyTable: number | null;
 }
 
-/** Встреча готова к назначению: оба участника известны и она не сыграна. */
-function isReady(match: MatchView): boolean {
+/** Встреча готова к назначению: оба участника известны, она не сыграна и не решена снятием. */
+function isReady(match: MatchView, withdrawn: ReadonlySet<string>): boolean {
   return (
     match.playerAId !== null &&
     match.playerBId !== null &&
-    (match.status === 'PENDING' || match.status === 'QUEUED')
+    (match.status === 'PENDING' || match.status === 'QUEUED') &&
+    !isSettled(match, withdrawn)
   );
 }
 
-function isPlaying(match: MatchView): boolean {
-  return match.status === 'PLAYING';
+/**
+ * Встреча идёт за столом. Групповая встреча снявшегося не идёт, даже если её
+ * успели позвать: исход даёт таблица, и сервер возвращает её в ожидание
+ * (ADR-061). Сетку сервер закрывает технической победой.
+ */
+function isPlaying(match: MatchView, withdrawn: ReadonlySet<string> = NOBODY): boolean {
+  return (
+    match.status === 'PLAYING' &&
+    !isDecidedByWithdrawal({ a: match.playerAId, b: match.playerBId }, withdrawn)
+  );
 }
 
 function allMatches(stages: readonly StageView[]): readonly MatchView[] {
@@ -82,11 +113,14 @@ function lastPlayed(matches: readonly MatchView[]): ReadonlyMap<string, string> 
 }
 
 /** Сколько несыгранных встреч осталось у игрока. */
-function remaining(matches: readonly MatchView[]): ReadonlyMap<string, number> {
+function remaining(
+  matches: readonly MatchView[],
+  withdrawn: ReadonlySet<string>,
+): ReadonlyMap<string, number> {
   const left = new Map<string, number>();
 
   for (const match of matches) {
-    if (match.status === 'FINISHED' || match.status === 'CANCELLED') {
+    if (isSettled(match, withdrawn)) {
       continue;
     }
 
@@ -113,38 +147,43 @@ function remaining(matches: readonly MatchView[]): ReadonlyMap<string, number> {
 export function buildQueue(
   stages: readonly StageView[],
   t?: (key: MessageKey) => string,
+  withdrawn: ReadonlySet<string> = NOBODY,
 ): readonly QueuedMatch[] {
   const matches = allMatches(stages);
   const last = lastPlayed(matches);
-  const left = remaining(matches);
+  const left = remaining(matches, withdrawn);
   const busy = new Map<string, number>();
 
   for (const match of matches) {
-    if (!isPlaying(match) || match.tableNumber === null) continue;
+    if (!isPlaying(match, withdrawn) || match.tableNumber === null) continue;
     if (match.playerAId !== null) busy.set(match.playerAId, match.tableNumber);
     if (match.playerBId !== null) busy.set(match.playerBId, match.tableNumber);
   }
 
   const queued = stages.flatMap((stage) =>
-    stage.matches.filter(isReady).map((match): QueuedMatch => {
-      const a = match.playerAId;
-      const b = match.playerBId;
-      const times = [a, b]
-        .map((playerId) => (playerId === null ? undefined : last.get(playerId)))
-        .filter((time) => time !== undefined);
+    stage.matches
+      .filter((match) => isReady(match, withdrawn))
+      .map((match): QueuedMatch => {
+        const a = match.playerAId;
+        const b = match.playerBId;
+        const times = [a, b]
+          .map((playerId) => (playerId === null ? undefined : last.get(playerId)))
+          .filter((time) => time !== undefined);
 
-      return {
-        match,
-        stageName: stage.name,
-        groupLabel: stage.groups.find((group) => group.id === match.groupId)?.label ?? null,
-        label: matchLabel(stages, match, t),
-        // Пара свободна не раньше, чем закончил позднейший из двоих.
-        waitingSince: times.length === 2 ? maxOf(times) : null,
-        lastForBoth: [a, b].every((playerId) => playerId !== null && left.get(playerId) === 1),
-        busyTable:
-          (a === null ? undefined : busy.get(a)) ?? (b === null ? undefined : busy.get(b)) ?? null,
-      };
-    }),
+        return {
+          match,
+          stageName: stage.name,
+          groupLabel: stage.groups.find((group) => group.id === match.groupId)?.label ?? null,
+          label: matchLabel(stages, match, t),
+          // Пара свободна не раньше, чем закончил позднейший из двоих.
+          waitingSince: times.length === 2 ? maxOf(times) : null,
+          lastForBoth: [a, b].every((playerId) => playerId !== null && left.get(playerId) === 1),
+          busyTable:
+            (a === null ? undefined : busy.get(a)) ??
+            (b === null ? undefined : busy.get(b)) ??
+            null,
+        };
+      }),
   );
 
   return [...queued].sort(compareQueued);
@@ -198,9 +237,10 @@ export interface TableState {
 export function buildTables(
   tableCount: number,
   stages: readonly StageView[],
+  withdrawn: ReadonlySet<string> = NOBODY,
 ): readonly TableState[] {
   const matches = allMatches(stages);
-  const playing = matches.filter(isPlaying);
+  const playing = matches.filter((match) => isPlaying(match, withdrawn));
   const finished = matches.filter(
     (match) => match.status === 'FINISHED' && match.tableNumber !== null,
   );
@@ -231,7 +271,7 @@ export function buildTables(
 
 /** Встречи, идущие прямо сейчас. Порядок — по номеру стола, как в зале. */
 export function playingMatches(stages: readonly StageView[]): readonly MatchView[] {
-  return [...allMatches(stages).filter(isPlaying)].sort(
+  return [...allMatches(stages).filter((match) => isPlaying(match))].sort(
     (left, right) => (left.tableNumber ?? 0) - (right.tableNumber ?? 0),
   );
 }
@@ -295,22 +335,26 @@ export function playedMatches(stages: readonly StageView[]): readonly MatchView[
   ].sort((left, right) => (right.finishedAt ?? '').localeCompare(left.finishedAt ?? ''));
 }
 
-/** Сколько встреч сыграно из скольких — прогресс турнира в шапке консоли. */
-export function progressOf(stages: readonly StageView[]): {
+/** Сколько встреч закрыто из скольких — прогресс турнира в шапке консоли. */
+export function progressOf(
+  stages: readonly StageView[],
+  withdrawn: ReadonlySet<string> = NOBODY,
+): {
   readonly done: number;
   readonly total: number;
 } {
   const matches = allMatches(stages).filter((match) => match.status !== 'CANCELLED');
 
   return {
-    done: matches.filter((match) => match.status === 'FINISHED').length,
+    done: matches.filter((match) => isSettled(match, withdrawn)).length,
     total: matches.length,
   };
 }
 
-/** Все ли встречи турнира сыграны: только тогда его можно завершать. */
-export function allPlayed(stages: readonly StageView[]): boolean {
-  return allMatches(stages).every(
-    (match) => match.status === 'FINISHED' || match.status === 'CANCELLED',
-  );
+/** Все ли встречи турнира закрыты: только тогда его можно завершать. */
+export function allPlayed(
+  stages: readonly StageView[],
+  withdrawn: ReadonlySet<string> = NOBODY,
+): boolean {
+  return allMatches(stages).every((match) => isSettled(match, withdrawn));
 }

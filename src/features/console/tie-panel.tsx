@@ -13,6 +13,8 @@ import { isPlayedOut, matchesOf } from './group-matches';
 interface TiePanelProps {
   readonly groups: readonly GroupStandingsView[];
   readonly stages: readonly StageView[];
+  /** Снявшиеся: их встречи группу доигранной не держат (ADR-061). */
+  readonly withdrawn?: ReadonlySet<string>;
   readonly names: ReadonlyMap<string, string>;
   readonly onDecide: (input: TieDecisionInput) => void;
   readonly isPending: boolean;
@@ -35,13 +37,14 @@ interface TiePanelProps {
 export default function TiePanel({
   groups,
   stages,
+  withdrawn,
   names,
   onDecide,
   isPending,
 }: TiePanelProps): ReactNode {
   const t = useT();
   const pending = groups.filter(
-    (group) => group.unresolved.length > 0 && isPlayedOut(matchesOf(stages, group)),
+    (group) => group.unresolved.length > 0 && isPlayedOut(matchesOf(stages, group), withdrawn),
   );
 
   if (pending.length === 0) {

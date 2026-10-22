@@ -9,6 +9,7 @@ import {
   buildTables,
   matchLabel,
   playingMatches,
+  progressOf,
   suggestedTable,
 } from './queue';
 
@@ -338,5 +339,52 @@ describe('подпись встречи', () => {
 
   it('без словаря подпись прежняя — этап и группа', () => {
     expect(matchLabel(stages, final)).toBe('Плей-офф');
+  });
+});
+
+describe('снявшиеся — ADR-061', () => {
+  // Раньше консоль о снятии не знала: встречи снявшегося висели в очереди,
+  // а «Завершить» не появлялось, пока судья не вбивал каждую техпобеду сам.
+  const out = new Set([B]);
+  const group = stage([
+    match({ id: 'm1', playerAId: A, playerBId: B }),
+    match({ id: 'm2', playerAId: A, playerBId: C, bracketSlot: 1 }),
+  ]);
+
+  it('встреча снявшегося в очередь не попадает: её никто не сыграет', () => {
+    expect(buildQueue([group], undefined, out).map((item) => item.match.id)).toEqual(['m2']);
+  });
+
+  it('встреча снявшегося не делает следующую «последней» для соперника', () => {
+    const [only] = buildQueue([group], undefined, out);
+
+    // У A осталась одна настоящая встреча — с C, и у C она единственная.
+    expect(only?.lastForBoth).toBe(true);
+  });
+
+  it('встреча снявшегося не держит завершение турнира', () => {
+    const played = stage([
+      match({ id: 'm1', playerAId: A, playerBId: B }),
+      match({ id: 'm2', playerAId: A, playerBId: C, status: 'FINISHED', setsA: 3, setsB: 0 }),
+    ]);
+
+    expect(allPlayed([played])).toBe(false);
+    expect(allPlayed([played], out)).toBe(true);
+  });
+
+  it('стол под встречей снявшегося свободен, и пара соперника его не ждёт', () => {
+    // Сервер возвращает такую встречу в ожидание; до синхронизации консоль
+    // не держит под ней стол сама.
+    const playing = stage([
+      match({ id: 'm1', playerAId: A, playerBId: B, status: 'PLAYING', tableNumber: 1 }),
+      match({ id: 'm2', playerAId: A, playerBId: C, bracketSlot: 1 }),
+    ]);
+
+    expect(buildTables(2, [playing], out)[0]?.status).toBe('FREE');
+    expect(buildQueue([playing], undefined, out)[0]?.busyTable).toBeNull();
+  });
+
+  it('и считается закрытой в прогрессе', () => {
+    expect(progressOf([group], out)).toEqual({ done: 1, total: 2 });
   });
 });

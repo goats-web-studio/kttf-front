@@ -1,7 +1,12 @@
 import type { TournamentSnapshotView } from '@kttf/shared/types';
 
 import type { OutboxItem, QueuedOperation } from './db';
-import { withOptimisticAssign, withOptimisticCancel, withOptimisticResult } from './state';
+import {
+  withOptimisticAssign,
+  withOptimisticCancel,
+  withOptimisticResult,
+  withOptimisticWithdraw,
+} from './state';
 
 /**
  * Снимок глазами судьи — ТЗ 6.4.
@@ -11,9 +16,10 @@ import { withOptimisticAssign, withOptimisticCancel, withOptimisticResult } from
  * стёр бы этот счёт с экрана: сервер о нём ещё не знает.
  *
  * Применяются только те операции, чей результат клиент вправе предсказать:
- * счёт, стол и отмена. Решение по равенству и снятие участника меняют места
- * и таблицы, а их считает движок на сервере — угадывать здесь означало бы
- * второй расчёт на клиенте (запрет №2 брифа).
+ * счёт, стол, отмена и статус снятого участника (ADR-061). Решение по
+ * равенству меняет места, а их считает движок на сервере — угадывать здесь
+ * означало бы второй расчёт на клиенте (запрет №2 брифа). У снятия так же:
+ * меняется только статус записи, техпобеды пришлёт сервер.
  */
 export function applyOperation(
   snapshot: TournamentSnapshotView,
@@ -40,8 +46,12 @@ export function applyOperation(
     case 'MATCH_CANCEL':
       return withOptimisticCancel(snapshot, operation.matchId);
 
-    case 'TIE_DECISION':
     case 'PLAYER_WITHDRAW':
+      return operation.payload.status === undefined
+        ? snapshot
+        : withOptimisticWithdraw(snapshot, operation.registrationId, operation.payload.status);
+
+    case 'TIE_DECISION':
       return snapshot;
   }
 }
