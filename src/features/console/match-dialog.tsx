@@ -280,33 +280,41 @@ function Dropout({
             {t('console.dropout.lead')}
           </Typography>
           {players.map((playerId) => (
-            <Box
-              key={playerId}
-              sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}
-            >
-              <Typography sx={{ flex: '1 1 160px', minWidth: 0, overflowWrap: 'anywhere' }}>
+            // Имя строкой, кнопки под ним сеткой: на телефоне в одну строку
+            // с длинной фамилией они ломались вразнобой.
+            <Box key={playerId} sx={{ mt: 1.5 }}>
+              <Typography sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
                 {names.get(playerId) ?? t('console.match.unknownPlayer')}
               </Typography>
-              {noShow && (
+              <Box
+                sx={{
+                  mt: 0.75,
+                  display: 'grid',
+                  gap: 1,
+                  gridTemplateColumns: noShow ? '1fr 1fr' : '1fr',
+                }}
+              >
+                {noShow && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setChosen({ playerId, status: 'NO_SHOW' });
+                    }}
+                    sx={{ minHeight: 48 }}
+                  >
+                    {t('console.dropout.noShow')}
+                  </Button>
+                )}
                 <Button
                   variant="outlined"
                   onClick={() => {
-                    setChosen({ playerId, status: 'NO_SHOW' });
+                    setChosen({ playerId, status: 'WITHDRAWN' });
                   }}
                   sx={{ minHeight: 48 }}
                 >
-                  {t('console.dropout.noShow')}
+                  {t('console.dropout.withdraw')}
                 </Button>
-              )}
-              <Button
-                variant="outlined"
-                onClick={() => {
-                  setChosen({ playerId, status: 'WITHDRAWN' });
-                }}
-                sx={{ minHeight: 48 }}
-              >
-                {t('console.dropout.withdraw')}
-              </Button>
+              </Box>
             </Box>
           ))}
         </DialogSection>
