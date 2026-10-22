@@ -112,9 +112,12 @@ describe('форма входа', () => {
     type(ru['login.password.label'], 'parol123');
     press(ru['login.submit']);
 
+    // Первый запрос — вход. После него шапка вошедшего уже спрашивает свои
+    // данные (колокольчик уведомлений), поэтому считается не число запросов.
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(fetchMock).toHaveBeenCalled();
     });
+    expect(fetchMock.mock.calls[0]?.[0] as string).toContain('/auth/login');
     const sent = fetchMock.mock.calls[0]?.[1]?.body as string;
     expect(sent).toContain(PHONE);
   });
