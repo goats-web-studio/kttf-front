@@ -17,25 +17,42 @@ interface Figure {
   readonly src: string;
   readonly width: number;
   readonly height: number;
-  /** Сторона и отступ от края первого экрана; отрицательный — фигура за краем. */
+  /** Сторона и отступ от края первого экрана до `lg`; отрицательный — за краем. */
   readonly side: 'left' | 'right';
   readonly offset: string;
-  /**
-   * С `lg` — от центра до ближнего к заголовку края фигуры, px. От краёв
-   * экрана композиция расползалась: на 1920 левый игрок уходил за край, а
-   * правый стоял у текста. От центра обе стороны одинаковы на любой ширине.
-   */
-  readonly inner: number;
-  /** Высота фигуры на широком экране. */
+  /** Высота фигуры до `lg`. */
   readonly size: number;
+  /**
+   * С `lg` — композиция в точках макета шириной `REF`: от центра до ближнего
+   * к заголовку края фигуры, высота и нижний край (отрицательный — фигура
+   * уходит под край экрана). На другой ширине всё множится на одну долю,
+   * и соотношения не плывут.
+   */
+  readonly lg: { readonly inner: number; readonly size: number; readonly bottom: number };
   /** Дальняя фигура — темнее и мягче, как на постере. */
   readonly back?: boolean;
+  /**
+   * Край кадра на фото, который надо растворить: низ — фигура обрезана по
+   * поясу выше края экрана; правый край — у дальней девушки рука упирается
+   * в край исходного снимка. Людей не дорисовываем (правила бренда,
+   * `kttf-marketing/CLAUDE.md`), поэтому обрез уходит в темноту.
+   */
+  readonly fade?: { readonly bottom?: boolean; readonly right?: boolean };
 }
+
+/** Ширина макета первого экрана, к которой подобраны `lg`. */
+const REF = 1560;
 
 /**
  * Игроки по бокам — те же вырезки реальных игроков Казахстана, что на шапке
  * YouTube-канала и первом постере (`kttf-marketing/sources/photos/cutouts`).
- * Ближние смотрят к центру, к заголовку; дальние приглушены.
+ *
+ * Масштаб подобран по голове, а не по высоте картинки: снимки кадрированы
+ * по-разному (подающий — до колен, с повязкой — по пояс), и при равной
+ * высоте голова одного выходила вдвое больше другой. Ближние — голова около
+ * 120 точек макета, на одной высоте; дальние — около 100 и выше, за плечом
+ * ближних, между ними и заголовком. Рука подающего кончается левее чисел
+ * под поиском.
  */
 const FIGURES: readonly Figure[] = [
   {
@@ -44,8 +61,8 @@ const FIGURES: readonly Figure[] = [
     height: 640,
     side: 'left',
     offset: '-4%',
-    inner: 520,
-    size: 470,
+    size: 440,
+    lg: { inner: 407, size: 560, bottom: -60 },
     back: true,
   },
   {
@@ -54,9 +71,10 @@ const FIGURES: readonly Figure[] = [
     height: 640,
     side: 'right',
     offset: '-14%',
-    inner: 360,
     size: 400,
+    lg: { inner: 324, size: 404, bottom: 86 },
     back: true,
+    fade: { bottom: true, right: true },
   },
   {
     src: '/home/player-serve.webp',
@@ -64,8 +82,8 @@ const FIGURES: readonly Figure[] = [
     height: 759,
     side: 'left',
     offset: '-9%',
-    inner: 240,
     size: 390,
+    lg: { inner: 260, size: 503, bottom: -103 },
   },
   {
     src: '/home/player-fist.webp',
@@ -73,8 +91,9 @@ const FIGURES: readonly Figure[] = [
     height: 880,
     side: 'right',
     offset: '5%',
-    inner: 240,
     size: 450,
+    lg: { inner: 368, size: 410, bottom: -20 },
+    fade: { bottom: true },
   },
 ];
 
@@ -227,6 +246,17 @@ export default function HeroPoster(): ReactNode {
 }
 
 function FigureImage({ figure }: { readonly figure: Figure }): ReactNode {
+  const { inner, size, bottom } = figure.lg;
+  const back = figure.back === true;
+  // Доля макета: на 1200 игроки мельче, на 1920 — не крупнее 110%, иначе
+  // голова уходит под заголовок.
+  const unit = `min(calc(100vw / ${String(REF)}), 1.1px)`;
+  const at = (value: number): string => `calc(${String(value)} * ${unit})`;
+  const masks = [
+    figure.fade?.bottom === true && 'linear-gradient(to top, transparent 0, #000 30%)',
+    figure.fade?.right === true && 'linear-gradient(to left, transparent 0, #000 18%)',
+  ].filter((mask): mask is string => mask !== false);
+
   return (
     <Box
       component="img"
@@ -236,30 +266,34 @@ function FigureImage({ figure }: { readonly figure: Figure }): ReactNode {
       width={figure.width}
       height={figure.height}
       // Первый экран: картинки ближних игроков нужны сразу, дальние — следом.
-      fetchPriority={figure.back === true ? 'low' : 'high'}
+      fetchPriority={back ? 'low' : 'high'}
       decoding="async"
       sx={{
         position: 'absolute',
-        bottom: 0,
+        bottom: { xs: 0, lg: at(bottom) },
         [figure.side]: { xs: figure.offset, lg: 'auto' },
         [figure.side === 'left' ? 'right' : 'left']: {
           xs: 'auto',
-          lg: `calc(50% + ${String(figure.inner)}px)`,
+          lg: `calc(50% + ${at(inner)})`,
         },
         width: 'auto',
         height: {
-          xs: figure.back === true ? 0 : 230,
-          sm: figure.back === true ? 260 : 300,
+          xs: back ? 0 : 230,
+          sm: back ? 260 : 300,
           md: figure.size,
+          lg: at(size),
         },
-        display: { xs: figure.back === true ? 'none' : 'block', sm: 'block' },
+        display: { xs: back ? 'none' : 'block', sm: 'block' },
         maxWidth: 'none',
         pointerEvents: 'none',
         userSelect: 'none',
-        filter:
-          figure.back === true
-            ? 'blur(3px) brightness(0.42) saturate(0.8)'
-            : 'brightness(0.95) contrast(1.05)',
+        ...(masks.length > 0 && {
+          maskImage: { lg: masks.join(', ') },
+          maskComposite: { lg: 'intersect' },
+        }),
+        filter: back
+          ? 'blur(3px) brightness(0.42) saturate(0.8)'
+          : 'brightness(0.95) contrast(1.05)',
       }}
     />
   );
