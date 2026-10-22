@@ -152,7 +152,9 @@ export default function CoachField({ value, onChange, label, error }: CoachField
                     <Typography variant="body2" color="text.secondary">
                       {option.city === null ? '' : placeName(option.city)}
                       {option.city !== null && option.rating !== null && ' · '}
-                      {option.rating !== null && <RatingValue value={option.rating} />}
+                      {option.rating !== null && (
+                        <RatingValue value={option.rating} animate={false} />
+                      )}
                     </Typography>
                   )}
                 </Box>

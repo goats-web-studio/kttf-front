@@ -29,6 +29,7 @@ import { searchId } from '@/common/search';
 import AdSlot from '@/common/ui/ad-slot';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
+import { Reveal } from '@/common/ui/motion';
 import { clubCities } from '@/features/clubs/cities';
 import { clubDirectoryQuery, clubsQuery } from '@/features/clubs/queries';
 import { CoachCard } from '@/features/coaches/coach-cards';
@@ -228,10 +229,10 @@ function HomePage(): ReactNode {
               more={{ href: '/trainings?view=coaches', label: t('home.coaches.all') }}
             >
               <Box component="ul" sx={railSx({ sm: 2, md: 4 })}>
-                {coaches.data?.items.map((coach) => (
-                  <Box component="li" key={coach.id}>
+                {coaches.data?.items.map((coach, index) => (
+                  <Reveal component="li" key={coach.id} delay={index * 60}>
                     <CoachCard coach={coach} />
-                  </Box>
+                  </Reveal>
                 ))}
               </Box>
             </Section>
@@ -355,10 +356,10 @@ function TournamentList({
         gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
       }}
     >
-      {items.map((tournament) => (
-        <Box component="li" key={tournament.id}>
+      {items.map((tournament, index) => (
+        <Reveal component="li" key={tournament.id} delay={index * 60}>
           <TournamentCard tournament={tournament} club={clubs?.get(tournament.clubId)} />
-        </Box>
+        </Reveal>
       ))}
     </Box>
   );

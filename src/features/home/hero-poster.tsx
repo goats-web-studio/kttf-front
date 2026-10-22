@@ -5,7 +5,7 @@ import InputBase from '@mui/material/InputBase';
 import Typography from '@mui/material/Typography';
 import { useNavigate } from '@tanstack/react-router';
 import { Search } from 'lucide-react';
-import { useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useState, type CSSProperties, type ReactNode, type SyntheticEvent } from 'react';
 
 import { useT } from '@/common/i18n';
 import { orUndefined } from '@/common/search';
@@ -115,6 +115,9 @@ const FIGURES: readonly Figure[] = [
  *
  * На телефоне игроки уходят вниз, под поиск: заголовок и поле должны
  * попасть в первый экран целиком.
+ *
+ * При загрузке строки поднимаются по очереди сверху вниз, игроки входят с
+ * боков — один раз, это фирменный жест страницы (`styles.css`, `hero-*`).
  */
 export default function HeroPoster(): ReactNode {
   const t = useT();
@@ -156,6 +159,8 @@ export default function HeroPoster(): ReactNode {
         }}
       >
         <Typography
+          className="hero-rise"
+          style={{ '--motion-delay': '0ms' } as CSSProperties}
           sx={{
             mb: { xs: 2, sm: 2.5 },
             display: 'inline-flex',
@@ -176,6 +181,8 @@ export default function HeroPoster(): ReactNode {
           {t('home.hero.forum')}
         </Typography>
         <Typography
+          className="hero-rise"
+          style={{ '--motion-delay': '80ms' } as CSSProperties}
           component="h1"
           sx={{
             fontWeight: 800,
@@ -192,6 +199,8 @@ export default function HeroPoster(): ReactNode {
           </Box>
         </Typography>
         <Typography
+          className="hero-rise"
+          style={{ '--motion-delay': '160ms' } as CSSProperties}
           sx={{
             mt: { xs: 2, sm: 3 },
             fontWeight: 700,
@@ -204,6 +213,8 @@ export default function HeroPoster(): ReactNode {
         </Typography>
 
         <Box
+          className="hero-rise"
+          style={{ '--motion-delay': '240ms' } as CSSProperties}
           component="form"
           role="search"
           onSubmit={submit}
@@ -245,7 +256,9 @@ export default function HeroPoster(): ReactNode {
           </Button>
         </Box>
 
-        <PlatformCounts />
+        <Box className="hero-rise" style={{ '--motion-delay': '320ms' } as CSSProperties}>
+          <PlatformCounts />
+        </Box>
       </Container>
     </Atmosphere>
   );
@@ -274,6 +287,9 @@ function FigureImage({ figure }: { readonly figure: Figure }): ReactNode {
       // Первый экран: картинки ближних игроков нужны сразу, дальние — следом.
       fetchPriority={back ? 'low' : 'high'}
       decoding="async"
+      // Игроки входят с боков к заголовку; дальние — следом за ближними.
+      className={figure.side === 'left' ? 'hero-enter-left' : 'hero-enter-right'}
+      style={{ '--motion-delay': back ? '220ms' : '80ms' } as CSSProperties}
       sx={{
         position: 'absolute',
         bottom: { xs: 0, lg: at(bottom) },

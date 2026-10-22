@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { formatCount, useLocale, useT } from '@/common/i18n';
+import { useT } from '@/common/i18n';
+import { Count } from '@/common/ui/motion';
 import QueryState from '@/common/ui/query-state';
 import RatingValue from '@/common/ui/rating-value';
 import { RowsSkeleton } from '@/common/ui/skeleton';
@@ -485,7 +486,6 @@ export function EquipmentCard({ playerId }: { readonly playerId: string }): Reac
  */
 export function GameStatsBlock({ coach }: { readonly coach: CoachView }): ReactNode {
   const t = useT();
-  const locale = useLocale();
   const summary = useQuery(playerSummaryQuery(coach.player.id, 'ALL'));
 
   return (
@@ -525,7 +525,7 @@ export function GameStatsBlock({ coach }: { readonly coach: CoachView }): ReactN
               <StatTile
                 icon={Flag}
                 label={t('profile.stats.tournaments')}
-                value={formatCount(summary.data.tournaments, locale)}
+                value={<Count value={summary.data.tournaments} />}
               />
             </>
           )}

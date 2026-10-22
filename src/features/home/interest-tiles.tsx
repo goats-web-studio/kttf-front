@@ -15,6 +15,7 @@ import {
 import type { ReactNode } from 'react';
 
 import { useT, type MessageKey } from '@/common/i18n';
+import { Reveal } from '@/common/ui/motion';
 
 interface Interest {
   readonly key: string;
@@ -62,8 +63,8 @@ export default function InterestTiles(): ReactNode {
         gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' },
       }}
     >
-      {INTERESTS.map(({ key, href, icon: Icon }) => (
-        <Box component="li" key={key}>
+      {INTERESTS.map(({ key, href, icon: Icon }, index) => (
+        <Reveal component="li" key={key} delay={index * 60}>
           <Paper variant="outlined" sx={{ height: '100%', overflow: 'hidden' }}>
             <CardActionArea
               href={href}
@@ -152,7 +153,7 @@ export default function InterestTiles(): ReactNode {
               </Typography>
             </CardActionArea>
           </Paper>
-        </Box>
+        </Reveal>
       ))}
     </Box>
   );

@@ -7,7 +7,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Swords, Trophy, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { fill, formatCount, formatDate, useLocale, useT } from '@/common/i18n';
+import { fill, formatDate, useLocale, useT } from '@/common/i18n';
+import { Count } from '@/common/ui/motion';
 import StatTile from '@/common/ui/stat-tile';
 
 import { clubSummaryQuery } from './queries';
@@ -19,7 +20,6 @@ import { clubSummaryQuery } from './queries';
  */
 export function ClubNumbers({ clubId }: { readonly clubId: string }): ReactNode {
   const t = useT();
-  const locale = useLocale();
   const summary = useQuery(clubSummaryQuery(clubId));
 
   if (summary.data === undefined || summary.data.tournamentsHeld === 0) return null;
@@ -31,17 +31,17 @@ export function ClubNumbers({ clubId }: { readonly clubId: string }): ReactNode 
       <StatTile
         icon={Swords}
         label={t('club.live.matches')}
-        value={formatCount(data.matchesRecent, locale)}
+        value={<Count value={data.matchesRecent} />}
       />
       <StatTile
         icon={Users}
         label={t('club.live.players')}
-        value={formatCount(data.activePlayersRecent, locale)}
+        value={<Count value={data.activePlayersRecent} />}
       />
       <StatTile
         icon={Trophy}
         label={t('club.live.tournaments')}
-        value={formatCount(data.tournamentsHeld, locale)}
+        value={<Count value={data.tournamentsHeld} />}
       />
     </Box>
   );

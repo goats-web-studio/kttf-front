@@ -2,9 +2,10 @@ import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { fill, formatDate, useLocale, useT } from '@/common/i18n';
+import { useMotionGroup } from '@/common/ui/motion-hooks';
 
 import { playerName } from './player-name';
 import { playerTournamentsQuery } from './queries';
@@ -25,6 +26,8 @@ export default function FormStrip({ playerId }: { readonly playerId: string }): 
   const t = useT();
   const results = useInfiniteQuery(playerTournamentsQuery(playerId));
   const form = recentForm(results.data?.pages[0]?.items ?? []);
+  // Точки встают по одной слева направо — от старой встречи к свежей.
+  const [motionRef, motion] = useMotionGroup();
 
   if (form.length === 0) return null;
 
@@ -37,14 +40,16 @@ export default function FormStrip({ playerId }: { readonly playerId: string }): 
       </Typography>
       <Box
         component="ol"
+        ref={motionRef}
+        data-motion={motion}
         aria-label={fill(t('profile.form.label'), {
           wins: String(wins),
           count: String(form.length),
         })}
         sx={{ m: 0, p: 0, listStyle: 'none', display: 'flex', mx: -0.5 }}
       >
-        {[...form].reverse().map((entry) => (
-          <Dot key={entry.match.matchId} entry={entry} />
+        {[...form].reverse().map((entry, index) => (
+          <Dot key={entry.match.matchId} entry={entry} order={index} />
         ))}
       </Box>
       <Typography
@@ -60,7 +65,7 @@ export default function FormStrip({ playerId }: { readonly playerId: string }): 
 }
 
 /** Точка встречи. Зона касания 28px вокруг кружка 14px — точки стоят плотно. */
-function Dot({ entry }: { readonly entry: FormMatch }): ReactNode {
+function Dot({ entry, order }: { readonly entry: FormMatch; readonly order: number }): ReactNode {
   const t = useT();
   const locale = useLocale();
   const { match, tournament } = entry;
@@ -101,6 +106,8 @@ function Dot({ entry }: { readonly entry: FormMatch }): ReactNode {
         <Box
           component="span"
           aria-hidden
+          className="motion-pop"
+          style={{ '--motion-delay': `${String(order * 50)}ms` } as CSSProperties}
           sx={{
             width: 14,
             height: 14,

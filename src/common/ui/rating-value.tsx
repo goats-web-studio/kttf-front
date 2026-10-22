@@ -5,11 +5,19 @@ import type { ReactNode } from 'react';
 
 import { formatRating } from '@/common/i18n';
 
+import { CountUp } from './motion';
+
 interface RatingValueProps {
   /** Рейтинг строкой, как пришёл от сервера (ADR-014); целым он становится при показе. */
   readonly value: string;
   /** Кегль, начертание и гарнитуру задаёт место: звезда — доля кегля. */
   readonly sx?: Exclude<SxProps<Theme>, readonly unknown[]>;
+  /**
+   * Расти от нуля при первом показе. Выключается там, где число меняется
+   * от наведения или открывается заново каждый раз: подсказка графика,
+   * меню аккаунта, выбор в поле формы.
+   */
+  readonly animate?: boolean;
 }
 
 /**
@@ -23,8 +31,13 @@ interface RatingValueProps {
  * (07, 3.2). Число остаётся цветом текста — красные цифры в каждой строке
  * таблицы съели бы правило 5% (07, 1.3). Чтецу экрана звезда не нужна: рядом
  * всегда подпись «Рейтинг» или заголовок колонки.
+ *
+ * При первом показе число растёт от нуля до рейтинга (`CountUp`): рейтинг —
+ * итог игры, и пусть он так и читается.
  */
-export default function RatingValue({ value, sx }: RatingValueProps): ReactNode {
+export default function RatingValue({ value, sx, animate = true }: RatingValueProps): ReactNode {
+  const whole = Number(formatRating(value));
+
   return (
     <Box
       component="span"
@@ -54,7 +67,11 @@ export default function RatingValue({ value, sx }: RatingValueProps): ReactNode 
           alignSelf: 'center',
         }}
       />
-      <span>{formatRating(value)}</span>
+      {animate && Number.isFinite(whole) ? (
+        <CountUp value={whole} format={(shown) => String(Math.round(shown))} />
+      ) : (
+        <span>{formatRating(value)}</span>
+      )}
     </Box>
   );
 }

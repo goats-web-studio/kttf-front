@@ -4,7 +4,8 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
-import { formatCount, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { useT, type MessageKey } from '@/common/i18n';
+import { Count } from '@/common/ui/motion';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { coachesQuery } from '@/features/coaches/queries';
 import { playersQuery } from '@/features/players/queries';
@@ -21,7 +22,6 @@ import { tournamentsQuery } from '@/features/tournaments/queries';
  */
 export default function PlatformCounts(): ReactNode {
   const t = useT();
-  const locale = useLocale();
   const players = useQuery(playersQuery({ page: 1, limit: 1 }));
   const tournaments = useQuery(tournamentsQuery({ page: 1, limit: 1 }));
   const coaches = useQuery(coachesQuery({ page: 1, limit: 1 }));
@@ -73,7 +73,7 @@ export default function PlatformCounts(): ReactNode {
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {formatCount(value ?? 0, locale)}
+              <Count value={value ?? 0} />
             </Typography>
             <Typography
               className="count-label"

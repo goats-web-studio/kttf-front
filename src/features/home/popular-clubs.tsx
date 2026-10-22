@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import { fill, formatDate, useLocale, useT } from '@/common/i18n';
 import { GRAIN } from '@/common/ui/atmosphere';
 import TableArt from '@/common/ui/table-art';
+import { Reveal } from '@/common/ui/motion';
 import ClubMark from '@/features/clubs/club-mark';
 import OpenStatus from '@/features/clubs/open-status';
 import { usePlaceName } from '@/features/places/place-name';
@@ -30,10 +31,10 @@ export default function PopularClubs({
 }): ReactNode {
   return (
     <Box component="ul" sx={railSx({ sm: 2, md: 3 })}>
-      {clubs.map((club) => (
-        <Box component="li" key={club.id}>
+      {clubs.map((club, index) => (
+        <Reveal component="li" key={club.id} delay={index * 60}>
           <ClubTile club={club} />
-        </Box>
+        </Reveal>
       ))}
     </Box>
   );

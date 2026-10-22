@@ -197,7 +197,7 @@ function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                {t('nav.ratings')} <RatingValue value={player.rating} />
+                {t('nav.ratings')} <RatingValue value={player.rating} animate={false} />
               </Box>
             </Box>
           </>
