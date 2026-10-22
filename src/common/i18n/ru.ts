@@ -827,7 +827,7 @@ export const ru = {
   'results.unresolved.title': 'Равенства без решения судьи',
   'results.standings.title': 'Групповые таблицы',
   'results.standings.rule.diff':
-    'Равенство очков решают личная встреча, затем разница сетов и мячей между равными',
+    'Равенство очков решают личная встреча, затем разница сетов между равными, затем по всей таблице',
   'results.standings.rule.ratio':
     'Равенство очков решают личная встреча, затем отношение сетов между равными',
   'results.standings.advance': 'Выходят дальше: первые {count} в группе',
@@ -1248,12 +1248,12 @@ export const ru = {
   'tournament.form.groupSetsToWin': 'Длина встречи в группе',
   'tournament.form.koSetsToWin': 'Длина встречи в плей-офф',
   'tournament.form.tieBreak': 'Равенство очков в таблице',
-  'tournament.form.tieBreak.diff': 'Разница сетов и мячей',
+  'tournament.form.tieBreak.diff': 'Разница сетов',
   'tournament.form.tieBreak.ratio': 'Отношение сетов среди равных',
   'tournament.form.tieBreak.diffHint':
-    'После личной встречи — разница сетов и мячей между равными, затем по всей таблице (ITTF)',
+    'После личной встречи — разница сетов между равными, затем по всей таблице (ITTF)',
   'tournament.form.tieBreak.ratioHint':
-    'После личной встречи — только отношение выигранных сетов к проигранным между равными; мячи не считаются',
+    'После личной встречи — только отношение выигранных сетов к проигранным между равными',
   'tournament.form.bo3': 'До 2 побед (bo3)',
   'tournament.form.bo5': 'До 3 побед (bo5)',
   'tournament.form.bo7': 'До 4 побед (bo7)',
