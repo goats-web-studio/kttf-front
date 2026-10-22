@@ -1076,6 +1076,13 @@ export const kk: Record<MessageKey, string> = {
   'tournament.form.setsToWin': 'Кездесу ұзақтығы',
   'tournament.form.groupSetsToWin': 'Топтағы кездесу ұзақтығы',
   'tournament.form.koSetsToWin': 'Плей-офф кездесу ұзақтығы',
+  'tournament.form.tieBreak': 'Кестедегі ұпай теңдігі',
+  'tournament.form.tieBreak.diff': 'Сеттер мен доптар айырмасы',
+  'tournament.form.tieBreak.ratio': 'Тең ойыншылар арасындағы сеттер қатынасы',
+  'tournament.form.tieBreak.diffHint':
+    'Жеке кездесуден кейін — тең ойыншылар арасындағы сеттер мен доптар айырмасы, содан кейін бүкіл кесте бойынша (ITTF)',
+  'tournament.form.tieBreak.ratioHint':
+    'Жеке кездесуден кейін — тек тең ойыншылар арасындағы ұтылған және ұтқан сеттер қатынасы; доптар есептелмейді',
   'tournament.form.bo3': '2 жеңіске дейін (bo3)',
   'tournament.form.bo5': '3 жеңіске дейін (bo5)',
   'tournament.form.bo7': '4 жеңіске дейін (bo7)',

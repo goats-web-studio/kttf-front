@@ -1066,6 +1066,13 @@ export const ru = {
   'tournament.form.setsToWin': 'Длина встречи',
   'tournament.form.groupSetsToWin': 'Длина встречи в группе',
   'tournament.form.koSetsToWin': 'Длина встречи в плей-офф',
+  'tournament.form.tieBreak': 'Равенство очков в таблице',
+  'tournament.form.tieBreak.diff': 'Разница сетов и мячей',
+  'tournament.form.tieBreak.ratio': 'Отношение сетов среди равных',
+  'tournament.form.tieBreak.diffHint':
+    'После личной встречи — разница сетов и мячей между равными, затем по всей таблице (ITTF)',
+  'tournament.form.tieBreak.ratioHint':
+    'После личной встречи — только отношение выигранных сетов к проигранным между равными; мячи не считаются',
   'tournament.form.bo3': 'До 2 побед (bo3)',
   'tournament.form.bo5': 'До 3 побед (bo5)',
   'tournament.form.bo7': 'До 4 побед (bo7)',

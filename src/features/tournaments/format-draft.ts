@@ -1,3 +1,4 @@
+import type { TieBreakRule } from '@kttf/shared/brackets';
 import type { FormatConfig, PlayoffSetsToWin } from '@kttf/shared/types';
 
 /**
@@ -36,6 +37,8 @@ export interface FormatDraft {
   readonly playoffSetsToWin: PlayoffSetsToWin;
   /** Не вышедшие из групп играют сетку за места — ADR-045. */
   readonly exitBracket: boolean;
+  /** Как разводится равенство очков в таблицах — ADR-062. */
+  readonly tieBreak: TieBreakRule;
 }
 
 /**
@@ -59,6 +62,7 @@ export const DEFAULT_DRAFT: FormatDraft = {
   // Включено: на любительском турнире играют все, и место получает
   // каждый. Выключить — одна галочка.
   exitBracket: true,
+  tieBreak: 'SET_DIFF',
 };
 
 /**
@@ -77,7 +81,12 @@ export function toFormatConfig(draft: FormatDraft): FormatConfig {
 
   switch (draft.type) {
     case 'ROUND_ROBIN':
-      return { type: 'ROUND_ROBIN', rounds: draft.rounds, setsToWin: draft.setsToWin };
+      return {
+        type: 'ROUND_ROBIN',
+        rounds: draft.rounds,
+        setsToWin: draft.setsToWin,
+        ...tieBreak(draft.tieBreak),
+      };
 
     case 'KNOCKOUT':
       return {
@@ -99,6 +108,7 @@ export function toFormatConfig(draft: FormatDraft): FormatConfig {
         ...playoff(draft.playoffSetsToWin),
         thirdPlace: draft.thirdPlace,
         exitBracket: draft.exitBracket,
+        ...tieBreak(draft.tieBreak),
       };
 
     default:
@@ -109,11 +119,17 @@ export function toFormatConfig(draft: FormatDraft): FormatConfig {
         groupRounds: draft.groupRounds,
         finalGroupCount: draft.advancePerGroup,
         setsToWin: draft.setsToWin,
+        ...tieBreak(draft.tieBreak),
       };
   }
 }
 
 /** Пустые длины по кругам в конфигурацию не пишутся: «как весь плей-офф». */
+/** Правило по умолчанию не пишется: так схема совпадает с прежними турнирами. */
+function tieBreak(rule: TieBreakRule): { tieBreak?: TieBreakRule } {
+  return rule === 'SET_DIFF' ? {} : { tieBreak: rule };
+}
+
 function playoff(lengths: PlayoffSetsToWin): { playoffSetsToWin?: PlayoffSetsToWin } {
   const set = Object.fromEntries(
     Object.entries(lengths).filter((entry) => entry[1] !== undefined),
@@ -132,7 +148,12 @@ export function fromFormatConfig(config: FormatConfig): FormatDraft {
 
   switch (config.type) {
     case 'ROUND_ROBIN':
-      return { ...base, rounds: config.rounds, setsToWin: config.setsToWin };
+      return {
+        ...base,
+        rounds: config.rounds,
+        setsToWin: config.setsToWin,
+        tieBreak: config.tieBreak ?? 'SET_DIFF',
+      };
 
     case 'KNOCKOUT':
       return {
@@ -153,6 +174,7 @@ export function fromFormatConfig(config: FormatConfig): FormatDraft {
         thirdPlace: config.thirdPlace,
         playoffSetsToWin: config.playoffSetsToWin ?? {},
         exitBracket: config.exitBracket,
+        tieBreak: config.tieBreak ?? 'SET_DIFF',
       };
 
     case 'GROUPS_FINAL_GROUPS':
@@ -162,6 +184,7 @@ export function fromFormatConfig(config: FormatConfig): FormatDraft {
         advancePerGroup: config.advancePerGroup,
         groupRounds: config.groupRounds,
         setsToWin: config.setsToWin,
+        tieBreak: config.tieBreak ?? 'SET_DIFF',
       };
   }
 }
