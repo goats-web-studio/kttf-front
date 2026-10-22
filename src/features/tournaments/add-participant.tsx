@@ -98,6 +98,13 @@ export default function AddParticipant({
         </Button>
       </Stack>
 
+      {(tournament.status === 'REG_CLOSED' || tournament.status === 'RUNNING') && (
+        // Поздняя запись (ADR-062): после жеребьёвки игрок встаёт в группу.
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+          {t('participants.late.hint')}
+        </Typography>
+      )}
+
       {add.error !== null && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {problems.length === 0 ? (

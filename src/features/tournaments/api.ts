@@ -6,6 +6,7 @@ import type {
   ListTournamentsRequest,
   Page,
   RegisterInput,
+  ReplaceRegistrationInput,
   RegistrationView,
   SetRegistrationCoachInput,
   TournamentResultsView,
@@ -102,6 +103,18 @@ export function registerForTournament(
     method: 'POST',
     body: input,
   });
+}
+
+/** Замена участника — ADR-062: новый встаёт на место заменённого в расстановке. */
+export function replaceRegistration(
+  tournamentId: string,
+  registrationId: string,
+  input: ReplaceRegistrationInput,
+): Promise<RegistrationView> {
+  return apiRequest<RegistrationView>(
+    `/tournaments/${tournamentId}/registrations/${registrationId}/replace`,
+    { method: 'POST', body: input },
+  );
 }
 
 export function updateRegistration(

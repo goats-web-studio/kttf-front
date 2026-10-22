@@ -32,6 +32,8 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   TABLE_OUT_OF_RANGE: 'error.api.TABLE_OUT_OF_RANGE',
   TABLE_BUSY: 'error.api.TABLE_BUSY',
   MATCH_LENGTH_LOCKED: 'error.api.MATCH_LENGTH_LOCKED',
+  LATE_ENTRY_CLOSED: 'error.api.LATE_ENTRY_CLOSED',
+  REPLACEMENT_LOCKED: 'error.api.REPLACEMENT_LOCKED',
 
   // Завершение турнира — ТС 7.5.
   TOURNAMENT_NOT_COMPLETE: 'error.api.TOURNAMENT_NOT_COMPLETE',

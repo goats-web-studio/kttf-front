@@ -658,6 +658,12 @@ export const kk: Record<MessageKey, string> = {
   'participants.markRated': 'Есепке алу',
   'participants.withdraw': 'Шығару',
   'participants.restore': 'Қайтару',
+  'participants.replace': 'Ауыстыру',
+  'participants.replace.lead':
+    'Орнына кім тұрады: {name}? Оның барлық кездесулері жаңа ойыншыға өтеді',
+  'participants.replace.pick': 'Қою',
+  'participants.late.hint':
+    'Жазылу жабық, бірақ қосуға болады: жеребеден кейін ойыншы ең шағын топқа тұрып, ондағылардың бәрімен ойнайды. Торға — тек ауыстыру арқылы.',
   'participants.remove': 'Жазбаны жою',
   'participants.search': 'Ойыншының тегі',
   'participants.find': 'Табу',
@@ -1044,6 +1050,9 @@ export const kk: Record<MessageKey, string> = {
     'Ойыншы орналастыруда жоқ: ол жеребеге қатыспайды немесе алынып тасталды.',
   'error.api.TABLE_OUT_OF_RANGE': 'Залда мұндай үстел жоқ — турнирдің үстел санын тексеріңіз',
   'error.api.TABLE_BUSY': 'Бұл үстелде әлі ойнап жатыр — басқасын таңдаңыз',
+  'error.api.LATE_ENTRY_CLOSED':
+    'Қосатын жер жоқ: келесі кезең құрылған немесе тор жүріп жатыр. Торға — ауыстыру арқылы',
+  'error.api.REPLACEMENT_LOCKED': 'Бұл ойыншы ойнап қойды — оны ауыстыруға болмайды, тек шығаруға',
   'error.api.MATCH_LENGTH_LOCKED': 'Басталған не ойналған кездесудің ұзақтығын өзгерту мүмкін емес',
   'error.api.TOURNAMENT_NOT_COMPLETE': 'Барлық кездесу ойналмаған',
   'error.api.TIES_UNRESOLVED': 'Барлық топта орындар анықталмаған',

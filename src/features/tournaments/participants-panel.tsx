@@ -26,6 +26,7 @@ import { removeRegistration, updateRegistration } from './api';
 import CoachDialog from './coach-dialog';
 import CoachNote from './coach-note';
 import { REGISTRATION_STATUS_KEYS } from './labels';
+import ReplaceParticipant from './replace-participant';
 import { paymentSummary } from './payment-summary';
 import { tournamentKeys } from './queries';
 import { isCoachEditable } from './registration-coach';
@@ -174,6 +175,12 @@ function Row({
   });
 
   const [editingCoach, setEditingCoach] = useState(false);
+  const [replacing, setReplacing] = useState(false);
+  // Заменить можно, пока расстановка есть, а турнир не закончен (ADR-062);
+  // сыгравшего сервер заменить не даст.
+  const replaceable =
+    (tournament.status === 'REG_CLOSED' || tournament.status === 'RUNNING') &&
+    registration.status !== 'WAITLIST';
 
   const isWithdrawn = registration.status === 'WITHDRAWN' || registration.status === 'NO_SHOW';
   const error = update.error ?? remove.error;
@@ -262,6 +269,19 @@ function Row({
               {isWithdrawn ? t('participants.restore') : t('participants.withdraw')}
             </Button>
 
+            {replaceable && !replacing && (
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => {
+                  setReplacing(true);
+                }}
+                sx={ROW_ACTION}
+              >
+                {t('participants.replace')}
+              </Button>
+            )}
+
             {/* Тренер на турнире — до старта (ADR-059, T3): после него по
                 записи уже считаются медали учеников. */}
             {isCoachEditable(tournament.status) && (
@@ -312,6 +332,15 @@ function Row({
               sx={{ width: 88 }}
             />
           </Stack>
+          {replacing && (
+            <ReplaceParticipant
+              tournament={tournament}
+              registration={registration}
+              onClose={() => {
+                setReplacing(false);
+              }}
+            />
+          )}
           <CoachDialog
             registration={registration}
             open={editingCoach}

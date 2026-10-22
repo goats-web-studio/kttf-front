@@ -649,6 +649,12 @@ export const ru = {
   'participants.markRated': 'В зачёт',
   'participants.withdraw': 'Снять',
   'participants.restore': 'Вернуть',
+  'participants.replace': 'Заменить',
+  'participants.replace.lead':
+    'Кто встанет вместо: {name}? Все его встречи перейдут к новому игроку',
+  'participants.replace.pick': 'Поставить',
+  'participants.late.hint':
+    'Запись закрыта, но добавить можно: после жеребьёвки игрок встанет в самую малую группу и сыграет со всеми в ней. В сетку — только заменой.',
   'participants.remove': 'Удалить запись',
   'participants.search': 'Фамилия игрока',
   'participants.find': 'Найти',
@@ -1033,6 +1039,9 @@ export const ru = {
     'Игрока нет в расстановке: он не участвует в жеребьёвке или снят.',
   'error.api.TABLE_OUT_OF_RANGE': 'Такого стола в зале нет — проверьте число столов турнира',
   'error.api.TABLE_BUSY': 'За этим столом ещё играют — выберите другой',
+  'error.api.LATE_ENTRY_CLOSED':
+    'Добавить некуда: следующий этап уже построен или идёт сетка. В сетку — заменой',
+  'error.api.REPLACEMENT_LOCKED': 'Этот игрок уже сыграл — заменить его нельзя, только снять',
   'error.api.MATCH_LENGTH_LOCKED': 'Длину начатой или сыгранной встречи не сменить',
   'error.api.TOURNAMENT_NOT_COMPLETE': 'Сыграны не все встречи',
   'error.api.TIES_UNRESOLVED': 'Не во всех группах определены места',
