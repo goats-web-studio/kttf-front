@@ -1,36 +1,44 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import InputAdornment from '@mui/material/InputAdornment';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { ClubView, TournamentView } from '@kttf/shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
   ArrowRight,
-  CalendarDays,
   MonitorPlay,
-  Search,
   TrendingUp,
   Trophy,
   WifiOff,
   type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { useLocale, useT } from '@/common/i18n';
-import { orUndefined, searchId } from '@/common/search';
+import { searchId } from '@/common/search';
+import AdSlot from '@/common/ui/ad-slot';
 import { RowsSkeleton } from '@/common/ui/skeleton';
+import TableArt from '@/common/ui/table-art';
+import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 import { clubCities } from '@/features/clubs/cities';
-import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { clubDirectoryQuery, clubsQuery } from '@/features/clubs/queries';
+import { CoachCard } from '@/features/coaches/coach-cards';
+import { coachesQuery } from '@/features/coaches/queries';
+import HeroPoster from '@/features/home/hero-poster';
+import InterestTiles from '@/features/home/interest-tiles';
 import { latestNewsQuery } from '@/features/home/news';
 import NewsFeed from '@/features/home/news-feed';
+import PopularClubs from '@/features/home/popular-clubs';
+import { railSx } from '@/features/home/rail';
 import TopPlayers from '@/features/home/top-players';
+import { CHOICE_PICKS, choiceQuery } from '@/features/market/players-choice-query';
+import ProductGrid from '@/features/market/product-grid';
+import { productsQuery } from '@/features/market/queries';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 import TournamentCard from '@/features/tournaments/tournament-card';
 
@@ -44,13 +52,22 @@ export const Route = createFileRoute('/_public/')({
 
 /** Сколько карточек турниров в блоке. Полный список — в календаре. */
 const CARDS = 4;
+/** Клубов — два ряда по три; тренеров и товаров — один ряд по четыре. */
+const CLUBS = 6;
+const ROW = 4;
 
 /**
- * Главная — вход в продукт для игрока и для клуба.
+ * Главная — вход в продукт для игрока, новичка с рекламы и клуба.
  *
- * Порядок блоков — порядок вопросов, с которыми сюда приходят: найти себя
- * в рейтинге, посмотреть, что идёт сейчас, куда записаться, что нового, кто
- * в лидерах. Блок для клубов последний: он для тех, кто турниры проводит.
+ * Сверху вниз: постер бренда с поиском игрока; плитки «что вас интересует»
+ * — вход в разделы словами о деле; живое — что идёт и куда записаться;
+ * популярные клубы; итоги рядом с лидерами рейтинга; тренеры; чем играют;
+ * блок для клубов последним — он для тех, кто турниры проводит.
+ *
+ * Места «популярного» — будущие рекламные: клубы, тренеры и товары стоят
+ * в порядке каталога, пока нет тарифов и продвижения (бэклог рекламы,
+ * `05-state` 5). Слот `home-feed` стоит между живым и итогами и пока
+ * ничего не выводит.
  *
  * Пустой блок не показывается вовсе, а не пишет «нет данных»: на пилотной
  * базе главная иначе выглядела бы заброшенной. Исключение — ошибка
@@ -77,6 +94,11 @@ function HomePage(): ReactNode {
   );
   const news = useQuery(latestNewsQuery);
   const clubs = useQuery(clubDirectoryQuery);
+  const popularClubs = useQuery(clubsQuery({ page: 1, limit: CLUBS }));
+  const coaches = useQuery(coachesQuery({ page: 1, limit: ROW }));
+  // «Чем играют» — первая подборка «Выбора игроков» маркета, без планки.
+  const gear = useQuery(productsQuery(choiceQuery(CHOICE_PICKS[0], 'all')));
+  const gearItems = (gear.data?.items ?? []).filter((item) => item.playerCount > 0).slice(0, ROW);
 
   const cities = useMemo(
     () => clubCities(clubs.data?.values() ?? [], locale),
@@ -85,12 +107,20 @@ function HomePage(): ReactNode {
 
   return (
     <>
-      <Hero />
+      <HeroPoster />
 
-      <Container maxWidth="lg" sx={{ pb: { xs: 6, sm: 10 } }}>
-        <Stack spacing={{ xs: 6, sm: 8 }}>
+      <Container maxWidth="lg" sx={{ pb: { xs: 8, sm: 12 } }}>
+        {/* Плитки заходят на постер: первый экран и разделы — одно целое. */}
+        <Box component="section" sx={{ mt: { xs: -3, md: -5 }, position: 'relative' }}>
+          <Typography variant="h2" sx={VISUALLY_HIDDEN}>
+            {t('home.interests.title')}
+          </Typography>
+          <InterestTiles />
+        </Box>
+
+        <Stack spacing={{ xs: 7, sm: 10 }} sx={{ mt: { xs: 7, sm: 10 } }}>
           {(running.data?.items.length ?? 0) > 0 && (
-            <Section title={t('home.running.title')}>
+            <Section title={t('home.running.title')} live>
               <TournamentList items={running.data?.items ?? []} clubs={clubs.data} />
             </Section>
           )}
@@ -110,33 +140,79 @@ function HomePage(): ReactNode {
             )
           )}
 
-          {(news.data?.length ?? 0) > 0 && (
+          {(popularClubs.data?.items.length ?? 0) > 0 && (
             <Section
-              title={t('home.news.title')}
-              more={{ href: '/tournaments?status=RATED', label: t('home.news.all') }}
+              title={t('home.popularClubs.title')}
+              more={{ href: '/clubs', label: t('home.popularClubs.all') }}
             >
-              <NewsFeed items={news.data ?? []} />
+              <PopularClubs clubs={popularClubs.data?.items ?? []} />
             </Section>
           )}
 
-          <Section
-            title={t('home.top.title')}
-            more={{
-              href:
-                search.city === undefined
-                  ? '/players'
-                  : `/players?${new URLSearchParams({ city: search.city }).toString()}`,
-              label: t('home.top.all'),
+          <AdSlot placement="home-feed" />
+
+          {/* Итоги и лидеры рядом: оба отвечают на «что нового в игре», и
+              по отдельности каждый был длинной лентой на всю ширину. */}
+          <Box
+            sx={{
+              display: 'grid',
+              gap: { xs: 7, md: 4 },
+              gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 7fr) minmax(0, 5fr)' },
+              alignItems: 'start',
             }}
           >
-            <TopPlayers
-              city={search.city}
-              cities={cities}
-              onCity={(city) => {
-                void navigate({ search: { city }, replace: true, resetScroll: false });
+            {(news.data?.length ?? 0) > 0 && (
+              <Section
+                title={t('home.news.title')}
+                more={{ href: '/tournaments?status=RATED', label: t('home.news.all') }}
+              >
+                <NewsFeed items={news.data ?? []} />
+              </Section>
+            )}
+
+            <Section
+              title={t('home.top.title')}
+              more={{
+                href:
+                  search.city === undefined
+                    ? '/players'
+                    : `/players?${new URLSearchParams({ city: search.city }).toString()}`,
+                label: t('home.top.all'),
               }}
-            />
-          </Section>
+            >
+              <TopPlayers
+                city={search.city}
+                cities={cities}
+                onCity={(city) => {
+                  void navigate({ search: { city }, replace: true, resetScroll: false });
+                }}
+              />
+            </Section>
+          </Box>
+
+          {(coaches.data?.items.length ?? 0) > 0 && (
+            <Section
+              title={t('home.coaches.title')}
+              more={{ href: '/trainings?view=coaches', label: t('home.coaches.all') }}
+            >
+              <Box component="ul" sx={railSx({ sm: 2, md: 4 })}>
+                {coaches.data?.items.map((coach) => (
+                  <Box component="li" key={coach.id}>
+                    <CoachCard coach={coach} />
+                  </Box>
+                ))}
+              </Box>
+            </Section>
+          )}
+
+          {gearItems.length > 0 && (
+            <Section
+              title={t('home.gear.title')}
+              more={{ href: '/market', label: t('home.gear.all') }}
+            >
+              <ProductGrid products={gearItems} showPlayers />
+            </Section>
+          )}
 
           <ClubsCallout />
         </Stack>
@@ -146,117 +222,45 @@ function HomePage(): ReactNode {
 }
 
 /**
- * Первый экран: что это за сайт и поиск себя в рейтинге.
- *
- * Поиск — главное действие главной и единственная залитая кнопка на ней
- * (запрет №2): игрок приходит посмотреть свой рейтинг или рейтинг соперника.
+ * Раздел главной: заголовок с красной чертой под фирменным наклоном 9°,
+ * ссылка «все» справа. У «Идёт сейчас» черта мигает — турнир в эту минуту.
  */
-function Hero(): ReactNode {
-  const t = useT();
-  const navigate = Route.useNavigate();
-  const [query, setQuery] = useState('');
-
-  const submit = (event: SyntheticEvent): void => {
-    event.preventDefault();
-    const value = orUndefined(query);
-    void navigate({ to: '/players', search: value === undefined ? {} : { search: value } });
-  };
-
-  return (
-    <Container maxWidth="lg" sx={{ pt: { xs: 3, sm: 5 }, mb: { xs: 5, sm: 7 } }}>
-      <Paper
-        variant="outlined"
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          px: { xs: 3, sm: 6 },
-          py: { xs: 4, sm: 7 },
-          // Мягкое тёплое пятно справа: глубина без картинки и без красной
-          // заливки на пол-экрана.
-          backgroundImage:
-            'radial-gradient(circle at 92% 8%, var(--red-50) 0, transparent 42%), radial-gradient(circle at 70% 110%, var(--gold-50) 0, transparent 40%)',
-        }}
-      >
-        <HeroBall />
-        <Box sx={{ position: 'relative', maxWidth: 600 }}>
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: { xs: 40, sm: 60 },
-              lineHeight: { xs: '42px', sm: '60px' },
-            }}
-          >
-            {t('page.home.title')}
-          </Typography>
-          <Typography color="text.secondary" sx={{ mt: 2, fontSize: 17, maxWidth: 480 }}>
-            {t('page.home.lead')}
-          </Typography>
-
-          <Box
-            component="form"
-            role="search"
-            onSubmit={submit}
-            sx={{
-              mt: 4,
-              display: 'flex',
-              gap: 1.5,
-              flexDirection: { xs: 'column', sm: 'row' },
-            }}
-          >
-            <TextField
-              type="search"
-              label={t('ratings.search')}
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-              }}
-              autoComplete="off"
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={18} aria-hidden />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-              sx={{ '& .MuiOutlinedInput-root': { minHeight: 48 } }}
-            />
-            <Button type="submit" variant="contained" size="large" sx={{ flexShrink: 0 }}>
-              {t('home.hero.find')}
-            </Button>
-          </Box>
-
-          <Stack direction="row" useFlexGap spacing={1} sx={{ mt: 3, flexWrap: 'wrap' }}>
-            <QuickLink href="/tournaments" icon={CalendarDays}>
-              {t('home.hero.calendar')}
-            </QuickLink>
-            <QuickLink href="/players" icon={TrendingUp}>
-              {t('home.hero.ratings')}
-            </QuickLink>
-          </Stack>
-        </Box>
-      </Paper>
-    </Container>
-  );
-}
-
 function Section({
   title,
   more,
+  live = false,
   children,
 }: {
   readonly title: string;
   readonly more?: { readonly href: string; readonly label: string };
+  readonly live?: boolean;
   readonly children: ReactNode;
 }): ReactNode {
   return (
-    <Box component="section">
+    <Box component="section" sx={{ minWidth: 0 }}>
       <Stack
         direction="row"
-        sx={{ alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 2 }}
+        sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2.5 }}
       >
-        <Typography variant="h2">{title}</Typography>
+        <Typography variant="h2" sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            component="span"
+            aria-hidden
+            sx={{
+              width: 6,
+              height: 22,
+              borderRadius: 1,
+              bgcolor: 'var(--red-500)',
+              transform: 'skewX(-9deg)',
+              flexShrink: 0,
+              ...(live && {
+                animation: 'kttf-live 1.6s var(--ease) infinite',
+                '@keyframes kttf-live': { '50%': { opacity: 0.35 } },
+              }),
+            }}
+          />
+          {title}
+        </Typography>
         {more !== undefined && (
           <Link
             href={more.href}
@@ -267,8 +271,10 @@ function Section({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 0.5,
+              minHeight: 44,
               fontWeight: 600,
               color: 'text.secondary',
+              '&:hover': { color: 'var(--red-600)' },
             }}
           >
             {more.label}
@@ -312,20 +318,32 @@ function TournamentList({
 /**
  * Для клубов: зачем проводить турниры здесь. Три довода — ровно то, чего нет
  * у таблицы в мессенджере: зал без интернета, рейтинг без ручного счёта,
- * экран для зрителей.
+ * экран для зрителей. Справа — стол сверху тем же рисунком, что под верхом
+ * страниц: блок про зал, и рисунок про зал.
  */
 function ClubsCallout(): ReactNode {
   const t = useT();
 
   return (
-    <Paper variant="outlined" sx={{ p: { xs: 3, sm: 5 } }}>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+    <Paper
+      variant="outlined"
+      sx={{
+        position: 'relative',
+        overflow: 'hidden',
+        p: { xs: 3, sm: 5 },
+        backgroundImage:
+          'radial-gradient(ellipse 50% 80% at 100% 0%, var(--red-50) 0, transparent 70%)',
+      }}
+    >
+      <CalloutTable />
+      <Stack direction="row" spacing={1.5} sx={{ position: 'relative', alignItems: 'center' }}>
         <IconTile icon={Trophy} />
         <Typography variant="h2">{t('home.clubs.title')}</Typography>
       </Stack>
       <Box
         component="ul"
         sx={{
+          position: 'relative',
           mt: 3,
           mb: 0,
           p: 0,
@@ -333,6 +351,7 @@ function ClubsCallout(): ReactNode {
           display: 'grid',
           gap: 1.5,
           gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+          maxWidth: { md: '78%' },
         }}
       >
         {(
@@ -359,10 +378,30 @@ function ClubsCallout(): ReactNode {
       </Box>
       {/* Заявка клуба — своей страницей с формой (ADR-047): раньше кнопка
           уводила в Instagram, и заявка терялась в личных сообщениях. */}
-      <Button href="/feedback" sx={{ mt: 3, minHeight: 44 }}>
+      <Button href="/feedback" sx={{ position: 'relative', mt: 3, minHeight: 44 }}>
         {t('home.clubs.action')}
       </Button>
     </Paper>
+  );
+}
+
+/** Стол сверху в углу блока для клубов. Декор, только на широком экране. */
+function CalloutTable(): ReactNode {
+  return (
+    <Box
+      aria-hidden
+      sx={{
+        display: { xs: 'none', md: 'block' },
+        position: 'absolute',
+        right: -40,
+        bottom: -30,
+        width: 300,
+        pointerEvents: 'none',
+        '& svg': { display: 'block', width: '100%', height: 'auto' },
+      }}
+    >
+      <TableArt />
+    </Box>
   );
 }
 
@@ -384,93 +423,6 @@ function IconTile({ icon: Icon }: { readonly icon: LucideIcon }): ReactNode {
       }}
     >
       <Icon size={20} strokeWidth={2} />
-    </Box>
-  );
-}
-
-/** Быстрый переход под поиском: пилюля с иконкой. */
-function QuickLink({
-  href,
-  icon: Icon,
-  children,
-}: {
-  readonly href: string;
-  readonly icon: LucideIcon;
-  readonly children: ReactNode;
-}): ReactNode {
-  return (
-    <Button
-      href={href}
-      variant="text"
-      startIcon={<Icon size={16} aria-hidden />}
-      sx={{
-        minHeight: 40,
-        px: 2,
-        borderRadius: 999,
-        bgcolor: 'var(--paper)',
-        border: 1,
-        borderColor: 'divider',
-        fontWeight: 500,
-        '&:hover': { bgcolor: 'var(--paper-hover)' },
-      }}
-    >
-      {children}
-    </Button>
-  );
-}
-
-/**
- * Мяч на первом экране: белый шар с тенью и кольца вокруг — фирменный
- * жест без фотографии. Только на широком экране: на телефоне место нужно
- * поиску.
- */
-function HeroBall(): ReactNode {
-  return (
-    <Box
-      aria-hidden
-      sx={{
-        display: { xs: 'none', md: 'block' },
-        position: 'absolute',
-        right: 56,
-        top: '50%',
-        transform: 'translateY(-50%)',
-        width: 220,
-        height: 220,
-        borderRadius: '50%',
-        border: '1px dashed var(--line-strong)',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          inset: 36,
-          borderRadius: '50%',
-          border: '1px solid var(--line)',
-        },
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          width: 64,
-          height: 64,
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle at 35% 30%, #ffffff 0, #fbfbf9 40%, #e7e5df 100%)',
-          boxShadow: '0 12px 28px rgb(31 31 29 / 0.16), 0 2px 6px rgb(31 31 29 / 0.08)',
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: 'absolute',
-          width: 14,
-          height: 14,
-          borderRadius: '50%',
-          bgcolor: 'var(--red-500)',
-          top: 18,
-          right: 38,
-          boxShadow: '0 0 0 6px var(--red-50)',
-        }}
-      />
     </Box>
   );
 }

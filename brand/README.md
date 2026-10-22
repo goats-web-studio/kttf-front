@@ -12,6 +12,14 @@
 | `public/icons/icon-192.png` | иконка PWA |
 | `public/icons/icon-512.png` | иконка PWA |
 | `public/icons/icon-512-maskable.png` | то же, поля у исходного аватара уже есть |
+| `public/logo-wordmark-white.png` | знак белым, 730×211 — из `kttf-marketing/brand/logo/kttf-source-wordmark-white.png`. Тёмный подвал |
+
+Игроки на первом экране главной — `public/home/player-*.webp`. Это вырезки
+реальных игроков Казахстана из `kttf-marketing/sources/photos/cutouts`, те
+же, что на шапке YouTube-канала: обрезаны по непрозрачному краю, сжаты до
+880 точек по высоте (дальние — до 640) и сохранены в WebP с качеством 78.
+Заменить игрока — заменить файл и поправить ширину и высоту в
+`src/features/home/hero-poster.tsx`.
 
 **Проверено по пикселям, а не на глаз:**
 

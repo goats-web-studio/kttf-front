@@ -1,12 +1,11 @@
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { useT } from '@/common/i18n';
 import ThemeRoot from '@/common/ui/theme';
 
 import BottomNav, { BOTTOM_NAV_HEIGHT } from './bottom-nav';
+import SiteBackdrop from './site-backdrop';
+import SiteFooter from './site-footer';
 import SiteHeader from './site-header';
 
 interface SiteLayoutProps {
@@ -25,8 +24,6 @@ interface SiteLayoutProps {
  * что попадает в консоль, считается против бюджета 400 КБ (ТС 8.1).
  */
 export default function SiteLayout({ children }: SiteLayoutProps): ReactNode {
-  const t = useT();
-
   return (
     <ThemeRoot>
       <Box
@@ -44,35 +41,11 @@ export default function SiteLayout({ children }: SiteLayoutProps): ReactNode {
         }}
       >
         <SiteHeader />
-        <Box component="main" sx={{ flexGrow: 1 }}>
-          {children}
+        <Box component="main" sx={{ flexGrow: 1, position: 'relative' }}>
+          <SiteBackdrop />
+          <Box sx={{ position: 'relative', zIndex: 1 }}>{children}</Box>
         </Box>
-        <Box
-          component="footer"
-          sx={{
-            borderTop: 1,
-            borderColor: 'divider',
-            bgcolor: 'background.paper',
-            px: 2,
-            py: 3,
-            textAlign: 'center',
-          }}
-        >
-          <Typography variant="body2" color="text.secondary">
-            {t('app.tagline')}
-          </Typography>
-          {/* Инстаграм — единственный внешний канал федерации: турниры
-              объявляются там, и игрок ищет их сначала в нём. */}
-          <Link
-            href="https://www.instagram.com/kttf.kz"
-            target="_blank"
-            rel="noreferrer"
-            variant="body2"
-            sx={{ display: 'inline-block', mt: 1 }}
-          >
-            {t('footer.instagram')}
-          </Link>
-        </Box>
+        <SiteFooter />
         <BottomNav />
       </Box>
     </ThemeRoot>
