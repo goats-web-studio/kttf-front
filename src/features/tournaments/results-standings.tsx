@@ -207,8 +207,7 @@ function GroupTable({
                         value={model.ratings.get(row.participant) ?? ''}
                         sx={{
                           // На телефоне — строкой под фамилией: место нужно числам.
-                          display: { xs: 'block', sm: 'inline' },
-                          whiteSpace: 'nowrap',
+                          display: { xs: 'flex', sm: 'inline-flex' },
                           ml: { xs: 0, sm: 1 },
                           typography: 'caption',
                           color: 'text.secondary',
