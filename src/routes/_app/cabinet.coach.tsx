@@ -43,15 +43,19 @@ import CoachStatsPanel from '@/features/coaches/editor/stats-panel';
 import { COACH_REQUIREMENT_KEYS, coachFullName } from '@/features/coaches/labels';
 import { coachKeys, coachQuery } from '@/features/coaches/queries';
 import CoachStatusPlate from '@/features/coaches/status-plate';
+import { coachInbox } from '@/features/trial-requests/inbox';
+import TrialInboxPanel from '@/features/trial-requests/inbox-panel';
+import { useNewTrialRequests } from '@/features/trial-requests/new-count';
 
 /**
  * Вкладки повторяют блоки страницы (`docs/11` 5.4): форма — сама страница
- * тренера. «Клубы» — этап T2. Вкладка и, у администратора, чья страница —
- * в адресе.
+ * тренера. «Клубы» — этап T2, «Заявки» на пробную с сайта — T3. Вкладка
+ * и, у администратора, чья страница — в адресе.
  */
 const COACH_TABS = [
   'page',
   'trainings',
+  'requests',
   'qualification',
   'posts',
   'media',
@@ -64,6 +68,7 @@ type CoachTab = (typeof COACH_TABS)[number];
 const TAB_LABELS: Readonly<Record<CoachTab, MessageKey>> = {
   page: 'coach.tab.page',
   trainings: 'coach.tab.services',
+  requests: 'trial.tab',
   clubs: 'coach.tab.clubs',
   students: 'coach.tab.students',
   qualification: 'coach.tab.qualification',
@@ -191,8 +196,10 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
   const id = useId();
   const navigate = Route.useNavigate();
   const tab = Route.useSearch().tab ?? 'page';
+  const newRequests = useNewTrialRequests(coachInbox(coach.id));
   const counts: Partial<Record<CoachTab, number>> = {
     trainings: coach.trainingRequests.length,
+    requests: newRequests,
     clubs: coach.clubInvites.length,
   };
 
@@ -226,7 +233,7 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
             value={value}
             label={
               // Ждущие ответа тренера — числом на вкладке: приглашения в
-              // тренировки клубов и в штаб.
+              // тренировки клубов и в штаб, новые заявки на пробную.
               (counts[value] ?? 0) > 0
                 ? `${t(TAB_LABELS[value])} (${String(counts[value])})`
                 : t(TAB_LABELS[value])
@@ -252,6 +259,7 @@ function Editor({ coach }: { readonly coach: CoachView }): ReactNode {
           </>
         )}
         {tab === 'trainings' && <CoachTrainingsTab coach={coach} />}
+        {tab === 'requests' && <TrialInboxPanel inbox={coachInbox(coach.id)} />}
         {tab === 'qualification' && <CoachQualificationEditor coach={coach} />}
         {tab === 'posts' && <PostsEditor owner={coachOwner(coach.id)} />}
         {tab === 'media' && (

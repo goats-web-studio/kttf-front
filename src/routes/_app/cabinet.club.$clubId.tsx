@@ -49,6 +49,9 @@ import StaffPanel from '@/features/clubs/staff-panel';
 import TournamentList from '@/features/clubs/tournament-list';
 import { usePlaceName } from '@/features/places/place-name';
 import { tournamentsQuery } from '@/features/tournaments/queries';
+import { clubInbox } from '@/features/trial-requests/inbox';
+import TrialInboxPanel from '@/features/trial-requests/inbox-panel';
+import { useNewTrialRequests } from '@/features/trial-requests/new-count';
 
 /**
  * Разделы управления — вкладками. Раньше турниры, форма данных клуба и
@@ -59,6 +62,7 @@ const MANAGE_TABS = [
   'tournaments',
   'page',
   'trainings',
+  'requests',
   'coaches',
   'posts',
   'media',
@@ -73,6 +77,7 @@ const MANAGE_TAB_LABELS: Readonly<Record<ManageTab, MessageKey>> = {
   tournaments: 'club.tournaments.title',
   page: 'manage.page.title',
   trainings: 'nav.trainings',
+  requests: 'trial.tab',
   coaches: 'staff.tab',
   posts: 'manage.posts.title',
   media: 'manage.media.title',
@@ -156,8 +161,11 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
   const trainingRequests = useQuery(clubTrainingsManageQuery(club.id)).data?.requests.length ?? 0;
   // Запросы тренеров в штаб — тоже числом на вкладке (T2.1).
   const staffRequests = useQuery(clubStaffManageQuery(club.id)).data?.requests.length ?? 0;
+  // Новые заявки на пробную с сайта (T3).
+  const newRequests = useNewTrialRequests(clubInbox(club.id));
   const counts: Partial<Record<ManageTab, number>> = {
     trainings: trainingRequests,
+    requests: newRequests,
     coaches: staffRequests,
   };
 
@@ -229,6 +237,7 @@ function Management({ club }: { readonly club: ClubView }): ReactNode {
         {tab === 'tournaments' && <ClubTournaments club={club} />}
         {tab === 'page' && <ClubPage club={club} />}
         {tab === 'trainings' && <ClubTrainingsPanel clubId={club.id} />}
+        {tab === 'requests' && <TrialInboxPanel inbox={clubInbox(club.id)} />}
         {tab === 'coaches' && <ClubStaffPanel clubId={club.id} />}
         {tab === 'posts' && <PostsEditor owner={clubOwner(club.id)} />}
         {tab === 'media' && <MediaEditor owner={clubOwner(club.id)} />}

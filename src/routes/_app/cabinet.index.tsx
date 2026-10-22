@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
 import { useSessionStore } from '@/features/auth/session-store';
+import MyTrialRequests from '@/features/trial-requests/my-requests';
 
 import AdminDesk from './-cabinet/admin-desk';
 import ClubDesk from './-cabinet/club-desk';
@@ -70,6 +71,10 @@ function CabinetPage(): ReactNode {
           {user.clubRoles.length > 0 && <ClubDesk user={user} />}
 
           {user.playerId !== null && <PlayerDesk playerId={user.playerId} />}
+
+          {/* Заявки на пробные (T3) — у любого вошедшего: профиль игрока для
+              заявки не нужен. Пусто — блока нет. */}
+          <MyTrialRequests />
 
           {/* Страница тренера строится на профиле игрока (ADR-059). */}
           {(user.playerId !== null || user.coach !== null) && <CoachDesk user={user} />}
