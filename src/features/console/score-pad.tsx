@@ -4,10 +4,9 @@ import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
-import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import Typography from '@mui/material/Typography';
-import { useId, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
 
@@ -31,8 +30,8 @@ interface ScorePadProps {
  * Ввод счёта — ТЗ 6.3.
  *
  * Закрытие встречи не более чем в два действия: открыть карточку и нажать
- * счёт. Поэтому быстрые кнопки покрывают все исходы, а ввод по сетам
- * спрятан за переключателем — он опция, а не обязанность.
+ * счёт. Поэтому быстрые кнопки покрывают все исходы. Счёт по партиям клубы
+ * не ведут, и его ввода нет: в системе только то, что в зале записывают.
  *
  * Ни одна кнопка не ждёт ответа сервера: обработчик применяет результат
  * к снимку сразу, запрос уходит следом (запрет №1).
@@ -45,7 +44,7 @@ export default function ScorePad({
   onRetire,
 }: ScorePadProps): ReactNode {
   const t = useT();
-  const [mode, setMode] = useState<'quick' | 'sets' | 'retired'>('quick');
+  const [mode, setMode] = useState<'quick' | 'retired'>('quick');
 
   const quick = quickResults(setsToWin);
   const wonByA = quick.filter((result) => result.setsA > result.setsB);
@@ -105,16 +104,6 @@ export default function ScorePad({
       </ScoreRow>
 
       <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        <ToggleButton
-          value="sets"
-          selected={mode === 'sets'}
-          onChange={() => {
-            setMode(mode === 'sets' ? 'quick' : 'sets');
-          }}
-          sx={{ minHeight: 56, px: 2, textTransform: 'none', color: 'text.secondary' }}
-        >
-          {t('console.score.bySets')}
-        </ToggleButton>
         {onRetire !== undefined && (
           <ToggleButton
             value="retired"
@@ -129,7 +118,6 @@ export default function ScorePad({
         )}
       </Box>
 
-      {mode === 'sets' && <SetScores setsToWin={setsToWin} onSubmit={onSubmit} />}
       {mode === 'retired' && onRetire !== undefined && (
         <Retirement setsToWin={setsToWin} nameA={nameA} nameB={nameB} onRetire={onRetire} />
       )}
@@ -315,99 +303,6 @@ function Retirement({
           {result === null
             ? t('console.retired.submit')
             : `${t('console.retired.submit')} ${String(result.setsA)}:${String(result.setsB)}`}
-        </Button>
-      </Box>
-    </Paper>
-  );
-}
-
-/**
- * Счёт по сетам — ТЗ 6.3, опция.
- *
- * Сеты складываются в `setsA`/`setsB` здесь, а не на сервере: контракт ТС 7.6
- * принимает и то, и другое, а проверку соответствия всё равно делает сервер и
- * отвергает кодом `INVALID_SCORE`.
- */
-function SetScores({ setsToWin, onSubmit }: ScorePadProps): ReactNode {
-  const t = useT();
-  const maximum = setsToWin * 2 - 1;
-  const baseId = useId();
-  const [scores, setScores] = useState<readonly [number, number][]>([[0, 0]]);
-
-  const wonA = scores.filter(([a, b]) => a > b).length;
-  const wonB = scores.filter(([a, b]) => b > a).length;
-
-  return (
-    <Paper variant="outlined" sx={{ mt: 1.5, p: 1.5 }}>
-      {scores.map((set, index) => {
-        const labelId = `${baseId}-set-${String(index)}`;
-
-        return (
-          <Box
-            key={index}
-            sx={{ mt: index === 0 ? 0 : 1, display: 'flex', alignItems: 'center', gap: 1 }}
-          >
-            <Typography id={labelId} variant="body2" color="text.secondary" sx={{ width: 64 }}>
-              {t('console.score.set')} {index + 1}
-            </Typography>
-            {([0, 1] as const).map((side) => (
-              <TextField
-                key={side}
-                type="number"
-                value={set[side]}
-                onChange={(event) => {
-                  const value = Number(event.target.value);
-
-                  setScores(
-                    scores.map((current, position): [number, number] =>
-                      position === index
-                        ? side === 0
-                          ? [value, current[1]]
-                          : [current[0], value]
-                        : current,
-                    ),
-                  );
-                }}
-                fullWidth={false}
-                slotProps={{
-                  htmlInput: { min: 0, inputMode: 'numeric', 'aria-labelledby': labelId },
-                }}
-                sx={{
-                  width: 80,
-                  '& .MuiInputBase-root': { minHeight: 56 },
-                  '& input': { fontVariantNumeric: 'tabular-nums' },
-                }}
-              />
-            ))}
-          </Box>
-        );
-      })}
-
-      <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-        <Button
-          variant="text"
-          size="large"
-          disabled={scores.length >= maximum}
-          onClick={() => {
-            setScores([...scores, [0, 0]]);
-          }}
-          sx={{ minHeight: 56, color: 'text.secondary' }}
-        >
-          {t('console.score.addSet')}
-        </Button>
-        <Button
-          size="large"
-          onClick={() => {
-            onSubmit({
-              setsA: wonA,
-              setsB: wonB,
-              setScores: scores.map((set) => [...set] as [number, number]),
-              resultType: 'NORMAL',
-            });
-          }}
-          sx={{ ml: 'auto', minHeight: 56, fontVariantNumeric: 'tabular-nums' }}
-        >
-          {t('console.score.submit')} {wonA}:{wonB}
         </Button>
       </Box>
     </Paper>

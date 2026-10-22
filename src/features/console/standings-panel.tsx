@@ -170,9 +170,6 @@ function GroupTable({
             <TableCell scope="col" align="center" sx={{ width: 56 }}>
               {t('console.standings.sets')}
             </TableCell>
-            <TableCell scope="col" align="center" sx={{ width: 56 }}>
-              {t('console.standings.balls')}
-            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -239,9 +236,6 @@ function GroupTable({
                 </TableCell>
                 <TableCell align="center" sx={{ fontSize: 14 }}>
                   {row.setsWon}:{row.setsLost}
-                </TableCell>
-                <TableCell align="center" sx={{ color: 'text.secondary' }}>
-                  {row.ballDiff > 0 ? `+${String(row.ballDiff)}` : row.ballDiff}
                 </TableCell>
               </TableRow>
             );
