@@ -18,6 +18,7 @@ import RatingValue from '@/common/ui/rating-value';
 import RouterLink from '@/common/ui/router-link';
 import { signOut } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
+import NotificationsBell from '@/features/notifications/bell';
 import { playerQuery } from '@/features/players/queries';
 
 import { SECTIONS } from './sections';
@@ -30,6 +31,7 @@ import { SECTIONS } from './sections';
  *
  * Разделы на телефоне уходят в нижнюю панель (раздел 4 дизайн-системы), здесь
  * остаются знак и вход: четыре слова и логотип в 360px не помещаются.
+ * Вошедшему — колокольчик уведомлений и аватарка (ADR-059, T3).
  */
 export default function SiteHeader(): ReactNode {
   const t = useT();
@@ -75,7 +77,11 @@ export default function SiteHeader(): ReactNode {
           {user === null ? (
             <NavButton to="/login">{t('page.login.title')}</NavButton>
           ) : (
-            <AccountMenu user={user} />
+            <>
+              {/* Колокольчик — рядом с аватаркой и на телефоне (T3). */}
+              <NotificationsBell />
+              <AccountMenu user={user} />
+            </>
           )}
         </Stack>
       </Container>

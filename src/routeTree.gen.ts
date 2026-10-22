@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as ConsoleRouteImport } from './routes/console'
+import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicFeedbackRouteImport } from './routes/_public/feedback'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
@@ -61,6 +62,11 @@ const ConsoleRoute = ConsoleRouteImport.update({
   id: '/console',
   path: '/console',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
 } as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
@@ -249,6 +255,7 @@ const PublicMarketItemsSlugRoute = PublicMarketItemsSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/console': typeof ConsoleRouteWithChildren
+  '/notifications': typeof AppNotificationsRoute
   '/feedback': typeof PublicFeedbackRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
+  '/notifications': typeof AppNotificationsRoute
   '/feedback': typeof PublicFeedbackRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/console': typeof ConsoleRouteWithChildren
+  '/_app/notifications': typeof AppNotificationsRoute
   '/_public/feedback': typeof PublicFeedbackRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/ratings': typeof PublicRatingsRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/console'
+    | '/notifications'
     | '/feedback'
     | '/login'
     | '/ratings'
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/notifications'
     | '/feedback'
     | '/login'
     | '/ratings'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_public'
     | '/console'
+    | '/_app/notifications'
     | '/_public/feedback'
     | '/_public/login'
     | '/_public/ratings'
@@ -515,6 +527,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/console'
       preLoaderRoute: typeof ConsoleRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_public/': {
       id: '/_public/'
@@ -772,6 +791,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppCabinetApplicationsRoute: typeof AppCabinetApplicationsRoute
   AppCabinetCatalogRoute: typeof AppCabinetCatalogRoute
   AppCabinetCoachRoute: typeof AppCabinetCoachRoute
@@ -789,6 +809,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppNotificationsRoute: AppNotificationsRoute,
   AppCabinetApplicationsRoute: AppCabinetApplicationsRoute,
   AppCabinetCatalogRoute: AppCabinetCatalogRoute,
   AppCabinetCoachRoute: AppCabinetCoachRoute,
