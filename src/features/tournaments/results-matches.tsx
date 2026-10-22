@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
+import PlayerLink from '@/features/players/player-link';
 
 import { MATCH_STATUS_KEYS, RESULT_TYPE_KEYS, stageTitle } from './labels';
 
@@ -196,5 +197,5 @@ function Name({
     );
   }
 
-  return names.get(id) ?? t('results.match.unknownPlayer');
+  return <PlayerLink id={id}>{names.get(id) ?? t('results.match.unknownPlayer')}</PlayerLink>;
 }

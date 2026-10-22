@@ -8,6 +8,7 @@ import { useT } from '@/common/i18n';
 import Bracket from '@/common/ui/bracket';
 import { BRACKET_STAGES, finalRound, sourceLabel } from '@/common/ui/bracket-model';
 import Surface from '@/common/ui/surface';
+import PlayerLink from '@/features/players/player-link';
 
 import { stageTitle } from './labels';
 
@@ -64,9 +65,13 @@ function StageBracket({
             const playerId = side === 'A' ? match.playerAId : match.playerBId;
             const source = side === 'A' ? match.sourceA : match.sourceB;
 
-            return playerId === null
-              ? sourceLabel(source, byId, final, t)
-              : (names.get(playerId) ?? t('results.match.unknownPlayer'));
+            return playerId === null ? (
+              sourceLabel(source, byId, final, t)
+            ) : (
+              <PlayerLink id={playerId}>
+                {names.get(playerId) ?? t('results.match.unknownPlayer')}
+              </PlayerLink>
+            );
           }}
         />
       </Box>

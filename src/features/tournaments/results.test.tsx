@@ -101,7 +101,7 @@ describe('итоговые места', () => {
 
     const second = row(playerName(PLAYERS.second));
     expect(second.textContent).toContain(`${ru['participants.coach']} Сериков Тимур`);
-    expect(within(second).queryByRole('link')).toBeNull();
+    expect(within(second).queryByRole('link', { name: 'Сериков Тимур' })).toBeNull();
 
     // Без тренера — без подписи.
     expect(row(playerName(PLAYERS.third)).textContent).not.toContain(ru['participants.coach']);
@@ -210,5 +210,41 @@ describe('изменения рейтинга', () => {
 
     // У участника без событий журнала раскрывать нечего — ТЗ 7.3.
     expect(screen.getAllByText(ru['results.ratings.events']).length).toBe(1);
+  });
+});
+
+describe('имя игрока ведёт в профиль', () => {
+  // Раньше на странице турнира имена были текстом: перейти к игроку из
+  // таблицы, встречи или итогов было нельзя.
+  const href = `/players/${PLAYERS.first.id}`;
+  const name = playerName(PLAYERS.first);
+  const links = (): string[] =>
+    screen.getAllByRole('link', { name }).map((link) => link.getAttribute('href') ?? '');
+
+  it('в групповой таблице', () => {
+    render(<ResultsStandings standings={RESULTS.standings} names={NAMES} />);
+    expect(links()).toContain(href);
+  });
+
+  it('во встречах', () => {
+    render(<ResultsMatches stages={RESULTS.stages} names={NAMES} />);
+    expect(links()).toContain(href);
+  });
+
+  it('в итоговых местах', () => {
+    render(
+      <ResultsPlacements
+        participants={RESULTS.participants}
+        shared={RESULTS.shared}
+        unresolved={RESULTS.unresolved}
+        names={NAMES}
+      />,
+    );
+    expect(links()).toContain(href);
+  });
+
+  it('в изменениях рейтинга', () => {
+    render(<ResultsRatings ratings={RESULTS.ratings} names={NAMES} />);
+    expect(links()).toContain(href);
   });
 });

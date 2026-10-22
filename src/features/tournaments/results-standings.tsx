@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
+import PlayerLink from '@/features/players/player-link';
 
 import ResultsTies from './results-ties';
 
@@ -100,7 +101,9 @@ function GroupTable({
                   )}
                 </TableCell>
                 <TableCell sx={{ ...STICKY, fontWeight: 500 }}>
-                  {names.get(row.participant) ?? row.participant}
+                  <PlayerLink id={row.participant}>
+                    {names.get(row.participant) ?? row.participant}
+                  </PlayerLink>
                 </TableCell>
                 <TableCell align="right" sx={{ ...NUM, color: 'text.secondary' }}>
                   {row.played}

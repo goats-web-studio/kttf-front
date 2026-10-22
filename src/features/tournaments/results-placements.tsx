@@ -12,6 +12,7 @@ import { useT } from '@/common/i18n';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import Surface from '@/common/ui/surface';
 import { playerName } from '@/features/players/player-name';
+import PlayerLink from '@/features/players/player-link';
 
 import CoachNote from './coach-note';
 import { PLACEMENT_REASON_KEYS, REGISTRATION_STATUS_KEYS } from './labels';
@@ -95,7 +96,9 @@ export default function ResultsPlacements({
                       size="sm"
                     />
                     <Box sx={{ minWidth: 0 }}>
-                      {playerName(participant.player)}
+                      <PlayerLink id={participant.player.id}>
+                        {playerName(participant.player)}
+                      </PlayerLink>
                       <CoachNote coach={participant.coach} />
                       {/* На телефоне примечание — подписью под именем: третья
                           колонка мяла фамилии в две строки. */}
