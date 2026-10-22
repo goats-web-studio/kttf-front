@@ -2,53 +2,43 @@ import { coachImageVariant, isCoachPublic, type CoachView } from '@kttf/shared/t
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import Link from '@mui/material/Link';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { MapPin, Pencil, Users } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { useCallback, useEffect, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { isMissingResource } from '@/common/api';
-import { fill, formatCount, useLocale, useT } from '@/common/i18n';
+import { fill, useT } from '@/common/i18n';
 import AdSlot from '@/common/ui/ad-slot';
 import { BackLink } from '@/common/ui/page-header';
-import PlayerAvatar from '@/common/ui/player-avatar';
 import QueryState from '@/common/ui/query-state';
-import RatingValue from '@/common/ui/rating-value';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
-import TrainingDialogHost from '@/features/coaches/training-dialog-host';
-import { searchTraining } from '@/features/coaches/trainings-search';
 import { STALE_PUBLIC_DAYS, daysSince, freshnessWhen } from '@/features/clubs/club-time';
-import { Badge } from '@/features/coaches/coach-cards';
+import CoachHeader from '@/features/coaches/coach-header';
 import {
   AboutBlock,
   AchievementsBlock,
-  AsideCard,
-  EquipmentCard,
+  FactRow,
   GameStatsBlock,
   QualificationBlock,
   TrainingsBlock,
-  WhereContent,
+  WhereBlock,
 } from '@/features/coaches/coach-sections';
-import CoachContactActions, { CoachContactList } from '@/features/coaches/contact-actions';
-import { coachFullName, coachPhoto, hasWhere, headerBadges } from '@/features/coaches/labels';
 import { coachBySlugQuery } from '@/features/coaches/queries';
 import CoachStatusPlate from '@/features/coaches/status-plate';
 import StudentsBlock from '@/features/coaches/staff/students-block';
 import { trackCoachView } from '@/features/coaches/track';
+import TrainingDialogHost from '@/features/coaches/training-dialog-host';
+import { searchTraining } from '@/features/coaches/trainings-search';
 import Gallery from '@/features/content/gallery';
 import { coachOwner } from '@/features/content/owner';
 import Posts from '@/features/content/posts';
-import { usePlaceName } from '@/features/places/place-name';
 
-/** Отступ блоков основной колонки — как у блоков страницы тренера. */
 const SECTION_GAP = { xs: 4, md: 6 };
 
 /** `?training=<id>` — окно тренировки поверх страницы (ADR-059). */
@@ -119,7 +109,6 @@ function CoachPage(): ReactNode {
 
 function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
   const t = useT();
-  const locale = useLocale();
   const user = useSessionStore((state) => state.user);
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -135,50 +124,9 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
   }, [coach.id, isPublic, isOwner]);
 
   const services = <TrainingsBlock coach={coach} />;
-  const qualification = <QualificationBlock coach={coach} />;
-  const achievements = <AchievementsBlock coach={coach} />;
-  // Ученики — после заслуг (T2.1, `docs/11` 3.2.1); в боковой колонке —
-  // число ссылкой на этот блок.
-  const studentsBlock = <StudentsBlock coach={coach} />;
-  // Новости и акции — над квалификацией, фото и видео — после учеников
+  // Новости и акции — сразу за тренировками, фото и видео — после учеников
   // (T2.2, `docs/11` 3.2.2 и 5.3). Пустые не выводятся.
   const owner = coachOwner(coach.id);
-  const posts = <Posts owner={owner} mt={SECTION_GAP} />;
-  const gallery = <Gallery owner={owner} layout={desktop ? 'grid' : 'strip'} mt={SECTION_GAP} />;
-  const about = <AboutBlock coach={coach} />;
-  const game = <GameStatsBlock coach={coach} />;
-
-  const where = hasWhere(coach) ? (
-    <AsideCard title={t('coach.where.title')}>
-      <WhereContent coach={coach} />
-    </AsideCard>
-  ) : null;
-  const contacts = (
-    <AsideCard title={t('club.contacts.title')}>
-      <CoachContactList coach={coach} />
-    </AsideCard>
-  );
-  const students =
-    coach.studentsCount === 0 ? null : (
-      <Paper variant="outlined" component="section" sx={{ p: 2.5 }}>
-        <Link
-          // Якорь на блок учеников на этой же странице — мимо роутера.
-          component="a"
-          href="#students"
-          variant="h3"
-          color="inherit"
-          sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
-        >
-          <Users size={18} aria-hidden />
-          {fill(t('coach.students.title'), { count: formatCount(coach.studentsCount, locale) })}
-        </Link>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {t('coach.students.text')}
-        </Typography>
-      </Paper>
-    );
-  const equipment = <EquipmentCard playerId={coach.player.id} />;
-  const fresh = <CoachFreshness reviewedAt={coach.profileReviewedAt} />;
 
   return (
     <>
@@ -193,53 +141,32 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
       )}
 
       <Cover coach={coach} />
-      <Header coach={coach} />
+      <CoachHeader coach={coach} />
 
-      {desktop ? (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 8fr) minmax(0, 4fr)', gap: 4 }}>
-          <Box>
-            {services}
-            {posts}
-            {qualification}
-            {achievements}
-            {studentsBlock}
-            {gallery}
-            {about}
-            {game}
-          </Box>
-          <Box component="aside" sx={{ mt: 6, display: 'grid', gap: 2, alignContent: 'start' }}>
-            {where}
-            {contacts}
-            {students}
-            {equipment}
-            <AdSlot placement="coach-aside" />
-            {fresh}
-          </Box>
+      {/* Порядок — решение владельца (`docs/11` 5.3): тренировки, квалификация
+          и заслуги сверху, игровая статистика внизу. Стиль — как у профиля
+          игрока (ADR-060): квалификация, заслуги и «где тренирует» — рядом
+          карточками, боковой колонки больше нет — контакты в плашке «Запись».
+          На телефоне тот же порядок одной колонкой (07, 1.2). */}
+      <Box data-coach-layout={desktop ? 'desktop' : 'phone'}>
+        {services}
+        <Posts owner={owner} mt={SECTION_GAP} />
+        <FactRow>
+          {[
+            <QualificationBlock key="qualification" coach={coach} />,
+            <AchievementsBlock key="achievements" coach={coach} />,
+            <WhereBlock key="where" coach={coach} />,
+          ]}
+        </FactRow>
+        <StudentsBlock coach={coach} />
+        <Gallery owner={owner} layout={desktop ? 'grid' : 'strip'} mt={SECTION_GAP} />
+        <AboutBlock coach={coach} />
+        <GameStatsBlock coach={coach} />
+        <Box sx={{ mt: SECTION_GAP, display: 'grid', gap: 2 }}>
+          <AdSlot placement="coach-aside" />
+          <CoachFreshness reviewedAt={coach.profileReviewedAt} />
         </Box>
-      ) : (
-        // Телефон — своя раскладка в одну колонку (07, 1.2; `docs/11` 5.3):
-        // за тренировками — квалификация и заслуги, где тренирует и ученики,
-        // о себе, игровая статистика внизу.
-        <Box data-coach-layout="phone">
-          {services}
-          {posts}
-          {qualification}
-          {achievements}
-          {where !== null && <Box sx={{ mt: 4 }}>{where}</Box>}
-          {/* На телефоне блок учеников сам стоит здесь — число ссылкой не нужно. */}
-          {studentsBlock}
-          {/* Видео лентой — прокруткой вбок, сразу за учениками. */}
-          {gallery}
-          {about}
-          {game}
-          <Box sx={{ mt: 4, display: 'grid', gap: 2 }}>
-            {contacts}
-            {equipment}
-            <AdSlot placement="coach-aside" />
-            {fresh}
-          </Box>
-        </Box>
-      )}
+      </Box>
     </>
   );
 }
@@ -267,78 +194,6 @@ function Cover({ coach }: { readonly coach: CoachView }): ReactNode {
         bgcolor: 'var(--ink-100)',
       }}
     />
-  );
-}
-
-/**
- * Шапка: фото, ФИО, город, «тренирует с 2015 года», короткая строка,
- * метки квалификации и кнопки связи (`docs/11` 5.3).
- */
-function Header({ coach }: { readonly coach: CoachView }): ReactNode {
-  const t = useT();
-  const placeName = usePlaceName();
-  const badges = headerBadges(coach, t);
-  const meta = [
-    ...(coach.city === null ? [] : [placeName(coach.city)]),
-    ...(coach.coachingSince === null
-      ? []
-      : [fill(t('coach.since'), { year: String(coach.coachingSince) })]),
-  ];
-
-  return (
-    <Paper
-      variant="outlined"
-      component="header"
-      sx={{ p: { xs: 2.5, sm: 4 }, mt: coach.coverUrl === null ? 0 : -1 }}
-    >
-      <Stack direction="row" spacing={{ xs: 2, sm: 3 }} sx={{ alignItems: 'center' }}>
-        <PlayerAvatar
-          lastName={coach.player.lastName}
-          firstName={coach.player.firstName}
-          photoUrl={coachPhoto(coach)}
-          size="hero"
-        />
-        <Box sx={{ minWidth: 0 }}>
-          <Typography
-            variant="h1"
-            sx={{ fontSize: { xs: 26, sm: 34 }, lineHeight: { xs: '30px', sm: '40px' } }}
-          >
-            {coachFullName(coach.player)}
-          </Typography>
-          {meta.length > 0 && (
-            <Typography
-              color="text.secondary"
-              sx={{ mt: 0.5, display: 'flex', alignItems: 'flex-start', gap: 0.75 }}
-            >
-              <MapPin size={16} aria-hidden style={{ flexShrink: 0, marginTop: 4 }} />
-              {meta.join(' · ')}
-            </Typography>
-          )}
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {t('ratings.column.rating')}{' '}
-            <RatingValue value={coach.player.rating} sx={{ fontWeight: 600 }} />
-          </Typography>
-        </Box>
-      </Stack>
-
-      {coach.headline !== null && (
-        <Typography variant="body1" sx={{ mt: 2, fontWeight: 500, maxWidth: 680 }}>
-          {coach.headline}
-        </Typography>
-      )}
-
-      {badges.length > 0 && (
-        <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-          {badges.map((badge) => (
-            <Badge key={badge}>{badge}</Badge>
-          ))}
-        </Box>
-      )}
-
-      <Box sx={{ mt: 3 }}>
-        <CoachContactActions coach={coach} />
-      </Box>
-    </Paper>
   );
 }
 

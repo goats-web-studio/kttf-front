@@ -354,6 +354,27 @@ describe('страница тренера', () => {
     expect(evening.textContent).toContain(`${ru['training.via.clubNamed']} ${CLUB.name}`);
   });
 
+  it('шапка-визитка: плашка «Запись» — цена своих тренировок «от», связь, ссылка к тренировкам', async () => {
+    asDesktop();
+    renderAt(`/coaches/${COACH_SLUG}`);
+
+    await screen.findByText(ru['training.part.own']);
+    const plate = element('[data-booking-plate]');
+
+    // Цена — самая низкая из своих: групповая клуба оплачивается клубу (ADR-060).
+    expect(plate.querySelector('[data-plate-price]')?.textContent).toMatch(/^от 20\s000/);
+    // Кнопки связи — в плашке, главная одна.
+    expect(plate.querySelectorAll('[data-coach-contacts] .MuiButton-contained')).toHaveLength(1);
+    expect(
+      within(plate)
+        .getByRole('link', { name: /Все тренировки/ })
+        .getAttribute('href'),
+    ).toBe('#trainings');
+    expect(document.getElementById('trainings')).not.toBeNull();
+    // Проверенный документ — отметка у имени.
+    expect(document.querySelector('header [data-coach-verified]')).not.toBeNull();
+  });
+
   it('телефон — своя раскладка в одну колонку', async () => {
     renderAt(`/coaches/${COACH_SLUG}`);
 

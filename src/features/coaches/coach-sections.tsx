@@ -4,7 +4,15 @@ import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { BadgeCheck, Flag, MapPin, TrendingUp, Trophy } from 'lucide-react';
+import {
+  BadgeCheck,
+  Flag,
+  GraduationCap,
+  MapPin,
+  TrendingUp,
+  Trophy,
+  type LucideIcon,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { formatCount, useLocale, useT } from '@/common/i18n';
@@ -19,12 +27,14 @@ import { hasEquipment } from '@/features/players/equipment-value';
 import { playerQuery, playerSummaryQuery } from '@/features/players/queries';
 
 import { Badge } from './coach-cards';
-import { CoachQuickRequests } from './contact-actions';
+import { TRAININGS_ANCHOR } from './coach-header';
+import { CoachContactList, CoachQuickRequests } from './contact-actions';
 import CredentialScan from './credential-scan';
 import { splitByOwner } from './enroll';
 import { TrainingList } from './training-list';
 import {
   ACHIEVEMENT_ROLE_KEYS,
+  hasWhere,
   COACH_CATEGORY_KEYS,
   CREDENTIAL_KIND_KEYS,
   SPORTS_RANK_KEYS,
@@ -85,6 +95,68 @@ export function AsideCard({
   );
 }
 
+/**
+ * Карточка ряда «кто он» под тренировками (ADR-060): квалификация, заслуги,
+ * где тренирует — тремя колонками на десктопе, столбиком на телефоне.
+ * Заголовок — второго уровня: это разделы страницы, а не боковые заметки.
+ */
+export function FactCard({
+  icon: Icon,
+  title,
+  data,
+  children,
+}: {
+  readonly icon: LucideIcon;
+  readonly title: string;
+  readonly data: string;
+  readonly children: ReactNode;
+}): ReactNode {
+  return (
+    <Paper
+      variant="outlined"
+      component="section"
+      data-fact={data}
+      sx={{ p: { xs: 2.5, sm: 3 }, height: { md: '100%' }, minWidth: 0 }}
+    >
+      <Typography
+        variant="h3"
+        component="h2"
+        sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+      >
+        <Icon size={18} aria-hidden style={{ color: 'var(--red-600)', flexShrink: 0 }} />
+        {title}
+      </Typography>
+      {children}
+    </Paper>
+  );
+}
+
+/**
+ * Ряд карточек «кто он»: делят ширину поровну. Пустая карточка возвращает
+ * `null` уже при отрисовке, поэтому колонки не считаются заранее: `auto-fit`
+ * схлопывает пустые дорожки, и одна карточка встаёт во всю ширину.
+ */
+export function FactRow({ children }: { readonly children: ReactNode }): ReactNode {
+  return (
+    <Box
+      data-coach-facts
+      sx={{
+        mt: { xs: 4, md: 6 },
+        display: 'grid',
+        gap: 2,
+        gridTemplateColumns: {
+          xs: 'minmax(0, 1fr)',
+          md: 'repeat(auto-fit, minmax(280px, 1fr))',
+        },
+        alignItems: 'start',
+        '&:empty': { display: 'none' },
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
 // ---------------------------------------------------------------- тренировки
 
 /**
@@ -98,7 +170,7 @@ export function TrainingsBlock({ coach }: { readonly coach: CoachView }): ReactN
   const parts = splitByOwner(coach.trainings);
 
   return (
-    <>
+    <Box id={TRAININGS_ANCHOR} sx={{ scrollMarginTop: 80 }}>
       {parts.coach.length > 0 && (
         <Section title={t('training.part.own')}>
           <Box data-coach-trainings="own">
@@ -116,7 +188,7 @@ export function TrainingsBlock({ coach }: { readonly coach: CoachView }): ReactN
           </Box>
         </Section>
       )}
-    </>
+    </Box>
   );
 }
 
@@ -134,7 +206,7 @@ function Row({
 
   return (
     <Box sx={{ display: 'contents' }}>
-      <Typography component="dt" variant="body2" color="text.secondary">
+      <Typography component="dt" variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
         {label}
       </Typography>
       <Typography component="dd" sx={{ m: 0, fontWeight: 500, overflowWrap: 'anywhere' }}>
@@ -160,18 +232,17 @@ export function QualificationBlock({ coach }: { readonly coach: CoachView }): Re
   if (!hasFacts && coach.credentials.length === 0) return null;
 
   return (
-    <Section title={t('coach.qualification.title')}>
-      <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }}>
+    <FactCard icon={GraduationCap} title={t('coach.qualification.title')} data="qualification">
+      <Box>
         {hasFacts && (
           <Box
             component="dl"
             sx={{
               m: 0,
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'max-content minmax(0, 1fr)' },
-              columnGap: 3,
-              rowGap: { xs: 0.25, sm: 1 },
-              '& dt:not(:first-of-type)': { mt: { xs: 1, sm: 0 } },
+              gridTemplateColumns: '1fr',
+              rowGap: 0.25,
+              '& dt:not(:first-of-type)': { mt: 1.25 },
             }}
           >
             <Row
@@ -245,8 +316,8 @@ export function QualificationBlock({ coach }: { readonly coach: CoachView }): Re
             ))}
           </Box>
         )}
-      </Paper>
-    </Section>
+      </Box>
+    </FactCard>
   );
 }
 
@@ -264,13 +335,17 @@ export function AchievementsBlock({ coach }: { readonly coach: CoachView }): Rea
   })).filter((group) => group.items.length > 0);
 
   return (
-    <Section title={t('coach.achievements.title')}>
-      <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 }, display: 'grid', gap: 2.5 }}>
+    <FactCard icon={Trophy} title={t('coach.achievements.title')} data="achievements">
+      <Box sx={{ display: 'grid', gap: 2.5 }}>
         {groups.map((group) => (
           <Box key={group.role}>
-            <Typography variant="h3" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Trophy size={18} aria-hidden />
-              {t(ACHIEVEMENT_ROLE_KEYS[group.role])}
+            <Typography
+              variant="caption"
+              component="h3"
+              color="text.secondary"
+              sx={{ mb: 1, fontWeight: 600, letterSpacing: '0.04em' }}
+            >
+              {t(ACHIEVEMENT_ROLE_KEYS[group.role]).toUpperCase()}
             </Typography>
             <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 0.75 }}>
               {group.items.map((achievement) => (
@@ -280,19 +355,24 @@ export function AchievementsBlock({ coach }: { readonly coach: CoachView }): Rea
                   sx={{ display: 'grid', gridTemplateColumns: '48px minmax(0, 1fr)', gap: 1.5 }}
                 >
                   <Typography
-                    color="text.secondary"
-                    sx={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}
+                    sx={{
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 700,
+                      color: 'var(--red-600)',
+                    }}
                   >
                     {achievement.year ?? ''}
                   </Typography>
-                  <Typography sx={{ overflowWrap: 'anywhere' }}>{achievement.title}</Typography>
+                  <Typography sx={{ overflowWrap: 'anywhere', fontWeight: 500 }}>
+                    {achievement.title}
+                  </Typography>
                 </Box>
               ))}
             </Box>
           </Box>
         ))}
-      </Paper>
-    </Section>
+      </Box>
+    </FactCard>
   );
 }
 
@@ -357,6 +437,30 @@ export function WhereContent({ coach }: { readonly coach: CoachView }): ReactNod
         </Box>
       )}
     </Box>
+  );
+}
+
+/** «Где тренирует» и контакты списком — третья карточка ряда «кто он». */
+export function WhereBlock({ coach }: { readonly coach: CoachView }): ReactNode {
+  const t = useT();
+
+  return (
+    <FactCard icon={MapPin} title={t('coach.where.title')} data="where">
+      <Box sx={{ display: 'grid', gap: 2.5 }}>
+        {hasWhere(coach) && <WhereContent coach={coach} />}
+        <Box>
+          <Typography
+            variant="caption"
+            component="h3"
+            color="text.secondary"
+            sx={{ mb: 1, fontWeight: 600, letterSpacing: '0.04em' }}
+          >
+            {t('club.contacts.title').toUpperCase()}
+          </Typography>
+          <CoachContactList coach={coach} />
+        </Box>
+      </Box>
+    </FactCard>
   );
 }
 
@@ -427,8 +531,20 @@ export function GameStatsBlock({ coach }: { readonly coach: CoachView }): ReactN
           )}
         </Box>
       </QueryState>
-      <Box sx={{ mt: 2 }}>
+      <Box
+        sx={{
+          mt: 2,
+          display: 'grid',
+          gap: 2,
+          // Инвентарь — колонкой справа, если он есть; без него победы во всю ширину.
+          gridTemplateColumns: 'minmax(0, 1fr)',
+          gridAutoFlow: { md: 'column' },
+          gridAutoColumns: { md: '360px' },
+          alignItems: 'start',
+        }}
+      >
         <BestWins playerId={coach.player.id} />
+        <EquipmentCard playerId={coach.player.id} />
       </Box>
     </Section>
   );
