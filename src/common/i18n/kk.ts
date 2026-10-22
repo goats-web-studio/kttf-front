@@ -2071,7 +2071,7 @@ export const kk: Record<MessageKey, string> = {
   'trial.form.preferredTime': 'Қашан ыңғайлы',
   'trial.form.preferredTimeHint': 'Мысалы: жұмыс күндері 18:00-ден кейін',
   'trial.form.comment': 'Түсініктеме',
-  'trial.form.commentHint': 'Ойын деңгейі, жаттықтырушыға сұрақтар',
+  'trial.form.commentHint': 'Ойын деңгейі, сұрақтар',
   'trial.form.privacyCoach': 'Жаттықтырушы аккаунттағы атыңыз бен телефоныңызды көреді',
   'trial.form.privacyClub': 'Клуб аккаунттағы атыңыз бен телефоныңызды көреді',
   'trial.form.submit': 'Өтінім жіберу',

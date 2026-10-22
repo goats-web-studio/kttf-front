@@ -2054,7 +2054,7 @@ export const ru = {
   'trial.form.preferredTime': 'Когда удобно',
   'trial.form.preferredTimeHint': 'Например: будни после 18:00',
   'trial.form.comment': 'Комментарий',
-  'trial.form.commentHint': 'Уровень игры, вопросы тренеру',
+  'trial.form.commentHint': 'Уровень игры, вопросы',
   'trial.form.privacyCoach': 'Тренер увидит ваше имя и телефон из аккаунта',
   'trial.form.privacyClub': 'Клуб увидит ваше имя и телефон из аккаунта',
   'trial.form.submit': 'Отправить заявку',
