@@ -51,22 +51,17 @@ export default function CoachHeader({ coach }: { readonly coach: CoachView }): R
       variant="outlined"
       component="header"
       sx={{
-        p: { xs: 2.5, sm: 4 },
         mt: coach.coverUrl === null ? 0 : -1,
         display: 'grid',
-        gap: { xs: 3, md: 4 },
         gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 320px' },
         alignItems: 'stretch',
-        // Фирменный штрих — та же косая полоса, что у профиля игрока.
-        backgroundImage: {
-          md: 'linear-gradient(105deg, transparent 0 64%, var(--red-50) 64% 68%, transparent 68%)',
-        },
+        overflow: 'hidden',
       }}
     >
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={{ xs: 2, sm: 3 }}
-        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, minWidth: 0 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, minWidth: 0, p: { xs: 2.5, sm: 4 } }}
       >
         <Box sx={{ flexShrink: 0 }}>
           <ProfilePhoto
@@ -77,13 +72,6 @@ export default function CoachHeader({ coach }: { readonly coach: CoachView }): R
         </Box>
 
         <Box sx={{ minWidth: 0 }}>
-          <Typography
-            variant="caption"
-            component="p"
-            sx={{ color: 'var(--red-600)', fontWeight: 700, letterSpacing: '0.06em' }}
-          >
-            {t('coach.header.kicker').toUpperCase()}
-          </Typography>
           <Stack
             direction="row"
             useFlexGap
@@ -217,9 +205,8 @@ function BookingPlate({ coach }: { readonly coach: CoachView }): ReactNode {
     <Box
       data-booking-plate
       sx={{
-        px: 3,
-        py: 2.5,
-        borderRadius: 4,
+        px: { xs: 2.5, sm: 4, md: 3 },
+        py: { xs: 2.5, md: 3 },
         bgcolor: 'var(--night)',
         color: 'var(--night-ink-900)',
         display: 'flex',
@@ -244,17 +231,14 @@ function BookingPlate({ coach }: { readonly coach: CoachView }): ReactNode {
       }}
     >
       <Box>
-        <Typography
-          variant="caption"
-          sx={{ color: 'var(--night-ink-500)', fontWeight: 600, letterSpacing: '0.06em' }}
-        >
-          {t('coach.plate.title').toUpperCase()}
+        <Typography variant="caption" sx={{ color: 'var(--night-ink-500)', fontWeight: 600 }}>
+          {t('coach.plate.title')}
         </Typography>
         <Typography
           component="p"
           data-plate-price
           sx={{
-            fontFamily: 'var(--font-mono)',
+            fontVariantNumeric: 'tabular-nums',
             fontWeight: 700,
             fontSize: cheapest === null ? 24 : { xs: 32, sm: 36 },
             lineHeight: cheapest === null ? '32px' : { xs: '40px', sm: '44px' },

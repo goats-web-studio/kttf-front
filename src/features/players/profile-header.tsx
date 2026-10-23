@@ -46,7 +46,9 @@ interface ProfileHeaderProps {
  * Слева человек: фото, имя, «в сети», город, клуб, год рождения и метки —
  * рука, хват, «Тренер KTTF». Под ними «Форма» — последние встречи точками.
  * Справа тёмная плашка рейтинга — главный акцент страницы: число, место в
- * рейтинге, максимум и изменение за последний турнир. Анкета списком
+ * рейтинге, максимум и изменение за последний турнир. Плашка — правая
+ * колонка самой карточки, вровень с её краем: карточка внутри карточки
+ * читалась как шаблон. Анкета списком
  * «подпись — значение» ушла: инвентарь, тренер и «о себе» — в карточках
  * под шапкой, где их видно сразу и крупно.
  */
@@ -66,23 +68,16 @@ export default function ProfileHeader({
       variant="outlined"
       component="header"
       sx={{
-        p: { xs: 2.5, sm: 4 },
         display: 'grid',
-        gap: { xs: 3, md: 4 },
         gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 296px' },
         alignItems: 'stretch',
-        position: 'relative',
         overflow: 'hidden',
-        // Фирменный штрих: косая красная полоса от плашки рейтинга.
-        backgroundImage: {
-          md: 'linear-gradient(105deg, transparent 0 67%, var(--red-50) 67% 71%, transparent 71%)',
-        },
       }}
     >
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={{ xs: 2, sm: 3 }}
-        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, minWidth: 0 }}
+        sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, minWidth: 0, p: { xs: 2.5, sm: 4 } }}
       >
         <Box sx={{ position: 'relative', flexShrink: 0 }}>
           <ProfilePhoto
@@ -182,7 +177,7 @@ export default function ProfileHeader({
 
 /**
  * Плашка рейтинга — тёмная, единственная на странице: якорь, к которому
- * глаз идёт первым (07, 1.3). Число — моноширинным дисплейным кеглем.
+ * глаз идёт первым (07, 1.3). Число — дисплейным кеглем, табличными цифрами.
  */
 function RatingPlate({
   player,
@@ -201,10 +196,8 @@ function RatingPlate({
     <Box
       data-rating-plate
       sx={{
-        position: 'relative',
-        px: 3,
-        py: 2.5,
-        borderRadius: 4,
+        px: { xs: 2.5, sm: 4, md: 3 },
+        py: { xs: 2.5, md: 3 },
         bgcolor: 'var(--night)',
         color: 'var(--night-ink-900)',
         display: 'flex',
@@ -212,16 +205,13 @@ function RatingPlate({
         justifyContent: 'center',
       }}
     >
-      <Typography
-        variant="caption"
-        sx={{ color: 'var(--night-ink-500)', fontWeight: 600, letterSpacing: '0.06em' }}
-      >
-        {t('ratings.column.rating').toUpperCase()}
+      <Typography variant="caption" sx={{ color: 'var(--night-ink-500)', fontWeight: 600 }}>
+        {t('ratings.column.rating')}
       </Typography>
       <Typography
         component="p"
         sx={{
-          fontFamily: 'var(--font-mono)',
+          fontVariantNumeric: 'tabular-nums',
           fontWeight: 700,
           fontSize: { xs: 48, sm: 56 },
           lineHeight: { xs: '56px', sm: '64px' },

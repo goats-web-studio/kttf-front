@@ -4,15 +4,7 @@ import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import {
-  BadgeCheck,
-  Flag,
-  GraduationCap,
-  MapPin,
-  TrendingUp,
-  Trophy,
-  type LucideIcon,
-} from 'lucide-react';
+import { BadgeCheck, Flag, MapPin, TrendingUp, Trophy } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -102,12 +94,10 @@ export function AsideCard({
  * Заголовок — второго уровня: это разделы страницы, а не боковые заметки.
  */
 export function FactCard({
-  icon: Icon,
   title,
   data,
   children,
 }: {
-  readonly icon: LucideIcon;
   readonly title: string;
   readonly data: string;
   readonly children: ReactNode;
@@ -119,12 +109,7 @@ export function FactCard({
       data-fact={data}
       sx={{ p: { xs: 2.5, sm: 3 }, height: { md: '100%' }, minWidth: 0 }}
     >
-      <Typography
-        variant="h3"
-        component="h2"
-        sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-      >
-        <Icon size={18} aria-hidden style={{ color: 'var(--red-600)', flexShrink: 0 }} />
+      <Typography variant="h3" component="h2" sx={{ mb: 2 }}>
         {title}
       </Typography>
       {children}
@@ -233,7 +218,7 @@ export function QualificationBlock({ coach }: { readonly coach: CoachView }): Re
   if (!hasFacts && coach.credentials.length === 0) return null;
 
   return (
-    <FactCard icon={GraduationCap} title={t('coach.qualification.title')} data="qualification">
+    <FactCard title={t('coach.qualification.title')} data="qualification">
       <Box>
         {hasFacts && (
           <Box
@@ -336,7 +321,7 @@ export function AchievementsBlock({ coach }: { readonly coach: CoachView }): Rea
   })).filter((group) => group.items.length > 0);
 
   return (
-    <FactCard icon={Trophy} title={t('coach.achievements.title')} data="achievements">
+    <FactCard title={t('coach.achievements.title')} data="achievements">
       <Box sx={{ display: 'grid', gap: 2.5 }}>
         {groups.map((group) => (
           <Box key={group.role}>
@@ -344,9 +329,9 @@ export function AchievementsBlock({ coach }: { readonly coach: CoachView }): Rea
               variant="caption"
               component="h3"
               color="text.secondary"
-              sx={{ mb: 1, fontWeight: 600, letterSpacing: '0.04em' }}
+              sx={{ mb: 1, fontWeight: 600 }}
             >
-              {t(ACHIEVEMENT_ROLE_KEYS[group.role]).toUpperCase()}
+              {t(ACHIEVEMENT_ROLE_KEYS[group.role])}
             </Typography>
             <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 0.75 }}>
               {group.items.map((achievement) => (
@@ -357,7 +342,7 @@ export function AchievementsBlock({ coach }: { readonly coach: CoachView }): Rea
                 >
                   <Typography
                     sx={{
-                      fontFamily: 'var(--font-mono)',
+                      fontVariantNumeric: 'tabular-nums',
                       fontWeight: 700,
                       color: 'var(--red-600)',
                     }}
@@ -446,7 +431,7 @@ export function WhereBlock({ coach }: { readonly coach: CoachView }): ReactNode 
   const t = useT();
 
   return (
-    <FactCard icon={MapPin} title={t('coach.where.title')} data="where">
+    <FactCard title={t('coach.where.title')} data="where">
       <Box sx={{ display: 'grid', gap: 2.5 }}>
         {hasWhere(coach) && <WhereContent coach={coach} />}
         <Box>
@@ -454,9 +439,9 @@ export function WhereBlock({ coach }: { readonly coach: CoachView }): ReactNode 
             variant="caption"
             component="h3"
             color="text.secondary"
-            sx={{ mb: 1, fontWeight: 600, letterSpacing: '0.04em' }}
+            sx={{ mb: 1, fontWeight: 600 }}
           >
-            {t('club.contacts.title').toUpperCase()}
+            {t('club.contacts.title')}
           </Typography>
           <CoachContactList coach={coach} />
         </Box>

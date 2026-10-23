@@ -3,7 +3,6 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import { Medal, Package, UserRound, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { fill, formatCount, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
@@ -32,21 +31,16 @@ export default function ProfileFacts({ player, summary }: ProfileFactsProps): Re
   const t = useT();
   const cards = [
     hasEquipment(player) ? (
-      <FactCard key="equipment" icon={Package} title={t('coach.equipment.title')} data="equipment">
+      <FactCard key="equipment" title={t('coach.equipment.title')} data="equipment">
         <EquipmentList player={player} thumb={40} />
       </FactCard>
     ) : null,
     summary === undefined ? null : (
-      <FactCard
-        key="achievements"
-        icon={Medal}
-        title={t('profile.facts.achievements')}
-        data="achievements"
-      >
+      <FactCard key="achievements" title={t('profile.facts.achievements')} data="achievements">
         <Achievements summary={summary} />
       </FactCard>
     ),
-    <FactCard key="about" icon={UserRound} title={t('profile.facts.about')} data="about">
+    <FactCard key="about" title={t('profile.facts.about')} data="about">
       <About player={player} />
     </FactCard>,
   ].filter((card) => card !== null);
@@ -70,12 +64,10 @@ export default function ProfileFacts({ player, summary }: ProfileFactsProps): Re
 }
 
 function FactCard({
-  icon: Icon,
   title,
   data,
   children,
 }: {
-  readonly icon: LucideIcon;
   readonly title: string;
   readonly data: string;
   readonly children: ReactNode;
@@ -87,12 +79,7 @@ function FactCard({
       data-fact={data}
       sx={{ p: { xs: 2.5, sm: 3 }, height: { md: '100%' } }}
     >
-      <Typography
-        variant="h3"
-        component="h2"
-        sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-      >
-        <Icon size={18} aria-hidden style={{ color: 'var(--red-600)' }} />
+      <Typography variant="h3" component="h2" sx={{ mb: 2 }}>
         {title}
       </Typography>
       {children}
