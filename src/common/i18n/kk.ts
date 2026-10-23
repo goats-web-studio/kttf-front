@@ -141,7 +141,9 @@ export const kk: Record<MessageKey, string> = {
   'profile.photo.open': 'Фотоны ашу: {name}',
   'profile.photo.close': 'Фотоны жабу',
   'profile.lastSeen': '(соңғы кіру: {date})',
-  'profile.chart.hint': 'Рейтинг графигі. Солға және оңға көрсеткілер — турнирлер бойынша',
+  'profile.chart.hint':
+    'Рейтинг графигі. Солға және оңға көрсеткілер — турнирлер бойынша, Enter — турнирді ашу',
+  'profile.chart.open': 'Турнирді ашу',
   'profile.bestWins.period': 'Үздік жеңістер кезеңі',
   'profile.col.date': 'Күні',
   'profile.col.time': 'Басталуы',

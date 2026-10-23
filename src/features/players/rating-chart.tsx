@@ -1,6 +1,7 @@
 import type { RatingPointView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { useNavigate } from '@tanstack/react-router';
 import {
   useId,
   useLayoutEffect,
@@ -44,6 +45,11 @@ interface RatingChartProps {
  * клавиатура — стрелками. Вертикальная прокрутка страницы пальцем остаётся:
  * холст забирает себе только горизонтальный жест.
  *
+ * Точка турнира ведёт на его страницу: мышью — щелчком (с Ctrl или Cmd — в
+ * новой вкладке), пальцем — повторным касанием той же точки (первое
+ * показывает подсказку), клавиатурой — Enter. Корректировка вне турнира
+ * никуда не ведёт.
+ *
  * Подсказка дополняет, а не прячет: те же числа есть текстом в результатах
  * по турнирам ниже. Сам холст скрыт от чтения с экрана, а подсказка
  * объявляется вежливо — человек с клавиатурой слышит турнир, на который
@@ -58,6 +64,10 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
   const height = width < NARROW ? HEIGHT.narrow : HEIGHT.wide;
   const scale = buildRatingScale(points, { width, height });
   const [active, setActive] = useState<number | null>(null);
+  const navigate = useNavigate();
+  // Каким указателем нажали последний раз: щелчок после касания — не
+  // переход, его делает само касание.
+  const pointer = useRef('mouse');
   // Линия рисуется слева направо при первом показе, заливка и точки
   // проявляются следом — история читается как путь, а не как картинка.
   const [motionRef, motion] = useMotionGroup();
@@ -70,13 +80,41 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
   const current = active === null ? undefined : scale.points[active];
   const dots = scale.points.length <= DOTS_UP_TO;
 
-  const pick = (event: PointerEvent<SVGSVGElement>) => {
+  const nearest = (event: PointerEvent<SVGSVGElement>): number | null => {
     const box = event.currentTarget.getBoundingClientRect();
     // Холст в пикселях места, но страховка от масштаба браузера не мешает.
     const x = ((event.clientX - box.left) / (box.width || width)) * width;
     const index = nearestPoint(scale.points, x);
 
-    setActive(index < 0 ? null : index);
+    return index < 0 ? null : index;
+  };
+
+  const pick = (event: PointerEvent<SVGSVGElement>) => {
+    setActive(nearest(event));
+  };
+
+  /** Турнир точки — на его страницу; в новой вкладке, если попросили. */
+  const open = (index: number | null, newTab = false) => {
+    const id = index === null ? null : (scale.points[index]?.tournamentId ?? null);
+
+    if (id === null) return;
+    if (newTab) {
+      window.open(`/tournaments/${id}`, '_blank', 'noopener');
+      return;
+    }
+    void navigate({ to: '/tournaments/$tournamentId', params: { tournamentId: id } });
+  };
+
+  const press = (event: PointerEvent<SVGSVGElement>) => {
+    const index = nearest(event);
+    pointer.current = event.pointerType;
+
+    // Касание: первое показывает подсказку, второе по той же точке — переход.
+    if (event.pointerType !== 'mouse' && index !== null && index === active) {
+      open(index);
+      return;
+    }
+    setActive(index);
   };
 
   const step = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -92,6 +130,8 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
     if (next !== undefined) {
       event.preventDefault();
       setActive(next);
+    } else if (event.key === 'Enter') {
+      open(active, event.ctrlKey || event.metaKey);
     } else if (event.key === 'Escape') {
       setActive(null);
     }
@@ -122,9 +162,19 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
         data-rating-chart
         ref={motionRef}
         data-motion={motion}
-        style={{ display: 'block', touchAction: 'pan-y', userSelect: 'none' }}
+        style={{
+          display: 'block',
+          touchAction: 'pan-y',
+          userSelect: 'none',
+          cursor: current?.tournamentId == null ? 'default' : 'pointer',
+        }}
         onPointerMove={pick}
-        onPointerDown={pick}
+        onPointerDown={press}
+        onClick={(event) => {
+          // Щелчок мыши; касание обработано в `press`.
+          if (pointer.current !== 'mouse') return;
+          open(active, event.ctrlKey || event.metaKey);
+        }}
         onPointerLeave={(event) => {
           // Палец «уходит» с холста сразу после касания — подсказка остаётся,
           // пока человек не тронет другое место. Мышь уводят — подсказка гаснет.
@@ -311,6 +361,15 @@ function Tip({
         <RatingValue value={point.rating} sx={{ fontWeight: 700, fontSize: 18 }} animate={false} />
         <DeltaPill value={point.delta} />
       </Box>
+      {point.tournamentId !== null && (
+        <Typography
+          variant="caption"
+          component="p"
+          sx={{ mt: 0.75, fontWeight: 600, color: 'var(--red-600)' }}
+        >
+          {t('profile.chart.open')}
+        </Typography>
+      )}
     </Box>
   );
 }

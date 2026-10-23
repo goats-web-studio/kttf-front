@@ -139,7 +139,9 @@ export const ru = {
   'profile.photo.open': 'Открыть фото: {name}',
   'profile.photo.close': 'Закрыть фото',
   'profile.lastSeen': '(последнее посещение: {date})',
-  'profile.chart.hint': 'График рейтинга. Стрелки влево и вправо — по турнирам',
+  'profile.chart.hint':
+    'График рейтинга. Стрелки влево и вправо — по турнирам, Enter — открыть турнир',
+  'profile.chart.open': 'Открыть турнир',
   'profile.bestWins.period': 'Период лучших побед',
   'profile.col.date': 'Дата',
   'profile.col.time': 'Начало',

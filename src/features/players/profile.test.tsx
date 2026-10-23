@@ -480,6 +480,49 @@ describe('кривая рейтинга', () => {
     expect(container.querySelector('[data-rating-tip]')).toBeNull();
   });
 
+  it('точка турнира ведёт на его страницу, корректировка — никуда', async () => {
+    const { container } = renderProfile();
+
+    const chart = await screen.findByRole('figure', { name: ru['profile.chart.hint'] });
+    const [first] = RATING_HISTORY.points;
+    if (first?.tournamentId == null) throw new Error('нет турнира у первой точки');
+
+    // Корректировка: подсказка без «Открыть турнир», Enter оставляет на месте.
+    fireEvent.keyDown(chart, { key: 'ArrowRight' });
+    fireEvent.keyDown(chart, { key: 'ArrowRight' });
+    expect(container.querySelector('[data-rating-tip]')?.textContent).not.toContain(
+      ru['profile.chart.open'],
+    );
+    fireEvent.keyDown(chart, { key: 'Enter' });
+    expect(window.location.pathname).toBe(`/players/${PLAYER_ID}`);
+
+    // Турнир: подсказка зовёт открыть, Enter переходит.
+    fireEvent.keyDown(chart, { key: 'Home' });
+    expect(container.querySelector('[data-rating-tip]')?.textContent).toContain(
+      ru['profile.chart.open'],
+    );
+    fireEvent.keyDown(chart, { key: 'Enter' });
+    await waitFor(() => {
+      expect(window.location.pathname).toBe(`/tournaments/${first.tournamentId ?? ''}`);
+    });
+  });
+
+  it('щелчок мышью по графику открывает турнир под указателем', async () => {
+    const { container } = renderProfile();
+
+    await screen.findByRole('figure', { name: ru['profile.chart.hint'] });
+    const svg = container.querySelector('[data-rating-chart]');
+    if (svg === null) throw new Error('нет графика');
+    const [first] = RATING_HISTORY.points;
+
+    // Левый край холста — первая точка.
+    fireEvent.pointerDown(svg, { pointerType: 'mouse', clientX: 0, clientY: 10 });
+    fireEvent.click(svg, { clientX: 0, clientY: 10 });
+    await waitFor(() => {
+      expect(window.location.pathname).toBe(`/tournaments/${first?.tournamentId ?? ''}`);
+    });
+  });
+
   it('без обсчитанных турниров показывает строку, а не пустой холст', async () => {
     history = EMPTY_RATING_HISTORY;
 
