@@ -15,8 +15,7 @@ import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
 import IntegerField from '@/common/ui/integer-field';
 import { updateTournament } from '@/features/tournaments/api';
-import { SetsField } from '@/features/tournaments/format-editor';
-import { previewFormat } from '@/features/tournaments/format-preview';
+import SetsField from '@/features/tournaments/sets-field';
 import PlayoffLengths from '@/features/tournaments/playoff-lengths';
 
 import ConsoleDialog, { DialogSection } from './console-dialog';
@@ -165,9 +164,12 @@ export default function RunningSettings({
 }
 
 /**
- * Размер основной сетки: по самой сетке, если она построена, иначе — по
- * предпросчёту схемы на нынешний состав. От него зависит, какие круги
- * предлагать.
+ * Размер основной сетки: по самой сетке, если она построена. Иначе — по
+ * тому, что уже известно: после жеребьёвки групп выходят «групп × выходящих»,
+ * у олимпийки — весь состав. От размера зависит, какие круги предлагать.
+ *
+ * Без предпросчёта схемы: он тянул в консоль весь редактор формы и выводил её
+ * за бюджет precache (ADR-032).
  */
 function bracketSizeOf(
   format: FormatConfig,
@@ -177,5 +179,11 @@ function bracketSizeOf(
   const knockout = stages.find((stage) => stage.type === 'KNOCKOUT');
   const rounds = Math.max(0, ...(knockout?.matches.map((match) => match.bracketRound ?? 0) ?? []));
 
-  return rounds > 0 ? nextPowerOfTwo(2 ** rounds) : previewFormat(format, participants).bracketSize;
+  if (rounds > 0) return 2 ** rounds;
+
+  const groups = stages.find((stage) => stage.type === 'GROUPS')?.groups.length ?? 0;
+  const entrants =
+    format.type === 'GROUPS_KNOCKOUT' ? groups * format.advancePerGroup : participants;
+
+  return nextPowerOfTwo(Math.max(2, entrants));
 }

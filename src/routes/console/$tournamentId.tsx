@@ -9,7 +9,7 @@ import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
 import { ChevronLeft, Copy, SlidersHorizontal, Tv } from 'lucide-react';
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
 import { hasBracket } from '@/common/ui/bracket-model';
@@ -30,7 +30,6 @@ import {
   suggestedTable,
 } from '@/features/console/queue';
 import QueueZone from '@/features/console/queue-zone';
-import RunningSettings from '@/features/console/running-settings';
 import { matchSetsToWin } from '@/features/console/score';
 import StandingsPanel from '@/features/console/standings-panel';
 import { namesOf, ratingsOf, withdrawnOf } from '@/features/console/state';
@@ -40,6 +39,14 @@ import TablesZone from '@/features/console/tables-zone';
 import TiePanel from '@/features/console/tie-panel';
 import { useConsole } from '@/features/console/use-console';
 import { useNow } from '@/features/console/use-now';
+
+/**
+ * «Столы и длины» — лениво (ADR-061). Окну нужна сеть, и грузить его заранее
+ * незачем: со списками и полями длины оно выводило набор консоли за бюджет
+ * precache (ADR-032). Чанк всё равно предзагружен — его просто нет в
+ * обязательном наборе.
+ */
+const RunningSettings = lazy(() => import('@/features/console/running-settings'));
 
 export const Route = createFileRoute('/console/$tournamentId')({
   component: ConsoleScreen,
@@ -604,20 +611,22 @@ function ConsoleScreen(): ReactNode {
       )}
 
       {settings && running && (
-        <RunningSettings
-          tournament={snapshot.tournament}
-          stages={snapshot.stages}
-          participants={snapshot.registrations.length}
-          online={online && queue.connection !== 'OFFLINE'}
-          onClose={() => {
-            setSettings(false);
-          }}
-          onSaved={() => {
-            setSettings(false);
-            queue.syncNow();
-            notify(t('console.settings.saved'), null);
-          }}
-        />
+        <Suspense fallback={null}>
+          <RunningSettings
+            tournament={snapshot.tournament}
+            stages={snapshot.stages}
+            participants={snapshot.registrations.length}
+            online={online && queue.connection !== 'OFFLINE'}
+            onClose={() => {
+              setSettings(false);
+            }}
+            onSaved={() => {
+              setSettings(false);
+              queue.syncNow();
+              notify(t('console.settings.saved'), null);
+            }}
+          />
+        </Suspense>
       )}
 
       {openedTable !== undefined && running && view !== null && (

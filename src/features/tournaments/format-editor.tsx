@@ -14,6 +14,7 @@ import IntegerField from '@/common/ui/integer-field';
 import { previewFormat } from './format-preview';
 import { toFormatConfig, type FormatDraft, type FormatType } from './format-draft';
 import PlayoffLengths from './playoff-lengths';
+import SetsField from './sets-field';
 
 interface FormatEditorProps {
   readonly draft: FormatDraft;
@@ -397,34 +398,6 @@ function RoundsField({
     >
       <MenuItem value="1">{t('tournament.form.oneRound')}</MenuItem>
       <MenuItem value="2">{t('tournament.form.twoRounds')}</MenuItem>
-    </TextField>
-  );
-}
-
-/** До скольких побед идёт встреча — ТЗ 5.2: bo3, bo5, bo7. */
-export function SetsField({
-  label,
-  value,
-  onChange,
-}: {
-  readonly label: MessageKey;
-  readonly value: 2 | 3 | 4;
-  readonly onChange: (value: 2 | 3 | 4) => void;
-}): ReactNode {
-  const t = useT();
-
-  return (
-    <TextField
-      select
-      label={t(label)}
-      value={String(value)}
-      onChange={(event) => {
-        onChange(event.target.value === '2' ? 2 : event.target.value === '4' ? 4 : 3);
-      }}
-    >
-      <MenuItem value="2">{t('tournament.form.bo3')}</MenuItem>
-      <MenuItem value="3">{t('tournament.form.bo5')}</MenuItem>
-      <MenuItem value="4">{t('tournament.form.bo7')}</MenuItem>
     </TextField>
   );
 }
