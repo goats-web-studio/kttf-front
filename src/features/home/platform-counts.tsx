@@ -61,12 +61,11 @@ export default function PlatformCounts(): ReactNode {
               display: 'block',
               color: 'inherit',
               minWidth: 64,
-              '&:hover .count-label': { color: 'var(--night-ink-900)' },
+              '&:hover .count-label': { color: 'var(--night-red)' },
             }}
           >
             <Typography
               sx={{
-                fontFamily: 'var(--font-mono)',
                 fontWeight: 700,
                 fontSize: { xs: 24, sm: 30 },
                 lineHeight: 1.1,
@@ -78,7 +77,12 @@ export default function PlatformCounts(): ReactNode {
             <Typography
               className="count-label"
               variant="body2"
-              sx={{ mt: 0.5, color: 'var(--night-ink-700)', fontWeight: 500 }}
+              sx={{
+                mt: 0.5,
+                color: 'var(--night-ink-900)',
+                fontWeight: 500,
+                transition: 'color var(--dur-fast) var(--ease)',
+              }}
             >
               {t(label)}
             </Typography>

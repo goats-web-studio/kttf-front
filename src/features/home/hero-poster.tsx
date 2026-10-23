@@ -106,7 +106,8 @@ const FIGURES: readonly Figure[] = [
 /**
  * Первый экран — постер бренда, как шапка YouTube-канала: тёмный фон с
  * красным свечением, игроки по бокам, заголовок белым и красным капсом,
- * строка бренда с разрядкой.
+ * строка бренда с разрядкой. Свечение ниже заголовка — за поиском: на
+ * самом ярком пятне красное слово не читалось.
  *
  * Говорит брендом, а не описанием: «Настольный теннис Казахстана» и четыре
  * слова — что здесь есть. Под ними главное действие главной — найти игрока —
@@ -131,7 +132,7 @@ export default function HeroPoster(): ReactNode {
   };
 
   return (
-    <Atmosphere component="section" glow={[50, 42]} minHeight={{ md: 600 }}>
+    <Atmosphere component="section" glow={[50, 58]} minHeight={{ md: 600 }}>
       {FIGURES.map((figure) => (
         <FigureImage key={figure.src} figure={figure} />
       ))}
@@ -158,31 +159,12 @@ export default function HeroPoster(): ReactNode {
           textAlign: 'center',
         }}
       >
+        {/* Заголовок капсом — осознанное исключение из запрета №10: это
+            постер бренда, один в один с шапкой YouTube-канала и афишами, а
+            запрет — про заголовки страниц и кнопки. */}
         <Typography
           className="hero-rise"
           style={{ '--motion-delay': '0ms' } as CSSProperties}
-          sx={{
-            mb: { xs: 2, sm: 2.5 },
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 1,
-            fontWeight: 700,
-            fontSize: { xs: 11, sm: 13 },
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: 'var(--night-ink-700)',
-          }}
-        >
-          <Box
-            component="span"
-            aria-hidden
-            sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'var(--red-500)' }}
-          />
-          {t('home.hero.forum')}
-        </Typography>
-        <Typography
-          className="hero-rise"
-          style={{ '--motion-delay': '80ms' } as CSSProperties}
           component="h1"
           sx={{
             fontWeight: 800,
@@ -190,17 +172,19 @@ export default function HeroPoster(): ReactNode {
             fontSize: { xs: 36, sm: 56, md: 64 },
             lineHeight: 0.98,
             letterSpacing: '-0.01em',
-            textShadow: '0 8px 32px rgb(0 0 0 / 0.5)',
+            textShadow: '0 2px 6px rgb(0 0 0 / 0.55), 0 8px 32px rgb(0 0 0 / 0.5)',
           }}
         >
           {t('home.hero.titleWhite')}{' '}
-          <Box component="span" sx={{ display: 'block', color: 'var(--red-500)' }}>
+          {/* Красное слово светлее фирменного 500: на красном свечении
+              оно иначе сливалось с фоном (контраст ниже 3:1). */}
+          <Box component="span" sx={{ display: 'block', color: 'var(--red-400)' }}>
             {t('home.hero.titleRed')}
           </Box>
         </Typography>
         <Typography
           className="hero-rise"
-          style={{ '--motion-delay': '160ms' } as CSSProperties}
+          style={{ '--motion-delay': '80ms' } as CSSProperties}
           sx={{
             mt: { xs: 2, sm: 3 },
             fontWeight: 700,
@@ -214,7 +198,7 @@ export default function HeroPoster(): ReactNode {
 
         <Box
           className="hero-rise"
-          style={{ '--motion-delay': '240ms' } as CSSProperties}
+          style={{ '--motion-delay': '160ms' } as CSSProperties}
           component="form"
           role="search"
           onSubmit={submit}
@@ -256,7 +240,7 @@ export default function HeroPoster(): ReactNode {
           </Button>
         </Box>
 
-        <Box className="hero-rise" style={{ '--motion-delay': '320ms' } as CSSProperties}>
+        <Box className="hero-rise" style={{ '--motion-delay': '240ms' } as CSSProperties}>
           <PlatformCounts />
         </Box>
       </Container>
