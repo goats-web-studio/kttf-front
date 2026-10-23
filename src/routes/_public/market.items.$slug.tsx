@@ -26,6 +26,7 @@ import { categoryHref, categoryLabel, hasOptions } from '@/features/market/label
 import ProductGallery from '@/features/market/product-gallery';
 import ProductOptions from '@/features/market/product-options';
 import { productQuery } from '@/features/market/queries';
+import SubjectThread from '@/features/forum/subject-thread';
 import { trackProductView } from '@/features/market/track';
 
 import WhereStands from './-market/where-stands';
@@ -168,6 +169,9 @@ function ProductDetails({ product }: { readonly product: ProductView }): ReactNo
     </Box>
   );
 
+  // Отзывы текстом без оценок — тема форума о товаре (`docs/10` 3.4, ADR-064).
+  const reviews = <SubjectThread type="PRODUCT" id={product.id} mt={{ xs: 4, md: 6 }} />;
+
   if (desktop) {
     return (
       <>
@@ -177,6 +181,7 @@ function ProductDetails({ product }: { readonly product: ProductView }): ReactNo
             <ProductGallery images={product.images} name={product.name} />
             {people}
             {description}
+            {reviews}
           </Box>
           <Box component="aside" sx={{ display: 'grid', gap: 2, alignContent: 'start' }}>
             {header}
@@ -202,6 +207,7 @@ function ProductDetails({ product }: { readonly product: ProductView }): ReactNo
       </Box>
       {people}
       {description}
+      {reviews}
       <Box sx={{ mt: 4 }}>
         <AdSlot placement="product-aside" />
       </Box>

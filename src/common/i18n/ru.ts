@@ -2493,4 +2493,16 @@ export const ru = {
   'forum.admin.sections.restore': 'Вернуть из архива',
   'forum.admin.sections.archived': 'В архиве — новых тем не принимает',
   'forum.admin.sections.saved': 'Сохранено',
+
+  'forum.thread.discussion': 'Обсуждение',
+  'forum.thread.reviews': 'Отзывы',
+  'forum.thread.all': 'Вся тема на форуме · {count}',
+  'forum.thread.emptyDiscussion': 'Пока никто не написал — начните обсуждение',
+  'forum.thread.emptyReviews': 'Отзывов пока нет — расскажите о своём опыте первым',
+  'forum.thread.placeholder': 'Как прошёл турнир? Вопрос организатору?',
+  'forum.thread.reviewPlaceholder': 'Ваш отзыв — что понравилось, что нет',
+  'forum.profile.title': 'На форуме',
+  'forum.profile.count': 'сообщений: {count}',
+  'home.forum.title': 'Обсуждают на форуме',
+  'home.forum.all': 'Весь форум',
 } as const satisfies Record<string, string>;

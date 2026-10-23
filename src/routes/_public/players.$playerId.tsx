@@ -14,6 +14,7 @@ import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import PlayerForumPosts from '@/features/forum/player-posts';
 import { usePlaceName } from '@/features/places/place-name';
 import { useSessionStore } from '@/features/auth/session-store';
 import BestWins from '@/features/players/best-wins';
@@ -182,6 +183,9 @@ function PlayerPage(): ReactNode {
           />
         </Stack>
       )}
+
+      {/* Сообщения на форуме — после истории игры (ADR-064, F2). */}
+      {player.data !== undefined && <PlayerForumPosts playerId={playerId} />}
     </Container>
   );
 }

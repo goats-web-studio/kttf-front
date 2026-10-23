@@ -2511,4 +2511,16 @@ export const kk: Record<MessageKey, string> = {
   'forum.admin.sections.restore': 'Мұрағаттан қайтару',
   'forum.admin.sections.archived': 'Мұрағатта — жаңа тақырып қабылдамайды',
   'forum.admin.sections.saved': 'Сақталды',
+
+  'forum.thread.discussion': 'Талқылау',
+  'forum.thread.reviews': 'Пікірлер',
+  'forum.thread.all': 'Форумдағы бүкіл тақырып · {count}',
+  'forum.thread.emptyDiscussion': 'Әзірге ешкім жазбады — талқылауды бастаңыз',
+  'forum.thread.emptyReviews': 'Әзірге пікір жоқ — өз тәжірибеңізбен бірінші бөлісіңіз',
+  'forum.thread.placeholder': 'Турнир қалай өтті? Ұйымдастырушыға сұрақ бар ма?',
+  'forum.thread.reviewPlaceholder': 'Сіздің пікіріңіз — не ұнады, не ұнамады',
+  'forum.profile.title': 'Форумда',
+  'forum.profile.count': 'хабарлама: {count}',
+  'home.forum.title': 'Форумда талқылануда',
+  'home.forum.all': 'Бүкіл форум',
 };

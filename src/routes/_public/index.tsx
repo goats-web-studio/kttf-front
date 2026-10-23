@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ClubView, TournamentView } from '@kttf/shared/types';
@@ -33,6 +34,8 @@ import { clubCities } from '@/features/clubs/cities';
 import { clubDirectoryQuery, clubsQuery } from '@/features/clubs/queries';
 import { CoachCard } from '@/features/coaches/coach-cards';
 import { coachesQuery } from '@/features/coaches/queries';
+import { forumTopicsQuery } from '@/features/forum/queries';
+import TopicRow from '@/features/forum/topic-row';
 import HeroPoster from '@/features/home/hero-poster';
 import InterestTiles from '@/features/home/interest-tiles';
 import { latestNewsQuery } from '@/features/home/news';
@@ -60,6 +63,8 @@ const CARDS = 4;
 /** Клубов — два ряда по три; тренеров и товаров — один ряд по четыре. */
 const CLUBS = 6;
 const ROW = 4;
+/** Тем форума на главной. */
+const FORUM_TOPICS = 5;
 
 /**
  * Что клуб получает в KTTF — только то, что уже работает (`05-state` 4):
@@ -131,6 +136,7 @@ function HomePage(): ReactNode {
   // «Чем играют» — первая подборка «Выбора игроков» маркета, без планки.
   const gear = useQuery(productsQuery(choiceQuery(CHOICE_PICKS[0], 'all')));
   const gearItems = (gear.data?.items ?? []).filter((item) => item.playerCount > 0).slice(0, ROW);
+  const forum = useQuery(forumTopicsQuery({ limit: FORUM_TOPICS }));
 
   const cities = useMemo(
     () => clubCities(clubs.data?.values() ?? [], locale),
@@ -253,6 +259,22 @@ function HomePage(): ReactNode {
               more={{ href: '/market', label: t('home.gear.all') }}
             >
               <ProductGrid products={gearItems} showPlayers />
+            </Section>
+          )}
+
+          {/* Форум — свежие темы всех разделов (ADR-064, F2). Пустой не выводится. */}
+          {(forum.data?.items.length ?? 0) > 0 && (
+            <Section
+              title={t('home.forum.title')}
+              more={{ href: '/forum', label: t('home.forum.all') }}
+            >
+              <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+                <Box component="ul" sx={{ m: 0, p: 0 }} data-home-forum>
+                  {forum.data?.items.map((topic) => (
+                    <TopicRow key={topic.id} topic={topic} showSection />
+                  ))}
+                </Box>
+              </Paper>
             </Section>
           )}
 

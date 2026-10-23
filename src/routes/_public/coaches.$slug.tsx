@@ -38,6 +38,7 @@ import { searchTraining } from '@/features/coaches/trainings-search';
 import Gallery from '@/features/content/gallery';
 import { coachOwner } from '@/features/content/owner';
 import Posts from '@/features/content/posts';
+import SubjectThread from '@/features/forum/subject-thread';
 
 const SECTION_GAP = { xs: 4, md: 6 };
 
@@ -162,6 +163,8 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
         <Gallery owner={owner} layout={desktop ? 'grid' : 'strip'} mt={SECTION_GAP} />
         <AboutBlock coach={coach} />
         <GameStatsBlock coach={coach} />
+        {/* Отзывы — тема форума о тренере (ADR-064, F2); у черновика их нет. */}
+        {isPublic && <SubjectThread type="COACH" id={coach.id} mt={SECTION_GAP} />}
         <Box sx={{ mt: SECTION_GAP, display: 'grid', gap: 2 }}>
           <AdSlot placement="coach-aside" />
           <CoachFreshness reviewedAt={coach.profileReviewedAt} />

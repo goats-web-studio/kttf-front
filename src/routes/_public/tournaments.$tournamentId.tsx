@@ -42,6 +42,7 @@ import {
   type ResultTab,
 } from '@/features/tournaments/results-tabs';
 import TournamentSummary from '@/features/tournaments/tournament-summary';
+import SubjectThread from '@/features/forum/subject-thread';
 
 const searchSchema = z.object({ tab: searchResultTab });
 
@@ -185,6 +186,9 @@ function TournamentPage(): ReactNode {
                     }
                   />
                 )}
+                {/* Обсуждение турнира — тема форума (ADR-064, F2). У черновика
+                    его нет: сервер отвечает «не найдено», и блок молчит. */}
+                <SubjectThread type="TOURNAMENT" id={tournamentId} />
               </>
             )}
           </QueryState>

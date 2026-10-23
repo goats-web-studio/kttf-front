@@ -46,6 +46,7 @@ import { trackClubView } from '@/features/clubs/track';
 import { usePlaceName } from '@/features/places/place-name';
 import LeadersTable from '@/features/players/leaders-table';
 import { tournamentsQuery } from '@/features/tournaments/queries';
+import SubjectThread from '@/features/forum/subject-thread';
 
 /** `?training=<id>` — окно тренировки поверх страницы (ADR-059). */
 const searchSchema = z.object({ training: searchTraining });
@@ -170,6 +171,8 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
     </Box>
   );
   const staff = <Staff clubId={club.id} />;
+  // Отзывы — тема форума о клубе (ADR-064, F2): после состава и игроков.
+  const reviews = <SubjectThread type="CLUB" id={club.id} />;
 
   const contacts = (
     <AsideCard title={t('club.contacts.title')}>
@@ -255,6 +258,7 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
             {about}
             {players}
             {staff}
+            {reviews}
           </Box>
           <Box component="aside" sx={{ mt: 6, display: 'grid', gap: 2, alignContent: 'start' }}>
             {contacts}
@@ -285,6 +289,7 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
           <Box sx={{ mt: 4 }}>{contacts}</Box>
           {players}
           {staff}
+          {reviews}
           <AdSlot placement="club-aside" />
           <Box sx={{ mt: 4 }}>{fresh}</Box>
         </Box>
