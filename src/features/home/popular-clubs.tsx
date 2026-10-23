@@ -6,8 +6,6 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { fill, formatDate, useLocale, useT } from '@/common/i18n';
-import { GRAIN } from '@/common/ui/atmosphere';
-import TableArt from '@/common/ui/table-art';
 import { Reveal } from '@/common/ui/motion';
 import ClubMark from '@/features/clubs/club-mark';
 import OpenStatus from '@/features/clubs/open-status';
@@ -66,24 +64,24 @@ function ClubTile({ club }: { readonly club: ClubListItemView }): ReactNode {
             position: 'relative',
             aspectRatio: '16 / 9',
             overflow: 'hidden',
-            // Без обложки — фирменная тёплая подложка с зерном и столом, а не
-            // серый прямоугольник «нет фото».
-            bgcolor: 'var(--red-50)',
-            backgroundImage: `radial-gradient(ellipse 80% 90% at 80% 0%, var(--red-100) 0, transparent 70%), ${GRAIN}`,
-            backgroundBlendMode: 'normal, soft-light',
+            // Без обложки — ровная нейтральная подложка, честное «фото пока
+            // нет», а не рисунок, изображающий зал. Есть логотип — он по центру.
+            bgcolor: 'var(--ink-100)',
+            display: 'grid',
+            placeItems: 'center',
           }}
         >
-          {club.coverUrl === null && (
+          {club.coverUrl === null && club.logoUrl !== null && (
             <Box
-              aria-hidden
-              sx={{
-                position: 'absolute',
-                inset: '8% 18% 14%',
-                '& svg': { width: '100%', height: '100%' },
-              }}
-            >
-              <TableArt line="var(--red-200)" net="var(--red-200)" />
-            </Box>
+              component="img"
+              src={clubImageVariant(club.logoUrl, 480)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              width={96}
+              height={96}
+              sx={{ width: 96, height: 96, objectFit: 'contain', borderRadius: '28%' }}
+            />
           )}
           {club.coverUrl !== null && (
             <Box
@@ -119,7 +117,6 @@ function ClubTile({ club }: { readonly club: ClubListItemView }): ReactNode {
                 fontWeight: 600,
                 bgcolor: 'var(--paper)',
                 color: 'var(--red-700)',
-                boxShadow: 'var(--shadow-card)',
               }}
             >
               {fill(t('clubs.card.next'), { date: formatDate(club.nextTournamentAt, locale) })}
