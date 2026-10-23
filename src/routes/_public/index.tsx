@@ -7,7 +7,6 @@ import type { ClubView, TournamentView } from '@kttf/shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
-  ArrowRight,
   BadgeCheck,
   BarChart3,
   Building2,
@@ -272,8 +271,9 @@ function HomePage(): ReactNode {
 }
 
 /**
- * Раздел главной: заголовок с красной чертой под фирменным наклоном 9°,
- * ссылка «все» справа. У «Идёт сейчас» черта мигает — турнир в эту минуту.
+ * Раздел главной: заголовок и ссылка «все» справа. Красная метка — только у
+ * «Идёт сейчас»: это единственный раздел про «прямо сейчас», и одна метка
+ * на страницу читается как знак, а шесть одинаковых — как шаблон.
  */
 function Section({
   title,
@@ -292,23 +292,14 @@ function Section({
         direction="row"
         sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2.5 }}
       >
-        <Typography variant="h2" sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box
-            component="span"
-            aria-hidden
-            sx={{
-              width: 6,
-              height: 22,
-              borderRadius: 1,
-              bgcolor: 'var(--red-500)',
-              transform: 'skewX(-9deg)',
-              flexShrink: 0,
-              ...(live && {
-                animation: 'kttf-live 1.6s var(--ease) infinite',
-                '@keyframes kttf-live': { '50%': { opacity: 0.35 } },
-              }),
-            }}
-          />
+        <Typography variant="h2" sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          {live && (
+            <Box
+              component="span"
+              aria-hidden
+              sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: 'var(--red-600)' }}
+            />
+          )}
           {title}
         </Typography>
         {more !== undefined && (
@@ -320,7 +311,6 @@ function Section({
               whiteSpace: 'nowrap',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 0.5,
               minHeight: 44,
               fontWeight: 600,
               color: 'text.secondary',
@@ -328,7 +318,6 @@ function Section({
             }}
           >
             {more.label}
-            <ArrowRight size={16} aria-hidden />
           </Link>
         )}
       </Stack>

@@ -35,7 +35,6 @@ const TONE: Readonly<Record<TournamentStatus, Tone>> = {
 export default function StatusBadge({ status }: { readonly status: TournamentStatus }): ReactNode {
   const t = useT();
   const tone = TONE[status];
-  const live = status === 'RUNNING';
 
   return (
     <Box
@@ -59,23 +58,9 @@ export default function StatusBadge({ status }: { readonly status: TournamentSta
       <Box
         component="span"
         aria-hidden
-        sx={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          bgcolor: tone.dot,
-          // «Идёт сейчас» дышит: единственное движение в календаре, и оно
-          // сообщает состояние. Кто просил покоя — получает покой (styles.css).
-          ...(live
-            ? {
-                animation: 'kttf-live 1.6s var(--ease) infinite',
-                '@keyframes kttf-live': {
-                  '0%, 100%': { boxShadow: '0 0 0 0 rgb(196 35 28 / 0.45)' },
-                  '50%': { boxShadow: '0 0 0 4px rgb(196 35 28 / 0)' },
-                },
-              }
-            : {}),
-        }}
+        // Точка не пульсирует: состояние называет подпись, а мигание
+        // рядом с ней изображало бы живость, которой в списке нет.
+        sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: tone.dot }}
       />
       {t(TOURNAMENT_STATUS_KEYS[status])}
     </Box>
