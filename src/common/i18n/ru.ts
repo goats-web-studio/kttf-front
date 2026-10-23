@@ -166,7 +166,7 @@ export const ru = {
   'profile.results.record': 'Победы: {wins} · Поражения: {losses}',
   'profile.results.matches': 'Встречи турнира',
 
-  'page.home.title': 'Настольный теннис Казахстана',
+  'page.home.title': 'Форум настольного тенниса Казахстана',
   'home.hero.find': 'Найти',
   'home.hero.titleWhite': 'Форум настольного',
   'home.hero.titleRed': 'тенниса Казахстана',

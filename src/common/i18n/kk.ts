@@ -168,7 +168,7 @@ export const kk: Record<MessageKey, string> = {
   'profile.results.record': 'Жеңіс: {wins} · Жеңіліс: {losses}',
   'profile.results.matches': 'Турнир кездесулері',
 
-  'page.home.title': 'Қазақстан үстел теннисі',
+  'page.home.title': 'Қазақстан үстел теннисі форумы',
   'home.hero.find': 'Табу',
   'home.hero.titleWhite': 'Қазақстан үстел',
   'home.hero.titleRed': 'теннисі форумы',
