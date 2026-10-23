@@ -3,7 +3,6 @@ import CardActionArea from '@mui/material/CardActionArea';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import {
-  ArrowRight,
   Building2,
   CalendarClock,
   GraduationCap,
@@ -21,6 +20,8 @@ interface Interest {
   readonly key: string;
   readonly href: string;
   readonly icon: LucideIcon;
+  /** Главные входы — турниры и рейтинг — крупнее остальных. */
+  readonly major?: boolean;
 }
 
 /**
@@ -29,8 +30,8 @@ interface Interest {
  * тренировку, инвентарь.
  */
 const INTERESTS: readonly Interest[] = [
-  { key: 'play', href: '/tournaments', icon: Trophy },
-  { key: 'rating', href: '/players', icon: TrendingUp },
+  { key: 'play', href: '/tournaments', icon: Trophy, major: true },
+  { key: 'rating', href: '/players', icon: TrendingUp, major: true },
   { key: 'club', href: '/clubs', icon: Building2 },
   { key: 'coach', href: '/trainings?view=coaches', icon: GraduationCap },
   { key: 'training', href: '/trainings', icon: CalendarClock },
@@ -44,8 +45,10 @@ const INTERESTS: readonly Interest[] = [
  * сделает. Новичок, пришедший с рекламы, не знает, что «Тренировки» — это
  * где найти тренера, а «Маркет» — где посмотреть, чем играют сильные.
  *
- * Большая иконка в углу под фирменным наклоном — декор, его нет для
- * читалки экрана; плитка целиком — одна ссылка.
+ * Плитки разного веса: турниры и рейтинг — то, ради чего сайт открывают
+ * чаще всего, — вдвое шире и с описанием на любом экране; остальные четыре
+ * ниже и уже. Иконка стоит в строке с заголовком, без собственной
+ * подложки; плитка целиком — одна ссылка.
  */
 export default function InterestTiles(): ReactNode {
   const t = useT();
@@ -60,94 +63,74 @@ export default function InterestTiles(): ReactNode {
         p: 0,
         display: 'grid',
         gap: { xs: 1.5, sm: 2 },
-        gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' },
+        gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(12, minmax(0, 1fr))' },
       }}
     >
-      {INTERESTS.map(({ key, href, icon: Icon }, index) => (
-        <Reveal component="li" key={key} delay={index * 60}>
-          <Paper variant="outlined" sx={{ height: '100%', overflow: 'hidden' }}>
+      {INTERESTS.map(({ key, href, icon: Icon, major = false }, index) => (
+        <Reveal
+          component="li"
+          key={key}
+          delay={index * 60}
+          sx={{
+            gridColumn: major
+              ? { xs: 'span 2', sm: 'span 6' }
+              : { xs: 'span 1', sm: 'span 6', md: 'span 3' },
+          }}
+        >
+          <Paper
+            variant="outlined"
+            sx={{
+              height: '100%',
+              overflow: 'hidden',
+              transition: 'border-color var(--dur-base) var(--ease)',
+              '&:hover': { borderColor: 'var(--line-strong)' },
+            }}
+          >
             <CardActionArea
               href={href}
               sx={{
-                position: 'relative',
                 height: '100%',
-                p: { xs: 2, sm: 3 },
-                minHeight: { xs: 112, sm: 0 },
+                p: { xs: 2, sm: major ? 3 : 2.5 },
+                minHeight: { xs: major ? 0 : 96, sm: 0 },
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'flex-start',
                 justifyContent: 'flex-start',
-                '&:hover .interest-arrow': {
-                  transform: 'translateX(4px)',
-                  color: 'var(--red-600)',
-                },
-                '&:hover .interest-decor': { color: 'var(--red-100)' },
               }}
             >
-              <Box
-                className="interest-decor"
-                aria-hidden
-                sx={{
-                  display: { xs: 'none', sm: 'block' },
-                  position: 'absolute',
-                  right: -12,
-                  bottom: -18,
-                  color: 'var(--red-50)',
-                  transform: 'rotate(-9deg)',
-                  transition: 'color var(--dur-base) var(--ease)',
-                  '& svg': { width: 120, height: 120 },
-                }}
-              >
-                <Icon strokeWidth={1.5} />
-              </Box>
-              <Box
-                aria-hidden
-                sx={{
-                  position: 'relative',
-                  width: 44,
-                  height: 44,
-                  borderRadius: 3,
-                  display: 'grid',
-                  placeItems: 'center',
-                  bgcolor: 'var(--red-50)',
-                  color: 'var(--red-600)',
-                }}
-              >
-                <Icon size={22} strokeWidth={2} />
-              </Box>
               <Typography
                 variant="h3"
                 component="h3"
                 sx={{
-                  position: 'relative',
-                  mt: { xs: 1.5, sm: 2 },
-                  fontSize: { xs: 15, sm: 17 },
-                  lineHeight: { xs: '20px', sm: '26px' },
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.75,
+                  alignItems: 'flex-start',
+                  gap: 1,
+                  fontSize: major ? { xs: 18, sm: 22 } : { xs: 15, sm: 17 },
+                  lineHeight: major ? { xs: '24px', sm: '28px' } : { xs: '20px', sm: '24px' },
                 }}
               >
-                {t(`home.interests.${key}.title` as MessageKey)}
                 <Box
                   component="span"
-                  className="interest-arrow"
+                  aria-hidden
                   sx={{
-                    display: { xs: 'none', sm: 'inline-flex' },
-                    color: 'var(--ink-400)',
-                    transition:
-                      'transform var(--dur-base) var(--ease), color var(--dur-base) var(--ease)',
+                    display: 'inline-flex',
+                    flexShrink: 0,
+                    color: 'var(--ink-700)',
+                    // Иконка по центру первой строки заголовка.
+                    height: major ? { xs: 24, sm: 28 } : { xs: 20, sm: 24 },
+                    alignItems: 'center',
                   }}
                 >
-                  <ArrowRight size={18} aria-hidden />
+                  <Icon size={major ? 22 : 18} strokeWidth={2} />
                 </Box>
+                {t(`home.interests.${key}.title` as MessageKey)}
               </Typography>
               <Typography
-                variant="body2"
+                variant={major ? 'body1' : 'body2'}
                 color="text.secondary"
-                // На телефоне — только иконка и название: шесть плиток с
-                // описанием занимали два экрана до первого турнира.
-                sx={{ display: { xs: 'none', sm: 'block' }, position: 'relative', mt: 0.5, pr: 6 }}
+                // На телефоне у малых плиток только название: шесть
+                // описаний занимали два экрана до первого турнира.
+                sx={{ display: major ? 'block' : { xs: 'none', sm: 'block' }, mt: 0.75 }}
               >
                 {t(`home.interests.${key}.text` as MessageKey)}
               </Typography>
