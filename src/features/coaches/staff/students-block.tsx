@@ -1,4 +1,4 @@
-import type { CoachStudentsView, CoachView } from '@kttf/shared/types';
+import type { CoachStudentsView, CoachView, StudentRef } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -10,18 +10,20 @@ import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Medal, Trophy, TrendingUp, Users } from 'lucide-react';
+import { Medal, Users } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import { fill, formatCount, formatDate, useLocale, useT } from '@/common/i18n';
 import { Count } from '@/common/ui/motion';
 import DeltaPill from '@/common/ui/delta-pill';
+import PlayerAvatar from '@/common/ui/player-avatar';
 import RankBadge from '@/common/ui/rank-badge';
 import RatingValue from '@/common/ui/rating-value';
 import StatTile from '@/common/ui/stat-tile';
 import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 import { useSessionStore } from '@/features/auth/session-store';
+import { usePlaceName } from '@/features/places/place-name';
 import { playerKeys, playerQuery } from '@/features/players/queries';
 
 import { becomeStudent, leaveStudent } from '../api';
@@ -109,27 +111,41 @@ export function StudentsContent({ view }: { readonly view: CoachStudentsView }):
 
       {view.top.length > 0 && (
         <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }} data-students-top>
-          <Typography variant="h3" sx={{ mb: 1 }}>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>
             {t('students.top')}
           </Typography>
-          <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 0.75 }}>
+          {/* Две колонки на широком экране: девять строк во всю ширину были
+              именем слева и числом справа через пустой экран. Порядок —
+              сверху вниз по колонкам, как читают рейтинг. */}
+          <Box
+            component="ol"
+            sx={{
+              m: 0,
+              p: 0,
+              listStyle: 'none',
+              display: 'grid',
+              columnGap: 4,
+              gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))' },
+              gridAutoFlow: { md: 'column' },
+              gridTemplateRows: { md: `repeat(${String(Math.ceil(view.top.length / 2))}, auto)` },
+            }}
+          >
             {view.top.map((student, index) => (
-              <Box
-                component="li"
+              <StudentLine
                 key={student.id}
-                sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
+                player={student}
+                lead={
+                  <Typography
+                    component="span"
+                    color="text.secondary"
+                    sx={{ width: 20, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    {formatCount(index + 1, locale)}
+                  </Typography>
+                }
               >
-                <Typography
-                  color="text.secondary"
-                  sx={{ width: 24, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
-                >
-                  {index + 1}
-                </Typography>
-                <Link href={`/players/${student.id}`} sx={{ flex: 1, minWidth: 0 }}>
-                  {`${student.lastName} ${student.firstName}`}
-                </Link>
-                <RatingValue value={student.rating} sx={{ fontWeight: 600 }} />
-              </Box>
+                <RatingValue value={student.rating} sx={{ fontWeight: 600, fontSize: 17 }} />
+              </StudentLine>
             ))}
           </Box>
         </Paper>
@@ -147,7 +163,16 @@ export function StudentsContent({ view }: { readonly view: CoachStudentsView }):
                 key={`${medal.player.id}-${medal.tournament.id}`}
                 sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}
               >
-                <RankBadge rank={medal.place} />
+                {/* Значок и фото не сжимаются, когда название турнира
+                    переносится на телефоне. */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+                  <RankBadge rank={medal.place} />
+                  <PlayerAvatar
+                    lastName={medal.player.lastName}
+                    firstName={medal.player.firstName}
+                    photoUrl={medal.player.photoUrl}
+                  />
+                </Box>
                 <Box sx={{ minWidth: 0 }}>
                   <Link href={`/players/${medal.player.id}`} sx={{ fontWeight: 600 }}>
                     {`${medal.player.lastName} ${medal.player.firstName}`}
@@ -167,10 +192,7 @@ export function StudentsContent({ view }: { readonly view: CoachStudentsView }):
 
       {view.tournaments.length > 0 && (
         <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }} data-students-tournaments>
-          <Typography variant="h3" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Trophy size={18} aria-hidden />
-            {t('students.tournaments')}
-          </Typography>
+          <Typography variant="h3">{t('students.tournaments')}</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1.5 }}>
             {t('students.tournaments.hint')}
           </Typography>
@@ -209,26 +231,71 @@ export function StudentsContent({ view }: { readonly view: CoachStudentsView }):
 
       {view.growth.length > 0 && (
         <Paper variant="outlined" sx={{ p: { xs: 2, sm: 3 } }} data-students-growth>
-          <Typography variant="h3" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TrendingUp size={18} aria-hidden />
+          <Typography variant="h3" sx={{ mb: 1.5 }}>
             {t('students.growth')}
           </Typography>
-          <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 0.75 }}>
+          <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid' }}>
             {view.growth.map((row) => (
-              <Box
-                component="li"
-                key={row.player.id}
-                sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
-              >
-                <Link href={`/players/${row.player.id}`} sx={{ flex: 1, minWidth: 0 }}>
-                  {`${row.player.lastName} ${row.player.firstName}`}
-                </Link>
-                <DeltaPill value={row.delta} />
-              </Box>
+              <StudentLine key={row.player.id} player={row.player}>
+                <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                  <RatingValue value={row.player.rating} sx={{ color: 'text.secondary' }} />
+                  <DeltaPill value={row.delta} />
+                </Box>
+              </StudentLine>
             ))}
           </Box>
         </Paper>
       )}
+    </Box>
+  );
+}
+
+/**
+ * Ученик строкой: фото или инициалы, имя ссылкой на профиль, город под
+ * именем, справа — число (рейтинг, рост). Всё, что сервер уже отдаёт об
+ * ученике: строка «имя — число» через всю карточку читалась пустой.
+ */
+function StudentLine({
+  player,
+  lead,
+  children,
+}: {
+  readonly player: StudentRef;
+  /** Слева от фото: место в списке. */
+  readonly lead?: ReactNode;
+  readonly children: ReactNode;
+}): ReactNode {
+  const placeName = usePlaceName();
+
+  return (
+    <Box
+      component="li"
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        minHeight: 56,
+        py: 0.75,
+        borderBottom: '1px solid var(--line)',
+      }}
+    >
+      {lead}
+      <Box sx={{ display: 'flex', flexShrink: 0 }}>
+        <PlayerAvatar
+          lastName={player.lastName}
+          firstName={player.firstName}
+          photoUrl={player.photoUrl}
+        />
+      </Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Link href={`/players/${player.id}`} sx={{ fontWeight: 600 }}>
+          {`${player.lastName} ${player.firstName}`}
+        </Link>
+        <Typography variant="body2" color="text.secondary" noWrap>
+          {placeName(player.city)}
+        </Typography>
+      </Box>
+      {children}
     </Box>
   );
 }
