@@ -147,8 +147,10 @@ function build(tokens: Tokens, locale: Locale): Theme {
         action: { hover: tokens.hover, selected: tokens.hover },
       },
       // База — 4px: на ней считаются `borderRadius: n` в sx (n × 4px), в том
-      // числе в консоли и на экране зала. Скругления «Спорт-модерн» заданы
-      // явно ниже: поля и кнопки — 10, карточки — 16, чипы и вкладки — пилюлей.
+      // числе в консоли и на экране зала. Радиусы по ролям, три и разные
+      // (styles.css): контрол — поле, кнопка, плитка внутри карточки — 8;
+      // карточка — 16; чип, вкладка, метка — пилюля. Один радиус на всё
+      // читается как шаблон.
       shape: { borderRadius: 4 },
       // Раздел 3.5: Geologica для всего текста, заголовки — насыщенностью и
       // плотной разрядкой. Числа набираются JetBrains Mono (--font-mono) по месту.
@@ -156,16 +158,30 @@ function build(tokens: Tokens, locale: Locale): Theme {
         fontFamily: FONT_UI,
         fontSize: 15,
         htmlFontSize: 16,
-        h1: { fontWeight: 700, fontSize: 30, lineHeight: '36px', letterSpacing: '-0.02em' },
-        h2: { fontWeight: 600, fontSize: 22, lineHeight: '28px', letterSpacing: '-0.01em' },
-        h3: { fontWeight: 600, fontSize: 17, lineHeight: '26px' },
+        // Заголовки без висячего слова во второй строке, абзацы — без
+        // одного слова в последней: `text-wrap` там, где браузер умеет.
+        h1: {
+          fontWeight: 700,
+          fontSize: 30,
+          lineHeight: '36px',
+          letterSpacing: '-0.02em',
+          textWrap: 'balance',
+        },
+        h2: {
+          fontWeight: 600,
+          fontSize: 22,
+          lineHeight: '28px',
+          letterSpacing: '-0.01em',
+          textWrap: 'balance',
+        },
+        h3: { fontWeight: 600, fontSize: 17, lineHeight: '26px', textWrap: 'balance' },
         h4: { fontWeight: 600, fontSize: 15, lineHeight: '24px' },
         h5: { fontWeight: 600, fontSize: 15, lineHeight: '24px' },
         h6: { fontWeight: 600, fontSize: 13, lineHeight: '20px' },
         subtitle1: { fontWeight: 600, fontSize: 17, lineHeight: '26px' },
         subtitle2: { fontWeight: 500, fontSize: 13, lineHeight: '20px' },
-        body1: { fontSize: 15, lineHeight: '24px' },
-        body2: { fontSize: 13, lineHeight: '20px' },
+        body1: { fontSize: 15, lineHeight: '24px', textWrap: 'pretty' },
+        body2: { fontSize: 13, lineHeight: '20px', textWrap: 'pretty' },
         caption: { fontSize: 12, lineHeight: '18px' },
         overline: { fontSize: 11, lineHeight: '16px', letterSpacing: 0, textTransform: 'none' },
         // Заголовки капслоком запрещены (запрет №10), кнопки — тоже.
@@ -219,9 +235,9 @@ function build(tokens: Tokens, locale: Locale): Theme {
           // называется явно — `variant="contained"` (запрет №2, ADR-039).
           defaultProps: { variant: 'outlined', color: 'secondary', disableElevation: true },
           styleOverrides: {
-            root: { minHeight: 40, paddingInline: 16, borderRadius: 10, fontWeight: 600 },
+            root: { minHeight: 40, paddingInline: 16, borderRadius: 8, fontWeight: 600 },
             sizeSmall: { minHeight: 32, paddingInline: 12, fontSize: 13, borderRadius: 8 },
-            sizeLarge: { minHeight: 48, paddingInline: 22, borderRadius: 12 },
+            sizeLarge: { minHeight: 48, paddingInline: 22, borderRadius: 10 },
             // Залитая кнопка — главное действие, и она всегда фирменного цвета:
             // нейтральное умолчание иначе красило бы её в чёрный.
             contained: ({ ownerState }) =>
@@ -249,7 +265,7 @@ function build(tokens: Tokens, locale: Locale): Theme {
             root: {
               backgroundColor: tokens.paper,
               minHeight: 40,
-              borderRadius: 10,
+              borderRadius: 8,
               '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.lineStrong },
             },
           },
@@ -359,17 +375,13 @@ function build(tokens: Tokens, locale: Locale): Theme {
           styleOverrides: { root: { '&:last-child > td, &:last-child > th': { borderBottom: 0 } } },
         },
         MuiAlert: {
-          // Ошибка — фон, левая линейка и текст (раздел 3.4), а не цветной блок.
+          // Сообщение — тонированный фон, иконка и текст, без цветной полосы
+          // слева: полоса на скруглённом блоке — самый узнаваемый штамп
+          // сгенерированных интерфейсов. Цвет несут иконка и текст.
           styleOverrides: {
-            root: { borderLeft: '3px solid', borderRadius: 10 },
-            colorError: { borderColor: tokens.error, color: tokens.error },
-            colorSuccess: { borderColor: tokens.ok },
-            colorWarning: { borderColor: tokens.warn },
-            colorInfo: {
-              borderColor: tokens.lineStrong,
-              backgroundColor: tokens.hover,
-              color: tokens.ink900,
-            },
+            root: { borderRadius: 8 },
+            colorError: { color: tokens.error },
+            colorInfo: { backgroundColor: tokens.hover, color: tokens.ink900 },
           },
         },
         MuiTooltip: { defaultProps: { arrow: true } },
