@@ -10,56 +10,37 @@ interface StatTileProps {
 }
 
 /**
- * Плитка факта: иконка, подпись, значение — дата, участники, взнос.
+ * Плитка факта: подпись с иконкой, под ней значение — дата, участники, взнос.
  *
  * Значение крупнее подписи: глаз ищет «когда» и «сколько», а не слово
- * «Начало». Иконка декоративна, смысл несёт подпись.
+ * «Начало». Иконка стоит в строке подписи, без собственной подложки:
+ * квадрат с тенью внутри плитки внутри карточки — три слоя там, где
+ * нужен один. Иконка декоративна, смысл несёт подпись.
  */
 export default function StatTile({ icon: Icon, label, value }: StatTileProps): ReactNode {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.5,
-        p: 1.5,
-        borderRadius: 3,
-        bgcolor: 'var(--paper-sunken)',
-        minWidth: 0,
-      }}
-    >
-      <Box
-        aria-hidden
+    <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: 'var(--paper-sunken)', minWidth: 0 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        component="div"
+        sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}
+      >
+        <Icon size={14} strokeWidth={2} aria-hidden style={{ flexShrink: 0 }} />
+        {label}
+      </Typography>
+      <Typography
+        component="div"
         sx={{
-          width: 36,
-          height: 36,
-          flexShrink: 0,
-          borderRadius: 2.5,
-          display: 'grid',
-          placeItems: 'center',
-          bgcolor: 'var(--paper)',
-          color: 'var(--ink-700)',
-          boxShadow: '0 1px 2px rgb(31 31 29 / 0.06)',
+          mt: 0.25,
+          fontWeight: 600,
+          fontSize: 15,
+          lineHeight: '20px',
+          fontVariantNumeric: 'tabular-nums',
         }}
       >
-        <Icon size={18} strokeWidth={2} />
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="caption" color="text.secondary" component="div">
-          {label}
-        </Typography>
-        <Typography
-          component="div"
-          sx={{
-            fontWeight: 600,
-            fontSize: 15,
-            lineHeight: '20px',
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {value}
-        </Typography>
-      </Box>
+        {value}
+      </Typography>
     </Box>
   );
 }
