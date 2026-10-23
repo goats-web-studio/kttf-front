@@ -17,7 +17,7 @@ import FilterSummary from '@/common/ui/filter-summary';
 import QueryState from '@/common/ui/query-state';
 import BrandMark from '@/features/market/brand-mark';
 import { catalogApiQuery, parseCatalogSearch } from '@/features/market/catalog-search';
-import { CATEGORY_ICONS, categoryHref, categoryLabel } from '@/features/market/labels';
+import { categoryHref, categoryLabel } from '@/features/market/labels';
 import MarketSection, { CATALOG_PAGE_SIZE } from '@/features/market/market-section';
 import PlayersChoice from '@/features/market/players-choice';
 import { CHOICE_BANDS, CHOICE_PICKS } from '@/features/market/players-choice-query';
@@ -198,61 +198,45 @@ function Showcase(): ReactNode {
   );
 }
 
-/** Категории плитками с иконками. Все двенадцать — и пустые: каталог наполняется импортом. */
+/**
+ * Категории — указатель: названия пилюлями в строку, без иконок и теней.
+ * Все двенадцать — и пустые: каталог наполняется импортом. Двенадцать
+ * одинаковых плиток с красной иконкой читались как витрина шаблона, а не
+ * каталога; указателю достаточно слов.
+ */
 function Categories(): ReactNode {
   const t = useT();
 
   return (
     <Box
       component="ul"
-      sx={{
-        m: 0,
-        p: 0,
-        listStyle: 'none',
-        display: 'grid',
-        gap: { xs: 1, sm: 2 },
-        gridTemplateColumns: {
-          xs: 'repeat(2, minmax(0, 1fr))',
-          sm: 'repeat(3, minmax(0, 1fr))',
-          md: 'repeat(6, minmax(0, 1fr))',
-        },
-      }}
+      sx={{ m: 0, p: 0, listStyle: 'none', display: 'flex', flexWrap: 'wrap', gap: 1 }}
     >
-      {PRODUCT_CATEGORIES.map((category) => {
-        const Icon = CATEGORY_ICONS[category];
-
-        return (
-          <Box component="li" key={category}>
-            <ButtonBase
-              href={categoryHref(category)}
-              sx={{
-                width: '100%',
-                minHeight: { xs: 64, sm: 96 },
-                px: 2,
-                py: 1.5,
-                gap: 1.5,
-                justifyContent: { xs: 'flex-start', sm: 'center' },
-                flexDirection: { xs: 'row', sm: 'column' },
-                borderRadius: 4,
-                bgcolor: 'background.paper',
-                border: 1,
-                borderColor: 'divider',
-                boxShadow: 'var(--shadow-card)',
-                transition: 'box-shadow var(--dur-fast) var(--ease)',
-                '@media (hover: hover)': { '&:hover': { boxShadow: 'var(--shadow-card-hover)' } },
-                '&.Mui-focusVisible': { outline: '2px solid var(--red-600)', outlineOffset: '2px' },
-              }}
-            >
-              <Box component="span" sx={{ color: 'var(--red-600)', display: 'flex' }}>
-                <Icon size={24} aria-hidden />
-              </Box>
-              <Typography component="span" sx={{ fontWeight: 600, textAlign: { sm: 'center' } }}>
-                {t(categoryLabel(category))}
-              </Typography>
-            </ButtonBase>
-          </Box>
-        );
-      })}
+      {PRODUCT_CATEGORIES.map((category) => (
+        <Box component="li" key={category}>
+          <ButtonBase
+            href={categoryHref(category)}
+            sx={{
+              minHeight: 44,
+              px: 2,
+              borderRadius: 999,
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'var(--line-strong)',
+              fontWeight: 600,
+              fontSize: 15,
+              transition:
+                'border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease)',
+              '@media (hover: hover)': {
+                '&:hover': { borderColor: 'var(--ink-700)', color: 'var(--red-600)' },
+              },
+              '&.Mui-focusVisible': { outline: '2px solid var(--red-600)', outlineOffset: '2px' },
+            }}
+          >
+            {t(categoryLabel(category))}
+          </ButtonBase>
+        </Box>
+      ))}
     </Box>
   );
 }
