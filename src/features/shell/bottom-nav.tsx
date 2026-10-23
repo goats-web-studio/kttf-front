@@ -5,6 +5,7 @@ import { useMatchRoute } from '@tanstack/react-router';
 import {
   Building2,
   CalendarDays,
+  MessagesSquare,
   ShoppingBag,
   Users,
   Whistle,
@@ -27,6 +28,7 @@ const ICONS: Readonly<Record<string, LucideIcon>> = {
   '/clubs': Building2,
   '/market': ShoppingBag,
   '/trainings': Whistle,
+  '/forum': MessagesSquare,
 };
 
 /**

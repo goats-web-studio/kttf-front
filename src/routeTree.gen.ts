@@ -26,7 +26,9 @@ import { Route as AppCabinetApplicationsRouteImport } from './routes/_app/cabine
 import { Route as AppCabinetCatalogRouteImport } from './routes/_app/cabinet.catalog'
 import { Route as AppCabinetCoachRouteImport } from './routes/_app/cabinet.coach'
 import { Route as AppCabinetContentRouteImport } from './routes/_app/cabinet.content'
+import { Route as AppCabinetForumRouteImport } from './routes/_app/cabinet.forum'
 import { Route as AppCabinetPlacesRouteImport } from './routes/_app/cabinet.places'
+import { Route as AppForumNewRouteImport } from './routes/_app/forum.new'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings.index'
 import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings.account'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings.profile'
@@ -34,6 +36,8 @@ import { Route as AppTournamentsNewRouteImport } from './routes/_app/tournaments
 import { Route as PublicClubsIndexRouteImport } from './routes/_public/clubs.index'
 import { Route as PublicClubsClubIdRouteImport } from './routes/_public/clubs.$clubId'
 import { Route as PublicCoachesSlugRouteImport } from './routes/_public/coaches.$slug'
+import { Route as PublicForumIndexRouteImport } from './routes/_public/forum.index'
+import { Route as PublicForumSectionRouteImport } from './routes/_public/forum.$section'
 import { Route as PublicMarketIndexRouteImport } from './routes/_public/market.index'
 import { Route as PublicMarketCategoryRouteImport } from './routes/_public/market.$category'
 import { Route as PublicPlayersIndexRouteImport } from './routes/_public/players.index'
@@ -46,6 +50,7 @@ import { Route as AppCabinetClubClubIdRouteImport } from './routes/_app/cabinet.
 import { Route as AppCabinetClubsIndexRouteImport } from './routes/_app/cabinet.clubs.index'
 import { Route as AppCabinetClubsNewRouteImport } from './routes/_app/cabinet.clubs.new'
 import { Route as AppTournamentsTournamentIdEditRouteImport } from './routes/_app/tournaments.$tournamentId.edit'
+import { Route as PublicForumTopicsTopicIdRouteImport } from './routes/_public/forum.topics.$topicId'
 import { Route as PublicMarketBrandsIndexRouteImport } from './routes/_public/market.brands.index'
 import { Route as PublicMarketBrandsSlugRouteImport } from './routes/_public/market.brands.$slug'
 import { Route as PublicMarketItemsSlugRouteImport } from './routes/_public/market.items.$slug'
@@ -133,9 +138,19 @@ const AppCabinetContentRoute = AppCabinetContentRouteImport.update({
   path: '/cabinet/content',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCabinetForumRoute = AppCabinetForumRouteImport.update({
+  id: '/cabinet/forum',
+  path: '/cabinet/forum',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCabinetPlacesRoute = AppCabinetPlacesRouteImport.update({
   id: '/cabinet/places',
   path: '/cabinet/places',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppForumNewRoute = AppForumNewRouteImport.update({
+  id: '/forum/new',
+  path: '/forum/new',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
@@ -171,6 +186,16 @@ const PublicClubsClubIdRoute = PublicClubsClubIdRouteImport.update({
 const PublicCoachesSlugRoute = PublicCoachesSlugRouteImport.update({
   id: '/coaches/$slug',
   path: '/coaches/$slug',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicForumIndexRoute = PublicForumIndexRouteImport.update({
+  id: '/forum/',
+  path: '/forum/',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicForumSectionRoute = PublicForumSectionRouteImport.update({
+  id: '/forum/$section',
+  path: '/forum/$section',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicMarketIndexRoute = PublicMarketIndexRouteImport.update({
@@ -236,6 +261,12 @@ const AppTournamentsTournamentIdEditRoute =
     path: '/tournaments/$tournamentId/edit',
     getParentRoute: () => AppRoute,
   } as any)
+const PublicForumTopicsTopicIdRoute =
+  PublicForumTopicsTopicIdRouteImport.update({
+    id: '/forum/topics/$topicId',
+    path: '/forum/topics/$topicId',
+    getParentRoute: () => PublicRoute,
+  } as any)
 const PublicMarketBrandsIndexRoute = PublicMarketBrandsIndexRouteImport.update({
   id: '/market/brands/',
   path: '/market/brands/',
@@ -267,12 +298,15 @@ export interface FileRoutesByFullPath {
   '/cabinet/catalog': typeof AppCabinetCatalogRoute
   '/cabinet/coach': typeof AppCabinetCoachRoute
   '/cabinet/content': typeof AppCabinetContentRoute
+  '/cabinet/forum': typeof AppCabinetForumRoute
   '/cabinet/places': typeof AppCabinetPlacesRoute
+  '/forum/new': typeof AppForumNewRoute
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/tournaments/new': typeof AppTournamentsNewRoute
   '/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/coaches/$slug': typeof PublicCoachesSlugRoute
+  '/forum/$section': typeof PublicForumSectionRoute
   '/market/$category': typeof PublicMarketCategoryRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
@@ -280,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/cabinet/': typeof AppCabinetIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/clubs/': typeof PublicClubsIndexRoute
+  '/forum/': typeof PublicForumIndexRoute
   '/market/': typeof PublicMarketIndexRoute
   '/players/': typeof PublicPlayersIndexRoute
   '/tournaments/': typeof PublicTournamentsIndexRoute
@@ -287,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
   '/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
+  '/forum/topics/$topicId': typeof PublicForumTopicsTopicIdRoute
   '/market/brands/$slug': typeof PublicMarketBrandsSlugRoute
   '/market/items/$slug': typeof PublicMarketItemsSlugRoute
   '/cabinet/clubs/': typeof AppCabinetClubsIndexRoute
@@ -306,12 +342,15 @@ export interface FileRoutesByTo {
   '/cabinet/catalog': typeof AppCabinetCatalogRoute
   '/cabinet/coach': typeof AppCabinetCoachRoute
   '/cabinet/content': typeof AppCabinetContentRoute
+  '/cabinet/forum': typeof AppCabinetForumRoute
   '/cabinet/places': typeof AppCabinetPlacesRoute
+  '/forum/new': typeof AppForumNewRoute
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/tournaments/new': typeof AppTournamentsNewRoute
   '/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/coaches/$slug': typeof PublicCoachesSlugRoute
+  '/forum/$section': typeof PublicForumSectionRoute
   '/market/$category': typeof PublicMarketCategoryRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
@@ -319,6 +358,7 @@ export interface FileRoutesByTo {
   '/cabinet': typeof AppCabinetIndexRoute
   '/settings': typeof AppSettingsIndexRoute
   '/clubs': typeof PublicClubsIndexRoute
+  '/forum': typeof PublicForumIndexRoute
   '/market': typeof PublicMarketIndexRoute
   '/players': typeof PublicPlayersIndexRoute
   '/tournaments': typeof PublicTournamentsIndexRoute
@@ -326,6 +366,7 @@ export interface FileRoutesByTo {
   '/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
   '/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
+  '/forum/topics/$topicId': typeof PublicForumTopicsTopicIdRoute
   '/market/brands/$slug': typeof PublicMarketBrandsSlugRoute
   '/market/items/$slug': typeof PublicMarketItemsSlugRoute
   '/cabinet/clubs': typeof AppCabinetClubsIndexRoute
@@ -349,12 +390,15 @@ export interface FileRoutesById {
   '/_app/cabinet/catalog': typeof AppCabinetCatalogRoute
   '/_app/cabinet/coach': typeof AppCabinetCoachRoute
   '/_app/cabinet/content': typeof AppCabinetContentRoute
+  '/_app/cabinet/forum': typeof AppCabinetForumRoute
   '/_app/cabinet/places': typeof AppCabinetPlacesRoute
+  '/_app/forum/new': typeof AppForumNewRoute
   '/_app/settings/account': typeof AppSettingsAccountRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/tournaments/new': typeof AppTournamentsNewRoute
   '/_public/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/_public/coaches/$slug': typeof PublicCoachesSlugRoute
+  '/_public/forum/$section': typeof PublicForumSectionRoute
   '/_public/market/$category': typeof PublicMarketCategoryRoute
   '/_public/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
@@ -362,6 +406,7 @@ export interface FileRoutesById {
   '/_app/cabinet/': typeof AppCabinetIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_public/clubs/': typeof PublicClubsIndexRoute
+  '/_public/forum/': typeof PublicForumIndexRoute
   '/_public/market/': typeof PublicMarketIndexRoute
   '/_public/players/': typeof PublicPlayersIndexRoute
   '/_public/tournaments/': typeof PublicTournamentsIndexRoute
@@ -369,6 +414,7 @@ export interface FileRoutesById {
   '/_app/cabinet/club/$clubId': typeof AppCabinetClubClubIdRoute
   '/_app/cabinet/clubs/new': typeof AppCabinetClubsNewRoute
   '/_app/tournaments/$tournamentId/edit': typeof AppTournamentsTournamentIdEditRoute
+  '/_public/forum/topics/$topicId': typeof PublicForumTopicsTopicIdRoute
   '/_public/market/brands/$slug': typeof PublicMarketBrandsSlugRoute
   '/_public/market/items/$slug': typeof PublicMarketItemsSlugRoute
   '/_app/cabinet/clubs/': typeof AppCabinetClubsIndexRoute
@@ -391,12 +437,15 @@ export interface FileRouteTypes {
     | '/cabinet/catalog'
     | '/cabinet/coach'
     | '/cabinet/content'
+    | '/cabinet/forum'
     | '/cabinet/places'
+    | '/forum/new'
     | '/settings/account'
     | '/settings/profile'
     | '/tournaments/new'
     | '/clubs/$clubId'
     | '/coaches/$slug'
+    | '/forum/$section'
     | '/market/$category'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
@@ -404,6 +453,7 @@ export interface FileRouteTypes {
     | '/cabinet/'
     | '/settings/'
     | '/clubs/'
+    | '/forum/'
     | '/market/'
     | '/players/'
     | '/tournaments/'
@@ -411,6 +461,7 @@ export interface FileRouteTypes {
     | '/cabinet/club/$clubId'
     | '/cabinet/clubs/new'
     | '/tournaments/$tournamentId/edit'
+    | '/forum/topics/$topicId'
     | '/market/brands/$slug'
     | '/market/items/$slug'
     | '/cabinet/clubs/'
@@ -430,12 +481,15 @@ export interface FileRouteTypes {
     | '/cabinet/catalog'
     | '/cabinet/coach'
     | '/cabinet/content'
+    | '/cabinet/forum'
     | '/cabinet/places'
+    | '/forum/new'
     | '/settings/account'
     | '/settings/profile'
     | '/tournaments/new'
     | '/clubs/$clubId'
     | '/coaches/$slug'
+    | '/forum/$section'
     | '/market/$category'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
@@ -443,6 +497,7 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/settings'
     | '/clubs'
+    | '/forum'
     | '/market'
     | '/players'
     | '/tournaments'
@@ -450,6 +505,7 @@ export interface FileRouteTypes {
     | '/cabinet/club/$clubId'
     | '/cabinet/clubs/new'
     | '/tournaments/$tournamentId/edit'
+    | '/forum/topics/$topicId'
     | '/market/brands/$slug'
     | '/market/items/$slug'
     | '/cabinet/clubs'
@@ -472,12 +528,15 @@ export interface FileRouteTypes {
     | '/_app/cabinet/catalog'
     | '/_app/cabinet/coach'
     | '/_app/cabinet/content'
+    | '/_app/cabinet/forum'
     | '/_app/cabinet/places'
+    | '/_app/forum/new'
     | '/_app/settings/account'
     | '/_app/settings/profile'
     | '/_app/tournaments/new'
     | '/_public/clubs/$clubId'
     | '/_public/coaches/$slug'
+    | '/_public/forum/$section'
     | '/_public/market/$category'
     | '/_public/players/$playerId'
     | '/_public/tournaments/$tournamentId'
@@ -485,6 +544,7 @@ export interface FileRouteTypes {
     | '/_app/cabinet/'
     | '/_app/settings/'
     | '/_public/clubs/'
+    | '/_public/forum/'
     | '/_public/market/'
     | '/_public/players/'
     | '/_public/tournaments/'
@@ -492,6 +552,7 @@ export interface FileRouteTypes {
     | '/_app/cabinet/club/$clubId'
     | '/_app/cabinet/clubs/new'
     | '/_app/tournaments/$tournamentId/edit'
+    | '/_public/forum/topics/$topicId'
     | '/_public/market/brands/$slug'
     | '/_public/market/items/$slug'
     | '/_app/cabinet/clubs/'
@@ -626,11 +687,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCabinetContentRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/cabinet/forum': {
+      id: '/_app/cabinet/forum'
+      path: '/cabinet/forum'
+      fullPath: '/cabinet/forum'
+      preLoaderRoute: typeof AppCabinetForumRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/cabinet/places': {
       id: '/_app/cabinet/places'
       path: '/cabinet/places'
       fullPath: '/cabinet/places'
       preLoaderRoute: typeof AppCabinetPlacesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/forum/new': {
+      id: '/_app/forum/new'
+      path: '/forum/new'
+      fullPath: '/forum/new'
+      preLoaderRoute: typeof AppForumNewRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/': {
@@ -680,6 +755,20 @@ declare module '@tanstack/react-router' {
       path: '/coaches/$slug'
       fullPath: '/coaches/$slug'
       preLoaderRoute: typeof PublicCoachesSlugRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/forum/': {
+      id: '/_public/forum/'
+      path: '/forum'
+      fullPath: '/forum/'
+      preLoaderRoute: typeof PublicForumIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/forum/$section': {
+      id: '/_public/forum/$section'
+      path: '/forum/$section'
+      fullPath: '/forum/$section'
+      preLoaderRoute: typeof PublicForumSectionRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/market/': {
@@ -766,6 +855,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTournamentsTournamentIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_public/forum/topics/$topicId': {
+      id: '/_public/forum/topics/$topicId'
+      path: '/forum/topics/$topicId'
+      fullPath: '/forum/topics/$topicId'
+      preLoaderRoute: typeof PublicForumTopicsTopicIdRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/market/brands/': {
       id: '/_public/market/brands/'
       path: '/market/brands'
@@ -796,7 +892,9 @@ interface AppRouteChildren {
   AppCabinetCatalogRoute: typeof AppCabinetCatalogRoute
   AppCabinetCoachRoute: typeof AppCabinetCoachRoute
   AppCabinetContentRoute: typeof AppCabinetContentRoute
+  AppCabinetForumRoute: typeof AppCabinetForumRoute
   AppCabinetPlacesRoute: typeof AppCabinetPlacesRoute
+  AppForumNewRoute: typeof AppForumNewRoute
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppTournamentsNewRoute: typeof AppTournamentsNewRoute
@@ -814,7 +912,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppCabinetCatalogRoute: AppCabinetCatalogRoute,
   AppCabinetCoachRoute: AppCabinetCoachRoute,
   AppCabinetContentRoute: AppCabinetContentRoute,
+  AppCabinetForumRoute: AppCabinetForumRoute,
   AppCabinetPlacesRoute: AppCabinetPlacesRoute,
+  AppForumNewRoute: AppForumNewRoute,
   AppSettingsAccountRoute: AppSettingsAccountRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppTournamentsNewRoute: AppTournamentsNewRoute,
@@ -836,15 +936,18 @@ interface PublicRouteChildren {
   PublicIndexRoute: typeof PublicIndexRoute
   PublicClubsClubIdRoute: typeof PublicClubsClubIdRoute
   PublicCoachesSlugRoute: typeof PublicCoachesSlugRoute
+  PublicForumSectionRoute: typeof PublicForumSectionRoute
   PublicMarketCategoryRoute: typeof PublicMarketCategoryRoute
   PublicPlayersPlayerIdRoute: typeof PublicPlayersPlayerIdRoute
   PublicTournamentsTournamentIdRoute: typeof PublicTournamentsTournamentIdRoute
   PublicTrainingsTrainingIdRoute: typeof PublicTrainingsTrainingIdRoute
   PublicClubsIndexRoute: typeof PublicClubsIndexRoute
+  PublicForumIndexRoute: typeof PublicForumIndexRoute
   PublicMarketIndexRoute: typeof PublicMarketIndexRoute
   PublicPlayersIndexRoute: typeof PublicPlayersIndexRoute
   PublicTournamentsIndexRoute: typeof PublicTournamentsIndexRoute
   PublicTrainingsIndexRoute: typeof PublicTrainingsIndexRoute
+  PublicForumTopicsTopicIdRoute: typeof PublicForumTopicsTopicIdRoute
   PublicMarketBrandsSlugRoute: typeof PublicMarketBrandsSlugRoute
   PublicMarketItemsSlugRoute: typeof PublicMarketItemsSlugRoute
   PublicMarketBrandsIndexRoute: typeof PublicMarketBrandsIndexRoute
@@ -858,15 +961,18 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicIndexRoute: PublicIndexRoute,
   PublicClubsClubIdRoute: PublicClubsClubIdRoute,
   PublicCoachesSlugRoute: PublicCoachesSlugRoute,
+  PublicForumSectionRoute: PublicForumSectionRoute,
   PublicMarketCategoryRoute: PublicMarketCategoryRoute,
   PublicPlayersPlayerIdRoute: PublicPlayersPlayerIdRoute,
   PublicTournamentsTournamentIdRoute: PublicTournamentsTournamentIdRoute,
   PublicTrainingsTrainingIdRoute: PublicTrainingsTrainingIdRoute,
   PublicClubsIndexRoute: PublicClubsIndexRoute,
+  PublicForumIndexRoute: PublicForumIndexRoute,
   PublicMarketIndexRoute: PublicMarketIndexRoute,
   PublicPlayersIndexRoute: PublicPlayersIndexRoute,
   PublicTournamentsIndexRoute: PublicTournamentsIndexRoute,
   PublicTrainingsIndexRoute: PublicTrainingsIndexRoute,
+  PublicForumTopicsTopicIdRoute: PublicForumTopicsTopicIdRoute,
   PublicMarketBrandsSlugRoute: PublicMarketBrandsSlugRoute,
   PublicMarketItemsSlugRoute: PublicMarketItemsSlugRoute,
   PublicMarketBrandsIndexRoute: PublicMarketBrandsIndexRoute,

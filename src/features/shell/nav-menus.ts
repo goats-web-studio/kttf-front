@@ -8,8 +8,11 @@ import {
   Flag,
   GraduationCap,
   Layers,
+  Lightbulb,
   ListOrdered,
   Medal,
+  MessagesSquare,
+  PenLine,
   Radio,
   Send,
   ShoppingBag,
@@ -80,6 +83,13 @@ export const NAV_MENUS: Readonly<Record<string, readonly NavMenuItem[]>> = {
     { href: '/trainings?audience=KIDS', icon: Users, key: 'trainings.kids' },
     { href: '/trainings?kind=CAMP', icon: TentTree, key: 'trainings.camps' },
     { href: '/cabinet/coach', icon: UserPlus, key: 'trainings.become' },
+  ],
+  '/forum': [
+    { href: '/forum', icon: MessagesSquare, key: 'forum.all' },
+    { href: '/forum/tournaments', icon: Trophy, key: 'forum.tournaments' },
+    { href: '/forum/equipment', icon: Layers, key: 'forum.equipment' },
+    { href: '/forum/site', icon: Lightbulb, key: 'forum.site' },
+    { href: '/forum/new', icon: PenLine, key: 'forum.new' },
   ],
 };
 

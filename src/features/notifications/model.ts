@@ -1,6 +1,7 @@
 import type { NotificationView } from '@kttf/shared/types';
 
 import { fill, type MessageKey } from '@/common/i18n';
+import { topicHref } from '@/features/forum/labels';
 import { MY_REQUESTS_HREF, inboxHref } from '@/features/trial-requests/inbox';
 
 type T = (key: MessageKey) => string;
@@ -26,15 +27,52 @@ export function notificationText(notification: NotificationView, t: T): string {
         ),
         { target: notification.data.targetName, training: notification.data.trainingTitle },
       );
+    case 'FORUM_REPLY':
+      return fill(t('notifications.FORUM_REPLY'), {
+        author: notification.data.authorName,
+        topic: notification.data.topicTitle,
+      });
+    case 'FORUM_TOPIC_UPDATE':
+      return fill(
+        t(
+          notification.data.count > 1
+            ? 'notifications.FORUM_TOPIC_UPDATE_MANY'
+            : 'notifications.FORUM_TOPIC_UPDATE',
+        ),
+        {
+          author: notification.data.authorName,
+          topic: notification.data.topicTitle,
+          count: String(notification.data.count),
+        },
+      );
+    case 'FORUM_POST_HIDDEN':
+      return fill(
+        t(
+          notification.data.postId === null
+            ? 'notifications.FORUM_TOPIC_HIDDEN'
+            : 'notifications.FORUM_POST_HIDDEN',
+        ),
+        { topic: notification.data.topicTitle, reason: notification.data.reason },
+      );
   }
 }
 
 /**
  * Подпись под строкой — чья это заявка, если у человека несколько
- * кабинетов: своя страница тренера или клуб по названию.
+ * кабинетов: своя страница тренера или клуб по названию. У форума — «Форум».
  */
 export function notificationCaption(notification: NotificationView, t: T): string | null {
-  if (notification.type === 'TRIAL_REQUEST_ANSWERED') return null;
+  switch (notification.type) {
+    case 'TRIAL_REQUEST_ANSWERED':
+      return null;
+    case 'FORUM_REPLY':
+    case 'FORUM_TOPIC_UPDATE':
+    case 'FORUM_POST_HIDDEN':
+      return t('notifications.forum');
+    case 'TRIAL_REQUEST_NEW':
+    case 'TRIAL_REQUEST_CANCELLED':
+      break;
+  }
 
   const { inbox } = notification.data;
 
@@ -43,7 +81,8 @@ export function notificationCaption(notification: NotificationView, t: T): strin
 
 /**
  * Куда ведёт строка: новая и отозванная заявка — во вкладку «Заявки»
- * кабинета адресата, ответ — в «Мои заявки» отправителя.
+ * кабинета адресата, ответ — в «Мои заявки» отправителя. Форум — к
+ * сообщению в теме: первому непрочитанному, процитированному, скрытому.
  */
 export function notificationHref(notification: NotificationView): string {
   switch (notification.type) {
@@ -52,5 +91,12 @@ export function notificationHref(notification: NotificationView): string {
       return inboxHref(notification.data.inbox);
     case 'TRIAL_REQUEST_ANSWERED':
       return MY_REQUESTS_HREF;
+    case 'FORUM_REPLY':
+    case 'FORUM_TOPIC_UPDATE':
+      return topicHref(notification.data.topicId, notification.data.number);
+    case 'FORUM_POST_HIDDEN':
+      return notification.data.number === null
+        ? topicHref(notification.data.topicId)
+        : topicHref(notification.data.topicId, notification.data.number);
   }
 }
