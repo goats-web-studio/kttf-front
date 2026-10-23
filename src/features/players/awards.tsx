@@ -130,10 +130,10 @@ export function MedalTally({ awards }: { readonly awards: readonly PlayerAwardVi
             component="span"
             aria-hidden
             sx={{
-              fontFamily: 'var(--font-mono)',
               fontWeight: 700,
               fontSize: 24,
               lineHeight: '32px',
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
             {`×${String(count)}`}

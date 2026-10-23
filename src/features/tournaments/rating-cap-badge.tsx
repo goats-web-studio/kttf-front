@@ -45,7 +45,6 @@ export default function RatingCapBadge({
         borderRadius: 1.5,
         bgcolor: max === null && min === null ? 'var(--ink-100)' : 'var(--ink-700)',
         color: max === null && min === null ? 'var(--ink-700)' : 'var(--paper)',
-        fontFamily: 'var(--font-mono)',
         fontSize: 11,
         fontWeight: 700,
         lineHeight: 1,

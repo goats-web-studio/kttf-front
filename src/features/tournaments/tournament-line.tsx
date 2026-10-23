@@ -48,7 +48,8 @@ export function TournamentName({
         display: 'inline-flex',
         alignItems: 'center',
         gap: 0.75,
-        ...(cancelled ? { color: 'var(--ink-400)', textDecoration: 'line-through' } : {}),
+        // Отменённый — зачёркнут и приглушён, но читаем: ink-500 даёт 5:1.
+        ...(cancelled ? { color: 'var(--ink-500)', textDecoration: 'line-through' } : {}),
       }}
     >
       {live && (

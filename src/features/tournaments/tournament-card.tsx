@@ -23,7 +23,7 @@ interface TournamentCardProps {
  * Турнир в календаре — docs/07-design-system.md, 5.2, `TournamentCard`.
  *
  * Слева дата плашкой: календарь пробегают глазами по дням, и число набрано
- * дисплейным шрифтом — это якорь карточки. Справа то, что решает «идти или
+ * крупно — это якорь карточки. Справа то, что решает «идти или
  * нет»: название, клуб с городом, состояние, уровень и взнос.
  *
  * Вся карточка — одна ссылка (`CardActionArea` с `href`): на телефоне
@@ -82,7 +82,6 @@ export default function TournamentCard({ tournament, club }: TournamentCardProps
           <Typography
             component="span"
             sx={{
-              fontFamily: 'var(--font-mono)',
               fontWeight: 700,
               fontSize: 28,
               lineHeight: '30px',
@@ -91,13 +90,22 @@ export default function TournamentCard({ tournament, club }: TournamentCardProps
           >
             {date.day}
           </Typography>
-          <Typography variant="caption" sx={{ fontWeight: 600, opacity: live ? 1 : 0.75 }}>
+          {/* Месяц и время — цветом, а не прозрачностью: полупрозрачные
+              чернила на подложке давали 4.3:1, ниже нормы для текста. */}
+          <Typography
+            variant="caption"
+            sx={{ fontWeight: 600, color: live ? 'inherit' : 'var(--ink-700)' }}
+          >
             {date.month}
             {date.year !== undefined && ` ${date.year}`}
           </Typography>
           <Typography
             variant="caption"
-            sx={{ fontVariantNumeric: 'tabular-nums', opacity: live ? 0.9 : 0.6 }}
+            sx={{
+              fontVariantNumeric: 'tabular-nums',
+              color: live ? 'inherit' : 'var(--ink-500)',
+              opacity: live ? 0.9 : 1,
+            }}
           >
             {date.time}
           </Typography>

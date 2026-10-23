@@ -111,7 +111,6 @@ export default function Podium({
                 height: winners.length === 0 ? 24 : style.height,
                 borderRadius: '12px 12px 0 0',
                 bgcolor: style.tint,
-                borderTop: `4px solid ${style.fill}`,
                 display: 'grid',
                 placeItems: 'center',
               }}
@@ -120,7 +119,6 @@ export default function Podium({
                 <Typography
                   component="span"
                   sx={{
-                    fontFamily: 'var(--font-mono)',
                     fontWeight: 700,
                     fontSize: medal === 1 ? 40 : 30,
                     lineHeight: 1,
