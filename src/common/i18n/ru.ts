@@ -168,8 +168,9 @@ export const ru = {
 
   'page.home.title': 'Настольный теннис Казахстана',
   'home.hero.find': 'Найти',
-  'home.hero.titleWhite': 'Настольный теннис',
-  'home.hero.titleRed': 'Казахстана',
+  'home.hero.titleWhite': 'Форум настольного',
+  'home.hero.titleRed': 'тенниса Казахстана',
+  'home.hero.line': 'KTTF · турниры · рейтинг · клубы · игроки',
   'home.hero.forum': 'KTTF — форум настольного тенниса Казахстана',
   'home.hero.placeholder': 'Фамилия игрока',
   'home.counts.players': 'Игроки',

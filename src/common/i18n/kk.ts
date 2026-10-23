@@ -170,8 +170,9 @@ export const kk: Record<MessageKey, string> = {
 
   'page.home.title': 'Қазақстан үстел теннисі',
   'home.hero.find': 'Табу',
-  'home.hero.titleWhite': 'Қазақстан',
-  'home.hero.titleRed': 'үстел теннисі',
+  'home.hero.titleWhite': 'Қазақстан үстел',
+  'home.hero.titleRed': 'теннисі форумы',
+  'home.hero.line': 'KTTF · турнирлер · рейтинг · клубтар · ойыншылар',
   'home.hero.forum': 'KTTF — Қазақстан үстел теннисі форумы',
   'home.hero.placeholder': 'Ойыншының тегі',
   'home.counts.players': 'Ойыншылар',
