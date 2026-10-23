@@ -24,7 +24,7 @@ import RouterLink from './router-link';
  * `--night-*` с контрастом AAA (раздел 3.3, запрет №7).
  */
 
-const FONT_UI = "'Fira Sans', system-ui, sans-serif";
+const FONT_UI = "'Roboto Flex', system-ui, sans-serif";
 
 /**
  * Ширина содержимого страниц. Колонка в 900px на широком экране оставляла
@@ -152,8 +152,8 @@ function build(tokens: Tokens, locale: Locale): Theme {
       // карточка — 16; чип, вкладка, метка — пилюля. Один радиус на всё
       // читается как шаблон.
       shape: { borderRadius: 4 },
-      // Раздел 3.5: Fira Sans для текста; h1–h2 — Fira Sans Condensed правилом
-      // в styles.css. Числа набираются JetBrains Mono (--font-mono) по месту.
+      // Раздел 3.5: Roboto Flex для текста; h1–h2 — она же узкой шириной,
+      // правилом в styles.css. Числа набираются JetBrains Mono (--font-mono) по месту.
       typography: {
         fontFamily: FONT_UI,
         fontSize: 15,
