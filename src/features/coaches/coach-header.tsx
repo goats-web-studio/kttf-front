@@ -51,7 +51,14 @@ export default function CoachHeader({ coach }: { readonly coach: CoachView }): R
       variant="outlined"
       component="header"
       sx={{
-        mt: coach.coverUrl === null ? 0 : -1,
+        // Под обложкой карточка продолжает её: прямые верхние углы и без
+        // верхней рамки, а не нахлёст на 8px — тёмная плашка стоит вровень
+        // с краем карточки и при нахлёсте вылезала бы на картинку.
+        ...(coach.coverUrl !== null && {
+          borderTopLeftRadius: 0,
+          borderTopRightRadius: 0,
+          borderTop: 0,
+        }),
         display: 'grid',
         gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'minmax(0, 1fr) 320px' },
         alignItems: 'stretch',
