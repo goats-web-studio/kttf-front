@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 import ThemeRoot from '@/common/ui/theme';
 
@@ -24,6 +24,17 @@ interface SiteLayoutProps {
  * что попадает в консоль, считается против бюджета 400 КБ (ТС 8.1).
  */
 export default function SiteLayout({ children }: SiteLayoutProps): ReactNode {
+  // Сайт без обводки фокуса (styles.css, `data-focus`). Метка на <html>, а не
+  // на обёртке: меню и диалоги рисуются в портале вне неё.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.focus = 'quiet';
+
+    return () => {
+      delete root.dataset.focus;
+    };
+  }, []);
+
   return (
     <ThemeRoot>
       <Box
