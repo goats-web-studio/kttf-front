@@ -2676,7 +2676,7 @@ export const kk: Record<MessageKey, string> = {
   'duel.new.rated': 'Рейтингке',
   'duel.new.format': 'Матч форматы',
   'duel.new.ratedHint':
-    'Бір қарсыласпен рейтингтік кездесу 7 күнде бір реттен жиі емес, ойыншыда аптасына 3-ке дейін',
+    'Дуэль турнирлік кездесудің рейтинг өзгерісінің жартысын береді. Бір қарсыласпен 7 күнде бір реттен жиі емес, ойыншыда аптасына 3-ке дейін',
   'duel.new.venue': 'Орны',
   'duel.new.time': 'Уақыты',
   'duel.new.timeLead': 'Үш нұсқаға дейін: қарсылас біреуін таңдайды немесе өз уақытын ұсынады',
@@ -2818,9 +2818,9 @@ export const kk: Record<MessageKey, string> = {
   'duel.flag.ONE_SIDED': 'Бір жақты жеңістер',
   'duel.flag.ONE_SIDED.hint':
     'Жұптың 30 күнде 3 не одан көп рейтингтік дуэлі бар, бәрін біреуі жеңген',
-  'duel.flag.PROVISIONAL': 'Провизорлық ойыншы',
+  'duel.flag.PROVISIONAL': 'Жаңа ойыншы',
   'duel.flag.PROVISIONAL.hint':
-    'Екеуінің бірінде 20-дан аз кездесу бар: оның коэффициенті екі есе жоғары, ол арқылы рейтинг жинау тиімдірек',
+    'Екеуінің бірі — жаңа ойыншы (5 турнирден аз): жеңілсе, екі есе аз жоғалтады, ол арқылы рейтинг жинау тиімдірек',
   'duel.flag.BIG_GAIN': 'Үлкен өсім',
   'duel.flag.BIG_GAIN.hint': 'Жеңімпаз 30 күнде дуэльдерден 30 және одан көп ұпай жинаған',
   'duel.admin.title': 'Дуэльдер',
@@ -2832,7 +2832,7 @@ export const kk: Record<MessageKey, string> = {
   'duel.admin.empty': 'Осы шарттар бойынша дуэльдер жоқ',
   'duel.admin.pairCount': 'Осы жұптың 30 күндегі рейтингтік дуэльдері: {count}',
   'duel.admin.noChange': 'Рейтинг өзгермеді',
-  'duel.admin.provisional': 'Провизорлық',
+  'duel.admin.provisional': 'Жаңа ойыншы',
   'duel.admin.annulledAt': 'Есептеу {at} болдырылмады',
   'duel.admin.resolve': 'Дауды шешу',
   'duel.admin.resolveTitle': 'Дауды шешу',
