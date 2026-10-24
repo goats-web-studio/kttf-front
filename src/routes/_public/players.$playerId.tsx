@@ -14,6 +14,7 @@ import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { newDuelHref } from '@/features/duels/labels';
 import PlayerForumPosts from '@/features/forum/player-posts';
 import { usePlaceName } from '@/features/places/place-name';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -126,6 +127,13 @@ function PlayerPage(): ReactNode {
                 : () => {
                     setOpponentId(viewerId);
                   }
+            }
+            // Вызов — вошедшему на чужом профиле, если вызов есть кому
+            // принять (ADR-065): у игрока, заведённого организатором, аккаунта нет.
+            challengeHref={
+              user === null || isOwn || player.data.userId === null
+                ? undefined
+                : newDuelHref(playerId)
             }
           />
         )}

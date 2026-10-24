@@ -16,6 +16,7 @@ import {
   Pencil,
   Settings,
   Swords,
+  Zap,
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -41,6 +42,11 @@ interface ProfileHeaderProps {
   readonly isOwn: boolean;
   /** «Сравнить со мной» — у вошедшего игрока на чужом профиле. */
   readonly onCompare?: (() => void) | undefined;
+  /**
+   * «Вызвать на дуэль» — адрес формы вызова (ADR-065): у вошедшего на чужом
+   * профиле, если у игрока есть аккаунт — без него вызов некому принять.
+   */
+  readonly challengeHref?: string | undefined;
 }
 
 /**
@@ -62,6 +68,7 @@ export default function ProfileHeader({
   summary,
   isOwn,
   onCompare,
+  challengeHref,
 }: ProfileHeaderProps): ReactNode {
   const t = useT();
   const chips = playerChips(player, t);
@@ -159,15 +166,29 @@ export default function ProfileHeader({
               </Button>
             </Stack>
           ) : (
-            onCompare !== undefined && (
-              <Button
-                onClick={onCompare}
-                startIcon={<Swords size={16} aria-hidden />}
-                sx={{ mt: 2.5, minHeight: 44 }}
-                data-compare
-              >
-                {t('profile.compare')}
-              </Button>
+            (onCompare !== undefined || challengeHref !== undefined) && (
+              <Stack direction="row" useFlexGap spacing={1} sx={{ mt: 2.5, flexWrap: 'wrap' }}>
+                {onCompare !== undefined && (
+                  <Button
+                    onClick={onCompare}
+                    startIcon={<Swords size={16} aria-hidden />}
+                    sx={{ minHeight: 44 }}
+                    data-compare
+                  >
+                    {t('profile.compare')}
+                  </Button>
+                )}
+                {challengeHref !== undefined && (
+                  <Button
+                    href={challengeHref}
+                    startIcon={<Zap size={16} aria-hidden />}
+                    sx={{ minHeight: 44 }}
+                    data-challenge
+                  >
+                    {t('profile.challenge')}
+                  </Button>
+                )}
+              </Stack>
             )
           )}
         </Box>

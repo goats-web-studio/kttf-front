@@ -19,6 +19,7 @@ import DeltaPill from '@/common/ui/delta-pill';
 import { useMotionGroup } from '@/common/ui/motion-hooks';
 import RatingValue from '@/common/ui/rating-value';
 
+import { ratingPointHref, ratingPointTitle } from './rating-point';
 import { buildRatingScale, nearestPoint, type RatingChartPoint } from './rating-scale';
 
 /** Ширина до первого замера и в среде без раскладки (тесты). */
@@ -93,16 +94,17 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
     setActive(nearest(event));
   };
 
-  /** Турнир точки — на его страницу; в новой вкладке, если попросили. */
+  /** Турнир или дуэль точки — на их страницу; в новой вкладке, если попросили. */
   const open = (index: number | null, newTab = false) => {
-    const id = index === null ? null : (scale.points[index]?.tournamentId ?? null);
+    const point = index === null ? undefined : scale.points[index];
+    const href = point === undefined ? null : ratingPointHref(point);
 
-    if (id === null) return;
+    if (href === null) return;
     if (newTab) {
-      window.open(`/tournaments/${id}`, '_blank', 'noopener');
+      window.open(href, '_blank', 'noopener');
       return;
     }
-    void navigate({ to: '/tournaments/$tournamentId', params: { tournamentId: id } });
+    void navigate({ href });
   };
 
   const press = (event: PointerEvent<SVGSVGElement>) => {
@@ -166,7 +168,8 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
           display: 'block',
           touchAction: 'pan-y',
           userSelect: 'none',
-          cursor: current?.tournamentId == null ? 'default' : 'pointer',
+          cursor:
+            current === undefined || ratingPointHref(current) === null ? 'default' : 'pointer',
         }}
         onPointerMove={pick}
         onPointerDown={press}
@@ -316,7 +319,7 @@ export default function RatingChart({ points }: RatingChartProps): ReactNode {
   );
 }
 
-/** Подсказка о турнире: дата, турнир, рейтинг после, изменение. */
+/** Подсказка о точке: дата, турнир или дуэль, рейтинг после, изменение. */
 function Tip({
   point,
   width,
@@ -355,19 +358,19 @@ function Tip({
         {formatDate(point.playedAt, locale)}
       </Typography>
       <Typography variant="body2" component="p" sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
-        {point.tournamentName ?? t('player.history.adjustment')}
+        {ratingPointTitle(point, t)}
       </Typography>
       <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1 }}>
         <RatingValue value={point.rating} sx={{ fontWeight: 700, fontSize: 18 }} animate={false} />
         <DeltaPill value={point.delta} />
       </Box>
-      {point.tournamentId !== null && (
+      {ratingPointHref(point) !== null && (
         <Typography
           variant="caption"
           component="p"
           sx={{ mt: 0.75, fontWeight: 600, color: 'var(--red-600)' }}
         >
-          {t('profile.chart.open')}
+          {t(point.tournamentId === null ? 'profile.chart.openDuel' : 'profile.chart.open')}
         </Typography>
       )}
     </Box>

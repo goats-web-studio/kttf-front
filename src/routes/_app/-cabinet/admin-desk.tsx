@@ -7,6 +7,7 @@ import { fill, useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
 import { newClubApplicationsCountQuery } from '@/features/club-applications/queries';
 import { pendingCoachesCountQuery } from '@/features/coaches/queries';
+import { adminDuelsQuery } from '@/features/duels/queries';
 import { forumReportsQuery } from '@/features/forum/queries';
 
 /**
@@ -23,6 +24,7 @@ export default function AdminDesk(): ReactNode {
   const fresh = useQuery(newClubApplicationsCountQuery).data ?? 0;
   const coaches = useQuery(pendingCoachesCountQuery).data ?? 0;
   const reports = useQuery(forumReportsQuery({ status: 'OPEN', limit: 1 })).data?.total ?? 0;
+  const disputes = useQuery(adminDuelsQuery({ status: 'DISPUTED', limit: 1 })).data?.total ?? 0;
 
   return (
     <Surface title={t('cabinet.admin.title')} subtitle={t('cabinet.admin.lead')}>
@@ -46,6 +48,12 @@ export default function AdminDesk(): ReactNode {
           {reports > 0
             ? fill(t('cabinet.admin.forumNew'), { count: String(reports) })
             : t('cabinet.admin.forum')}
+        </Button>
+        {/* Споры дуэлей ждут решения администратора — числом, как жалобы (ADR-065). */}
+        <Button href="/cabinet/duels" sx={{ minHeight: 44 }}>
+          {disputes > 0
+            ? fill(t('cabinet.admin.duelsNew'), { count: String(disputes) })
+            : t('cabinet.admin.duels')}
         </Button>
         <Button href="/cabinet/places" sx={{ minHeight: 44 }}>
           {t('page.places.title')}

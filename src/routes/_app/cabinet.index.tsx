@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
 import { useSessionStore } from '@/features/auth/session-store';
+import MyDuels from '@/features/duels/my-duels';
 import MyTrialRequests from '@/features/trial-requests/my-requests';
 
 import AdminDesk from './-cabinet/admin-desk';
@@ -71,6 +72,9 @@ function CabinetPage(): ReactNode {
           {user.clubRoles.length > 0 && <ClubDesk user={user} />}
 
           {user.playerId !== null && <PlayerDesk playerId={user.playerId} />}
+
+          {/* Дуэли и спарринги (ADR-065) — у игрока: без профиля их нет. */}
+          {user.playerId !== null && <MyDuels playerId={user.playerId} />}
 
           {/* Заявки на пробные (T3) — у любого вошедшего: профиль игрока для
               заявки не нужен. Пусто — блока нет. */}

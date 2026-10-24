@@ -832,6 +832,34 @@ describe('шапка-визитка и карточки «кто он» (ADR-060
     expect(screen.queryByRole('button', { name: ru['profile.compare'] })).toBeNull();
   });
 
+  it('«Вызвать на дуэль» — вошедшему на чужом профиле игрока с аккаунтом (ADR-065)', async () => {
+    profile = { ...PLAYER_PROFILE, userId: '00000000-0000-4000-8000-000000000062' };
+    renderProfile(PLAYER_ID, { ...USER_WITH_PROFILE, playerId: PLAYER_IDS.second });
+
+    const challenge = await screen.findByRole('link', { name: ru['profile.challenge'] });
+    expect(challenge.getAttribute('href')).toBe(`/duels/new?opponent=${PLAYER_ID}`);
+  });
+
+  it('игроку без аккаунта вызова нет: его некому принять', async () => {
+    renderProfile(PLAYER_ID, { ...USER_WITH_PROFILE, playerId: PLAYER_IDS.second });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(screen.queryByRole('link', { name: ru['profile.challenge'] })).toBeNull();
+  });
+
+  it('на своём профиле вызова нет', async () => {
+    profile = { ...PLAYER_PROFILE, userId: '00000000-0000-4000-8000-000000000062' };
+    renderProfile(PLAYER_ID, USER_WITH_PROFILE);
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(screen.queryByRole('link', { name: ru['profile.challenge'] })).toBeNull();
+  });
+
+  it('гостю вызова нет', async () => {
+    profile = { ...PLAYER_PROFILE, userId: '00000000-0000-4000-8000-000000000062' };
+    renderProfile();
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(screen.queryByRole('link', { name: ru['profile.challenge'] })).toBeNull();
+  });
+
   it('«Достижения» — медали по достоинству, победы с долей, первый турнир', async () => {
     const { container } = renderProfile();
 

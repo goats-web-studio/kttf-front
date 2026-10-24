@@ -14,6 +14,7 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import TournamentList from '@/features/clubs/tournament-list';
+import { ratingPointTitle } from '@/features/players/rating-point';
 import {
   playerQuery,
   playerRatingHistoryQuery,
@@ -84,11 +85,13 @@ export default function PlayerDesk({ playerId }: { readonly playerId: string }):
               })}
             </Typography>
           )}
-          {last?.tournamentName != null && (
+          {/* Последнее изменение — турнир или дуэль (ADR-065); корректировку не
+              показываем: она не «что я сыграл». */}
+          {last !== undefined && (last.tournamentName !== null || last.duel !== null) && (
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
               <DeltaPill value={last.delta} />
               <Typography color="text.secondary" noWrap>
-                {last.tournamentName}
+                {ratingPointTitle(last, t)}
               </Typography>
             </Stack>
           )}

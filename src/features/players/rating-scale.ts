@@ -50,6 +50,8 @@ export interface RatingChartPoint {
   readonly playedAt: string;
   readonly tournamentId: string | null;
   readonly tournamentName: string | null;
+  /** Дуэль вне турнира (ADR-065): точка на каждую, с именем соперника. */
+  readonly duel: RatingPointView['duel'];
 }
 
 /** Деление оси значений: круглое число и его высота. */
@@ -150,7 +152,11 @@ export function buildRatingScale(
     round(plot.left + (span > 0 ? (innerWidth * (time - first.time)) / span : innerWidth / 2));
 
   const chartPoints = entries.map((entry, position) => ({
-    key: entry.point.tournamentId ?? `adjustment-${String(entry.index)}`,
+    key:
+      entry.point.tournamentId ??
+      (entry.point.duel === null
+        ? `adjustment-${String(entry.index)}`
+        : `duel-${entry.point.duel.id}`),
     x: round(plot.left + innerWidth * horizontal(entry, first, span, position, entries.length)),
     y: yOf(entry.value),
     rating: entry.point.ratingAfter,
@@ -158,6 +164,7 @@ export function buildRatingScale(
     playedAt: entry.point.playedAt,
     tournamentId: entry.point.tournamentId,
     tournamentName: entry.point.tournamentName,
+    duel: entry.point.duel,
   }));
 
   const line =

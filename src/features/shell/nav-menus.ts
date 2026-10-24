@@ -17,6 +17,7 @@ import {
   Send,
   ShoppingBag,
   Sparkles,
+  Swords,
   Tag,
   TentTree,
   Trophy,
@@ -56,6 +57,8 @@ export const NAV_MENUS: Readonly<Record<string, readonly NavMenuItem[]>> = {
     { href: '/players', icon: ListOrdered, key: 'players.rating' },
     { href: '/players?gender=FEMALE', icon: Venus, key: 'players.women' },
     { href: '/players?view=equipment', icon: Layers, key: 'players.equipment' },
+    // Дуэли и спарринги — ADR-065, `docs/13` 5.1.
+    { href: '/duels', icon: Swords, key: 'players.duels' },
   ],
   '/tournaments': [
     { href: '/tournaments', icon: CalendarDays, key: 'tournaments.calendar' },
