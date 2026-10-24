@@ -56,7 +56,7 @@ export default function DuelCard({ duel }: { readonly duel: DuelItemView }): Rea
       {/* Заголовок карточки для чтеца экрана — имя автора: на доске ищут людей. */}
       <Box id={titleId}>
         {played ? (
-          <ScoreLine duel={duel} />
+          <ScoreLine duel={duel} deltas />
         ) : (
           <DuelPlayerLine
             player={duel.author}

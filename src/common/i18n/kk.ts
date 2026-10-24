@@ -2858,6 +2858,7 @@ export const kk: Record<MessageKey, string> = {
   'notifications.DUEL_SCHEDULED': '{player} ойыншысымен ойын белгіленді: {when}',
   'notifications.DUEL_DECLINED': '{player} шақырудан бас тартты',
   'notifications.DUEL_DECLINED_TAKEN': '{player} басқа қарсыласты таңдады',
+  'notifications.DUEL_DECLINED_REJECTED': '{player} сіздің жауабыңызды қабылдамады',
   'notifications.DUEL_CANCELLED': '{player} ойынды болдырмады',
   'notifications.DUEL_CANCELLED_REASON': '{player} ойынды болдырмады: {reason}',
   'notifications.DUEL_RESULT':

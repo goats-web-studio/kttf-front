@@ -86,7 +86,9 @@ export function notificationText(notification: NotificationView, t: T, locale: L
         t(
           notification.data.reason === 'TAKEN'
             ? 'notifications.DUEL_DECLINED_TAKEN'
-            : 'notifications.DUEL_DECLINED',
+            : notification.data.reason === 'REJECTED'
+              ? 'notifications.DUEL_DECLINED_REJECTED'
+              : 'notifications.DUEL_DECLINED',
         ),
         { player: notification.data.playerName },
       );

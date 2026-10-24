@@ -38,6 +38,7 @@ function item(patch: Partial<DuelItemView>): DuelItemView {
     note: null,
     responsesNew: 0,
     result: null,
+    ratingChanges: [],
     createdAt: '2026-10-24T08:00:00.000Z',
     ...patch,
   };

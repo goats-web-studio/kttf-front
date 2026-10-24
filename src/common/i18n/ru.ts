@@ -2835,6 +2835,7 @@ export const ru = {
   'notifications.DUEL_SCHEDULED': 'Игра с {player} назначена: {when}',
   'notifications.DUEL_DECLINED': '{player} отказался(ась) от вызова',
   'notifications.DUEL_DECLINED_TAKEN': '{player} выбрал(а) другого соперника',
+  'notifications.DUEL_DECLINED_REJECTED': '{player} отклонил(а) ваш отклик',
   'notifications.DUEL_CANCELLED': '{player} отменил(а) игру',
   'notifications.DUEL_CANCELLED_REASON': '{player} отменил(а) игру: {reason}',
   'notifications.DUEL_RESULT':

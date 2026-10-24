@@ -85,6 +85,7 @@ const OPEN_ITEM: DuelItemView = {
   note: 'Играю атакующе',
   responsesNew: null,
   result: null,
+  ratingChanges: [],
   createdAt: '2026-10-24T08:00:00.000Z',
 };
 

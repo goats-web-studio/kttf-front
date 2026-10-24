@@ -6,6 +6,7 @@ import { Clock, MapPin } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useLocale, useT } from '@/common/i18n';
+import DeltaPill from '@/common/ui/delta-pill';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import RatingValue from '@/common/ui/rating-value';
 import { Badge } from '@/features/coaches/coach-cards';
@@ -154,13 +155,33 @@ export function SlotList({ slots }: { readonly slots: readonly DuelSlotView[] })
 /**
  * Счёт сыгранной: «Ержанов 3:1 Смагулов» — победитель первым, как пишут
  * результат в зале. Партии — то, что внесли и подтвердили сами игроки.
+ * С `deltas` рядом с именами — изменение рейтинга: в карточке «Сыгранных»
+ * отдельного блока начисления нет.
  */
-export function ScoreLine({ duel }: { readonly duel: DuelItemView }): ReactNode {
+export function ScoreLine({
+  duel,
+  deltas = false,
+}: {
+  readonly duel: DuelItemView;
+  readonly deltas?: boolean;
+}): ReactNode {
   const { result, opponent } = duel;
   if (result === null || opponent === null) return null;
 
   const winner = result.winnerId === duel.author.id ? duel.author : opponent;
   const loser = winner === opponent ? duel.author : opponent;
+  const delta = (playerId: string): ReactNode => {
+    const change = deltas
+      ? duel.ratingChanges.find((item) => item.playerId === playerId)
+      : undefined;
+
+    return change === undefined ? null : (
+      <>
+        {' '}
+        <DeltaPill value={change.delta} />
+      </>
+    );
+  };
 
   return (
     <Typography
@@ -168,11 +189,13 @@ export function ScoreLine({ duel }: { readonly duel: DuelItemView }): ReactNode 
       data-duel-score
       sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere' }}
     >
-      {winner.name}{' '}
+      {winner.name}
+      {delta(winner.id)}{' '}
       <Box component="span" sx={{ px: 0.5, color: 'var(--red-600)' }}>
         {result.winnerSets}:{result.loserSets}
       </Box>{' '}
       {loser.name}
+      {delta(loser.id)}
     </Typography>
   );
 }
