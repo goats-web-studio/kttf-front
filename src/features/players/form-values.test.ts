@@ -42,6 +42,7 @@ const profile: PlayerProfileView = {
   coachSlug: null,
   coachSince: null,
   coachHistory: [],
+  coachVisibility: 'ALL',
   ownCoachSlug: null,
   lastSeenAt: null,
   online: false,
@@ -119,6 +120,14 @@ describe('форма в правку', () => {
     expect(patch.birthYear).toBe(2001);
     expect(patch.gender).toBe('MALE');
     expect(patch.cityId).toBe(CITIES.almaty.id);
+  });
+
+  it('кому виден тренер (ADR-066) — туда и обратно, пустое — умолчание, а не null', () => {
+    expect(toFormValues({ ...profile, coachVisibility: 'NONE' }).coachVisibility).toBe('NONE');
+    expect(toPlayerPatch({ ...filled, coachVisibility: 'CURRENT' }).coachVisibility).toBe(
+      'CURRENT',
+    );
+    expect(toPlayerPatch(filled).coachVisibility).toBe('ALL');
   });
 });
 

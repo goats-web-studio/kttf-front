@@ -412,7 +412,7 @@ describe('штаб на странице клуба и история трене
     expect(staff.textContent).toContain('Старший тренер');
   });
 
-  it('профиль: «Тренер: X с 2024», ниже «Раньше: Y, 2020–2024»', async () => {
+  it('профиль: «Тренер сейчас: X · с 2024 года», ниже «Прежний тренер: Y · 2020–2024»', async () => {
     own = {
       ...PLAYER_PROFILE,
       coachPlayerId: PLAYERS.second.id,
@@ -433,8 +433,39 @@ describe('штаб на странице клуба и история трене
 
     const coachLink = await screen.findByRole('link', { name: 'Смагулов Асан' });
     expect(coachLink.getAttribute('href')).toBe('/coaches/smagulov-asan');
-    expect(coachLink.parentElement?.textContent).toContain('Смагулов Асан с 2024');
-    expect(element('[data-coach-history]').textContent).toBe('Тлеубаев Асан, 2020–2024');
+    const about = element('[data-fact="about"]');
+    expect(coachLink.parentElement?.textContent).toContain('Смагулов Асан · с 2024 года');
+    expect(element('[data-coach-history]').textContent).toBe('Тлеубаев Асан · 2020–2024');
+    expect(about.textContent).toContain(ru['profile.coachCurrent']);
+    // Один прежний — подпись в единственном числе.
+    expect(about.textContent).toContain(ru['profile.coachHistoryOne']);
+    expect(about.querySelector('[data-hidden-note]')).toBeNull();
+  });
+
+  it('спрятанное от других (ADR-066) помечено у подписи — его видят только свои', async () => {
+    own = {
+      ...PLAYER_PROFILE,
+      coachName: 'Смагулов Асан',
+      coachVisibility: 'CURRENT',
+      coachHistory: [
+        {
+          coachPlayerId: PLAYERS.third.id,
+          name: 'Тлеубаев Асан',
+          slug: null,
+          from: '2020-02-01T00:00:00.000Z',
+          to: '2024-03-01T00:00:00.000Z',
+        },
+      ],
+    };
+    renderAt(`/players/${PLAYER_PROFILE.id}`);
+
+    const history = await waitFor(() => element('[data-coach-history]'));
+    const notes = element('[data-fact="about"]').querySelectorAll('[data-hidden-note]');
+    // Нынешний виден всем, прежние — нет: пометка одна, у прежних.
+    expect(notes).toHaveLength(1);
+    expect(history.closest('dd')?.parentElement?.textContent).toContain(
+      ru['profile.hiddenFromOthers'],
+    );
   });
 });
 

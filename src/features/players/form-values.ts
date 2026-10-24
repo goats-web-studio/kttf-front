@@ -62,6 +62,7 @@ export function toFormValues(player: PlayerProfileView): Partial<CreatePlayerInp
         ? {}
         : { coachName: player.coachName }
       : { coachPlayerId: player.coachPlayerId }),
+    coachVisibility: player.coachVisibility,
   };
 }
 
@@ -100,6 +101,8 @@ export function toPlayerPatch(values: CreatePlayerInput): UpdatePlayerInput {
     bio: values.bio ?? null,
     coachPlayerId: values.coachPlayerId ?? null,
     coachName: values.coachName ?? null,
+    // Настройка, а не поле анкеты: «стереть» её нечем, пустая — умолчание.
+    coachVisibility: values.coachVisibility ?? 'ALL',
   };
 }
 

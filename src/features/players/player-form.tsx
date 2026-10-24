@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  coachVisibilitySchema,
   createPlayerSchema,
   genderSchema,
   gripSchema,
   playingHandSchema,
   type CityRef,
+  type CoachVisibility,
   type CreatePlayerInput,
 } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
@@ -102,6 +104,7 @@ export default function PlayerForm({
       // Умолчание совпадает со схемой: до появления даты профиль показывал
       // только год, и галочка ничего не меняет в том, что о человеке видно.
       birthYearOnly: true,
+      coachVisibility: 'ALL',
       ...defaultValues,
     },
   });
@@ -337,6 +340,24 @@ export default function PlayerForm({
             error={errors.coachName === undefined ? undefined : 'error.form.coach'}
           />
         </Box>
+        {/* Кому виден тренер — ADR-066. Прячет сервер; здесь только выбор. */}
+        <Box sx={{ ...GRID, mt: 2 }}>
+          <Box>
+            <TextInput
+              control={control}
+              name="coachVisibility"
+              label="player.form.coachVisibility"
+              select
+            >
+              {coachVisibilitySchema.options.map((value) => (
+                <MenuItem key={value} value={value}>
+                  {t(COACH_VISIBILITY_KEYS[value])}
+                </MenuItem>
+              ))}
+            </TextInput>
+            <FormHelperText>{t('player.form.coachVisibilityHint')}</FormHelperText>
+          </Box>
+        </Box>
       </Section>
 
       <TextInput
@@ -441,7 +462,8 @@ type TextName =
   | 'rubberBackhand'
   | 'bio'
   | 'coachPlayerId'
-  | 'coachName';
+  | 'coachName'
+  | 'coachVisibility';
 
 /** Группа полей с подписью над линейкой. */
 function Section({
@@ -530,6 +552,12 @@ function Choice({
 const GENDER_KEYS: Readonly<Record<NonNullable<CreatePlayerInput['gender']>, MessageKey>> = {
   MALE: 'player.gender.MALE',
   FEMALE: 'player.gender.FEMALE',
+};
+
+const COACH_VISIBILITY_KEYS: Readonly<Record<CoachVisibility, MessageKey>> = {
+  ALL: 'player.form.coachVisibility.ALL',
+  CURRENT: 'player.form.coachVisibility.CURRENT',
+  NONE: 'player.form.coachVisibility.NONE',
 };
 
 const HAND_KEYS: Readonly<Record<'RIGHT' | 'LEFT', MessageKey>> = {

@@ -729,6 +729,7 @@ export const PLAYER_PROFILE: PlayerProfileView = {
   coachSlug: null,
   coachSince: null,
   coachHistory: [],
+  coachVisibility: 'ALL',
   ownCoachSlug: null,
   lastSeenAt: null,
   online: false,

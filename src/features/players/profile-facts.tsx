@@ -140,6 +140,10 @@ function Achievements({ summary }: { readonly summary: PlayerSummaryView }): Rea
 function About({ player }: { readonly player: PlayerProfileView }): ReactNode {
   const t = useT();
   const locale = useLocale();
+  // Постороннему спрятанное не приходит вовсе (ADR-066). Пришло, хотя
+  // настройка его прячет, — значит, смотрит сам игрок или организатор
+  // клуба, и ему стоит видеть, что другие этого не видят.
+  const hidden = <HiddenNote />;
 
   return (
     <Box sx={{ display: 'grid', gap: 2 }}>
@@ -153,8 +157,16 @@ function About({ player }: { readonly player: PlayerProfileView }): ReactNode {
       )}
       <Facts
         rows={[
-          ['player.form.coach', coach(player, t)],
-          ['profile.coachHistory', coachHistory(player)],
+          [
+            'profile.coachCurrent',
+            coach(player, t),
+            player.coachVisibility === 'NONE' ? hidden : null,
+          ],
+          [
+            player.coachHistory.length === 1 ? 'profile.coachHistoryOne' : 'profile.coachHistory',
+            coachHistory(player),
+            player.coachVisibility === 'ALL' ? null : hidden,
+          ],
           [
             'profile.since',
             player.lastSeenAt === null
@@ -174,7 +186,8 @@ function Facts({
   rows,
   columns = 1,
 }: {
-  readonly rows: readonly (readonly [MessageKey, ReactNode])[];
+  /** Подпись, значение и необязательная пометка к подписи. */
+  readonly rows: readonly (readonly [MessageKey, ReactNode, ReactNode?])[];
   /** Короткие значения — числа, даты — встают в две колонки. */
   readonly columns?: 1 | 2;
 }): ReactNode {
@@ -198,10 +211,13 @@ function Facts({
         },
       }}
     >
-      {rows.map(([label, value]) =>
+      {rows.map(([label, value, note]) =>
         value === null || value === undefined || value === '' ? null : (
           <Box key={label}>
-            <dt>{t(label)}</dt>
+            <dt>
+              {t(label)}
+              {note}
+            </dt>
             <dd>{value}</dd>
           </Box>
         ),
@@ -210,9 +226,20 @@ function Facts({
   );
 }
 
+/** «· скрыто от других» у подписи факта, спрятанного от посторонних. */
+function HiddenNote(): ReactNode {
+  const t = useT();
+
+  return (
+    <Box component="span" data-hidden-note sx={{ fontWeight: 400 }}>
+      {` · ${t('profile.hiddenFromOthers')}`}
+    </Box>
+  );
+}
+
 /**
  * Тренер: со страницей на KTTF — ссылкой на неё (ADR-059), иначе именем,
- * как в анкете (ADR-035); «с 2024» — из истории тренера (T2.1).
+ * как в анкете (ADR-035); «с 2024 года» — из истории тренера (T2.1).
  */
 function coach(player: PlayerProfileView, t: (key: MessageKey) => string): ReactNode {
   if (player.coachName === null) return null;
@@ -229,32 +256,39 @@ function coach(player: PlayerProfileView, t: (key: MessageKey) => string): React
       ) : (
         <Link href={`/coaches/${player.coachSlug}`}>{player.coachName}</Link>
       )}
-      {since !== null && (
-        <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>
-          {` ${since}`}
-        </Box>
-      )}
+      {since !== null && <Years>{since}</Years>}
     </>
   );
 }
 
-/** «Раньше: Y, 2020–2024; Z, 2018–2020» — прежние тренеры, последние первыми. */
+/**
+ * Прежние тренеры, последние первыми, — каждый своей строкой с годами:
+ * «Петров Алексей · 2020–2024».
+ */
 function coachHistory(player: PlayerProfileView): ReactNode {
   if (player.coachHistory.length === 0) return null;
 
   return (
-    <span data-coach-history>
-      {player.coachHistory.map((tenure, index) => (
+    <Box component="span" data-coach-history sx={{ display: 'grid', gap: 0.5 }}>
+      {player.coachHistory.map((tenure) => (
         <span key={`${tenure.coachPlayerId}-${tenure.from}`}>
-          {index > 0 && '; '}
           {tenure.slug === null ? (
             tenure.name
           ) : (
             <Link href={`/coaches/${tenure.slug}`}>{tenure.name}</Link>
           )}
-          {`, ${tenureYears(tenure)}`}
+          <Years>{tenureYears(tenure)}</Years>
         </span>
       ))}
-    </span>
+    </Box>
+  );
+}
+
+/** Годы при имени тренера — тише имени, через точку. */
+function Years({ children }: { readonly children: string }): ReactNode {
+  return (
+    <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+      {` · ${children}`}
+    </Box>
   );
 }
