@@ -34,7 +34,12 @@ import {
   VenueLine,
 } from '@/features/duels/duel-parts';
 import { DUELS_HREF, formatSlot } from '@/features/duels/labels';
+import MatchPanel from '@/features/duels/match-panel';
 import { duelQuery } from '@/features/duels/queries';
+import SubjectThread from '@/features/forum/subject-thread';
+
+/** Как часто перечитывается идущий матч. */
+const LIVE_POLL_MS = 5_000;
 
 export const Route = createFileRoute('/_public/duels/$duelId')({
   component: DuelPage,
@@ -52,7 +57,16 @@ function DuelPage(): ReactNode {
   const user = useSessionStore((state) => state.user);
   const me = user?.playerId ?? null;
   const valid = z.uuid().safeParse(duelId).success;
-  const duel = useQuery({ ...duelQuery(duelId), enabled: valid });
+  const duel = useQuery({
+    ...duelQuery(duelId),
+    enabled: valid,
+    // Идёт матч — табло на втором телефоне и у зрителей обновляется само
+    // (ADR-068): партию записывает любой из двоих.
+    refetchInterval: (query) =>
+      query.state.data?.status === 'SCHEDULED' && query.state.data.startedAt !== null
+        ? LIVE_POLL_MS
+        : false,
+  });
 
   if (!valid || isMissingResource(duel.error)) {
     return (
@@ -96,6 +110,9 @@ function DuelBody({
   // Ответ на вызов и отклик на публикацию — одна панель; отказ вызванного —
   // в ней же, даже если отвечать вариантом уже нельзя.
   const answering = can.respond || can.decline;
+  // Согласованная игра — блок «Матч» (ADR-068): когда, где, перенос, табло.
+  // Он же показывает время, поэтому строка состояния над ним не нужна.
+  const match = opponent !== null && (duel.status === 'SCHEDULED' || duel.status === 'REPORTED');
 
   return (
     <>
@@ -106,7 +123,9 @@ function DuelBody({
       />
 
       <Stack spacing={3}>
-        <StatusLine duel={duel} me={me} />
+        {duel.status !== 'SCHEDULED' && <StatusLine duel={duel} me={me} />}
+
+        {match && <MatchPanel duel={duel} me={me} />}
 
         <Surface title={t('duel.page.details')}>
           <Box sx={{ display: 'grid', gap: 2 }}>
@@ -146,7 +165,8 @@ function DuelBody({
 
         {duel.result !== null && <ResultPanel duel={duel} />}
 
-        {can.report && <ReportPanel duel={duel} me={me} />}
+        {/* У назначенной ручной счёт — вторичной ссылкой в блоке «Матч». */}
+        {can.report && duel.status !== 'SCHEDULED' && <ReportPanel duel={duel} me={me} />}
         {(can.confirm || can.dispute) && <ConfirmPanel duel={duel} me={me} />}
         {answering && <RespondPanel duel={duel} me={me} />}
 
@@ -158,6 +178,9 @@ function DuelBody({
           </Box>
         )}
       </Stack>
+
+      {/* Обсуждение — тема форума с предметом «дуэль» (ADR-068 §5). */}
+      <SubjectThread type="DUEL" id={duel.id} />
     </>
   );
 }

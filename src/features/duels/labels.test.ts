@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { fill, type MessageKey } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 
-import { byTodo, duelErrorText, duelTodo } from './labels';
+import { byTodo, duelContact, duelErrorText, duelTodo, matchStage } from './labels';
 import { parseTime, slotProblem, toSlotInput } from './slot-draft';
 
 const t = (key: MessageKey): string => ru[key];
@@ -177,5 +177,31 @@ describe('текст отказа', () => {
     expect(duelErrorText(new AppError(ERROR_CODES.DUEL_TIME_INVALID, 'x'), t)).toBe(
       ru['error.api.DUEL_TIME_INVALID'],
     );
+  });
+});
+
+describe('контакт соперника (ADR-068)', () => {
+  it('телефон — с +7 для ссылок, «8 …» тоже; Telegram — по @ и ссылке; прочее — текст', () => {
+    expect(duelContact('+7 701 123-45-67')).toEqual({ kind: 'PHONE', phone: '77011234567' });
+    expect(duelContact('8 (701) 123 45 67')).toEqual({ kind: 'PHONE', phone: '77011234567' });
+    expect(duelContact('@petrov_tt')).toEqual({ kind: 'TELEGRAM', handle: 'petrov_tt' });
+    expect(duelContact('https://t.me/petrov_tt')).toEqual({
+      kind: 'TELEGRAM',
+      handle: 'petrov_tt',
+    });
+    expect(duelContact('пишите в инстаграм')).toEqual({ kind: 'TEXT' });
+    expect(duelContact('123')).toEqual({ kind: 'TEXT' });
+  });
+});
+
+describe('этап матча', () => {
+  const base = { status: 'SCHEDULED' as const, startedAt: null, sets: [], bestOf: 5 as const };
+
+  it('назначена → игра → счёт → подтверждение', () => {
+    expect(matchStage(base)).toBe('scheduled');
+    const started = { ...base, startedAt: '2026-10-24T12:00:00.000Z' };
+    expect(matchStage({ ...started, sets: [ME, OTHER, ME] })).toBe('game');
+    expect(matchStage({ ...started, sets: [ME, OTHER, ME, ME] })).toBe('score');
+    expect(matchStage({ ...started, status: 'REPORTED' })).toBe('confirm');
   });
 });

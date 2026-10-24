@@ -1,7 +1,7 @@
 import { notificationViewSchema, type NotificationView } from '@kttf/shared/types';
 import { describe, expect, it } from 'vitest';
 
-import { fill, formatDateTime, type MessageKey } from '@/common/i18n';
+import { fill, formatDateTime, formatTime, type MessageKey } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 
 import { notificationCaption, notificationHref, notificationText } from './model';
@@ -79,5 +79,50 @@ describe('уведомления дуэлей (ADR-065)', () => {
     expect(notificationText(duelNote('DUEL_COMPLETED', { delta: null }), t, 'ru')).toBe(
       fill(ru['notifications.DUEL_COMPLETED'], { player }),
     );
+  });
+});
+
+describe('перенос и напоминание (ADR-068)', () => {
+  const player = 'Смагулов Асан';
+  const startsAt = '2026-10-24T15:00:00.000Z';
+
+  it('перенос: предложен, принят, отклонён — с новым временем и ссылкой на дуэль', () => {
+    for (const action of ['PROPOSED', 'ACCEPTED', 'DECLINED'] as const) {
+      const note = duelNote('DUEL_RESCHEDULE', { startsAt, action });
+
+      expect(notificationText(note, t, 'ru')).toBe(
+        fill(ru[`notifications.DUEL_RESCHEDULE_${action}`], {
+          player,
+          when: formatDateTime(startsAt, 'ru'),
+        }),
+      );
+      expect(notificationHref(note)).toBe(`/duels/${DUEL_ID}`);
+      expect(notificationCaption(note, t)).toBe(ru['notifications.duels']);
+    }
+  });
+
+  it('напоминание в тот же день — «Сегодня в 20:00 … с кем, где»', () => {
+    const note = notificationViewSchema.parse({
+      id: '00000000-0000-4000-8000-0000000000a2',
+      type: 'DUEL_REMINDER',
+      readAt: null,
+      createdAt: '2026-10-24T12:00:00.000Z',
+      data: {
+        duelId: DUEL_ID,
+        kind: 'DUEL',
+        playerName: player,
+        startsAt,
+        venueName: 'Клуб «Спин»',
+      },
+    });
+
+    expect(notificationText(note, t, 'ru')).toBe(
+      fill(ru['notifications.DUEL_REMINDER_TODAY'], {
+        player,
+        time: formatTime(startsAt, 'ru'),
+        venue: 'Клуб «Спин»',
+      }),
+    );
+    expect(notificationHref(note)).toBe(`/duels/${DUEL_ID}`);
   });
 });

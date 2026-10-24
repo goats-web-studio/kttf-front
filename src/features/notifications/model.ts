@@ -1,6 +1,13 @@
 import type { NotificationView } from '@kttf/shared/types';
 
-import { fill, formatDateTime, formatDelta, type Locale, type MessageKey } from '@/common/i18n';
+import {
+  fill,
+  formatDateTime,
+  formatDelta,
+  formatTime,
+  type Locale,
+  type MessageKey,
+} from '@/common/i18n';
 import { duelHref } from '@/features/duels/labels';
 import { RULE_KEYS, RULES_HREF, topicHref } from '@/features/forum/labels';
 import { MY_REQUESTS_HREF, inboxHref } from '@/features/trial-requests/inbox';
@@ -81,6 +88,36 @@ export function notificationText(notification: NotificationView, t: T, locale: L
         player: notification.data.playerName,
         when: formatDateTime(notification.data.startsAt, locale),
       });
+    case 'DUEL_RESCHEDULE':
+      return fill(t(`notifications.DUEL_RESCHEDULE_${notification.data.action}`), {
+        player: notification.data.playerName,
+        when: formatDateTime(notification.data.startsAt, locale),
+      });
+    case 'DUEL_REMINDER': {
+      // Напоминание приходит за 3 часа: чаще всего это «сегодня» — так и
+      // пишем; игра после полуночи — с датой.
+      const today =
+        new Date(notification.data.startsAt).toDateString() ===
+        new Date(notification.createdAt).toDateString();
+
+      return fill(
+        t(
+          notification.data.kind === 'DUEL'
+            ? today
+              ? 'notifications.DUEL_REMINDER_TODAY'
+              : 'notifications.DUEL_REMINDER'
+            : today
+              ? 'notifications.DUEL_REMINDER_SPARRING_TODAY'
+              : 'notifications.DUEL_REMINDER_SPARRING',
+        ),
+        {
+          player: notification.data.playerName,
+          time: formatTime(notification.data.startsAt, locale),
+          when: formatDateTime(notification.data.startsAt, locale),
+          venue: notification.data.venueName,
+        },
+      );
+    }
     case 'DUEL_DECLINED':
       return fill(
         t(
@@ -144,6 +181,8 @@ export function notificationCaption(notification: NotificationView, t: T): strin
     case 'DUEL_RESULT':
     case 'DUEL_COMPLETED':
     case 'DUEL_DISPUTED':
+    case 'DUEL_RESCHEDULE':
+    case 'DUEL_REMINDER':
       return t('notifications.duels');
     case 'TRIAL_REQUEST_NEW':
     case 'TRIAL_REQUEST_CANCELLED':
@@ -188,6 +227,8 @@ export function notificationHref(notification: NotificationView): string {
     case 'DUEL_RESULT':
     case 'DUEL_COMPLETED':
     case 'DUEL_DISPUTED':
+    case 'DUEL_RESCHEDULE':
+    case 'DUEL_REMINDER':
       return duelHref(notification.data.duelId);
   }
 }

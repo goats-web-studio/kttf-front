@@ -14,6 +14,7 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { ChevronRight, Swords } from 'lucide-react';
 import { useCallback, type ReactNode } from 'react';
 
 import { fill, formatCount, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
@@ -28,6 +29,7 @@ import RatingValue from '@/common/ui/rating-value';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { DUELS_HREF } from '@/features/duels/labels';
 import type { PickedProduct } from '@/features/market/picked-product';
 import { useCityLabel } from '@/features/places/city-label';
 import { usePlaceName } from '@/features/places/place-name';
@@ -164,6 +166,33 @@ function PlayersPage(): ReactNode {
           filter(value);
         }}
       />
+
+      {/* На телефоне «Игроки» в нижней панели ведут сразу сюда, без меню
+          раздела: путь к дуэлям — строкой над переключателем (ADR-065). */}
+      <Link
+        href={DUELS_HREF}
+        underline="none"
+        data-duels-link
+        sx={{
+          mt: 3,
+          px: 2,
+          minHeight: 56,
+          display: { xs: 'flex', sm: 'none' },
+          alignItems: 'center',
+          gap: 1.5,
+          borderRadius: 3,
+          bgcolor: 'var(--paper)',
+          border: '1px solid var(--line)',
+          color: 'text.primary',
+          fontWeight: 600,
+        }}
+      >
+        <Swords size={20} aria-hidden />
+        <Box component="span" sx={{ flex: 1, minWidth: 0 }}>
+          {t('players.duelsLink')}
+        </Box>
+        <ChevronRight size={18} aria-hidden />
+      </Link>
 
       {/* «Список игроков / инвентарь игроков», как у RTTF (ADR-058). */}
       <Box sx={{ mt: 3 }}>

@@ -3,14 +3,18 @@ import type {
   AnnulDuelInput,
   CreateDuelInput,
   DisputeDuelInput,
+  DuelContactInput,
   DuelItemView,
   DuelReasonInput,
+  DuelSetInput,
+  DuelUndoSetInput,
   DuelView,
   ListAdminDuelsQuery,
   ListDuelsQuery,
   ListMyDuelsQuery,
   Page,
   ReportDuelInput,
+  RescheduleDuelInput,
   RespondDuelInput,
   ResolveDuelInput,
 } from '@kttf/shared/types';
@@ -76,6 +80,42 @@ export function confirmDuel(duelId: string): Promise<DuelView> {
 
 export function disputeDuel(duelId: string, input: DisputeDuelInput): Promise<DuelView> {
   return apiRequest<DuelView>(`/duels/${duelId}/dispute`, { method: 'POST', body: input });
+}
+
+// ---------------------------------------------------------------- матч (ADR-068)
+
+export function startDuel(duelId: string): Promise<DuelView> {
+  return apiRequest<DuelView>(`/duels/${duelId}/start`, { method: 'POST' });
+}
+
+/** Партия на табло; `index` — сколько партий видит отправитель (защита от двойного нажатия). */
+export function recordDuelSet(duelId: string, input: DuelSetInput): Promise<DuelView> {
+  return apiRequest<DuelView>(`/duels/${duelId}/sets`, { method: 'POST', body: input });
+}
+
+export function undoDuelSet(duelId: string, input: DuelUndoSetInput): Promise<DuelView> {
+  return apiRequest<DuelView>(`/duels/${duelId}/sets/undo`, { method: 'POST', body: input });
+}
+
+/** Счёт по табло — сопернику на подтверждение, как внесённый вручную. */
+export function finishDuel(duelId: string): Promise<DuelView> {
+  return apiRequest<DuelView>(`/duels/${duelId}/finish`, { method: 'POST' });
+}
+
+export function rescheduleDuel(duelId: string, input: RescheduleDuelInput): Promise<DuelView> {
+  return apiRequest<DuelView>(`/duels/${duelId}/reschedule`, { method: 'POST', body: input });
+}
+
+/** Ответ на перенос: принять, отказать — второй участник; отозвать — предложивший. */
+export function answerReschedule(
+  duelId: string,
+  action: 'accept' | 'decline' | 'withdraw',
+): Promise<DuelView> {
+  return apiRequest<DuelView>(`/duels/${duelId}/reschedule/${action}`, { method: 'POST' });
+}
+
+export function setDuelContact(duelId: string, input: DuelContactInput): Promise<DuelView> {
+  return apiRequest<DuelView>(`/duels/${duelId}/contact`, { method: 'POST', body: input });
 }
 
 // ---------------------------------------------------------------- администратор

@@ -97,6 +97,10 @@ const NO_CAN: DuelView['can'] = {
   report: false,
   confirm: false,
   dispute: false,
+  start: false,
+  score: false,
+  reschedule: false,
+  answerReschedule: false,
 };
 
 function view(patch: Partial<DuelView> = {}): DuelView {
@@ -107,6 +111,11 @@ function view(patch: Partial<DuelView> = {}): DuelView {
     annulledAt: null,
     annulReason: null,
     ratingSkipped: null,
+    startedAt: null,
+    sets: [],
+    startableAt: null,
+    reschedule: null,
+    contacts: null,
     can: NO_CAN,
     ...patch,
   };
@@ -163,6 +172,8 @@ function answer(url: string, init: RequestInit | undefined): Response {
   if (method === 'POST') {
     return actionReply === null ? reply(duel) : reply(actionReply.body, actionReply.status);
   }
+  if (path.startsWith('/forum/subjects/DUEL/'))
+    return reply({ section: null, topic: null, posts: [] });
   if (path.startsWith('/me/duels')) return reply(pageOf(mine));
   if (path.startsWith('/admin/duels')) return reply(pageOf(admin));
   if (/^\/duels\/[^/?]+$/.test(path)) return reply(duel);
@@ -306,6 +317,8 @@ describe('предложить игру', () => {
         venueName: 'Спортзал школы № 12',
         venueAddress: 'ул. Абая, 10',
         cityId: CITIES.almaty.id,
+        // Контакт по умолчанию — телефон аккаунта (ADR-068 §3).
+        contact: USER_WITH_PROFILE.phone,
         slots: [
           {
             startsAt: day.hour(19).minute(0).second(0).millisecond(0).toISOString(),
@@ -378,6 +391,7 @@ describe('страница дуэли', () => {
       expect(requests('POST', `/duels/${DUEL_ID}/responses`)[0]?.body).toEqual({
         slotId: SLOT_2,
         message: 'Буду с ракеткой',
+        contact: USER_WITH_PROFILE.phone,
       });
     });
   });
@@ -422,6 +436,8 @@ describe('страница дуэли', () => {
     duel = view({ ...SCHEDULED, can: { ...NO_CAN, report: true, cancel: false } });
     renderAt(`/duels/${DUEL_ID}`);
 
+    // У назначенной ручной счёт — вторичной ссылкой под табло (ADR-068).
+    fireEvent.click(await screen.findByRole('button', { name: ru['duel.match.manual'] }));
     const form = await waitFor(() => element('[data-duel-report]'));
     const submit = within(form).getByRole('button', { name: ru['duel.report.submit'] });
     expect((submit as HTMLButtonElement).disabled).toBe(true);
@@ -492,6 +508,196 @@ describe('страница дуэли', () => {
     expect(element('[data-duel-score]', result).textContent).toContain('3:1');
     expect(within(result).getByText('+6.20')).toBeDefined();
     expect(within(result).getByText('-6.20')).toBeDefined();
+  });
+});
+
+/** Начатый матч: я — автор, до 3 побед. */
+const STARTED: Partial<DuelView> = {
+  ...SCHEDULED,
+  startsAt: '2026-10-24T13:00:00.000Z',
+  endsAt: '2026-10-24T15:00:00.000Z',
+  startedAt: '2026-10-24T12:50:00.000Z',
+  contacts: { mine: null, counterpart: null },
+};
+
+describe('матч дуэли (ADR-068)', () => {
+  it('до начала: этапы, когда, подсказка старта, контакт соперника ссылками', async () => {
+    duel = view({
+      ...SCHEDULED,
+      startsAt: '2030-11-07T13:00:00.000Z',
+      endsAt: '2030-11-07T15:00:00.000Z',
+      startableAt: '2030-11-07T12:00:00.000Z',
+      contacts: { mine: '@erzhanov', counterpart: '8 701 123 45 67' },
+      can: { ...NO_CAN, reschedule: true, cancel: true },
+    });
+    renderAt(`/duels/${DUEL_ID}`);
+
+    const match = await waitFor(() => element('[data-duel-match="scheduled"]'));
+    expect(element('[aria-current="step"]', match).getAttribute('data-stage')).toBe('scheduled');
+    expect(element('[data-duel-startable]', match)).toBeDefined();
+    expect(within(match).queryByRole('button', { name: ru['duel.match.start'] })).toBeNull();
+
+    const contacts = element('[data-duel-contacts]', match);
+    expect(
+      within(contacts).getByRole('link', { name: ru['club.contact.call'] }).getAttribute('href'),
+    ).toBe('tel:+77011234567');
+    expect(
+      within(contacts)
+        .getByRole('link', { name: ru['club.contact.whatsapp'] })
+        .getAttribute('href'),
+    ).toBe('https://wa.me/77011234567');
+    expect(within(contacts).getByText('@erzhanov')).toBeDefined();
+
+    fireEvent.click(within(contacts).getByRole('button', { name: ru['duel.contact.edit'] }));
+    fireEvent.change(within(contacts).getByLabelText(ru['duel.contact.label']), {
+      target: { value: '@erzhanov_kz' },
+    });
+    fireEvent.click(within(contacts).getByRole('button', { name: ru['duel.contact.save'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/duels/${DUEL_ID}/contact`)[0]?.body).toEqual({
+        contact: '@erzhanov_kz',
+      });
+    });
+    expect(screen.getByRole('button', { name: ru['duel.reschedule.action'] })).toBeDefined();
+  });
+
+  it('перенос: второму — «Принять» и «Отказаться» по can, запрос /reschedule/accept', async () => {
+    duel = view({
+      ...SCHEDULED,
+      reschedule: {
+        startsAt: '2030-11-08T13:00:00.000Z',
+        endsAt: '2030-11-08T15:00:00.000Z',
+        proposedById: PLAYER_IDS.second,
+        message: 'Давай в воскресенье',
+        createdAt: '2026-10-24T09:00:00.000Z',
+      },
+      can: { ...NO_CAN, answerReschedule: true },
+    });
+    renderAt(`/duels/${DUEL_ID}`);
+
+    const card = await waitFor(() => element('[data-duel-reschedule]'));
+    expect(within(card).getByText('«Давай в воскресенье»')).toBeDefined();
+    expect(within(card).queryByRole('button', { name: ru['duel.reschedule.withdraw'] })).toBeNull();
+    within(card).getByRole('button', { name: ru['duel.reschedule.decline'] });
+    fireEvent.click(within(card).getByRole('button', { name: ru['duel.reschedule.accept'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/duels/${DUEL_ID}/reschedule/accept`)).toHaveLength(1);
+    });
+  });
+
+  it('перенос: предложившему — «Ждём ответа» и «Отозвать», без ответа', async () => {
+    duel = view({
+      ...SCHEDULED,
+      reschedule: {
+        startsAt: '2030-11-08T13:00:00.000Z',
+        endsAt: '2030-11-08T15:00:00.000Z',
+        proposedById: ME,
+        message: null,
+        createdAt: '2026-10-24T09:00:00.000Z',
+      },
+      can: { ...NO_CAN, answerReschedule: false },
+    });
+    renderAt(`/duels/${DUEL_ID}`);
+
+    const card = await waitFor(() => element('[data-duel-reschedule]'));
+    expect(within(card).getByText(ru['duel.reschedule.waiting'])).toBeDefined();
+    expect(within(card).queryByRole('button', { name: ru['duel.reschedule.accept'] })).toBeNull();
+    fireEvent.click(within(card).getByRole('button', { name: ru['duel.reschedule.withdraw'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/duels/${DUEL_ID}/reschedule/withdraw`)).toHaveLength(1);
+    });
+  });
+
+  it('«Начать матч» по can.start', async () => {
+    duel = view({ ...SCHEDULED, can: { ...NO_CAN, start: true } });
+    renderAt(`/duels/${DUEL_ID}`);
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['duel.match.start'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/duels/${DUEL_ID}/start`)).toHaveLength(1);
+    });
+  });
+
+  it('табло: партия уходит с index; «Завершить» — только когда набрано setsToWin', async () => {
+    duel = view({ ...STARTED, sets: [ME, PLAYER_IDS.second], can: { ...NO_CAN, score: true } });
+    renderAt(`/duels/${DUEL_ID}`);
+
+    const board = await waitFor(() => element('[data-duel-board]'));
+    expect(element('[data-duel-board-score]', board).textContent).toBe('1:1');
+    expect(
+      within(board).getByText(fill(ru['duel.match.setLine'], { n: '1', name: 'я' })),
+    ).toBeDefined();
+    const finish = element('[data-duel-finish]', board);
+    expect(finish.hasAttribute('disabled')).toBe(true);
+
+    fireEvent.click(within(board).getByRole('button', { name: ru['duel.match.setMine'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/duels/${DUEL_ID}/sets`)[0]?.body).toEqual({
+        winnerId: ME,
+        index: 2,
+      });
+    });
+
+    fireEvent.click(within(board).getByRole('button', { name: ru['duel.match.undo'] }));
+    await waitFor(() => {
+      expect(requests('POST', `/duels/${DUEL_ID}/sets/undo`)[0]?.body).toEqual({ index: 2 });
+    });
+  });
+
+  it('табло: 3 партии у одного — кнопки партий выключены, «Завершить» шлёт /finish', async () => {
+    duel = view({
+      ...STARTED,
+      sets: [ME, PLAYER_IDS.second, ME, ME],
+      can: { ...NO_CAN, score: true },
+    });
+    renderAt(`/duels/${DUEL_ID}`);
+
+    const board = await waitFor(() => element('[data-duel-board]'));
+    expect(await waitFor(() => element('[data-duel-match="score"]'))).toBeDefined();
+    expect(
+      within(board)
+        .getByRole('button', { name: ru['duel.match.setMine'] })
+        .hasAttribute('disabled'),
+    ).toBe(true);
+    const finish = element('[data-duel-finish]', board);
+    expect(finish.hasAttribute('disabled')).toBe(false);
+    fireEvent.click(finish);
+    await waitFor(() => {
+      expect(requests('POST', `/duels/${DUEL_ID}/finish`)).toHaveLength(1);
+    });
+  });
+
+  it('табло: партию уже записал второй телефон — страница перечитывается', async () => {
+    duel = view({ ...STARTED, can: { ...NO_CAN, score: true } });
+    actionReply = {
+      body: {
+        error: { code: 'DUEL_INVALID_STATE', message: 'x', details: { status: 'SCHEDULED' } },
+      },
+      status: 409,
+    };
+    renderAt(`/duels/${DUEL_ID}`);
+
+    const board = await waitFor(() => element('[data-duel-board]'));
+    const before = requests('GET', `/duels/${DUEL_ID}`).length;
+    fireEvent.click(
+      within(board).getByRole('button', {
+        name: fill(ru['duel.match.setFor'], { name: 'Смагулов Асан' }),
+      }),
+    );
+    expect(await within(board).findByText(ru['duel.match.conflict'])).toBeDefined();
+    await waitFor(() => {
+      expect(requests('GET', `/duels/${DUEL_ID}`).length).toBeGreaterThan(before);
+    });
+  });
+
+  it('зрителю — счёт без кнопок', async () => {
+    duel = view({ ...STARTED, sets: [PLAYER_IDS.second], contacts: null });
+    renderAt(`/duels/${DUEL_ID}`, null);
+
+    const board = await waitFor(() => element('[data-duel-board]'));
+    expect(element('[data-duel-board-score]', board).textContent).toBe('0:1');
+    expect(within(board).queryAllByRole('button')).toHaveLength(0);
+    expect(within(board).getByText(ru['duel.match.live'])).toBeDefined();
   });
 });
 

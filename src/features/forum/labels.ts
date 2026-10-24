@@ -46,7 +46,7 @@ export const RULES_HREF = '/forum/rules';
 /** Лента сообщений игрока — «все сообщения» из профиля. */
 export const playerFeedHref = (playerId: string): string => `/forum/feed?author=${playerId}`;
 
-/** Страница предмета темы: турнир, клуб, тренер, товар. */
+/** Страница предмета темы: турнир, клуб, тренер, товар, новость, дуэль (ADR-068). */
 export function subjectHref(subject: ForumSubject): string {
   switch (subject.type) {
     case 'TOURNAMENT':
@@ -60,6 +60,8 @@ export function subjectHref(subject: ForumSubject): string {
     case 'CLUB_POST':
     case 'COACH_POST':
       return subject.owner === null ? FORUM_HREF : ownerHref(subject.owner);
+    case 'DUEL':
+      return `/duels/${subject.id}`;
   }
 }
 
@@ -79,6 +81,7 @@ export const SUBJECT_KEYS: Readonly<Record<ForumSubjectType, MessageKey>> = {
   PRODUCT: 'forum.subject.PRODUCT',
   CLUB_POST: 'forum.subject.CLUB_POST',
   COACH_POST: 'forum.subject.COACH_POST',
+  DUEL: 'forum.subject.DUEL',
 };
 
 /** Метка того, кто говорит за обсуждаемую сторону (ADR-067 §3). */

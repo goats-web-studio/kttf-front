@@ -1,7 +1,16 @@
 import type { ForumSubject } from '@kttf/shared/types';
 import { describe, expect, it } from 'vitest';
 
-import { forumImageVariant, isNews, lastPage, subjectHref, topicHref } from './labels';
+import { ru } from '@/common/i18n/ru';
+
+import {
+  SUBJECT_KEYS,
+  forumImageVariant,
+  isNews,
+  lastPage,
+  subjectHref,
+  topicHref,
+} from './labels';
 
 const TOPIC = '11111111-1111-4111-8111-111111111111';
 const CLUB = '22222222-2222-4222-8222-222222222222';
@@ -63,5 +72,23 @@ describe('forumImageVariant', () => {
 
     expect(forumImageVariant(own, 480)).toBe(`/api/v1/files/forum/${TOPIC}-480.webp`);
     expect(forumImageVariant('https://example.com/a.webp', 480)).toBe('https://example.com/a.webp');
+  });
+});
+
+describe('тема с предметом «дуэль» (ADR-068)', () => {
+  it('ведёт на страницу дуэли и подписана «Дуэль»', () => {
+    const id = '00000000-0000-4000-8000-0000000000d1';
+
+    expect(
+      subjectHref({
+        type: 'DUEL',
+        id,
+        name: 'Ержанов — Смагулов',
+        slug: null,
+        owner: null,
+        news: null,
+      }),
+    ).toBe(`/duels/${id}`);
+    expect(ru[SUBJECT_KEYS.DUEL]).toBe('Дуэль');
   });
 });

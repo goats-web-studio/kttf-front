@@ -17,8 +17,9 @@ import PostCard from './post-card';
 import { forumKeys, forumSubjectQuery } from './queries';
 
 /**
- * Заголовок блока: у турнира — обсуждение, у клуба, тренера и товара —
- * отзывы (ADR-064 §7: тема предмета и есть текстовые отзывы, без оценок).
+ * Заголовок блока: у турнира, новости и дуэли — обсуждение, у клуба,
+ * тренера и товара — отзывы (ADR-064 §7: тема предмета и есть текстовые
+ * отзывы, без оценок).
  */
 const TITLES: Readonly<Record<ForumSubjectType, MessageKey>> = {
   TOURNAMENT: 'forum.thread.discussion',
@@ -27,6 +28,7 @@ const TITLES: Readonly<Record<ForumSubjectType, MessageKey>> = {
   PRODUCT: 'forum.thread.reviews',
   CLUB_POST: 'forum.thread.discussion',
   COACH_POST: 'forum.thread.discussion',
+  DUEL: 'forum.thread.discussion',
 };
 
 const EMPTY: Readonly<Record<ForumSubjectType, MessageKey>> = {
@@ -36,6 +38,17 @@ const EMPTY: Readonly<Record<ForumSubjectType, MessageKey>> = {
   PRODUCT: 'forum.thread.emptyReviews',
   CLUB_POST: 'forum.thread.emptyDiscussion',
   COACH_POST: 'forum.thread.emptyDiscussion',
+  DUEL: 'forum.thread.emptyDiscussion',
+};
+
+const PLACEHOLDERS: Readonly<Record<ForumSubjectType, MessageKey>> = {
+  TOURNAMENT: 'forum.thread.placeholder',
+  CLUB: 'forum.thread.reviewPlaceholder',
+  COACH: 'forum.thread.reviewPlaceholder',
+  PRODUCT: 'forum.thread.reviewPlaceholder',
+  CLUB_POST: 'forum.thread.reviewPlaceholder',
+  COACH_POST: 'forum.thread.reviewPlaceholder',
+  DUEL: 'forum.thread.duelPlaceholder',
 };
 
 /**
@@ -112,11 +125,7 @@ export default function SubjectThread({
               onClearQuote={() => {
                 setQuote(null);
               }}
-              placeholder={t(
-                type === 'TOURNAMENT'
-                  ? 'forum.thread.placeholder'
-                  : 'forum.thread.reviewPlaceholder',
-              )}
+              placeholder={t(PLACEHOLDERS[type])}
               submit={async (input) => {
                 await postToForumSubject(type, id, input);
                 await queryClient.invalidateQueries({ queryKey: forumKeys.all });

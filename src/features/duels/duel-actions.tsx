@@ -20,11 +20,11 @@ import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
-import { useMutation } from '@tanstack/react-query';
 import { useId, useState, type ReactNode } from 'react';
 
 import { fill, formatDateTime, useLocale, useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
+import { useSessionStore } from '@/features/auth/session-store';
 import { Badge } from '@/features/coaches/coach-cards';
 
 import {
@@ -40,7 +40,7 @@ import {
 } from './api';
 import { DuelPlayerLine } from './duel-parts';
 import { duelErrorText, formatSlot } from './labels';
-import { useDuelUpdated } from './queries';
+import { useDuelAction } from './queries';
 import { EMPTY_SLOT, slotProblem, toSlotInput, type SlotDraft } from './slot-draft';
 import SlotEditor from './slot-editor';
 
@@ -49,13 +49,6 @@ import SlotEditor from './slot-editor';
  * сервер (`view.can`): правила состояний, сроков и частоты живут там, и
  * интерфейс их не угадывает. Каждое действие отвечает свежей страницей.
  */
-
-/** Действие с ответом-страницей: кладёт её в кэш и перечитывает списки. */
-function useDuelAction<A>(action: (arg: A) => Promise<DuelView>) {
-  const updated = useDuelUpdated();
-
-  return useMutation({ mutationFn: action, onSuccess: updated });
-}
 
 const RESPONSE_STATUS_KEYS = {
   NEW: 'duel.response.status.NEW',
@@ -245,6 +238,9 @@ export function RespondPanel({
   const [choice, setChoice] = useState<string>(duel.slots[0]?.id ?? 'OWN');
   const [proposed, setProposed] = useState<SlotDraft>(EMPTY_SLOT);
   const [message, setMessage] = useState('');
+  // Как связаться — по умолчанию телефон аккаунта (ADR-068 §3).
+  const accountPhone = useSessionStore((state) => state.user?.phone ?? '');
+  const [contact, setContact] = useState(accountPhone);
   const [tried, setTried] = useState(false);
   const [declining, setDeclining] = useState(false);
   const respond = useDuelAction((input: RespondDuelInput) => respondDuel(duel.id, input));
@@ -257,6 +253,7 @@ export function RespondPanel({
   const input = {
     ...(own ? (slot === null ? {} : { proposed: slot }) : { slotId: choice }),
     ...(message.trim() === '' ? {} : { message: message.trim() }),
+    ...(contact.trim() === '' ? {} : { contact: contact.trim() }),
   };
   const parsed = respondDuelSchema.safeParse(input);
   const problem = own ? slotProblem(proposed, new Date()) : null;
@@ -319,6 +316,16 @@ export function RespondPanel({
             minRows={2}
             fullWidth
             slotProps={{ htmlInput: { maxLength: 500 } }}
+          />
+          <TextField
+            label={t('duel.contact.label')}
+            value={contact}
+            onChange={(event) => {
+              setContact(event.target.value);
+            }}
+            helperText={t('duel.contact.hint')}
+            fullWidth
+            slotProps={{ htmlInput: { maxLength: 100 } }}
           />
           {respond.error !== null && (
             <Alert severity="error" data-duel-error>

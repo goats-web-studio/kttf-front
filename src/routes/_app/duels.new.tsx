@@ -129,6 +129,9 @@ function DuelForm({
   const [cityId, setCityId] = useState<string | null>(null);
   const [slots, setSlots] = useState<readonly SlotDraft[]>([EMPTY_SLOT]);
   const [note, setNote] = useState('');
+  // Как связаться — по умолчанию телефон аккаунта (ADR-068 §3).
+  const accountPhone = useSessionStore((state) => state.user?.phone ?? '');
+  const [contact, setContact] = useState(accountPhone);
   // Ошибки у полей — после первой попытки отправить, не с первого символа.
   const [tried, setTried] = useState(false);
   // «Сейчас» — на момент отправки: вариант, ставший прошлым, пока человек
@@ -154,6 +157,7 @@ function DuelForm({
         }),
     slots: slotInputs.filter((slot) => slot !== null),
     ...(note.trim() === '' ? {} : { note: note.trim() }),
+    ...(contact.trim() === '' ? {} : { contact: contact.trim() }),
   };
   // Та же схема, что на сервере; время — своими правилами (`slotProblem`).
   const parsed = createDuelSchema.safeParse(input);
@@ -406,6 +410,17 @@ function DuelForm({
       </Surface>
 
       <Surface>
+        <TextField
+          label={t('duel.contact.label')}
+          value={contact}
+          onChange={(event) => {
+            setContact(event.target.value);
+          }}
+          helperText={t('duel.contact.hint')}
+          fullWidth
+          slotProps={{ htmlInput: { maxLength: 100 } }}
+          sx={{ mb: 2.5 }}
+        />
         <TextField
           label={t('duel.new.note')}
           value={note}

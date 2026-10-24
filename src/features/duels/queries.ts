@@ -4,7 +4,7 @@ import type {
   ListDuelsQuery,
   ListMyDuelsQuery,
 } from '@kttf/shared/types';
-import { queryOptions, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { fetchDuel, listAdminDuels, listDuels, listMyDuels } from './api';
@@ -66,4 +66,11 @@ export function useDuelUpdated(): (view: DuelView) => Promise<void> {
     },
     [queryClient],
   );
+}
+
+/** Действие с ответом-страницей: кладёт её в кэш и перечитывает списки. */
+export function useDuelAction<A>(action: (arg: A) => Promise<DuelView>) {
+  const updated = useDuelUpdated();
+
+  return useMutation({ mutationFn: action, onSuccess: updated });
 }

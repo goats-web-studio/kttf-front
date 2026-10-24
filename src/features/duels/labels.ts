@@ -1,11 +1,13 @@
 import { ERROR_CODES, isAppError } from '@kttf/shared/errors';
-import type {
-  DuelBestOf,
-  DuelFlag,
-  DuelItemView,
-  DuelKind,
-  DuelStatus,
-  DuelVenue,
+import {
+  setsToWin,
+  type DuelBestOf,
+  type DuelFlag,
+  type DuelItemView,
+  type DuelKind,
+  type DuelStatus,
+  type DuelVenue,
+  type DuelView,
 } from '@kttf/shared/types';
 
 import { errorMessageKey } from '@/common/api';
@@ -146,6 +148,57 @@ export function byTodo(
   const weight = (duel: DuelItemView): number => (duelTodo(duel, playerId, now) === null ? 1 : 0);
 
   return [...duels].sort((left, right) => weight(left) - weight(right));
+}
+
+/** Этапы матча (ADR-068): «Назначена → Игра → Счёт → Подтверждение». */
+export const MATCH_STAGES = ['scheduled', 'game', 'score', 'confirm'] as const;
+export type MatchStage = (typeof MATCH_STAGES)[number];
+
+/** Партий у игрока на табло. */
+export function setsOf(sets: readonly string[], playerId: string): number {
+  return sets.filter((winnerId) => winnerId === playerId).length;
+}
+
+/**
+ * Где матч сейчас: не начат — «Назначена»; табло идёт — «Игра»; кто-то
+ * набрал нужное число партий — «Счёт» (осталось отправить); счёт внесён —
+ * «Подтверждение».
+ */
+export function matchStage(
+  duel: Pick<DuelView, 'status' | 'startedAt' | 'sets' | 'bestOf'>,
+): MatchStage {
+  if (duel.status !== 'SCHEDULED') return 'confirm';
+  if (duel.startedAt === null) return 'scheduled';
+
+  const toWin = duel.bestOf === null ? null : setsToWin(duel.bestOf);
+  const best = Math.max(0, ...[...new Set(duel.sets)].map((id) => setsOf(duel.sets, id)));
+
+  return toWin !== null && best >= toWin ? 'score' : 'game';
+}
+
+/**
+ * Контакт соперника — строка, как человек её вписал (ADR-068 §3). Похожая
+ * на телефон — звонок и WhatsApp, на имя в Telegram — ссылка на чат;
+ * остальное показывается текстом: угадывать ссылку там, где её нет, нельзя.
+ */
+export type DuelContact =
+  | { readonly kind: 'PHONE'; readonly phone: string }
+  | { readonly kind: 'TELEGRAM'; readonly handle: string }
+  | { readonly kind: 'TEXT' };
+
+export function duelContact(value: string): DuelContact {
+  const trimmed = value.trim();
+  const telegram = /^(?:@|(?:https?:\/\/)?t(?:elegram)?\.me\/)([A-Za-z0-9_]{4,32})$/i.exec(trimmed);
+  if (telegram?.[1] !== undefined) return { kind: 'TELEGRAM', handle: telegram[1] };
+
+  if (/^\+?[\d\s()-]{7,24}$/.test(trimmed)) {
+    const digits = trimmed.replace(/\D/g, '');
+    // «8 701 …» — так номер пишут по привычке; ссылкам нужен +7.
+    const phone = digits.length === 11 && digits.startsWith('8') ? `7${digits.slice(1)}` : digits;
+    if (phone.length >= 10 && phone.length <= 15) return { kind: 'PHONE', phone };
+  }
+
+  return { kind: 'TEXT' };
 }
 
 /**
