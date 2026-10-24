@@ -811,7 +811,7 @@ export const kk: Record<MessageKey, string> = {
     'Профиль турнир клубында ашылады, ойыншы бірден жазылады. Қалған сауалнаманы өзі толтырады.',
   'participants.new.rating': 'Бастапқы рейтинг',
   'participants.new.ratingHint':
-    'Ойыншы күшін сіздің бағалауыңыз: себу соған қарай. Алғашқы 20 кездесу оны түзетеді',
+    'Ойыншы күшін сіздің бағалауыңыз: себу соған қарай. Алғашқы бес турнир оны түзетеді',
   'participants.new.submit': 'Ашу және жазу',
   'participants.new.cancel': 'Болдырмау',
 
@@ -851,6 +851,7 @@ export const kk: Record<MessageKey, string> = {
   'results.match.table': '{n}-үстел',
   'results.match.minutes': '{n} мин',
   'results.ratings.vs': 'қарсы',
+  'results.ratings.bonus': 'Жүлдегер бонусы',
   'results.facts.format': 'Формат',
   'results.facts.average': 'Орташа рейтинг',
   'results.facts.matches': 'Кездесулер',
@@ -942,7 +943,7 @@ export const kk: Record<MessageKey, string> = {
   'ratings.column.city': 'Қала',
   'ratings.column.rating': 'Рейтинг',
   'ratings.column.matches': 'Кездесу',
-  'ratings.provisional': 'Уақытша',
+  'ratings.provisional': 'Жаңа ойыншы',
   'ratings.empty': 'Ойыншылар табылмады',
   'ratings.emptyState.title': 'Рейтинг әзірге бос',
   'ratings.emptyState.text': 'Ойыншылар алғашқы рейтингтік турнирден кейін осында шығады.',
@@ -2163,7 +2164,20 @@ export const kk: Record<MessageKey, string> = {
   'profile.plate.rank': 'Рейтингте {total} ішінен #{rank}',
   'profile.plate.matches': 'Рейтингтік кездесулер',
   'profile.plate.last': 'Соңғы турнир',
-  'profile.plate.provisional': 'Алдын ала: 20 кездесуден аз',
+  'profile.plate.provisional': 'Жаңа ойыншы: 5 турнирден аз',
+  'profile.plate.level': '{level}-деңгей · {name}',
+
+  'level.aria': '10 ішінен {level}-деңгей — {name}',
+  'level.name.1': 'Жаңа ойыншы',
+  'level.name.2': 'Бастаушы',
+  'level.name.3': 'Әуесқой',
+  'level.name.4': 'Сенімді әуесқой',
+  'level.name.5': 'Озық',
+  'level.name.6': 'Күшті әуесқой',
+  'level.name.7': 'Күшті',
+  'level.name.8': 'Сарапшы',
+  'level.name.9': 'Шебер',
+  'level.name.10': 'Элита',
   'profile.form.title': 'Форма',
   'profile.form.label': 'Соңғы кездесулер, жаңасы оң жақта: {count} ішінен {wins} жеңіс',
   'profile.form.win': 'Жеңіс',
@@ -2540,7 +2554,6 @@ export const kk: Record<MessageKey, string> = {
   'home.forum.title': 'Форумда талқылануда',
   'home.forum.all': 'Бүкіл форум',
 
-
   'forum.subject.CLUB_POST': 'Клуб жаңалығы',
   'forum.subject.COACH_POST': 'Жаттықтырушы жаңалығы',
   'forum.role.ORGANIZER': 'Ұйымдастырушы',
@@ -2553,17 +2566,25 @@ export const kk: Record<MessageKey, string> = {
   'forum.rule.OFFTOPIC': 'Тақырыпқа сай емес',
   'forum.rule.OTHER': 'Басқа',
   'forum.rules.title': 'Сөйлесу ережелері',
-  'forum.rules.lead': 'Әңгімелесушілерді құрметтеңіз және іске қатысты жазыңыз. Хабарламаны жасырғанда немесе ескерткенде модератор ереже тармағын атайды.',
-  'forum.rules.ABUSE': 'Қатысушыларды қорламаңыз, жеке басқа тимеңіз және жанжал тудырмаңыз. Адаммен емес, пікірмен таласыңыз.',
-  'forum.rules.FLOOD': 'Мазмұнсыз хабарлама жазбаңыз, бір нәрсені қайталамаңыз, дәйексөзді шектен тыс қолданбаңыз.',
-  'forum.rules.ADS': 'Тауарлар мен қызметтер жарнамасы — тек KTTF келісімімен. Клубтар мен жаттықтырушылар жаңалықтары мен акцияларын өз беттерінде жариялайды — олар форумда өздігінен шығады.',
-  'forum.rules.DUPLICATE': 'Жаңа тақырып ашпас бұрын ұқсасын іздеңіз. Бірнеше бөлімдегі бірдей тақырыптар мен хабарламалар жасырылады.',
-  'forum.rules.OFFTOPIC': 'Тиісті бөлімге және әңгіме тақырыбына жазыңыз. Басқа бөлімдегі тақырыпты модератор ауыстырады.',
+  'forum.rules.lead':
+    'Әңгімелесушілерді құрметтеңіз және іске қатысты жазыңыз. Хабарламаны жасырғанда немесе ескерткенде модератор ереже тармағын атайды.',
+  'forum.rules.ABUSE':
+    'Қатысушыларды қорламаңыз, жеке басқа тимеңіз және жанжал тудырмаңыз. Адаммен емес, пікірмен таласыңыз.',
+  'forum.rules.FLOOD':
+    'Мазмұнсыз хабарлама жазбаңыз, бір нәрсені қайталамаңыз, дәйексөзді шектен тыс қолданбаңыз.',
+  'forum.rules.ADS':
+    'Тауарлар мен қызметтер жарнамасы — тек KTTF келісімімен. Клубтар мен жаттықтырушылар жаңалықтары мен акцияларын өз беттерінде жариялайды — олар форумда өздігінен шығады.',
+  'forum.rules.DUPLICATE':
+    'Жаңа тақырып ашпас бұрын ұқсасын іздеңіз. Бірнеше бөлімдегі бірдей тақырыптар мен хабарламалар жасырылады.',
+  'forum.rules.OFFTOPIC':
+    'Тиісті бөлімге және әңгіме тақырыбына жазыңыз. Басқа бөлімдегі тақырыпты модератор ауыстырады.',
   'forum.rules.sanctionsTitle': 'Модератор не істейді',
-  'forum.rules.sanction.hide': 'Хабарламаны жасырады: мәтіннің орнына барлығы себебін көреді, авторға хабарлама барады',
+  'forum.rules.sanction.hide':
+    'Хабарламаны жасырады: мәтіннің орнына барлығы себебін көреді, авторға хабарлама барады',
   'forum.rules.sanction.warn': 'Ереже тармағын көрсетіп ескертеді',
   'forum.rules.sanction.mute': 'Бірнеше күнге жазуға тыйым салады — форумды оқуға болады',
-  'forum.rules.sanction.report': 'Бұзушылықты көрсеңіз — хабарламадағы «…» және «Шағымдану» басыңыз',
+  'forum.rules.sanction.report':
+    'Бұзушылықты көрсеңіз — хабарламадағы «…» және «Шағымдану» басыңыз',
   'forum.warn.title': 'Ескерту',
   'forum.warn.hint': 'Бұзушы ереже тармағы көрсетілген хабарлама алады.',
   'forum.warn.comment': 'Түсініктеме',
@@ -2579,7 +2600,8 @@ export const kk: Record<MessageKey, string> = {
   'forum.replies.NEW': 'Алдымен жаңалары',
   'forum.replies.TOP': 'Үздіктері',
   'forum.feed.title': 'Хабарламалар таспасы',
-  'forum.feed.lead': 'Форумның және турнирлер, клубтар, жаттықтырушылар мен тауарлар талқылауларының барлық хабарламалары',
+  'forum.feed.lead':
+    'Форумның және турнирлер, клубтар, жаттықтырушылар мен тауарлар талқылауларының барлық хабарламалары',
   'forum.feed.byAuthor': 'Барлық хабарламалар: {name}',
   'forum.feed.search': 'Мәтін бойынша іздеу',
   'forum.feed.section': 'Бөлім',
@@ -2591,12 +2613,11 @@ export const kk: Record<MessageKey, string> = {
   'forum.side.tournaments': 'Турнирлерді талқылау',
   'forum.side.birthdays': 'Бүгін туған күн',
   'forum.side.age': '{age} жасқа толады',
-  'forum.news.hint': 'Мұнда клубтар мен жаттықтырушылардың жаңалықтары мен акциялары — олар оларды өз беттерінде жариялайды. Әрқайсысының астында талқылаңыз.',
+  'forum.news.hint':
+    'Мұнда клубтар мен жаттықтырушылардың жаңалықтары мен акциялары — олар оларды өз беттерінде жариялайды. Әрқайсысының астында талқылаңыз.',
   'forum.news.discuss': 'Форумда талқылау',
   'forum.news.discussCount': 'Талқылау · {count}',
   'notifications.FORUM_WARNING': 'Модератор сізге ескерту жасады: {rule}',
-
-
 
   'forum.admin.sections.manualTopics': 'Тақырыптарды қатысушылар ашады',
 };

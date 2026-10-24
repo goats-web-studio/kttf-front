@@ -180,6 +180,10 @@ function Events({
 
           return (
             <li key={event.matchId ?? index}>
+              {event.matchId === null && (
+                // Событие без встречи — бонус призёру по итогам турнира (ADR-069).
+                <>{t('results.ratings.bonus')} · </>
+              )}
               {opponent !== null && (
                 <>
                   {t('results.ratings.vs')}{' '}

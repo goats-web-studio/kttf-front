@@ -804,7 +804,7 @@ export const ru = {
     'Профиль заведётся в клубе турнира, игрок сразу будет записан. Остальную анкету он заполнит сам.',
   'participants.new.rating': 'Стартовый рейтинг',
   'participants.new.ratingHint':
-    'Ваша оценка силы игрока: по ней он посеется. Первые 20 встреч её поправят',
+    'Ваша оценка силы игрока: по ней он посеется. Первые пять турниров её поправят',
   'participants.new.submit': 'Завести и записать',
   'participants.new.cancel': 'Отмена',
 
@@ -844,6 +844,7 @@ export const ru = {
   'results.match.table': 'Стол {n}',
   'results.match.minutes': '{n} мин',
   'results.ratings.vs': 'с',
+  'results.ratings.bonus': 'Бонус призёру',
   'results.facts.format': 'Формат',
   'results.facts.average': 'Средний рейтинг',
   'results.facts.matches': 'Встречи',
@@ -934,7 +935,7 @@ export const ru = {
   'ratings.column.city': 'Город',
   'ratings.column.rating': 'Рейтинг',
   'ratings.column.matches': 'Встреч',
-  'ratings.provisional': 'Провизорный',
+  'ratings.provisional': 'Новичок',
   'ratings.empty': 'Игроков не найдено',
   'ratings.emptyState.title': 'Рейтинг пока пуст',
   'ratings.emptyState.text': 'Игроки появятся здесь после первого рейтингового турнира.',
@@ -2146,7 +2147,20 @@ export const ru = {
   'profile.plate.rank': '#{rank} из {total} в рейтинге',
   'profile.plate.matches': 'Рейтинговых встреч',
   'profile.plate.last': 'Последний турнир',
-  'profile.plate.provisional': 'Провизорный: меньше 20 встреч',
+  'profile.plate.provisional': 'Новичок: меньше 5 турниров',
+  'profile.plate.level': 'Уровень {level} · {name}',
+
+  'level.aria': 'Уровень {level} из 10 — {name}',
+  'level.name.1': 'Новичок',
+  'level.name.2': 'Начинающий',
+  'level.name.3': 'Любитель',
+  'level.name.4': 'Уверенный любитель',
+  'level.name.5': 'Продвинутый',
+  'level.name.6': 'Сильный любитель',
+  'level.name.7': 'Сильный',
+  'level.name.8': 'Эксперт',
+  'level.name.9': 'Мастер',
+  'level.name.10': 'Элита',
   'profile.form.title': 'Форма',
   'profile.form.label': 'Последние встречи, свежая справа: побед {wins} из {count}',
   'profile.form.win': 'Победа',
@@ -2520,7 +2534,6 @@ export const ru = {
   'home.forum.title': 'Обсуждают на форуме',
   'home.forum.all': 'Весь форум',
 
-
   'forum.subject.CLUB_POST': 'Новость клуба',
   'forum.subject.COACH_POST': 'Новость тренера',
   'forum.role.ORGANIZER': 'Организатор',
@@ -2533,14 +2546,21 @@ export const ru = {
   'forum.rule.OFFTOPIC': 'Не по теме',
   'forum.rule.OTHER': 'Другое',
   'forum.rules.title': 'Правила общения',
-  'forum.rules.lead': 'Уважайте собеседников и пишите по делу. Скрывая сообщение или предупреждая, модератор называет пункт правил.',
-  'forum.rules.ABUSE': 'Не оскорбляйте участников, не переходите на личности и не провоцируйте ссоры. Спорьте с мнением, а не с человеком.',
-  'forum.rules.FLOOD': 'Не пишите сообщений без содержания, не повторяйте одно и то же, не злоупотребляйте цитатами.',
-  'forum.rules.ADS': 'Реклама товаров и услуг — только по согласованию с KTTF. Клубы и тренеры публикуют новости и акции на своих страницах — на форуме они появляются сами.',
-  'forum.rules.DUPLICATE': 'Перед новой темой поищите похожую. Одинаковые темы и сообщения в нескольких разделах скрываются.',
-  'forum.rules.OFFTOPIC': 'Пишите в подходящий раздел и по теме разговора. Тему не в том разделе модератор перенесёт.',
+  'forum.rules.lead':
+    'Уважайте собеседников и пишите по делу. Скрывая сообщение или предупреждая, модератор называет пункт правил.',
+  'forum.rules.ABUSE':
+    'Не оскорбляйте участников, не переходите на личности и не провоцируйте ссоры. Спорьте с мнением, а не с человеком.',
+  'forum.rules.FLOOD':
+    'Не пишите сообщений без содержания, не повторяйте одно и то же, не злоупотребляйте цитатами.',
+  'forum.rules.ADS':
+    'Реклама товаров и услуг — только по согласованию с KTTF. Клубы и тренеры публикуют новости и акции на своих страницах — на форуме они появляются сами.',
+  'forum.rules.DUPLICATE':
+    'Перед новой темой поищите похожую. Одинаковые темы и сообщения в нескольких разделах скрываются.',
+  'forum.rules.OFFTOPIC':
+    'Пишите в подходящий раздел и по теме разговора. Тему не в том разделе модератор перенесёт.',
   'forum.rules.sanctionsTitle': 'Что делает модератор',
-  'forum.rules.sanction.hide': 'Скрывает сообщение: вместо текста все видят причину, автору приходит уведомление',
+  'forum.rules.sanction.hide':
+    'Скрывает сообщение: вместо текста все видят причину, автору приходит уведомление',
   'forum.rules.sanction.warn': 'Предупреждает с указанием пункта правил',
   'forum.rules.sanction.mute': 'Запрещает писать на несколько дней — читать форум при этом можно',
   'forum.rules.sanction.report': 'Видите нарушение — нажмите «…» у сообщения и «Пожаловаться»',
@@ -2571,12 +2591,11 @@ export const ru = {
   'forum.side.tournaments': 'Обсуждение турниров',
   'forum.side.birthdays': 'Дни рождения сегодня',
   'forum.side.age': 'исполняется {age}',
-  'forum.news.hint': 'Здесь новости и акции клубов и тренеров — они публикуют их на своих страницах. Обсуждайте под каждой.',
+  'forum.news.hint':
+    'Здесь новости и акции клубов и тренеров — они публикуют их на своих страницах. Обсуждайте под каждой.',
   'forum.news.discuss': 'Обсудить на форуме',
   'forum.news.discussCount': 'Обсуждение · {count}',
   'notifications.FORUM_WARNING': 'Модератор предупредил вас: {rule}',
-
-
 
   'forum.admin.sections.manualTopics': 'Темы заводят участники',
 } as const satisfies Record<string, string>;

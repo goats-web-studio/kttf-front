@@ -1,3 +1,4 @@
+import { ratingLevel } from '@kttf/shared/rating';
 import type { PlayerProfileView, PlayerSummaryView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -21,6 +22,8 @@ import type { ReactNode } from 'react';
 
 import { fill, formatCount, useLocale, useT, type MessageKey } from '@/common/i18n';
 import DeltaPill from '@/common/ui/delta-pill';
+import LevelBadge from '@/common/ui/level-badge';
+import { LEVEL_NAME } from '@/common/ui/level-name';
 import RatingValue from '@/common/ui/rating-value';
 
 import FormStrip from './form-strip';
@@ -219,6 +222,15 @@ function RatingPlate({
       >
         <RatingValue value={player.rating} />
       </Typography>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1 }} data-level-row>
+        <LevelBadge rating={player.rating} tone="night" />
+        <Typography sx={{ fontWeight: 600 }}>
+          {fill(t('profile.plate.level'), {
+            level: String(ratingLevel(Number(player.rating))),
+            name: t(LEVEL_NAME[ratingLevel(Number(player.rating))]),
+          })}
+        </Typography>
+      </Stack>
       {summary !== undefined && summary.rankedPlayers > 0 && (
         <Typography sx={{ fontWeight: 600 }} data-rank>
           {fill(t('profile.plate.rank'), {
@@ -229,8 +241,8 @@ function RatingPlate({
       )}
 
       {player.isProvisional && (
-        // Провизорный рейтинг двигается быстрее: сыграно меньше двадцати
-        // рейтинговых встреч (ТЗ 7.1).
+        // Новичок — первые пять рейтинговых турниров: его рейтинг растёт
+        // вдвое быстрее, чем падает (ТЗ 7.4, ADR-069).
         <Typography variant="body2" sx={{ color: 'var(--night-ink-500)' }} data-provisional>
           {t('profile.plate.provisional')}
         </Typography>

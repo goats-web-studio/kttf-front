@@ -19,6 +19,7 @@ import { useCallback, type ReactNode } from 'react';
 import { fill, formatCount, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
+import LevelBadge from '@/common/ui/level-badge';
 import Pagination from '@/common/ui/pagination';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import PillTabs from '@/common/ui/pill-tabs';
@@ -340,8 +341,8 @@ function PlayerRow({
               {playerName(player)}
             </Link>
             {player.isProvisional && (
-              // Провизорный рейтинг двигается быстрее и означает, что
-              // игрок сыграл меньше 20 рейтинговых встреч (ТЗ 7.1).
+              // Новичок — первые пять рейтинговых турниров (ТЗ 7.4).
+              // Его рейтинг ещё оценка организатора и двигается быстрее.
               // Подписью, а не плашкой в рамке: в новом рейтинге
               // провизорны почти все, и рамки в каждой строке
               // рябили сильнее самих фамилий.
@@ -387,7 +388,14 @@ function PlayerRow({
         align="right"
         sx={{ ...NUM, fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18 }}
       >
-        <RatingValue value={player.rating} />
+        <Stack
+          direction="row"
+          spacing={1.5}
+          sx={{ alignItems: 'center', justifyContent: 'flex-end' }}
+        >
+          <RatingValue value={player.rating} />
+          <LevelBadge rating={player.rating} size={28} />
+        </Stack>
       </TableCell>
       {equipment ? (
         <>
