@@ -18,21 +18,26 @@ interface ClubOption {
 }
 
 /**
- * Клуб KTTF — поиском по `GET /clubs?search=`: для тренировки «в клубе» и
- * для запроса в штаб. Справочник клубов здесь не подходит — в нём только
- * первая сотня.
+ * Клуб KTTF — поиском по `GET /clubs?search=`: для тренировки «в клубе»,
+ * для запроса в штаб и для места дуэли (ADR-065). Справочник клубов здесь
+ * не подходит — в нём только первая сотня.
  */
 export function ClubPicker({
   value,
   name,
   error,
   onChange,
+  label,
+  noOptions,
 }: {
   readonly value: string | null;
   /** Название выбранного — пока поиск не вернул клуб, поле не пустое. */
   readonly name: string;
   readonly error: boolean;
   readonly onChange: (club: { readonly id: string; readonly name: string } | null) => void;
+  /** Подписи вне тренировки: у дуэли запасной вариант — «Свой зал». */
+  readonly label?: string;
+  readonly noOptions?: string;
 }): ReactNode {
   const t = useT();
   const placeName = usePlaceName();
@@ -77,9 +82,9 @@ export function ClubPicker({
       isOptionEqualToValue={(option, chosen) => option.id === chosen.id}
       loading={clubs.isPending}
       loadingText={t('common.loading')}
-      noOptionsText={t('training.editor.noClub')}
+      noOptionsText={noOptions ?? t('training.editor.noClub')}
       renderInput={(params) => (
-        <TextField {...params} label={t('training.editor.club')} error={error} />
+        <TextField {...params} label={label ?? t('training.editor.club')} error={error} />
       )}
     />
   );

@@ -95,7 +95,7 @@ export default function NotificationList({
                     overflowWrap: 'anywhere',
                   }}
                 >
-                  {notificationText(notification, t)}
+                  {notificationText(notification, t, locale)}
                 </Typography>
                 <Typography
                   component="span"

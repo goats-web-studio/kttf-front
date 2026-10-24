@@ -70,6 +70,17 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   FORUM_MUTED: 'error.api.FORUM_MUTED',
   FORUM_TOPIC_LOCKED: 'error.api.FORUM_TOPIC_LOCKED',
   FORUM_LIMIT: 'error.api.FORUM_LIMIT',
+
+  // Дуэли и спарринги — ADR-065. Пределы и частоту подробнее называет
+  // `duelErrorText` по `details`; здесь — общий текст кода.
+  DUEL_PROFILE_REQUIRED: 'error.api.DUEL_PROFILE_REQUIRED',
+  DUEL_OPPONENT_INVALID: 'error.api.DUEL_OPPONENT_INVALID',
+  DUEL_LIMIT: 'error.api.DUEL_LIMIT',
+  DUEL_RATING_LIMIT: 'error.api.DUEL_RATING_LIMIT',
+  DUEL_INVALID_STATE: 'error.api.DUEL_INVALID_STATE',
+  DUEL_RESPONSE_EXISTS: 'error.api.DUEL_RESPONSE_EXISTS',
+  DUEL_TIME_INVALID: 'error.api.DUEL_TIME_INVALID',
+  DUEL_SCORE_INVALID: 'error.api.DUEL_SCORE_INVALID',
 };
 
 /**

@@ -538,6 +538,7 @@ export const RATING_HISTORY: RatingHistoryView = {
     {
       tournamentId: '00000000-0000-4000-8000-000000000041',
       tournamentName: 'Открытие сезона',
+      duel: null,
       playedAt: '2026-03-14T09:00:00.000Z',
       ratingBefore: '250.00',
       ratingAfter: '495.50',
@@ -547,6 +548,7 @@ export const RATING_HISTORY: RatingHistoryView = {
     {
       tournamentId: null,
       tournamentName: null,
+      duel: null,
       playedAt: '2026-06-01T12:00:00.000Z',
       ratingBefore: '495.50',
       ratingAfter: '500.00',
@@ -556,6 +558,7 @@ export const RATING_HISTORY: RatingHistoryView = {
     {
       tournamentId: TOURNAMENT_ID,
       tournamentName: TOURNAMENT.name,
+      duel: null,
       playedAt: TOURNAMENT.startsAt,
       ratingBefore: '500.00',
       ratingAfter: '520.00',

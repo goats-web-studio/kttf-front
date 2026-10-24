@@ -27,6 +27,7 @@ function point(
   return {
     tournamentId,
     tournamentName: 'Турнир',
+    duel: null,
     playedAt,
     ratingBefore: '0.00',
     ratingAfter,
@@ -184,6 +185,7 @@ describe('buildRatingScale', () => {
       ...point('2026-01-01T00:00:00.000Z', '250.00'),
       tournamentId: null,
       tournamentName: null,
+      duel: null,
     };
 
     expect(buildRatingScale([adjustment])?.points[0]?.key).toBe('adjustment-0');
