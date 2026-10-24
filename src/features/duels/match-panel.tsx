@@ -693,9 +693,8 @@ function Scoreboard({
                 sx={{ minHeight: 64, fontSize: 18 }}
                 data-duel-set-for={player.id}
               >
-                {player.id === me
-                  ? t('duel.match.setMine')
-                  : fill(t('duel.match.setFor'), { name: player.name })}
+                {/* «Партия за соперником»: имя не склоняется, а чьё оно — видно над табло. */}
+                {player.id === me ? t('duel.match.setMine') : t('duel.match.setFor')}
               </Button>
             ))}
           </Box>

@@ -625,7 +625,9 @@ describe('матч дуэли (ADR-068)', () => {
     const board = await waitFor(() => element('[data-duel-board]'));
     expect(element('[data-duel-board-score]', board).textContent).toBe('1:1');
     expect(
-      within(board).getByText(fill(ru['duel.match.setLine'], { n: '1', name: 'я' })),
+      within(board).getByText(
+        fill(ru['duel.match.setLine'], { n: '1', name: ru['duel.match.meShort'] }),
+      ),
     ).toBeDefined();
     const finish = element('[data-duel-finish]', board);
     expect(finish.hasAttribute('disabled')).toBe(true);
@@ -681,7 +683,7 @@ describe('матч дуэли (ADR-068)', () => {
     const before = requests('GET', `/duels/${DUEL_ID}`).length;
     fireEvent.click(
       within(board).getByRole('button', {
-        name: fill(ru['duel.match.setFor'], { name: 'Смагулов Асан' }),
+        name: ru['duel.match.setFor'],
       }),
     );
     expect(await within(board).findByText(ru['duel.match.conflict'])).toBeDefined();

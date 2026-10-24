@@ -79,15 +79,22 @@ export function DuelPlayerLine({
   );
 }
 
-/** Вид, «на рейтинг», формат и — по желанию — состояние: метками в строку. */
+/**
+ * Вид, «на рейтинг», формат и — по желанию — состояние: метками в строку.
+ * Начатый матч — «Идёт матч», а не «Назначена»: состояние в базе то же,
+ * но для людей это другой этап (ADR-068).
+ */
 export function DuelBadges({
   duel,
   status = false,
 }: {
-  readonly duel: Pick<DuelItemView, 'kind' | 'rated' | 'bestOf' | 'status'>;
+  readonly duel: Pick<DuelItemView, 'kind' | 'rated' | 'bestOf' | 'status'> & {
+    readonly startedAt?: string | null;
+  };
   readonly status?: boolean;
 }): ReactNode {
   const t = useT();
+  const live = duel.status === 'SCHEDULED' && typeof duel.startedAt === 'string';
 
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}>
@@ -95,7 +102,11 @@ export function DuelBadges({
       {/* У дуэли рейтинг всегда — метка нужна только спаррингу. */}
       {duel.kind === 'SPARRING' && duel.rated && <Badge tone="ok">{t('duel.rated')}</Badge>}
       {duel.bestOf !== null && <Badge>{t(BEST_OF_KEYS[duel.bestOf])}</Badge>}
-      {status && <Badge tone={STATUS_TONES[duel.status]}>{t(STATUS_KEYS[duel.status])}</Badge>}
+      {status && (
+        <Badge tone={live ? 'warn' : STATUS_TONES[duel.status]}>
+          {t(live ? 'duel.status.LIVE' : STATUS_KEYS[duel.status])}
+        </Badge>
+      )}
     </Box>
   );
 }
