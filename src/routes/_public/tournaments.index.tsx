@@ -411,6 +411,7 @@ function TournamentsPage(): ReactNode {
                 month={month}
                 today={dayKeyOf(today)}
                 items={calendar.data ?? []}
+                club={(id) => clubs.data?.get(id)}
                 onMonth={(next) => {
                   filter({ month: next === monthOf(now) ? undefined : next });
                 }}

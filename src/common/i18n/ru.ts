@@ -726,6 +726,8 @@ export const ru = {
   'tournaments.month.prev': 'Предыдущий месяц',
   'tournaments.month.next': 'Следующий месяц',
   'tournaments.month.empty': 'В этом месяце турниров нет',
+  'tournaments.day.more': 'Ещё {count}',
+  'tournaments.day.less': 'Свернуть',
   'tournaments.today': 'Сегодня',
   'tournaments.upcoming': 'Ближайшие турниры',
   'tournaments.upcoming.empty': 'Ближайших турниров нет.',

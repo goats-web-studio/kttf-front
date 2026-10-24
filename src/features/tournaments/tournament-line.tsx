@@ -31,8 +31,11 @@ export function StartTime({ startsAt }: { readonly startsAt: string }): ReactNod
  */
 export function TournamentName({
   tournament,
+  truncate = false,
 }: {
   readonly tournament: Pick<TournamentListItemView, 'id' | 'name' | 'status'>;
+  /** В одну строку с многоточием — в клетке календаря, где полное название в подсказке. */
+  readonly truncate?: boolean;
 }): ReactNode {
   const t = useT();
   const cancelled = tournament.status === 'CANCELLED';
@@ -45,9 +48,19 @@ export function TournamentName({
       sx={{
         minWidth: 0,
         fontWeight: 500,
-        display: 'inline-flex',
+        display: truncate ? 'flex' : 'inline-flex',
         alignItems: 'center',
         gap: 0.75,
+        ...(truncate
+          ? {
+              '& > [data-name]': {
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              },
+            }
+          : {}),
         // Отменённый — зачёркнут и приглушён, но читаем: ink-500 даёт 5:1.
         ...(cancelled ? { color: 'var(--ink-500)', textDecoration: 'line-through' } : {}),
       }}
@@ -65,7 +78,7 @@ export function TournamentName({
           }}
         />
       )}
-      <span>{tournament.name}</span>
+      <span data-name>{tournament.name}</span>
       {(cancelled || live) && (
         <Box component="span" sx={VISUALLY_HIDDEN}>
           {` (${t(cancelled ? 'tournament.status.CANCELLED' : 'tournament.status.RUNNING')})`}

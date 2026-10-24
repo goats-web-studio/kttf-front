@@ -732,6 +732,8 @@ export const kk: Record<MessageKey, string> = {
   'tournaments.month.prev': 'Алдыңғы ай',
   'tournaments.month.next': 'Келесі ай',
   'tournaments.month.empty': 'Бұл айда турнир жоқ',
+  'tournaments.day.more': 'Тағы {count}',
+  'tournaments.day.less': 'Жасыру',
   'tournaments.today': 'Бүгін',
   'tournaments.upcoming': 'Жақын турнирлер',
   'tournaments.upcoming.empty': 'Жақын турнирлер жоқ.',
