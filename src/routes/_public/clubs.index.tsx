@@ -31,6 +31,7 @@ import ClubCard from '@/features/clubs/club-card';
 import { clubsQuery } from '@/features/clubs/queries';
 import CitiesFilter from '@/features/places/cities-filter';
 import { useCityLabel } from '@/features/places/city-label';
+import { ClubPartnerCallout } from '@/features/home/partners';
 
 /**
  * Список через запятую в адресе — как города в «Игроках» (ADR-054): ссылку
@@ -357,6 +358,10 @@ function ClubsPage(): ReactNode {
           });
         }}
       />
+
+      <Box sx={{ mt: { xs: 7, sm: 10 } }}>
+        <ClubPartnerCallout />
+      </Box>
     </Container>
   );
 }

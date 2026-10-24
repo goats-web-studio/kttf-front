@@ -48,7 +48,13 @@ export default function PartnerCallout({
 
   return (
     <Reveal>
-      <Paper component="section" variant="outlined" sx={{ p: { xs: 3, sm: 5 } }}>
+      <Paper
+        component="section"
+        id="join"
+        variant="outlined"
+        // Ссылка «#join» с баннера главной: заголовок не прячется под шапкой.
+        sx={{ p: { xs: 3, sm: 5 }, scrollMarginTop: 96 }}
+      >
         <Box sx={{ maxWidth: 680 }}>
           <Typography variant="h2" sx={{ fontSize: { xs: 24, sm: 28 }, lineHeight: 1.2 }}>
             {t(key('title'))}

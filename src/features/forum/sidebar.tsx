@@ -112,7 +112,7 @@ function TournamentTalk(): ReactNode {
   );
 }
 
-function Birthdays(): ReactNode {
+export function Birthdays(): ReactNode {
   const t = useT();
   const birthdays = useQuery(forumBirthdaysQuery);
 

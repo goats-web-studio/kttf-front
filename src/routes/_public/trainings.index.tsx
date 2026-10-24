@@ -62,6 +62,7 @@ import {
 } from '@/features/coaches/trainings-search';
 import CitiesFilter from '@/features/places/cities-filter';
 import { useCityLabel } from '@/features/places/city-label';
+import { CoachPartnerCallout } from '@/features/home/partners';
 
 export const Route = createFileRoute('/_public/trainings/')({
   validateSearch: (search: Record<string, unknown>) => trainingsSearchSchema.parse(search),
@@ -459,13 +460,18 @@ function TrainingsPage(): ReactNode {
             onReset={reset}
           />
         ) : (
-          <CoachesList
-            search={search}
-            page={page}
-            filtered={filtered}
-            active={active}
-            onReset={reset}
-          />
+          <>
+            <CoachesList
+              search={search}
+              page={page}
+              filtered={filtered}
+              active={active}
+              onReset={reset}
+            />
+            <Box sx={{ mt: { xs: 7, sm: 10 } }}>
+              <CoachPartnerCallout />
+            </Box>
+          </>
         )}
       </Container>
     </TrainingDialogHost>

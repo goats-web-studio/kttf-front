@@ -41,6 +41,19 @@ function answer(url: string): Response {
     return reply(places);
   }
 
+  // Живые блоки главной — ADR-071.
+  if (url.includes('/stats/podiums')) {
+    return reply(HOME_PODIUMS);
+  }
+
+  if (url.includes('/stats/leaders')) {
+    return reply({ period: 'MONTH', tournaments: [], wins: [] });
+  }
+
+  if (url.includes('/stats/upsets')) {
+    return reply(HOME_UPSETS);
+  }
+
   if (/\/tournaments\/[^/]+\/results$/.test(url)) {
     return reply(RESULTS);
   }
@@ -102,6 +115,47 @@ function answer(url: string): Response {
 
   throw new Error(`Неожидаемый запрос: ${url}`);
 }
+
+/** Призёры турнира на главной: первое место и делённое третье. */
+const HOME_PODIUMS = {
+  items: [
+    {
+      tournamentId: TOURNAMENT_ID,
+      name: TOURNAMENT.name,
+      startsAt: TOURNAMENT.startsAt,
+      level: 'CLUB',
+      ratingCapMax: '300.00',
+      ratingCapMin: null,
+      club: { id: CLUB.id, name: CLUB.name },
+      participants: 12,
+      places: [
+        { place: 1, placeTo: null, playerId: PLAYERS.first.id, name: playerName(PLAYERS.first) },
+        { place: 3, placeTo: 4, playerId: PLAYERS.third.id, name: playerName(PLAYERS.third) },
+      ],
+    },
+  ],
+};
+
+/** Лучшая победа: слабый Ахметов обыграл сильного Ержанова. */
+const HOME_UPSETS = {
+  period: 'MONTH',
+  items: [
+    {
+      matchId: '00000000-0000-4000-8000-0000000000b1',
+      tournament: { id: TOURNAMENT_ID, name: TOURNAMENT.name, startsAt: TOURNAMENT.startsAt },
+      club: { id: CLUB.id, name: CLUB.name },
+      playedAt: TOURNAMENT.startsAt,
+      winner: { id: PLAYERS.fourth.id, name: playerName(PLAYERS.fourth) },
+      winnerRating: '300.00',
+      winnerDelta: '14.5',
+      loser: { id: PLAYERS.first.id, name: playerName(PLAYERS.first) },
+      loserRating: '520.00',
+      loserDelta: '-14.5',
+      setsWinner: 3,
+      setsLoser: 1,
+    },
+  ],
+};
 
 /** Последнее изменение рейтинга первого игрока — колонка «Обновлён». */
 const UPDATED_AT = '2026-03-14T12:00:00.000Z';
@@ -553,19 +607,49 @@ describe('фильтры в адресе', () => {
 });
 
 describe('главная', () => {
-  it('в ленте — итоги турнира с победителем из результатов', async () => {
+  it('результаты турниров — турнир ссылкой и призёры ссылками на профили', async () => {
     renderAt('/');
 
-    const title = await screen.findByText(
-      fill(ru['home.news.result.title'], { name: TOURNAMENT.name }),
+    const podiums = await screen.findByText(ru['home.results.title']);
+    const section = podiums.closest('section');
+    if (section === null) throw new Error('раздел результатов не найден');
+
+    const winner = await within(section).findByRole('link', { name: playerName(PLAYERS.first) });
+    expect(winner.getAttribute('href')).toBe(`/players/${PLAYERS.first.id}`);
+    expect(within(section).getByRole('link', { name: TOURNAMENT.name }).getAttribute('href')).toBe(
+      `/tournaments/${TOURNAMENT_ID}`,
     );
-    // Победитель приходит отдельным запросом результатов, а не из списка.
+    // Делённое третье подписано диапазоном для чтеца.
     expect(
-      await screen.findByText(
-        new RegExp(fill(ru['home.news.result.winner'], { name: playerName(PLAYERS.first) })),
-      ),
+      within(section).getByLabelText(fill(ru['home.results.place'], { place: '3–4' })),
     ).toBeDefined();
-    expect(title.closest('a')?.getAttribute('href')).toBe(`/tournaments/${TOURNAMENT_ID}`);
+  });
+
+  it('лучшие победы — счёт по партиям и прирост победителя со знаком', async () => {
+    renderAt('/');
+
+    const title = await screen.findByText(ru['home.stats.upsets']);
+    const table = title.closest('[data-home-upsets]');
+    if (!(table instanceof HTMLElement)) throw new Error('таблица лучших побед не найдена');
+
+    expect(within(table).getByText('3:1')).toBeDefined();
+    expect(within(table).getByText('+14.50')).toBeDefined();
+    expect(within(table).getByText('-14.50')).toBeDefined();
+  });
+
+  it('ближайшие турниры — строками в колонке турниров, со ссылкой на календарь', async () => {
+    renderAt('/');
+
+    const upcoming = await screen.findByText(ru['home.upcoming.title']);
+    const block = upcoming.closest('section');
+    if (block === null) throw new Error('блок ближайших не найден');
+
+    expect(
+      (await within(block).findByRole('link', { name: TOURNAMENT.name })).getAttribute('href'),
+    ).toBe(`/tournaments/${TOURNAMENT_ID}`);
+    expect(
+      within(block).getByRole('link', { name: ru['home.upcoming.all'] }).getAttribute('href'),
+    ).toBe('/tournaments');
   });
 
   it('поиск на первом экране ведёт в рейтинг с запросом', async () => {
