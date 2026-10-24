@@ -2,6 +2,7 @@ import { FORUM_SECTION_SLUG_PATTERN, type ListForumTopicsQuery } from '@kttf/sha
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { PenLine } from 'lucide-react';
@@ -95,17 +96,28 @@ function SectionPage(): ReactNode {
         {...(section?.description === null || section === undefined
           ? {}
           : { subtitle: section.description })}
-        actions={
-          <Button
-            href={newTopicHref(slug)}
-            variant="contained"
-            startIcon={<PenLine size={18} aria-hidden />}
-            sx={{ minHeight: 44 }}
-          >
-            {t('forum.newTopic')}
-          </Button>
-        }
+        // В «Новостях клубов и тренеров» тема — сама новость (ADR-067 §2):
+        // её публикуют клуб или тренер на своей странице.
+        {...(section?.manualTopics === false
+          ? {}
+          : {
+              actions: (
+                <Button
+                  href={newTopicHref(slug)}
+                  variant="contained"
+                  startIcon={<PenLine size={18} aria-hidden />}
+                  sx={{ minHeight: 44 }}
+                >
+                  {t('forum.newTopic')}
+                </Button>
+              ),
+            })}
       />
+      {section?.manualTopics === false && (
+        <Typography color="text.secondary" sx={{ mt: -2, mb: 3 }} data-forum-news-hint>
+          {t('forum.news.hint')}
+        </Typography>
+      )}
 
       <Box
         role="search"

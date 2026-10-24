@@ -128,6 +128,11 @@ interface ComposerProps {
   readonly onDone?: () => void;
   /** Проверка полей вокруг формы (заголовок новой темы): `false` — не отправлять. */
   readonly validate?: () => boolean;
+  /**
+   * Черновик на устройстве (ADR-067 §9): пока ответ не отправлен, текст
+   * переживает закрытие вкладки. Ключ — тема или предмет.
+   */
+  readonly draftKey?: string;
 }
 
 /**
@@ -146,13 +151,14 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
     onCancel,
     onDone,
     validate,
+    draftKey,
   },
   ref,
 ) {
   const t = useT();
   const fileId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
-  const [body, setBody] = useState(initial?.body ?? '');
+  const [body, setBody] = useState(initial?.body ?? readDraft(draftKey));
   const [images, setImages] = useState<readonly ForumImage[]>(initial?.images ?? []);
   const [pending, setPending] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -207,6 +213,7 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
           .then(() => {
             if (initial === undefined) {
               setBody('');
+              writeDraft(draftKey, '');
               setImages([]);
               onClearQuote?.();
             }
@@ -269,6 +276,7 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
         value={body}
         onChange={(event) => {
           setBody(event.target.value);
+          writeDraft(draftKey, event.target.value);
         }}
         placeholder={placeholder ?? t('forum.composer.placeholder')}
         aria-label={placeholder ?? t('forum.composer.placeholder')}
@@ -388,3 +396,27 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
 });
 
 export default Composer;
+
+const DRAFT_PREFIX = 'kttf:forum-draft:';
+
+/** Черновик из хранилища устройства; недоступное хранилище — пустой черновик. */
+function readDraft(key: string | undefined): string {
+  if (key === undefined) return '';
+
+  try {
+    return window.localStorage.getItem(DRAFT_PREFIX + key) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function writeDraft(key: string | undefined, value: string): void {
+  if (key === undefined) return;
+
+  try {
+    if (value.trim() === '') window.localStorage.removeItem(DRAFT_PREFIX + key);
+    else window.localStorage.setItem(DRAFT_PREFIX + key, value);
+  } catch {
+    // Приватный режим или полное хранилище: без черновика, но форма работает.
+  }
+}

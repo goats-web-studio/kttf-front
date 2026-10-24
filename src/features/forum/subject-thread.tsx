@@ -25,6 +25,8 @@ const TITLES: Readonly<Record<ForumSubjectType, MessageKey>> = {
   CLUB: 'forum.thread.reviews',
   COACH: 'forum.thread.reviews',
   PRODUCT: 'forum.thread.reviews',
+  CLUB_POST: 'forum.thread.discussion',
+  COACH_POST: 'forum.thread.discussion',
 };
 
 const EMPTY: Readonly<Record<ForumSubjectType, MessageKey>> = {
@@ -32,6 +34,8 @@ const EMPTY: Readonly<Record<ForumSubjectType, MessageKey>> = {
   CLUB: 'forum.thread.emptyReviews',
   COACH: 'forum.thread.emptyReviews',
   PRODUCT: 'forum.thread.emptyReviews',
+  CLUB_POST: 'forum.thread.emptyDiscussion',
+  COACH_POST: 'forum.thread.emptyDiscussion',
 };
 
 /**
@@ -103,6 +107,7 @@ export default function SubjectThread({
           {canReply && (
             <Composer
               ref={composer}
+              draftKey={`${type}:${id}`}
               quote={quote}
               onClearQuote={() => {
                 setQuote(null);

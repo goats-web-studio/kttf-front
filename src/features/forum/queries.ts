@@ -1,6 +1,7 @@
 import type {
   ForumSubjectType,
-  ListForumPlayerPostsQuery,
+  ForumPostSort,
+  ListForumFeedQuery,
   ListForumReportsQuery,
   ListForumTopicsQuery,
   PageQuery,
@@ -13,7 +14,9 @@ import {
   fetchForumTopic,
   listAdminForumSections,
   listForumMutes,
-  listForumPlayerPosts,
+  fetchForumOnline,
+  listForumBirthdays,
+  listForumFeed,
   listForumPosts,
   listForumReports,
   listForumSections,
@@ -30,8 +33,11 @@ export const forumKeys = {
   me: ['forum', 'me'] as const,
   topics: (query: Partial<ListForumTopicsQuery>) => ['forum', 'topics', query] as const,
   topic: (topicId: string) => ['forum', 'topic', topicId] as const,
-  posts: (topicId: string, page: number) => ['forum', 'topic', topicId, 'posts', page] as const,
-  playerPosts: (query: ListForumPlayerPostsQuery) => ['forum', 'player-posts', query] as const,
+  posts: (topicId: string, page: number, sort: ForumPostSort) =>
+    ['forum', 'topic', topicId, 'posts', sort, page] as const,
+  feed: (query: Partial<ListForumFeedQuery>) => ['forum', 'feed', query] as const,
+  online: ['forum', 'online'] as const,
+  birthdays: ['forum', 'birthdays'] as const,
   subject: (type: ForumSubjectType, id: string) => ['forum', 'subject', type, id] as const,
   reports: (query: Partial<ListForumReportsQuery>) => ['forum', 'admin', 'reports', query] as const,
   mutes: (query: PageQuery) => ['forum', 'admin', 'mutes', query] as const,
@@ -65,19 +71,33 @@ export function forumTopicQuery(topicId: string) {
   });
 }
 
-export function forumPostsQuery(topicId: string, page: number) {
+/** Ответы темы — без первого сообщения: оно «статья» над ними (ADR-067). */
+export function forumPostsQuery(topicId: string, page: number, sort: ForumPostSort) {
   return queryOptions({
-    queryKey: forumKeys.posts(topicId, page),
-    queryFn: () => listForumPosts(topicId, { page }),
+    queryKey: forumKeys.posts(topicId, page, sort),
+    queryFn: () => listForumPosts(topicId, { page, sort, replies: true }),
   });
 }
 
-export function forumPlayerPostsQuery(query: ListForumPlayerPostsQuery) {
+export function forumFeedQuery(query: Partial<ListForumFeedQuery>) {
   return queryOptions({
-    queryKey: forumKeys.playerPosts(query),
-    queryFn: () => listForumPlayerPosts(query),
+    queryKey: forumKeys.feed(query),
+    queryFn: () => listForumFeed(query),
   });
 }
+
+/** «Сейчас на сайте» — раз в минуту, как колокольчик. */
+export const forumOnlineQuery = queryOptions({
+  queryKey: forumKeys.online,
+  queryFn: fetchForumOnline,
+  refetchInterval: 60_000,
+});
+
+export const forumBirthdaysQuery = queryOptions({
+  queryKey: forumKeys.birthdays,
+  queryFn: listForumBirthdays,
+  staleTime: 10 * 60_000,
+});
 
 export function forumSubjectQuery(type: ForumSubjectType, id: string) {
   return queryOptions({

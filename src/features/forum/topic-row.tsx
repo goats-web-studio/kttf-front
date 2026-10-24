@@ -2,12 +2,12 @@ import type { ForumTopicItem } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import { Lock, MessagesSquare, Pin } from 'lucide-react';
+import { Eye, Lock, MessagesSquare, Pin } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { fill, formatDateTime, useLocale, useT } from '@/common/i18n';
 
-import { lastPage, sectionHref, SUBJECT_KEYS, topicHref } from './labels';
+import { sectionHref, SUBJECT_KEYS, topicHref } from './labels';
 
 /**
  * Строка темы в списке: заголовок, раздел (если список не по разделу),
@@ -24,8 +24,8 @@ export default function TopicRow({
   const t = useT();
   const locale = useLocale();
   const replies = Math.max(0, topic.postsCount - 1);
-  const pages = lastPage(topic.postsCount);
-  const lastHref = `${topicHref(topic.id)}${pages > 1 ? `?page=${String(pages)}` : ''}#post-${String(topic.postsCount)}`;
+  // «Последнее сообщение» — ссылкой на него по номеру.
+  const lastHref = topicHref(topic.id, topic.postsCount);
 
   return (
     <Box
@@ -34,7 +34,7 @@ export default function TopicRow({
       sx={{
         listStyle: 'none',
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) 120px 200px' },
+        gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) 170px 200px' },
         gap: { xs: 0.5, sm: 2 },
         alignItems: 'center',
         px: { xs: 2, sm: 2.5 },
@@ -87,7 +87,21 @@ export default function TopicRow({
               {' · '}
             </>
           )}
-          {topic.author?.name ?? t('forum.author.gone')}
+          {/* У новости автор — клуб или тренер, а не тот, кто нажал «Опубликовать». */}
+          {topic.subject?.owner?.name ?? topic.author?.name ?? t('forum.author.gone')}
+          {topic.unread !== null && topic.unread > 0 && topic.firstUnread !== null && (
+            <>
+              {' · '}
+              <Link
+                href={topicHref(topic.id, topic.firstUnread)}
+                underline="hover"
+                sx={{ fontWeight: 600, color: 'var(--red-600)' }}
+                data-forum-unread={topic.unread}
+              >
+                {fill(t('forum.topic.unread'), { count: String(topic.unread) })}
+              </Link>
+            </>
+          )}
         </Typography>
       </Box>
 
@@ -98,6 +112,14 @@ export default function TopicRow({
       >
         <MessagesSquare size={16} aria-hidden />
         {fill(t('forum.topic.replies'), { count: String(replies) })}
+        <Box
+          component="span"
+          sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, ml: 1 }}
+          title={t('forum.topic.viewsShort')}
+        >
+          <Eye size={16} aria-label={t('forum.topic.viewsShort')} />
+          {topic.viewsCount}
+        </Box>
       </Typography>
 
       <Typography variant="body2" color="text.secondary" sx={{ minWidth: 0 }}>

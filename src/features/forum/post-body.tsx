@@ -13,11 +13,23 @@ import { forumImageVariant } from './labels';
  * Текст как вписан: переносы строк сохраняются, ссылки кликабельны и
  * помечены `nofollow ugc` — их пишут люди, а не мы (ADR-055 §8).
  */
-export function ForumText({ text }: { readonly text: string }): ReactNode {
+export function ForumText({
+  text,
+  large = false,
+}: {
+  readonly text: string;
+  /** Статья темы — кеглем крупнее (ADR-067 §1). */
+  readonly large?: boolean;
+}): ReactNode {
   return (
     <Typography
       component="div"
-      sx={{ whiteSpace: 'pre-line', overflowWrap: 'anywhere', maxWidth: 720 }}
+      sx={{
+        whiteSpace: 'pre-line',
+        overflowWrap: 'anywhere',
+        maxWidth: 720,
+        ...(large ? { fontSize: 18, lineHeight: '28px' } : {}),
+      }}
       data-forum-text
     >
       {textParts(text).map((part, index) =>

@@ -16,6 +16,7 @@ import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
 import { newTopicHref, sectionHref, topicHref } from '@/features/forum/labels';
+import ForumSidebar from '@/features/forum/sidebar';
 import { forumSectionsQuery, forumTopicsQuery } from '@/features/forum/queries';
 
 export const Route = createFileRoute('/_public/forum/')({
@@ -74,52 +75,55 @@ function ForumPage(): ReactNode {
           </QueryState>
         </Surface>
 
-        <Surface title={t('forum.active')} flush component="section">
-          <QueryState
-            isPending={active.isPending}
-            error={active.error}
-            onRetry={() => void active.refetch()}
-            loading={<RowsSkeleton rows={4} />}
-          >
-            {active.data?.items.length === 0 ? (
-              <Box sx={{ p: 2 }}>
-                <EmptyState title={t('forum.empty.title')} text={t('forum.empty.text')} />
-              </Box>
-            ) : (
-              <Box component="ul" sx={{ m: 0, p: 0 }} data-forum-active>
-                {active.data?.items.map((topic) => (
-                  <Box
-                    component="li"
-                    key={topic.id}
-                    sx={{
-                      listStyle: 'none',
-                      px: 2.5,
-                      py: 1.5,
-                      borderTop: '1px solid var(--line)',
-                      '&:first-of-type': { borderTop: 0 },
-                    }}
-                  >
-                    <Link
-                      href={topicHref(topic.id)}
-                      underline="hover"
-                      color="text.primary"
-                      sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}
+        <Box sx={{ display: 'grid', gap: 3, alignContent: 'start' }}>
+          <Surface title={t('forum.active')} flush component="section">
+            <QueryState
+              isPending={active.isPending}
+              error={active.error}
+              onRetry={() => void active.refetch()}
+              loading={<RowsSkeleton rows={4} />}
+            >
+              {active.data?.items.length === 0 ? (
+                <Box sx={{ p: 2 }}>
+                  <EmptyState title={t('forum.empty.title')} text={t('forum.empty.text')} />
+                </Box>
+              ) : (
+                <Box component="ul" sx={{ m: 0, p: 0 }} data-forum-active>
+                  {active.data?.items.map((topic) => (
+                    <Box
+                      component="li"
+                      key={topic.id}
+                      sx={{
+                        listStyle: 'none',
+                        px: 2.5,
+                        py: 1.5,
+                        borderTop: '1px solid var(--line)',
+                        '&:first-of-type': { borderTop: 0 },
+                      }}
                     >
-                      {topic.title}
-                    </Link>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-                      {topic.section.title}
-                      {' · '}
-                      {fill(t('forum.topic.replies'), {
-                        count: String(Math.max(0, topic.postsCount - 1)),
-                      })}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </QueryState>
-        </Surface>
+                      <Link
+                        href={topicHref(topic.id)}
+                        underline="hover"
+                        color="text.primary"
+                        sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}
+                      >
+                        {topic.title}
+                      </Link>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                        {topic.section.title}
+                        {' · '}
+                        {fill(t('forum.topic.replies'), {
+                          count: String(Math.max(0, topic.postsCount - 1)),
+                        })}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </QueryState>
+          </Surface>
+          <ForumSidebar />
+        </Box>
       </Box>
     </Container>
   );

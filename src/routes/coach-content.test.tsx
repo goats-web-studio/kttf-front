@@ -40,6 +40,7 @@ const POST: CoachPostView = {
   editedAt: null,
   hidden: false,
   hiddenReason: null,
+  discussion: null,
 };
 
 const HIDDEN_POST: CoachPostView = {

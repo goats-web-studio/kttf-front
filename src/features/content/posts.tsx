@@ -1,13 +1,15 @@
 import { MAX_PAGE_SIZE } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
+import Link from '@mui/material/Link';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { Pin } from 'lucide-react';
+import { MessagesSquare, Pin } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { fill, formatDate, useLocale, useT } from '@/common/i18n';
+import { topicHref } from '@/features/forum/labels';
 
 import { OWNER_TEXTS, contentImageVariant, type ContentOwner, type ContentPostView } from './owner';
 import PostText from './post-text';
@@ -133,6 +135,28 @@ export function PostCard({
           {post.title}
         </Typography>
         <PostText text={post.body} />
+        {/* Новость — тема на форуме (ADR-067 §2): обсуждают там. */}
+        {post.discussion !== null && (
+          <Link
+            href={topicHref(post.discussion.topicId)}
+            variant="body2"
+            underline="hover"
+            sx={{
+              mt: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 0.75,
+              minHeight: 44,
+              fontWeight: 600,
+            }}
+            data-post-discussion={post.discussion.replies}
+          >
+            <MessagesSquare size={16} aria-hidden />
+            {post.discussion.replies === 0
+              ? t('forum.news.discuss')
+              : fill(t('forum.news.discussCount'), { count: String(post.discussion.replies) })}
+          </Link>
+        )}
         {actions}
       </Box>
     </Paper>

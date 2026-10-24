@@ -73,11 +73,13 @@ function NewTopicPage(): ReactNode {
                   {t('common.loading')}
                 </MenuItem>
               )}
-              {sections.data?.map((item) => (
-                <MenuItem key={item.id} value={item.slug} sx={{ minHeight: 44 }}>
-                  {item.title}
-                </MenuItem>
-              ))}
+              {sections.data
+                ?.filter((item) => item.manualTopics)
+                .map((item) => (
+                  <MenuItem key={item.id} value={item.slug} sx={{ minHeight: 44 }}>
+                    {item.title}
+                  </MenuItem>
+                ))}
             </TextField>
             <TextField
               label={t('forum.new.titleLabel')}

@@ -9,8 +9,8 @@ import type { ReactNode } from 'react';
 
 import { fill, formatDateTime, useLocale, useT } from '@/common/i18n';
 
-import { topicHref } from './labels';
-import { forumPlayerPostsQuery } from './queries';
+import { playerFeedHref, topicHref } from './labels';
+import { forumFeedQuery } from './queries';
 
 /** Сколько последних сообщений в профиле. */
 const LAST = 5;
@@ -23,7 +23,7 @@ const LAST = 5;
 export default function PlayerForumPosts({ playerId }: { readonly playerId: string }): ReactNode {
   const t = useT();
   const locale = useLocale();
-  const posts = useQuery(forumPlayerPostsQuery({ authorPlayerId: playerId, page: 1, limit: LAST }));
+  const posts = useQuery(forumFeedQuery({ authorPlayerId: playerId, page: 1, limit: LAST }));
 
   if (posts.data === undefined || posts.data.items.length === 0) return null;
 
@@ -34,9 +34,9 @@ export default function PlayerForumPosts({ playerId }: { readonly playerId: stri
         sx={{ alignItems: 'baseline', justifyContent: 'space-between', gap: 2, mb: 2 }}
       >
         <Typography variant="h2">{t('forum.profile.title')}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {fill(t('forum.profile.count'), { count: String(posts.data.total) })}
-        </Typography>
+        <Link href={playerFeedHref(playerId)} variant="body2" data-player-forum-all>
+          {fill(t('forum.profile.all'), { count: String(posts.data.total) })}
+        </Link>
       </Stack>
       <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
         <Box component="ul" sx={{ m: 0, p: 0 }}>

@@ -1,7 +1,7 @@
 import type { NotificationView } from '@kttf/shared/types';
 
 import { fill, type MessageKey } from '@/common/i18n';
-import { topicHref } from '@/features/forum/labels';
+import { RULE_KEYS, RULES_HREF, topicHref } from '@/features/forum/labels';
 import { MY_REQUESTS_HREF, inboxHref } from '@/features/trial-requests/inbox';
 
 type T = (key: MessageKey) => string;
@@ -54,6 +54,10 @@ export function notificationText(notification: NotificationView, t: T): string {
         ),
         { topic: notification.data.topicTitle, reason: notification.data.reason },
       );
+    case 'FORUM_WARNING':
+      return fill(t('notifications.FORUM_WARNING'), {
+        rule: t(RULE_KEYS[notification.data.rule]),
+      });
   }
 }
 
@@ -68,6 +72,7 @@ export function notificationCaption(notification: NotificationView, t: T): strin
     case 'FORUM_REPLY':
     case 'FORUM_TOPIC_UPDATE':
     case 'FORUM_POST_HIDDEN':
+    case 'FORUM_WARNING':
       return t('notifications.forum');
     case 'TRIAL_REQUEST_NEW':
     case 'TRIAL_REQUEST_CANCELLED':
@@ -98,5 +103,10 @@ export function notificationHref(notification: NotificationView): string {
       return notification.data.number === null
         ? topicHref(notification.data.topicId)
         : topicHref(notification.data.topicId, notification.data.number);
+    case 'FORUM_WARNING':
+      // Предупреждение ведёт к сообщению, а без него — к правилам.
+      return notification.data.topicId === null
+        ? RULES_HREF
+        : topicHref(notification.data.topicId, notification.data.number ?? undefined);
   }
 }

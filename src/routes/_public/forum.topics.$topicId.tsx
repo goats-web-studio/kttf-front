@@ -1,4 +1,4 @@
-import type { ForumTopicView } from '@kttf/shared/types';
+import { type ForumPostSort, type ForumTopicView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -12,22 +12,25 @@ import Link from '@mui/material/Link';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Bell, BellOff, Lock, Pin, Shield } from 'lucide-react';
+import { Bell, BellOff, Eye, Lock, Pin, Shield } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { errorMessageKey, isMissingResource } from '@/common/api';
-import { fill, useT } from '@/common/i18n';
+import { fill, formatDate, useLocale, useT } from '@/common/i18n';
 import { searchPage } from '@/common/search';
 import EmptyState from '@/common/ui/empty-state';
 import PageHeader from '@/common/ui/page-header';
 import Pagination from '@/common/ui/pagination';
+import PillTabs from '@/common/ui/pill-tabs';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
 import { useSessionStore } from '@/features/auth/session-store';
+import { contentImageVariant } from '@/features/content/owner';
 import {
   moderateForumTopic,
   renameForumTopic,
@@ -38,7 +41,9 @@ import Composer, { WriteGate, type DraftQuote } from '@/features/forum/composer'
 import { ReasonDialog } from '@/features/forum/dialogs';
 import {
   FORUM_HREF,
+  isNews,
   lastPage,
+  ownerHref,
   sectionHref,
   subjectHref,
   SUBJECT_KEYS,
@@ -51,7 +56,10 @@ import {
   forumTopicQuery,
 } from '@/features/forum/queries';
 
-const searchSchema = z.object({ page: searchPage });
+const searchSchema = z.object({
+  page: searchPage,
+  sort: z.enum(['OLD', 'NEW', 'TOP']).optional().catch(undefined),
+});
 
 export const Route = createFileRoute('/_public/forum/topics/$topicId')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
@@ -59,10 +67,19 @@ export const Route = createFileRoute('/_public/forum/topics/$topicId')({
 });
 
 /**
- * Тема форума — `docs/12` 5. Сообщения по 20, номер страницы в адресе,
- * `#post-N` — к сообщению. Ответ внизу; «Цитировать» у сообщения кладёт
- * выделенный фрагмент в поле ответа. Открытие темы гасит уведомления о ней
- * (сервер). У модератора — закрепить, закрыть, перенести, скрыть.
+ * Порядок ответов по умолчанию (ADR-067 §1): разговор читается по порядку,
+ * а в обсуждении турнира важно свежее — «опаздываю на 10 минут».
+ */
+function defaultSort(topic: ForumTopicView | undefined): ForumPostSort {
+  return topic?.subject?.type === 'TOURNAMENT' ? 'NEW' : 'OLD';
+}
+
+/**
+ * Тема форума — `docs/12` 5, ADR-067: первое сообщение «статьёй» со
+ * счётчиком просмотров, ниже ответы по 20 с переключателем «по порядку /
+ * новые / лучшие»; номер страницы и порядок — в адресе, `#post-N` — к
+ * сообщению. Ответ внизу; «Цитировать» кладёт фрагмент в поле ответа.
+ * Открытие темы гасит уведомления о ней и отметку «новые» (сервер).
  */
 function TopicPage(): ReactNode {
   const t = useT();
@@ -72,20 +89,21 @@ function TopicPage(): ReactNode {
   const queryClient = useQueryClient();
   const page = search.page ?? 1;
   const topic = useQuery(forumTopicQuery(topicId));
-  const posts = useQuery(forumPostsQuery(topicId, page));
+  const sort = search.sort ?? defaultSort(topic.data);
+  const replies = useQuery({ ...forumPostsQuery(topicId, page, sort), enabled: topic.isSuccess });
   const composer = useRef<HTMLTextAreaElement>(null);
   const [quote, setQuote] = useState<DraftQuote | null>(null);
 
   // К сообщению из адреса — когда страница с ним пришла.
   useEffect(() => {
-    if (posts.data === undefined) return;
+    if (replies.data === undefined) return;
 
     const target = window.location.hash.slice(1);
 
     if (target.startsWith('post-')) {
       document.getElementById(target)?.scrollIntoView({ block: 'start' });
     }
-  }, [posts.data]);
+  }, [replies.data]);
 
   if (topic.error !== null && isMissingResource(topic.error)) {
     return (
@@ -100,7 +118,14 @@ function TopicPage(): ReactNode {
 
   const data = topic.data;
   const pages =
-    posts.data === undefined ? 1 : Math.max(1, Math.ceil(posts.data.total / posts.data.limit));
+    replies.data === undefined
+      ? 1
+      : Math.max(1, Math.ceil(replies.data.total / replies.data.limit));
+  const onQuote = (next: DraftQuote): void => {
+    setQuote(next);
+    composer.current?.scrollIntoView({ block: 'center' });
+    composer.current?.focus({ preventScroll: true });
+  };
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
@@ -130,38 +155,84 @@ function TopicPage(): ReactNode {
         </Alert>
       )}
 
-      <Surface>
-        <QueryState
-          isPending={posts.isPending}
-          error={posts.error}
-          onRetry={() => void posts.refetch()}
-          loading={<RowsSkeleton />}
-        >
-          <Box data-forum-posts>
-            {posts.data?.items.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                canReply={data?.canReply === true}
-                onQuote={(next) => {
-                  setQuote(next);
-                  composer.current?.scrollIntoView({ block: 'center' });
-                  composer.current?.focus({ preventScroll: true });
-                }}
-              />
-            ))}
-          </Box>
-        </QueryState>
-      </Surface>
+      {data?.firstPost != null && (
+        <Surface component="article">
+          <PostCard
+            post={data.firstPost}
+            canReply={data.canReply}
+            onQuote={onQuote}
+            article
+            header={isNews(data.subject) ? <NewsHeader topic={data} /> : undefined}
+          />
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 0.75 }}
+            data-forum-views
+          >
+            <Eye size={16} aria-hidden />
+            {fill(t('forum.topic.views'), { count: String(data.viewsCount) })}
+          </Typography>
+        </Surface>
+      )}
 
-      <Pagination
-        page={page}
-        pages={pages}
-        onPage={(next) => {
-          void navigate({ search: { page: next > 1 ? next : undefined } });
-          window.scrollTo({ top: 0 });
-        }}
-      />
+      {data !== undefined && data.postsCount > 1 && (
+        <Box component="section" sx={{ mt: 4 }} aria-labelledby="forum-replies">
+          <Box
+            sx={{
+              mb: 2,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2,
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Typography id="forum-replies" variant="h2">
+              {fill(t('forum.topic.repliesTitle'), { count: String(data.postsCount - 1) })}
+            </Typography>
+            <PillTabs
+              label={t('forum.replies.sort')}
+              value={sort}
+              options={[
+                ['OLD', 'forum.replies.OLD'],
+                ['NEW', 'forum.replies.NEW'],
+                ['TOP', 'forum.replies.TOP'],
+              ]}
+              onChange={(next) => {
+                void navigate({
+                  search: { sort: next === defaultSort(data) ? undefined : next },
+                  replace: true,
+                });
+              }}
+            />
+          </Box>
+          <Surface>
+            <QueryState
+              isPending={replies.isPending}
+              error={replies.error}
+              onRetry={() => void replies.refetch()}
+              loading={<RowsSkeleton />}
+            >
+              <Box data-forum-posts>
+                {replies.data?.items.map((post) => (
+                  <PostCard key={post.id} post={post} canReply={data.canReply} onQuote={onQuote} />
+                ))}
+              </Box>
+            </QueryState>
+          </Surface>
+          <Pagination
+            page={page}
+            pages={pages}
+            onPage={(next) => {
+              void navigate({
+                search: (previous) => ({ ...previous, page: next > 1 ? next : undefined }),
+              });
+              window.scrollTo({ top: 0 });
+            }}
+          />
+        </Box>
+      )}
 
       {data !== undefined && (
         <Box component="section" aria-label={t('forum.composer.title')} sx={{ mt: 3 }}>
@@ -170,6 +241,7 @@ function TopicPage(): ReactNode {
               <Surface title={t('forum.composer.title')}>
                 <Composer
                   ref={composer}
+                  draftKey={`topic:${topicId}`}
                   quote={quote}
                   onClearQuote={() => {
                     setQuote(null);
@@ -177,11 +249,18 @@ function TopicPage(): ReactNode {
                   submit={async (input) => {
                     const created = await replyForumTopic(topicId, input);
                     await queryClient.invalidateQueries({ queryKey: forumKeys.all });
-                    // Новое сообщение — на последней странице, к нему и ведём.
+                    // Новый ответ: при «новых сверху» — первый, иначе — последний
+                    // по порядку; туда и ведём.
                     const last = lastPage(created.number);
 
                     await navigate({
-                      search: { page: last > 1 ? last : undefined },
+                      search:
+                        sort === 'NEW'
+                          ? { sort: search.sort }
+                          : {
+                              sort: sort === 'OLD' ? search.sort : 'OLD',
+                              page: last > 1 ? last : undefined,
+                            },
                       hash: `post-${String(created.number)}`,
                     });
                   }}
@@ -195,12 +274,74 @@ function TopicPage(): ReactNode {
   );
 }
 
+/**
+ * Шапка статьи-новости (ADR-067 §2): чья новость — клуб или тренер ссылкой,
+ * акция со сроком, картинка записи. Тот же вид, что на их странице.
+ */
+function NewsHeader({ topic }: { readonly topic: ForumTopicView }): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+  const owner = topic.subject?.owner ?? null;
+  const news = topic.subject?.news ?? null;
+
+  if (owner === null || news === null) return null;
+
+  return (
+    <Box sx={{ mb: 2.5 }} data-forum-news-header>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+        {owner.logoUrl !== null && (
+          <Box
+            component="img"
+            src={contentImageVariant(owner.logoUrl, 480)}
+            alt=""
+            width={40}
+            height={40}
+            sx={{ width: 40, height: 40, borderRadius: 2, objectFit: 'cover' }}
+          />
+        )}
+        <Link
+          href={ownerHref(owner)}
+          underline="hover"
+          color="text.primary"
+          sx={{ fontWeight: 600 }}
+        >
+          {owner.name}
+        </Link>
+        <Chip
+          size="small"
+          label={
+            news.kind === 'PROMO'
+              ? news.validUntil === null
+                ? t('club.posts.promo')
+                : fill(t('club.posts.promoUntil'), {
+                    date: formatDate(`${news.validUntil}T12:00:00Z`, locale),
+                  })
+              : t('club.posts.news')
+          }
+          color={news.kind === 'PROMO' ? 'primary' : 'default'}
+          variant={news.kind === 'PROMO' ? 'filled' : 'outlined'}
+        />
+      </Box>
+      {news.imageUrl !== null && (
+        <Box
+          component="img"
+          src={contentImageVariant(news.imageUrl, 960)}
+          alt=""
+          loading="lazy"
+          sx={{ display: 'block', mt: 2, width: '100%', maxWidth: 720, borderRadius: 3 }}
+        />
+      )}
+    </Box>
+  );
+}
+
 /** Над заголовком: предмет темы ссылкой и состояние — закреплена, закрыта. */
 function TopicBadges({ topic }: { readonly topic: ForumTopicView }): ReactNode {
   const t = useT();
   const chips: ReactNode[] = [];
 
-  if (topic.subject !== null) {
+  // У новости чей она — в шапке статьи; чип повторял бы заголовок.
+  if (topic.subject !== null && !isNews(topic.subject)) {
     chips.push(
       <Chip
         key="subject"

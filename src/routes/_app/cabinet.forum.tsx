@@ -9,7 +9,9 @@ import {
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
 import Container from '@mui/material/Container';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Tab from '@mui/material/Tab';
@@ -404,7 +406,10 @@ function SectionEditor({
   const [title, setTitle] = useState(section?.title ?? '');
   const [description, setDescription] = useState(section?.description ?? '');
   const [position, setPosition] = useState(String(section?.position ?? 100));
-  const [subjectType, setSubjectType] = useState<ForumSubjectType | ''>(section?.subjectType ?? '');
+  const [subjectTypes, setSubjectTypes] = useState<ForumSubjectType[]>(
+    section === null ? [] : [...section.subjectTypes],
+  );
+  const [manualTopics, setManualTopics] = useState(section?.manualTopics ?? true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -413,7 +418,8 @@ function SectionEditor({
     title: title.trim(),
     description: description.trim() === '' ? null : description.trim(),
     position: Number.parseInt(position, 10) || 0,
-    subjectType: subjectType === '' ? null : subjectType,
+    subjectTypes,
+    manualTopics,
   };
   const save = async (extra: { archived?: boolean } = {}): Promise<void> => {
     setError(null);
@@ -494,20 +500,45 @@ function SectionEditor({
         <TextField
           select
           label={t('forum.admin.sections.subject')}
-          value={subjectType}
+          value={subjectTypes}
           onChange={(event) => {
-            setSubjectType(event.target.value as ForumSubjectType | '');
+            const value = event.target.value as unknown;
+
+            setSubjectTypes(
+              (Array.isArray(value) ? value : [value]).filter((item): item is ForumSubjectType =>
+                FORUM_SUBJECT_TYPES.some((type) => type === item),
+              ),
+            );
+          }}
+          slotProps={{
+            select: {
+              multiple: true,
+              renderValue: (value) =>
+                (value as ForumSubjectType[]).length === 0
+                  ? t('forum.admin.sections.noSubject')
+                  : (value as ForumSubjectType[]).map((type) => t(SUBJECT_KEYS[type])).join(', '),
+              displayEmpty: true,
+            },
           }}
         >
-          <MenuItem value="" sx={{ minHeight: 44 }}>
-            {t('forum.admin.sections.noSubject')}
-          </MenuItem>
           {FORUM_SUBJECT_TYPES.map((type) => (
             <MenuItem key={type} value={type} sx={{ minHeight: 44 }}>
               {t(SUBJECT_KEYS[type])}
             </MenuItem>
           ))}
         </TextField>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={manualTopics}
+              onChange={(event) => {
+                setManualTopics(event.target.checked);
+              }}
+            />
+          }
+          label={t('forum.admin.sections.manualTopics')}
+          sx={{ gridColumn: { sm: 'span 2' }, minHeight: 44 }}
+        />
         <Box
           sx={{
             gridColumn: '1 / -1',

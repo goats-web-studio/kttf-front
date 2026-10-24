@@ -38,6 +38,8 @@ import { Route as PublicClubsClubIdRouteImport } from './routes/_public/clubs.$c
 import { Route as PublicCoachesSlugRouteImport } from './routes/_public/coaches.$slug'
 import { Route as PublicForumIndexRouteImport } from './routes/_public/forum.index'
 import { Route as PublicForumSectionRouteImport } from './routes/_public/forum.$section'
+import { Route as PublicForumFeedRouteImport } from './routes/_public/forum.feed'
+import { Route as PublicForumRulesRouteImport } from './routes/_public/forum.rules'
 import { Route as PublicMarketIndexRouteImport } from './routes/_public/market.index'
 import { Route as PublicMarketCategoryRouteImport } from './routes/_public/market.$category'
 import { Route as PublicPlayersIndexRouteImport } from './routes/_public/players.index'
@@ -198,6 +200,16 @@ const PublicForumSectionRoute = PublicForumSectionRouteImport.update({
   path: '/forum/$section',
   getParentRoute: () => PublicRoute,
 } as any)
+const PublicForumFeedRoute = PublicForumFeedRouteImport.update({
+  id: '/forum/feed',
+  path: '/forum/feed',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicForumRulesRoute = PublicForumRulesRouteImport.update({
+  id: '/forum/rules',
+  path: '/forum/rules',
+  getParentRoute: () => PublicRoute,
+} as any)
 const PublicMarketIndexRoute = PublicMarketIndexRouteImport.update({
   id: '/market/',
   path: '/market/',
@@ -307,6 +319,8 @@ export interface FileRoutesByFullPath {
   '/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/coaches/$slug': typeof PublicCoachesSlugRoute
   '/forum/$section': typeof PublicForumSectionRoute
+  '/forum/feed': typeof PublicForumFeedRoute
+  '/forum/rules': typeof PublicForumRulesRoute
   '/market/$category': typeof PublicMarketCategoryRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
@@ -351,6 +365,8 @@ export interface FileRoutesByTo {
   '/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/coaches/$slug': typeof PublicCoachesSlugRoute
   '/forum/$section': typeof PublicForumSectionRoute
+  '/forum/feed': typeof PublicForumFeedRoute
+  '/forum/rules': typeof PublicForumRulesRoute
   '/market/$category': typeof PublicMarketCategoryRoute
   '/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
@@ -399,6 +415,8 @@ export interface FileRoutesById {
   '/_public/clubs/$clubId': typeof PublicClubsClubIdRoute
   '/_public/coaches/$slug': typeof PublicCoachesSlugRoute
   '/_public/forum/$section': typeof PublicForumSectionRoute
+  '/_public/forum/feed': typeof PublicForumFeedRoute
+  '/_public/forum/rules': typeof PublicForumRulesRoute
   '/_public/market/$category': typeof PublicMarketCategoryRoute
   '/_public/players/$playerId': typeof PublicPlayersPlayerIdRoute
   '/_public/tournaments/$tournamentId': typeof PublicTournamentsTournamentIdRoute
@@ -446,6 +464,8 @@ export interface FileRouteTypes {
     | '/clubs/$clubId'
     | '/coaches/$slug'
     | '/forum/$section'
+    | '/forum/feed'
+    | '/forum/rules'
     | '/market/$category'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
@@ -490,6 +510,8 @@ export interface FileRouteTypes {
     | '/clubs/$clubId'
     | '/coaches/$slug'
     | '/forum/$section'
+    | '/forum/feed'
+    | '/forum/rules'
     | '/market/$category'
     | '/players/$playerId'
     | '/tournaments/$tournamentId'
@@ -537,6 +559,8 @@ export interface FileRouteTypes {
     | '/_public/clubs/$clubId'
     | '/_public/coaches/$slug'
     | '/_public/forum/$section'
+    | '/_public/forum/feed'
+    | '/_public/forum/rules'
     | '/_public/market/$category'
     | '/_public/players/$playerId'
     | '/_public/tournaments/$tournamentId'
@@ -771,6 +795,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicForumSectionRouteImport
       parentRoute: typeof PublicRoute
     }
+    '/_public/forum/feed': {
+      id: '/_public/forum/feed'
+      path: '/forum/feed'
+      fullPath: '/forum/feed'
+      preLoaderRoute: typeof PublicForumFeedRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/forum/rules': {
+      id: '/_public/forum/rules'
+      path: '/forum/rules'
+      fullPath: '/forum/rules'
+      preLoaderRoute: typeof PublicForumRulesRouteImport
+      parentRoute: typeof PublicRoute
+    }
     '/_public/market/': {
       id: '/_public/market/'
       path: '/market'
@@ -937,6 +975,8 @@ interface PublicRouteChildren {
   PublicClubsClubIdRoute: typeof PublicClubsClubIdRoute
   PublicCoachesSlugRoute: typeof PublicCoachesSlugRoute
   PublicForumSectionRoute: typeof PublicForumSectionRoute
+  PublicForumFeedRoute: typeof PublicForumFeedRoute
+  PublicForumRulesRoute: typeof PublicForumRulesRoute
   PublicMarketCategoryRoute: typeof PublicMarketCategoryRoute
   PublicPlayersPlayerIdRoute: typeof PublicPlayersPlayerIdRoute
   PublicTournamentsTournamentIdRoute: typeof PublicTournamentsTournamentIdRoute
@@ -962,6 +1002,8 @@ const PublicRouteChildren: PublicRouteChildren = {
   PublicClubsClubIdRoute: PublicClubsClubIdRoute,
   PublicCoachesSlugRoute: PublicCoachesSlugRoute,
   PublicForumSectionRoute: PublicForumSectionRoute,
+  PublicForumFeedRoute: PublicForumFeedRoute,
+  PublicForumRulesRoute: PublicForumRulesRoute,
   PublicMarketCategoryRoute: PublicMarketCategoryRoute,
   PublicPlayersPlayerIdRoute: PublicPlayersPlayerIdRoute,
   PublicTournamentsTournamentIdRoute: PublicTournamentsTournamentIdRoute,

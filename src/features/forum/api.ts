@@ -17,7 +17,10 @@ import type {
   ForumTopicItem,
   ForumTopicView,
   HideForumPostInput,
-  ListForumPlayerPostsQuery,
+  ForumBirthday,
+  ForumOnline,
+  ForumWarningInput,
+  ListForumFeedQuery,
   ListForumPostsQuery,
   ListForumReportsQuery,
   ListForumTopicsQuery,
@@ -89,10 +92,21 @@ export function replyForumTopic(
   });
 }
 
-export function listForumPlayerPosts(
-  query: ListForumPlayerPostsQuery,
-): Promise<Page<ForumPostItem>> {
+/** Лента сообщений (ADR-067): весь форум, фильтры; с автором — его сообщения. */
+export function listForumFeed(query: Partial<ListForumFeedQuery>): Promise<Page<ForumPostItem>> {
   return apiRequest<Page<ForumPostItem>>(`/forum/posts${queryString(query)}`);
+}
+
+export function fetchForumOnline(): Promise<ForumOnline> {
+  return apiRequest<ForumOnline>('/forum/online');
+}
+
+export function listForumBirthdays(): Promise<ForumBirthday[]> {
+  return apiRequest<ForumBirthday[]>('/forum/birthdays');
+}
+
+export async function warnForumUser(input: ForumWarningInput): Promise<void> {
+  await apiRequest<undefined>('/admin/forum/warnings', { method: 'POST', body: input });
 }
 
 export function locateForumPost(postId: string): Promise<ForumPostLocation> {

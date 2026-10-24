@@ -24,10 +24,11 @@ import {
   muteForumUser,
   setForumLike,
   updateForumPost,
+  warnForumUser,
 } from './api';
 import AuthorLine from './author-line';
 import Composer, { type DraftQuote } from './composer';
-import { MuteDialog, ReasonDialog, ReportDialog } from './dialogs';
+import { MuteDialog, ReasonDialog, ReportDialog, WarnDialog } from './dialogs';
 import { topicHref } from './labels';
 import { ForumImages, ForumQuote, ForumText } from './post-body';
 import { forumKeys } from './queries';
@@ -37,6 +38,13 @@ interface PostCardProps {
   /** Тема открыта для ответа этому человеку — тогда есть «Цитировать» и правка. */
   readonly canReply: boolean;
   readonly onQuote?: (quote: DraftQuote) => void;
+  /**
+   * Первое сообщение темы — «статья» над ответами (ADR-067 §1): крупнее, без
+   * разделителя; номер не нужен — он у статьи всегда первый.
+   */
+  readonly article?: boolean;
+  /** Над текстом статьи: шапка новости клуба или тренера. */
+  readonly header?: ReactNode;
 }
 
 /**
@@ -46,14 +54,20 @@ interface PostCardProps {
  * в меню «…»: пожаловаться, изменить, удалить, у модератора — скрыть и
  * запретить писать.
  */
-export default function PostCard({ post, canReply, onQuote }: PostCardProps): ReactNode {
+export default function PostCard({
+  post,
+  canReply,
+  onQuote,
+  article = false,
+  header,
+}: PostCardProps): ReactNode {
   const t = useT();
   const locale = useLocale();
   const queryClient = useQueryClient();
   const user = useSessionStore((state) => state.user);
   const textRef = useRef<HTMLDivElement>(null);
   const [editing, setEditing] = useState(false);
-  const [dialog, setDialog] = useState<'report' | 'delete' | 'hide' | 'mute' | null>(null);
+  const [dialog, setDialog] = useState<'report' | 'delete' | 'hide' | 'mute' | 'warn' | null>(null);
 
   const refresh = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: forumKeys.all });
@@ -83,26 +97,41 @@ export default function PostCard({ post, canReply, onQuote }: PostCardProps): Re
       component="article"
       id={`post-${String(post.number)}`}
       data-forum-post={post.number}
-      sx={{
-        py: 2.5,
-        scrollMarginTop: 96,
-        borderTop: '1px solid var(--line)',
-        '&:first-of-type': { borderTop: 0, pt: 0 },
-        '&:last-of-type': { pb: 0 },
-        '&:target': { bgcolor: 'var(--red-50)', mx: -2, px: 2, borderRadius: 2 },
-      }}
+      data-forum-article={article || undefined}
+      sx={
+        article
+          ? { scrollMarginTop: 96 }
+          : {
+              py: 2.5,
+              scrollMarginTop: 96,
+              borderTop: '1px solid var(--line)',
+              '&:first-of-type': { borderTop: 0, pt: 0 },
+              '&:last-of-type': { pb: 0 },
+              '&:target': { bgcolor: 'var(--red-50)', mx: -2, px: 2, borderRadius: 2 },
+            }
+      }
     >
+      {header}
       <Box
         sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', justifyContent: 'space-between' }}
       >
         <AuthorLine
           author={post.author}
+          role={post.role}
           meta={
             <Typography variant="body2" color="text.secondary">
-              <Link href={topicHref(post.topicId, post.number)} color="inherit" underline="hover">
-                #{post.number}
-              </Link>
-              {' · '}
+              {!article && (
+                <>
+                  <Link
+                    href={topicHref(post.topicId, post.number)}
+                    color="inherit"
+                    underline="hover"
+                  >
+                    #{post.number}
+                  </Link>
+                  {' · '}
+                </>
+              )}
               {formatDateTime(post.createdAt, locale)}
               {post.editedAt !== null && !post.deleted && ` · ${t('forum.post.edited')}`}
             </Typography>
@@ -126,7 +155,7 @@ export default function PostCard({ post, canReply, onQuote }: PostCardProps): Re
         )}
       </Box>
 
-      <Box sx={{ mt: 1.5, pl: { sm: 6 } }}>
+      <Box sx={{ mt: article ? 2 : 1.5, pl: article ? 0 : { sm: 6 } }}>
         {post.deleted ? (
           <Placeholder>{t('forum.post.deleted')}</Placeholder>
         ) : editing ? (
@@ -161,7 +190,7 @@ export default function PostCard({ post, canReply, onQuote }: PostCardProps): Re
                     }
                   />
                 )}
-                <ForumText text={post.body} />
+                <ForumText text={post.body} large={article} />
                 <ForumImages images={post.images} />
               </Box>
             )}
@@ -209,6 +238,7 @@ export default function PostCard({ post, canReply, onQuote }: PostCardProps): Re
         title={t('forum.moderation.hidePost')}
         hint={t('forum.moderation.hidePostHint')}
         submitLabel={t('forum.moderation.hide')}
+        rules
         onClose={() => {
           setDialog(null);
         }}
@@ -217,6 +247,20 @@ export default function PostCard({ post, canReply, onQuote }: PostCardProps): Re
           await refresh();
         }}
       />
+      {post.author !== null && (
+        <WarnDialog
+          open={dialog === 'warn'}
+          name={post.author.name}
+          onClose={() => {
+            setDialog(null);
+          }}
+          onSubmit={async (input) => {
+            if (post.author !== null) {
+              await warnForumUser({ userId: post.author.userId, postId: post.id, ...input });
+            }
+          }}
+        />
+      )}
       {post.author !== null && (
         <MuteDialog
           open={dialog === 'mute'}
@@ -326,7 +370,7 @@ function LikeButton({
   );
 }
 
-type MenuAction = 'report' | 'edit' | 'delete' | 'hide' | 'mute';
+type MenuAction = 'report' | 'edit' | 'delete' | 'hide' | 'mute' | 'warn';
 
 function PostMenu({
   post,
@@ -372,6 +416,7 @@ function PostMenu({
         : { key: 'hide', label: t('forum.moderation.hide'), run: pick('hide') },
     );
     if (post.author !== null && !post.mine && !post.author.moderator) {
+      items.push({ key: 'warn', label: t('forum.warn.title'), run: pick('warn') });
       items.push({ key: 'mute', label: t('forum.mute.title'), run: pick('mute') });
     }
   }
