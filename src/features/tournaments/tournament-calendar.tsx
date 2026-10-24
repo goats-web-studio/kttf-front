@@ -246,7 +246,7 @@ function DayCell({
       data-day={dayKey}
       aria-label={formatDate(dateOfDay(dayKey).toISOString(), locale)}
       sx={{
-        minHeight: 96,
+        minHeight: 80,
         px: 0.75,
         py: 0.75,
         minWidth: 0,
@@ -305,6 +305,11 @@ function CellEntry({
       enterDelay={250}
       enterNextDelay={150}
       describeChild
+      // Плотная подложка: сквозь полупрозрачную читались строки соседней клетки.
+      slotProps={{
+        tooltip: { sx: { bgcolor: 'var(--ink-900)', px: 1.25, py: 1 } },
+        arrow: { sx: { color: 'var(--ink-900)' } },
+      }}
       title={<EntryDetails tournament={tournament} club={club} />}
     >
       <Box
