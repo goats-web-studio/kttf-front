@@ -680,9 +680,10 @@ describe('клубы', () => {
     // Клуб заводит администратор по заявке «Напишите нам» — ADR-049.
     renderAt('/clubs');
 
-    const apply = await screen.findByRole('link', { name: ru['clubs.apply'] });
+    // Заявка — в шапке списка и в блоке «Ваш клуб в KTTF» внизу (ADR-071).
+    const apply = await screen.findAllByRole('link', { name: ru['clubs.apply'] });
 
-    expect(apply.getAttribute('href')).toBe('/feedback');
+    expect(apply.map((link) => link.getAttribute('href'))).toEqual(['/feedback', '/feedback']);
     expect(screen.queryByRole('link', { name: ru['club.create'] })).toBeNull();
   });
 
