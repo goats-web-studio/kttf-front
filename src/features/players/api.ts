@@ -1,4 +1,5 @@
 import type {
+  ConfirmPlayerInput,
   CreatePlayerInput,
   HeadToHeadView,
   ListPlayersRequest,
@@ -46,6 +47,19 @@ export function fetchPlayer(id: string): Promise<PlayerProfileView> {
  */
 export function createPlayer(input: CreatePlayerInput): Promise<PlayerProfileView> {
   return apiRequest<PlayerProfileView>('/players', { method: 'POST', body: input });
+}
+
+/**
+ * Подтверждение анкеты организатором — ADR-072: анкета без рейтинга
+ * становится игровым профилем с рейтингом по уровню игры.
+ */
+export function confirmPlayer(id: string, input: ConfirmPlayerInput): Promise<PlayerProfileView> {
+  return apiRequest<PlayerProfileView>(`/players/${id}/confirm`, { method: 'POST', body: input });
+}
+
+/** «Это я» — привязка кабинета к игровому профилю (ADR-072). */
+export function claimPlayer(id: string): Promise<PlayerProfileView> {
+  return apiRequest<PlayerProfileView>(`/players/${id}/claim`, { method: 'POST' });
 }
 
 export function updatePlayer(id: string, input: UpdatePlayerInput): Promise<PlayerProfileView> {

@@ -81,6 +81,10 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   DUEL_RESPONSE_EXISTS: 'error.api.DUEL_RESPONSE_EXISTS',
   DUEL_TIME_INVALID: 'error.api.DUEL_TIME_INVALID',
   DUEL_SCORE_INVALID: 'error.api.DUEL_SCORE_INVALID',
+
+  // Игровой профиль — ADR-072.
+  PLAYER_NOT_CONFIRMED: 'error.api.PLAYER_NOT_CONFIRMED',
+  PLAYER_CLAIM_INVALID: 'error.api.PLAYER_CLAIM_INVALID',
 };
 
 /**

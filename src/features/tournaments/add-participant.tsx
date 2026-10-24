@@ -19,6 +19,7 @@ import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
 
 import { registerForTournament } from './api';
+import ConfirmParticipant from './confirm-participant';
 import { eligibilityProblems } from './eligibility-problems';
 import NewParticipant from './new-participant';
 import { tournamentKeys } from './queries';
@@ -54,7 +55,9 @@ export default function AddParticipant({
   const [search, setSearch] = useState('');
 
   const found = useQuery({
-    ...playersQuery({ page: 1, limit: DEFAULT_PAGE_SIZE, search }),
+    // С анкетами без рейтинга (ADR-072): пришедшему со своей анкетой
+    // организатор задаёт рейтинг, а не заводит второй профиль.
+    ...playersQuery({ page: 1, limit: DEFAULT_PAGE_SIZE, search, withUnconfirmed: true }),
     enabled: search !== '',
   });
 
@@ -128,38 +131,47 @@ export default function AddParticipant({
               </Typography>
             </ListItem>
           ) : (
-            candidates.map((player) => (
-              <ListItem
-                key={player.id}
-                disableGutters
-                divider
-                secondaryAction={
-                  <Button
-                    variant="text"
-                    size="small"
-                    disabled={add.isPending}
-                    onClick={() => {
-                      add.mutate(player.id);
-                    }}
-                    sx={{ minHeight: { xs: 44, sm: 32 } }}
-                  >
-                    {t('participants.add')}
-                  </Button>
-                }
-              >
-                <ListItemText
-                  primary={playerName(player)}
-                  secondary={
-                    <>
-                      {placeName(player.city)}{' '}
-                      <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                        {formatRating(player.rating)}
-                      </Box>
-                    </>
-                  }
+            candidates.map((player) =>
+              !player.confirmed ? (
+                <ConfirmParticipant
+                  key={player.id}
+                  tournament={tournament}
+                  player={player}
+                  city={placeName(player.city)}
                 />
-              </ListItem>
-            ))
+              ) : (
+                <ListItem
+                  key={player.id}
+                  disableGutters
+                  divider
+                  secondaryAction={
+                    <Button
+                      variant="text"
+                      size="small"
+                      disabled={add.isPending}
+                      onClick={() => {
+                        add.mutate(player.id);
+                      }}
+                      sx={{ minHeight: { xs: 44, sm: 32 } }}
+                    >
+                      {t('participants.add')}
+                    </Button>
+                  }
+                >
+                  <ListItemText
+                    primary={playerName(player)}
+                    secondary={
+                      <>
+                        {placeName(player.city)}{' '}
+                        <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                          {formatRating(player.rating)}
+                        </Box>
+                      </>
+                    }
+                  />
+                </ListItem>
+              ),
+            )
           )}
         </List>
       )}

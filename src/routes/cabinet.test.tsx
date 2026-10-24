@@ -209,14 +209,14 @@ describe('профиль при регистрации', () => {
   it('без профиля настройки предлагают его завести', async () => {
     renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
-    expect(await screen.findByText(ru['cabinet.profile.lead'])).toBeDefined();
+    expect(await screen.findByText(ru['settings.profile.sheet.lead'])).toBeDefined();
     expect(screen.getByLabelText(ru['player.form.lastName'])).toBeDefined();
   });
 
   it('отправляет профиль телом по контракту', async () => {
     renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
-    await screen.findByText(ru['cabinet.profile.lead']);
+    await screen.findByText(ru['settings.profile.sheet.lead']);
     await fillRequired();
     submit(ru['cabinet.profile.create']);
 
@@ -244,7 +244,7 @@ describe('профиль при регистрации', () => {
   it('незаполненное обязательное поле не уходит на сервер', async () => {
     renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
-    await screen.findByText(ru['cabinet.profile.lead']);
+    await screen.findByText(ru['settings.profile.sheet.lead']);
     submit(ru['cabinet.profile.create']);
 
     // Названы все пять обязательных полей ТЗ 2.2, а не первое встреченное.
@@ -255,7 +255,7 @@ describe('профиль при регистрации', () => {
   it('после заведения профиль появляется без повторного входа', async () => {
     renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
-    await screen.findByText(ru['cabinet.profile.lead']);
+    await screen.findByText(ru['settings.profile.sheet.lead']);
     await fillRequired();
     submit(ru['cabinet.profile.create']);
 
@@ -566,7 +566,7 @@ describe('дата рождения', () => {
   it('отдельного поля года в форме нет', async () => {
     renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
-    await screen.findByText(ru['cabinet.profile.lead']);
+    await screen.findByText(ru['settings.profile.sheet.lead']);
 
     expect(screen.queryByLabelText(ru['player.form.birthYear'])).toBeNull();
     expect(
@@ -577,7 +577,7 @@ describe('дата рождения', () => {
   it('год уходит на сервер выведенным из даты', async () => {
     renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
-    await screen.findByText(ru['cabinet.profile.lead']);
+    await screen.findByText(ru['settings.profile.sheet.lead']);
     await fillRequired();
     submit(ru['cabinet.profile.create']);
 
@@ -591,7 +591,7 @@ describe('дата рождения', () => {
   it('без даты профиль не отправляется', async () => {
     renderAt(PROFILE, USER_WITHOUT_PROFILE);
 
-    await screen.findByText(ru['cabinet.profile.lead']);
+    await screen.findByText(ru['settings.profile.sheet.lead']);
     submit(ru['cabinet.profile.create']);
 
     expect(await screen.findByText(ru['error.form.birthDate'])).toBeDefined();

@@ -80,7 +80,6 @@ export const kk: Record<MessageKey, string> = {
   'settings.account.tab': 'Аккаунт',
   'settings.profile.lead':
     'Ойыншы бетіңізде басқалар көретін нәрсе: фото, аты-жөні, клуб, сауалнама және құрал-жабдық.',
-  'settings.profile.new': 'Жаңа ойыншы профилі',
   'settings.account.signIn': 'Кіру және байланыс',
   'cabinet.clubs.all': 'Барлық клубтар',
   'cabinet.clubs.manage': 'Басқару',
@@ -94,9 +93,10 @@ export const kk: Record<MessageKey, string> = {
   'cabinet.my.title': 'Менің турнирлерім',
   'cabinet.my.find': 'Турнир табу',
   'cabinet.my.empty': 'Сіз әзірге ешқайда жазылмағансыз. Жақын турнирлер — күнтізбеде.',
-  'cabinet.noProfile.title': 'Ойыншы профилін құрыңыз',
-  'cabinet.noProfile.text': 'Онсыз турнирге жазылу және рейтинг алу мүмкін емес.',
-  'cabinet.noProfile.action': 'Профиль құру',
+  'cabinet.noProfile.title': 'Ойыншы профиліңізді табыңыз',
+  'cabinet.noProfile.text':
+    'Рейтингі бар профильді турнирге алғаш келгенде ұйымдастырушы ашады. Ойнаған болсаңыз — өзіңізді табыңыз. Әлі жоқ — сауалнаманы толтырыңыз.',
+  'cabinet.noProfile.action': 'Өзімді табу',
   'nav.admin': 'Әкімшілік',
   'profile.edit': 'Профильді өзгерту',
   'profile.settings': 'Кабинет',
@@ -337,8 +337,7 @@ export const kk: Record<MessageKey, string> = {
   'error.form.gender': 'Мәнді таңдаңыз',
   'error.form.city': 'Қаланы таңдаңыз',
 
-  'cabinet.profile.lead': 'Ойыншы профилін толтырыңыз — онсыз турнирге тіркелу мүмкін емес.',
-  'cabinet.profile.create': 'Профиль құру',
+  'cabinet.profile.create': 'Сауалнама құру',
   'cabinet.profile.save': 'Сақтау',
   'cabinet.profile.edit': 'Өзгерту',
   'cabinet.profile.public': 'Жария профиль',
@@ -802,7 +801,7 @@ export const kk: Record<MessageKey, string> = {
   'participants.new.title': 'Жаңа ойыншы',
   'participants.new.lead':
     'Профиль турнир клубында ашылады, ойыншы бірден жазылады. Қалған сауалнаманы өзі толтырады.',
-  'participants.new.rating': 'Бастапқы рейтинг',
+  'participants.new.rating': 'Ойын деңгейі бойынша рейтинг',
   'participants.new.ratingHint':
     'Ойыншы күшін сіздің бағалауыңыз: себу соған қарай. Алғашқы бес турнир оны түзетеді',
   'participants.new.submit': 'Ашу және жазу',
@@ -2958,4 +2957,37 @@ export const kk: Record<MessageKey, string> = {
   'notifications.DUEL_REMINDER_SPARRING_TODAY':
     'Бүгін {time}-де {player} ойыншысымен спарринг, {venue}',
   'players.duelsLink': 'Дуэльдер мен спаррингтер — қарсылас табу',
+
+  // Ойын профилі — ADR-072.
+  'error.api.PLAYER_NOT_CONFIRMED':
+    'Рейтингсіз сауалнама: турнирлер мен дуэльдер — ұйымдастырушы рейтинг бергеннен кейін',
+  'error.api.PLAYER_CLAIM_INVALID':
+    'Бұл профильді байлау мүмкін емес: оның кабинеті бар немесе сізде рейтингі бар профиль бар',
+  'claim.title': 'Менің рейтингім',
+  'claim.lead':
+    'Турнирде ойнаған болсаңыз, ұйымдастырушы сізге рейтингі бар профиль ашқан. Өзіңізді табыңыз — кездесулер тарихы мен рейтинг сізде болады.',
+  'claim.sheet': 'Сауалнамаңыз табылған профильге көшеді: бос өрістер одан толтырылады.',
+  'claim.search': 'Тегі мен аты',
+  'claim.find': 'Табу',
+  'claim.results': 'Кабинеті жоқ профильдер',
+  'claim.empty':
+    'Ешкім табылмады. Әлі ойнамаған болсаңыз, рейтингі бар профиль алғашқы турнирден кейін пайда болады.',
+  'claim.action': 'Бұл мен',
+  'claim.yes': 'Иә, байлау',
+  'claim.no': 'Жоқ',
+  'profile.unrated.title': 'Рейтингсіз',
+  'profile.unrated.text':
+    'Сауалнама рейтингке байланбаған. Рейтингті алғашқы турнирде ұйымдастырушы ойын деңгейі бойынша береді.',
+  'nav.unrated': 'Рейтингсіз',
+  'settings.profile.sheet.title': 'Әлі ойнамадыңыз ба?',
+  'settings.profile.sheet.lead':
+    'Сауалнаманы толтырыңыз. Алғашқы турнирде ұйымдастырушы оны тауып, ойын деңгейі бойынша рейтинг береді.',
+  'registration.unrated':
+    'Онлайн-жазылу — рейтингі бар ойыншыларға. Турнирге келіңіз: ұйымдастырушы ойын деңгейі бойынша рейтинг беріп, сізді жазады. Бұрын ойнадыңыз ба?',
+  'registration.unrated.link': 'Профиліңізді табыңыз',
+  'participants.sheet': 'рейтингсіз сауалнама',
+  'participants.confirm.open': 'Рейтинг беру',
+  'participants.confirm.lead':
+    'Сауалнаманы адам сайтта өзі ашқан. Ойын деңгейі бойынша рейтинг беріңіз — сауалнама рейтингі бар профильге айналады, ойыншы жазылады.',
+  'participants.confirm.submit': 'Растау және жазу',
 };

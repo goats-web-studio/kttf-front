@@ -1,4 +1,5 @@
 import type { CreatePlayerInput } from '@kttf/shared/types';
+import Stack from '@mui/material/Stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
@@ -9,6 +10,7 @@ import Surface from '@/common/ui/surface';
 import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 import { createPlayer, updatePlayer } from '@/features/players/api';
+import ClaimProfile from '@/features/players/claim-profile';
 import { equipmentProducts, toFormValues, toPlayerPatch } from '@/features/players/form-values';
 import PlayerForm from '@/features/players/player-form';
 import { playerKeys, playerQuery } from '@/features/players/queries';
@@ -45,8 +47,10 @@ function ProfileSettingsPage(): ReactNode {
 /**
  * Заведение профиля после регистрации.
  *
- * Тот же маршрут, что и заведение игрока организатором: какой из двух
- * случаев — решает сервер по наличию профиля у вошедшего (ADR-014).
+ * Сначала — найти себя: профиль с рейтингом заводит организатор на первом
+ * турнире (ADR-072). Не нашёл — анкета без рейтинга; тот же маршрут, что и
+ * заведение игрока организатором, какой из двух случаев — решает сервер
+ * (ADR-014).
  */
 function NewProfile(): ReactNode {
   const t = useT();
@@ -63,20 +67,29 @@ function NewProfile(): ReactNode {
   });
 
   return (
-    <Surface title={t('settings.profile.new')} subtitle={t('cabinet.profile.lead')}>
-      <PlayerForm
-        submitLabel="cabinet.profile.create"
-        isPending={create.isPending}
-        error={create.error}
-        onSubmit={(values) => {
-          create.mutate(values);
-        }}
-      />
-    </Surface>
+    <Stack spacing={3}>
+      <Surface title={t('claim.title')}>
+        <ClaimProfile hasSheet={false} />
+      </Surface>
+      <Surface
+        title={t('settings.profile.sheet.title')}
+        subtitle={t('settings.profile.sheet.lead')}
+      >
+        <PlayerForm
+          submitLabel="cabinet.profile.create"
+          isPending={create.isPending}
+          error={create.error}
+          onSubmit={(values) => {
+            create.mutate(values);
+          }}
+        />
+      </Surface>
+    </Stack>
   );
 }
 
 function EditProfile({ playerId }: { readonly playerId: string }): ReactNode {
+  const t = useT();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const player = useQuery(playerQuery(playerId));
@@ -100,23 +113,31 @@ function EditProfile({ playerId }: { readonly playerId: string }): ReactNode {
       onRetry={() => void player.refetch()}
     >
       {player.data === undefined ? null : (
-        <Surface>
-          <PlayerForm
-            defaultValues={toFormValues(player.data)}
-            city={player.data.city}
-            products={equipmentProducts(player.data)}
-            coachLabel={player.data.coachName}
-            submitLabel="cabinet.profile.save"
-            isPending={update.isPending}
-            error={update.error}
-            onSubmit={(values) => {
-              update.mutate(values);
-            }}
-            onCancel={() => {
-              void navigate({ to: '/players/$playerId', params: { playerId } });
-            }}
-          />
-        </Surface>
+        <Stack spacing={3}>
+          {/* Анкета без рейтинга (ADR-072) — найти свой профиль с рейтингом. */}
+          {!player.data.confirmed && (
+            <Surface title={t('claim.title')}>
+              <ClaimProfile hasSheet />
+            </Surface>
+          )}
+          <Surface>
+            <PlayerForm
+              defaultValues={toFormValues(player.data)}
+              city={player.data.city}
+              products={equipmentProducts(player.data)}
+              coachLabel={player.data.coachName}
+              submitLabel="cabinet.profile.save"
+              isPending={update.isPending}
+              error={update.error}
+              onSubmit={(values) => {
+                update.mutate(values);
+              }}
+              onCancel={() => {
+                void navigate({ to: '/players/$playerId', params: { playerId } });
+              }}
+            />
+          </Surface>
+        </Stack>
       )}
     </QueryState>
   );

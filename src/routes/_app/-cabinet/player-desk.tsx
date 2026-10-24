@@ -13,6 +13,7 @@ import RatingValue from '@/common/ui/rating-value';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
+import ClaimProfile from '@/features/players/claim-profile';
 import TournamentList from '@/features/clubs/tournament-list';
 import { ratingPointTitle } from '@/features/players/rating-point';
 import {
@@ -49,6 +50,19 @@ export default function PlayerDesk({ playerId }: { readonly playerId: string }):
 
   const last = history.data?.points.at(-1);
   const ahead = (mine.data?.items ?? []).filter((tournament) => AHEAD.has(tournament.status));
+
+  // Анкета без рейтинга (ADR-072): ни рейтинга, ни турниров у неё нет —
+  // первое дело найти свой профиль с рейтингом.
+  if (player.data?.confirmed === false) {
+    return (
+      <Surface
+        title={t('claim.title')}
+        action={<Button href={`/players/${playerId}`}>{t('nav.myProfile')}</Button>}
+      >
+        <ClaimProfile hasSheet />
+      </Surface>
+    );
+  }
 
   return (
     <>

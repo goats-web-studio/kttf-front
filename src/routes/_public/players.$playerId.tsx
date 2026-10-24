@@ -19,6 +19,7 @@ import PlayerForumPosts from '@/features/forum/player-posts';
 import { usePlaceName } from '@/features/places/place-name';
 import { useSessionStore } from '@/features/auth/session-store';
 import BestWins from '@/features/players/best-wins';
+import ClaimProfile from '@/features/players/claim-profile';
 import HeadToHead from '@/features/players/head-to-head';
 import PlayerResults from '@/features/players/player-results';
 import { playerName } from '@/features/players/player-name';
@@ -31,6 +32,7 @@ import {
   playerSummaryQuery,
 } from '@/features/players/queries';
 import RatingSection from '@/features/players/rating-section';
+import Surface from '@/common/ui/surface';
 
 export const Route = createFileRoute('/_public/players/$playerId')({
   component: PlayerPage,
@@ -131,7 +133,7 @@ function PlayerPage(): ReactNode {
             // Вызов — вошедшему на чужом профиле, если вызов есть кому
             // принять (ADR-065): у игрока, заведённого организатором, аккаунта нет.
             challengeHref={
-              user === null || isOwn || player.data.userId === null
+              user === null || isOwn || player.data.userId === null || !player.data.confirmed
                 ? undefined
                 : newDuelHref(playerId)
             }
@@ -145,7 +147,17 @@ function PlayerPage(): ReactNode {
         </Box>
       )}
 
-      {player.data !== undefined && (
+      {/* Своя анкета без рейтинга (ADR-072) — вместо истории игры, которой у
+          неё нет, поиск своего профиля с рейтингом, как «Мой рейтинг» RTTF. */}
+      {player.data !== undefined && !player.data.confirmed && isOwn && (
+        <Box sx={{ mt: { xs: 5, md: 6 } }}>
+          <Surface title={t('claim.title')}>
+            <ClaimProfile hasSheet />
+          </Surface>
+        </Box>
+      )}
+
+      {player.data?.confirmed === true && (
         <Stack spacing={3} sx={{ mt: { xs: 5, md: 6 } }}>
           <Typography variant="h2">{t('profile.history.title')}</Typography>
           <QueryState

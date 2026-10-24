@@ -917,3 +917,59 @@ describe('результаты свёрнуты до итога', () => {
     expect(earlier?.querySelector('[data-result-cards]')).not.toBeNull();
   });
 });
+
+describe('анкета без рейтинга — ADR-072', () => {
+  const SHEET: PlayerProfileView = { ...PLAYER_PROFILE, confirmed: false };
+  const CANDIDATE = {
+    ...PLAYERS.second,
+    ratingUpdatedAt: null,
+    blade: null,
+    rubberForehand: null,
+    rubberBackhand: null,
+  };
+
+  it('вместо числа — «Без рейтинга», истории игры нет', async () => {
+    profile = SHEET;
+    const { container } = renderProfile();
+
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(container.querySelector('[data-unrated-plate]')).not.toBeNull();
+    expect(container.querySelector('[data-rating-plate]')).toBeNull();
+    expect(screen.queryByRole('heading', { name: ru['profile.history.title'] })).toBeNull();
+    // Искать себя предлагают только хозяину анкеты.
+    expect(screen.queryByText(ru['claim.lead'])).toBeNull();
+  });
+
+  it('своя — поиск профиля с рейтингом и привязка после «Да, привязать»', async () => {
+    profile = SHEET;
+    const posts: string[] = [];
+    vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) => {
+      const url = String(input);
+
+      if (init?.method === 'POST') posts.push(url);
+      if (url.includes('/auth/me')) return Promise.resolve(reply(USER_WITH_PROFILE));
+      // Ищут только среди профилей без кабинета — у остальных хозяин есть.
+      if (url.includes('/players?') && url.includes('withoutAccount=true')) {
+        return Promise.resolve(reply(pageOf([CANDIDATE])));
+      }
+
+      return Promise.resolve(answer(url));
+    });
+    renderProfile(PLAYER_ID, USER_WITH_PROFILE);
+
+    await screen.findByText(ru['claim.lead']);
+    expect(screen.getByText(ru['claim.sheet'])).toBeDefined();
+
+    fireEvent.change(screen.getByLabelText(ru['claim.search']), { target: { value: 'Ержанов' } });
+    fireEvent.click(screen.getByRole('button', { name: ru['claim.find'] }));
+    fireEvent.click(await screen.findByRole('button', { name: ru['claim.action'] }));
+
+    // Первое нажатие только спрашивает: привязку самому не отменить.
+    expect(posts).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: ru['claim.yes'] }));
+
+    await waitFor(() => {
+      expect(posts).toEqual([expect.stringContaining(`/players/${CANDIDATE.id}/claim`)]);
+    });
+  });
+});

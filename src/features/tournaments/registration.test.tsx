@@ -70,6 +70,8 @@ let tournament: TournamentView = openTournament();
 let registrations: readonly RegistrationView[] = [];
 /** Профиль вошедшего: по нему считается допуск до нажатия. */
 let profile: PlayerView = PLAYERS.first;
+/** Выдача поиска организатора. */
+let found: readonly PlayerView[] = [PLAYERS.second];
 /** Ответ сервера на запись. `null` — успех. */
 let refusal: { readonly code: string; readonly details?: unknown } | null = null;
 
@@ -126,7 +128,7 @@ function answer(url: string, init: RequestInit | undefined): Response {
   }
 
   if (url.includes('/players')) {
-    return reply(pageOf([PLAYERS.second]));
+    return reply(pageOf(found));
   }
 
   throw new Error(`Неожидаемый запрос: ${url}`);
@@ -155,6 +157,7 @@ beforeEach(() => {
   tournament = openTournament();
   registrations = [];
   profile = PLAYERS.first;
+  found = [PLAYERS.second];
   refusal = null;
   vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) =>
     Promise.resolve(answer(String(input), init)),
@@ -185,6 +188,18 @@ describe('запись игрока', () => {
     const link = await screen.findByRole('link', { name: ru['registration.signInToJoin'] });
 
     expect(link.getAttribute('href')).toContain('/login');
+    expect(screen.queryByRole('button', { name: ru['registration.join'] })).toBeNull();
+  });
+
+  it('анкете без рейтинга — объяснение вместо кнопки (ADR-072)', async () => {
+    profile = { ...PLAYERS.first, confirmed: false };
+
+    renderTournament(USER_WITH_PROFILE);
+
+    expect(await screen.findByText(new RegExp(ru['registration.unrated']))).toBeDefined();
+    expect(
+      screen.getByRole('link', { name: ru['registration.unrated.link'] }).getAttribute('href'),
+    ).toBe('/settings/profile');
     expect(screen.queryByRole('button', { name: ru['registration.join'] })).toBeNull();
   });
 
@@ -396,6 +411,41 @@ describe('панель организатора', () => {
     const [request] = sent.filter((row) => row.method === 'POST');
 
     expect(request?.body).toEqual({ playerId: PLAYERS.second.id });
+  });
+
+  it('пришедшему с анкетой организатор задаёт рейтинг по уровню и записывает (ADR-072)', async () => {
+    found = [{ ...PLAYERS.second, confirmed: false }];
+
+    renderTournament(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
+      target: { value: 'Смагулов' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
+
+    // В поиск организатора анкеты попадают — по флагу запроса.
+    await screen.findByText(new RegExp(ru['participants.sheet']));
+    expect(sent.some((request) => request.url.includes('withUnconfirmed=true'))).toBe(true);
+    expect(screen.queryByRole('button', { name: ru['participants.add'] })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.confirm.open'] }));
+    const submit = screen.getByRole('button', { name: ru['participants.confirm.submit'] });
+    expect(submit.hasAttribute('disabled')).toBe(true);
+
+    fireEvent.mouseDown(
+      screen.getByRole('combobox', { name: new RegExp(ru['participants.new.rating']) }),
+    );
+    fireEvent.click(await screen.findByRole('option', { name: '400' }));
+    fireEvent.click(submit);
+
+    await waitFor(() => {
+      expect(sent.filter((row) => row.method === 'POST')).toHaveLength(2);
+    });
+    const [confirm, register] = sent.filter((row) => row.method === 'POST');
+
+    expect(confirm?.url).toContain(`/players/${PLAYERS.second.id}/confirm`);
+    expect(confirm?.body).toEqual({ clubId: TOURNAMENT.clubId, startRating: 400 });
+    expect(register?.body).toEqual({ playerId: PLAYERS.second.id });
   });
 
   it('найденный уже записанный игрок не предлагается повторно', async () => {

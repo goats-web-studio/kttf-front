@@ -1,10 +1,4 @@
-import {
-  START_RATING_MAX,
-  START_RATING_MIN,
-  START_RATING_STEP,
-  type CreatePlayerInput,
-  type TournamentView,
-} from '@kttf/shared/types';
+import type { CreatePlayerInput, TournamentView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -19,16 +13,11 @@ import { useT } from '@/common/i18n';
 import IntegerField from '@/common/ui/integer-field';
 import CityPicker from '@/features/places/city-picker';
 import { createPlayer } from '@/features/players/api';
+import StartRatingField from '@/features/players/start-rating-field';
 
 import { registerForTournament } from './api';
 import { newParticipantInput, type NewParticipantForm } from './new-participant-input';
 import { tournamentKeys } from './queries';
-
-/** Оценки на выбор: 100, 125 … 1000 — ADR-062. */
-const RATINGS = Array.from(
-  { length: (START_RATING_MAX - START_RATING_MIN) / START_RATING_STEP + 1 },
-  (_unused, index) => START_RATING_MIN + index * START_RATING_STEP,
-);
 
 interface NewParticipantProps {
   readonly tournament: TournamentView;
@@ -146,22 +135,14 @@ export default function NewParticipant({ tournament, lastName }: NewParticipantP
           }}
           label={t('player.form.city')}
         />
-        <TextField
-          select
-          required
+        <StartRatingField
+          value={form.startRating}
           label={t('participants.new.rating')}
-          value={form.startRating === null ? '' : String(form.startRating)}
           helperText={t('participants.new.ratingHint')}
-          onChange={(event) => {
-            setForm({ ...form, startRating: Number(event.target.value) });
+          onChange={(startRating) => {
+            setForm({ ...form, startRating });
           }}
-        >
-          {RATINGS.map((rating) => (
-            <MenuItem key={rating} value={String(rating)}>
-              {rating}
-            </MenuItem>
-          ))}
-        </TextField>
+        />
       </Box>
 
       {create.error !== null && (

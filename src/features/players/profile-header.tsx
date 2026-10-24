@@ -194,7 +194,7 @@ export default function ProfileHeader({
         </Box>
       </Stack>
 
-      <RatingPlate player={player} summary={summary} />
+      {player.confirmed ? <RatingPlate player={player} summary={summary} /> : <UnratedPlate />}
     </Paper>
   );
 }
@@ -294,6 +294,40 @@ function RatingPlate({
           </PlateRow>
         )}
       </Box>
+    </Box>
+  );
+}
+
+/**
+ * Анкета без рейтинга — ADR-072, как «профиль не привязан к рейтингу» у
+ * RTTF. Плашка на месте, чтобы шапка не прыгала, но числа в ней нет:
+ * умолчание 250 — не оценка игры.
+ */
+function UnratedPlate(): ReactNode {
+  const t = useT();
+
+  return (
+    <Box
+      data-unrated-plate
+      sx={{
+        px: { xs: 2.5, sm: 4, md: 3 },
+        py: { xs: 2.5, md: 3 },
+        bgcolor: 'var(--night)',
+        color: 'var(--night-ink-900)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+      }}
+    >
+      <Typography variant="caption" sx={{ color: 'var(--night-ink-500)', fontWeight: 600 }}>
+        {t('ratings.column.rating')}
+      </Typography>
+      <Typography component="p" sx={{ fontWeight: 700, fontSize: 28, lineHeight: '36px', mt: 0.5 }}>
+        {t('profile.unrated.title')}
+      </Typography>
+      <Typography variant="body2" sx={{ color: 'var(--night-ink-700)', mt: 1 }}>
+        {t('profile.unrated.text')}
+      </Typography>
     </Box>
   );
 }

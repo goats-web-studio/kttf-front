@@ -119,6 +119,7 @@ function player(id: string, lastName: string, rating: string): PlayerView {
     rating,
     ratedMatches: 25,
     isProvisional: false,
+    confirmed: true,
     createdAt: '2026-08-01T00:00:00.000Z',
   };
 }

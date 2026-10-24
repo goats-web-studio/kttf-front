@@ -176,6 +176,9 @@ export default function RegistrationPanel({
           <Join
             isExpired={isExpired}
             hasProfile={playerId !== null}
+            // Анкета без рейтинга (ADR-072) записаться онлайн не может. Пока
+            // профиль не прочитан — не известно, кнопка просто занята.
+            isUnrated={profile.data?.confirmed === false}
             isSignedIn={user !== null}
             isPending={join.isPending}
             isChecking={playerId !== null && profile.data === undefined}
@@ -355,6 +358,7 @@ function Conditions({
 function Join({
   isExpired,
   hasProfile,
+  isUnrated,
   isSignedIn,
   isPending,
   isChecking,
@@ -367,6 +371,7 @@ function Join({
 }: {
   readonly isExpired: boolean;
   readonly hasProfile: boolean;
+  readonly isUnrated: boolean;
   readonly isSignedIn: boolean;
   readonly isPending: boolean;
   readonly isChecking: boolean;
@@ -401,6 +406,15 @@ function Join({
     return (
       <Typography color="text.secondary">
         {t('registration.profileRequired')} <Link href="/cabinet">{t('page.cabinet.title')}</Link>
+      </Typography>
+    );
+  }
+
+  if (isUnrated) {
+    return (
+      <Typography color="text.secondary" data-unrated>
+        {t('registration.unrated')}{' '}
+        <Link href="/settings/profile">{t('registration.unrated.link')}</Link>
       </Typography>
     );
   }

@@ -78,7 +78,6 @@ export const ru = {
   'settings.account.tab': 'Аккаунт',
   'settings.profile.lead':
     'То, что видят другие на вашей странице игрока: фото, имя, клуб, анкета и инвентарь.',
-  'settings.profile.new': 'Новый профиль игрока',
   'settings.account.signIn': 'Вход и связь',
   'cabinet.clubs.all': 'Все клубы',
   'cabinet.clubs.manage': 'Управление',
@@ -92,9 +91,10 @@ export const ru = {
   'cabinet.my.title': 'Мои турниры',
   'cabinet.my.find': 'Найти турнир',
   'cabinet.my.empty': 'Вы пока никуда не записаны. Ближайшие турниры — в календаре.',
-  'cabinet.noProfile.title': 'Создайте профиль игрока',
-  'cabinet.noProfile.text': 'Без него нельзя записаться на турнир и получить рейтинг.',
-  'cabinet.noProfile.action': 'Создать профиль',
+  'cabinet.noProfile.title': 'Найдите свой профиль игрока',
+  'cabinet.noProfile.text':
+    'Профиль с рейтингом заводит организатор, когда вы впервые приходите на турнир. Уже играли — найдите себя. Ещё нет — заполните анкету.',
+  'cabinet.noProfile.action': 'Найти себя',
   'nav.admin': 'Администрирование',
   'profile.edit': 'Редактировать профиль',
   'profile.settings': 'Кабинет',
@@ -335,8 +335,7 @@ export const ru = {
   'error.form.gender': 'Выберите значение',
   'error.form.city': 'Выберите город',
 
-  'cabinet.profile.lead': 'Заполните профиль игрока — без него нельзя записаться на турнир.',
-  'cabinet.profile.create': 'Создать профиль',
+  'cabinet.profile.create': 'Создать анкету',
   'cabinet.profile.save': 'Сохранить',
   'cabinet.profile.edit': 'Изменить',
   'cabinet.profile.public': 'Публичный профиль',
@@ -795,7 +794,7 @@ export const ru = {
   'participants.new.title': 'Новый игрок',
   'participants.new.lead':
     'Профиль заведётся в клубе турнира, игрок сразу будет записан. Остальную анкету он заполнит сам.',
-  'participants.new.rating': 'Стартовый рейтинг',
+  'participants.new.rating': 'Рейтинг по уровню игры',
   'participants.new.ratingHint':
     'Ваша оценка силы игрока: по ней он посеется. Первые пять турниров её поправят',
   'participants.new.submit': 'Завести и записать',
@@ -2932,4 +2931,37 @@ export const ru = {
   'notifications.DUEL_REMINDER_SPARRING': 'Спарринг с {player} — {when}, {venue}',
   'notifications.DUEL_REMINDER_SPARRING_TODAY': 'Сегодня в {time} спарринг с {player}, {venue}',
   'players.duelsLink': 'Дуэли и спарринги — найти соперника',
+
+  // Игровой профиль — ADR-072.
+  'error.api.PLAYER_NOT_CONFIRMED':
+    'Анкета без рейтинга: турниры и дуэли — после того, как организатор задаст рейтинг',
+  'error.api.PLAYER_CLAIM_INVALID':
+    'Этот профиль привязать нельзя: у него уже есть кабинет или у вас уже есть профиль с рейтингом',
+  'claim.title': 'Мой рейтинг',
+  'claim.lead':
+    'Если вы уже играли на турнире, организатор завёл вам профиль с рейтингом. Найдите себя — история встреч и рейтинг станут вашими.',
+  'claim.sheet': 'Ваша анкета перейдёт в найденный профиль: пустые поля заполнятся из неё.',
+  'claim.search': 'Фамилия и имя',
+  'claim.find': 'Найти',
+  'claim.results': 'Профили без кабинета',
+  'claim.empty':
+    'Никого не нашлось. Если вы ещё не играли, профиль с рейтингом появится после первого турнира.',
+  'claim.action': 'Это я',
+  'claim.yes': 'Да, привязать',
+  'claim.no': 'Нет',
+  'profile.unrated.title': 'Без рейтинга',
+  'profile.unrated.text':
+    'Анкета не привязана к рейтингу. Рейтинг задаёт организатор на первом турнире — по уровню игры.',
+  'nav.unrated': 'Без рейтинга',
+  'settings.profile.sheet.title': 'Ещё не играли?',
+  'settings.profile.sheet.lead':
+    'Заполните анкету. На первом турнире организатор найдёт её и задаст рейтинг по уровню игры.',
+  'registration.unrated':
+    'Онлайн-запись — для игроков с рейтингом. Приходите на турнир: организатор задаст рейтинг по уровню игры и запишет вас. Уже играли?',
+  'registration.unrated.link': 'Найдите свой профиль',
+  'participants.sheet': 'анкета без рейтинга',
+  'participants.confirm.open': 'Задать рейтинг',
+  'participants.confirm.lead':
+    'Анкету человек завёл на сайте сам. Задайте рейтинг по уровню игры — анкета станет профилем с рейтингом, и игрок будет записан.',
+  'participants.confirm.submit': 'Подтвердить и записать',
 } as const satisfies Record<string, string>;

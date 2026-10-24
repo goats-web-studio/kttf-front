@@ -197,7 +197,13 @@ function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
                   fontVariantNumeric: 'tabular-nums',
                 }}
               >
-                {t('nav.ratings')} <RatingValue value={player.rating} animate={false} />
+                {player.confirmed ? (
+                  <>
+                    {t('nav.ratings')} <RatingValue value={player.rating} animate={false} />
+                  </>
+                ) : (
+                  t('nav.unrated')
+                )}
               </Box>
             </Box>
           </>
