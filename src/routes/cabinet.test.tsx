@@ -236,6 +236,8 @@ describe('профиль при регистрации', () => {
       birthYearOnly: true,
       gender: 'MALE',
       cityId: CITIES.almaty.id,
+      // Кому виден тренер — по умолчанию всем (ADR-066).
+      coachVisibility: 'ALL',
     });
   });
 
