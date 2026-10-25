@@ -17,6 +17,7 @@ import { Pencil, Pin, PinOff, Plus, Trash2 } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
+import RichField from '@/common/rich/rich-field';
 import { useT, type MessageKey } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
@@ -276,19 +277,19 @@ function PostForm({
           slotProps={{ htmlInput: { maxLength: 150 } }}
         />
       </Box>
-      <TextField
-        label={t('manage.posts.body')}
-        value={draft.body}
-        multiline
-        minRows={5}
-        fullWidth
-        onChange={(event) => {
-          change({ body: event.target.value });
-        }}
-        helperText={t('manage.posts.bodyHint')}
-        slotProps={{ htmlInput: { maxLength: 4000 } }}
-        sx={{ mt: 2 }}
-      />
+      {/* Разметка, ссылки и отметки — ADR-076. */}
+      <Box sx={{ mt: 2 }}>
+        <RichField
+          label={t('manage.posts.body')}
+          value={draft.body}
+          minRows={5}
+          maxLength={4000}
+          onChange={(body) => {
+            change({ body });
+          }}
+          helperText={t('manage.posts.bodyHint')}
+        />
+      </Box>
       {draft.kind === 'PROMO' && (
         <TextField
           type="date"

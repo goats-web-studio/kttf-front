@@ -8,7 +8,7 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
-import { ChevronLeft, Copy, SlidersHorizontal, Tv } from 'lucide-react';
+import { ChevronLeft, Copy, SlidersHorizontal, Tv, Users } from 'lucide-react';
 import { lazy, Suspense, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
@@ -47,6 +47,9 @@ import { useNow } from '@/features/console/use-now';
  * обязательном наборе.
  */
 const RunningSettings = lazy(() => import('@/features/console/running-settings'));
+// Состав с поиском и формой игрока — отдельным чанком: в офлайн-бюджет
+// консоли (ADR-004) он не входит, нужен он только при сети.
+const ParticipantsDialog = lazy(() => import('@/features/console/participants-dialog'));
 
 export const Route = createFileRoute('/console/$tournamentId')({
   component: ConsoleScreen,
@@ -99,6 +102,8 @@ function ConsoleScreen(): ReactNode {
   const [toast, setToast] = useState<Toast | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [settings, setSettings] = useState(false);
+  // Состав — опоздавший, замена, снятие, оплата — прямо из консоли (ADR-076).
+  const [participants, setParticipants] = useState(false);
 
   const snapshot = state.data;
   // Счёт принимает только идущий турнир: сервер отклонит любое действие
@@ -321,6 +326,20 @@ function ConsoleScreen(): ReactNode {
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+            {snapshot !== undefined &&
+              snapshot.tournament.status !== 'FINISHED' &&
+              snapshot.tournament.status !== 'RATED' && (
+                <Button
+                  onClick={() => {
+                    setParticipants(true);
+                  }}
+                  startIcon={<Users size={18} aria-hidden />}
+                  sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
+                  data-console-participants-open
+                >
+                  {t('console.participants.open')}
+                </Button>
+              )}
             {running && (
               <Button
                 onClick={() => {
@@ -608,6 +627,21 @@ function ConsoleScreen(): ReactNode {
           }}
           onWithdraw={doWithdraw}
         />
+      )}
+
+      {participants && snapshot !== undefined && (
+        <Suspense fallback={null}>
+          <ParticipantsDialog
+            tournament={snapshot.tournament}
+            online={online && queue.connection !== 'OFFLINE'}
+            onClose={() => {
+              setParticipants(false);
+              // Правки ушли на сервер напрямую — снимок консоли перечитывается.
+              queue.syncNow();
+              void state.refetch();
+            }}
+          />
+        </Suspense>
       )}
 
       {settings && running && (

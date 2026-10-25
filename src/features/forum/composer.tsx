@@ -2,6 +2,7 @@ import {
   CLUB_IMAGE_MAX_BYTES,
   FORUM_POST_BODY_MAX,
   FORUM_POST_IMAGES_MAX,
+  markupToPlain,
   rejectPhoto,
   type CreateForumPostInput,
   type ForumImage,
@@ -10,14 +11,14 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
 import { ImagePlus, X } from 'lucide-react';
-import { forwardRef, useId, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useId, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
+import RichField from '@/common/rich/rich-field';
 import { fill, formatDate, useLocale, useT } from '@/common/i18n';
 import { authHref } from '@/features/auth/redirect';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -157,6 +158,9 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
 ) {
   const t = useT();
   const fileId = useId();
+  // Поле наружу — «Цитировать» ставит в него курсор.
+  const field = useRef<HTMLTextAreaElement | null>(null);
+  useImperativeHandle(ref, () => field.current!);
   const fileInput = useRef<HTMLInputElement>(null);
   const [body, setBody] = useState(initial?.body ?? readDraft(draftKey));
   const [images, setImages] = useState<readonly ForumImage[]>(initial?.images ?? []);
@@ -258,7 +262,7 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
                 overflow: 'hidden',
               }}
             >
-              {quote.text}
+              {markupToPlain(quote.text)}
             </Typography>
           </Box>
           <IconButton
@@ -271,20 +275,16 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
         </Box>
       )}
 
-      <TextField
-        inputRef={ref}
+      {/* Разметка, ссылки и отметки — ADR-076. */}
+      <RichField
+        inputRef={field}
         value={body}
-        onChange={(event) => {
-          setBody(event.target.value);
-          writeDraft(draftKey, event.target.value);
+        onChange={(next) => {
+          setBody(next);
+          writeDraft(draftKey, next);
         }}
         placeholder={placeholder ?? t('forum.composer.placeholder')}
-        aria-label={placeholder ?? t('forum.composer.placeholder')}
-        multiline
-        minRows={3}
-        maxRows={16}
-        fullWidth
-        slotProps={{ htmlInput: { maxLength: FORUM_POST_BODY_MAX } }}
+        maxLength={FORUM_POST_BODY_MAX}
       />
 
       {images.length > 0 && (

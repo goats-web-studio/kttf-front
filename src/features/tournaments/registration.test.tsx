@@ -203,6 +203,32 @@ describe('запись игрока', () => {
     expect(screen.queryByRole('button', { name: ru['registration.join'] })).toBeNull();
   });
 
+  it('без срока запись свободна, пока организатор её не закрыл, — и старт её не обрывает (ADR-076)', async () => {
+    tournament = {
+      ...tournament,
+      registrationEndsAt: null,
+      startsAt: new Date(Date.now() - 60 * 60_000).toISOString(),
+    };
+
+    renderTournament(USER_WITH_PROFILE);
+
+    expect(await screen.findByRole('button', { name: ru['registration.join'] })).toBeDefined();
+    expect(screen.getByText(ru['registration.untilClosed'])).toBeDefined();
+  });
+
+  it('сняться самому можно и после срока записи — до старта турнира (ADR-076)', async () => {
+    tournament = {
+      ...tournament,
+      status: 'REG_CLOSED',
+      registrationEndsAt: new Date(Date.now() - 60 * 60_000).toISOString(),
+    };
+    registrations = [OWN_REGISTRATION];
+
+    renderTournament(USER_WITH_PROFILE);
+
+    expect(await screen.findByRole('button', { name: ru['registration.cancel'] })).toBeDefined();
+  });
+
   it('вошедшему без профиля предлагает кабинет', async () => {
     renderTournament(USER_WITHOUT_PROFILE);
 

@@ -1,11 +1,11 @@
-import type { ForumImage, ForumPostView } from '@kttf/shared/types';
+import { markupToPlain, type ForumImage, type ForumPostView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
-import { textParts } from '@/features/content/text-parts';
+import RichText from '@/common/rich/rich-text';
 
 import { forumImageVariant } from './labels';
 
@@ -22,32 +22,12 @@ export function ForumText({
   readonly large?: boolean;
 }): ReactNode {
   return (
-    <Typography
-      component="div"
-      sx={{
-        whiteSpace: 'pre-line',
-        overflowWrap: 'anywhere',
-        maxWidth: 720,
-        ...(large ? { fontSize: 18, lineHeight: '28px' } : {}),
-      }}
+    // Разметка, ссылки и отметки — ADR-076.
+    <RichText
+      text={text}
+      sx={{ maxWidth: 720, ...(large ? { fontSize: 18, lineHeight: '28px' } : {}) }}
       data-forum-text
-    >
-      {textParts(text).map((part, index) =>
-        part.kind === 'link' ? (
-          <Link
-            // Куски не переставляются: индекс — честный ключ.
-            key={index}
-            href={part.value}
-            target="_blank"
-            rel="nofollow ugc noopener noreferrer"
-          >
-            {part.value}
-          </Link>
-        ) : (
-          <span key={index}>{part.value}</span>
-        ),
-      )}
-    </Typography>
+    />
   );
 }
 
@@ -94,7 +74,7 @@ export function ForumQuote({
         variant="body2"
         sx={{ whiteSpace: 'pre-line', overflowWrap: 'anywhere', color: 'var(--ink-700)' }}
       >
-        {quote.text}
+        {markupToPlain(quote.text)}
       </Typography>
     </Box>
   );

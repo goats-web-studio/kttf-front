@@ -1,45 +1,42 @@
+import { markupToPlain } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
 import { useId, useState, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
-
-import { textParts } from './text-parts';
+import RichText from '@/common/rich/rich-text';
 
 /** Сколько знаков видно до «Читать полностью». */
 const PREVIEW = 320;
 
 /**
- * Текст записи: переносы строк как вписаны, ссылки кликабельны и помечены
- * `nofollow ugc` — их пишет клуб или тренер, а не мы. Длинный текст свёрнут.
+ * Текст записи клуба и тренера — с разметкой, ссылками и отметками
+ * (ADR-076). Длинный свёрнут до нескольких строк: резать саму разметку
+ * нельзя — посреди отметки она развалилась бы, поэтому сворачивается показ.
  */
 export default function PostText({ text }: { readonly text: string }): ReactNode {
   const t = useT();
   const id = useId();
   const [open, setOpen] = useState(false);
-  const long = text.length > PREVIEW;
-  const shown = long && !open ? `${text.slice(0, PREVIEW).trimEnd()}…` : text;
+  const long = markupToPlain(text).length > PREVIEW;
 
   return (
     <Box>
-      <Typography id={id} sx={{ whiteSpace: 'pre-line', overflowWrap: 'anywhere', maxWidth: 680 }}>
-        {textParts(shown).map((part, index) =>
-          part.kind === 'link' ? (
-            <Link
-              // Куски не переставляются: индекс — честный ключ.
-              key={index}
-              href={part.value}
-              target="_blank"
-              rel="nofollow ugc noopener noreferrer"
-            >
-              {part.value}
-            </Link>
-          ) : (
-            <span key={index}>{part.value}</span>
-          ),
-        )}
-      </Typography>
+      <RichText
+        id={id}
+        text={text}
+        sx={{
+          maxWidth: 680,
+          ...(long && !open
+            ? {
+                display: '-webkit-box',
+                WebkitLineClamp: 6,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }
+            : {}),
+        }}
+      />
       {long && (
         <Link
           component="button"

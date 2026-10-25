@@ -1,4 +1,5 @@
 import { checkEligibility, type EligibilityProblem } from '@kttf/shared/eligibility';
+import { isAppError } from '@kttf/shared/errors';
 import type { RegistrationStatus, RegistrationView, TournamentView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -67,8 +68,12 @@ export default function RegistrationPanel({
 
   // Правило сервера: состав меняется только при открытой регистрации.
   const isOpen = tournament.status === 'REG_OPEN';
-  const deadline = tournament.registrationEndsAt ?? tournament.startsAt;
-  const isExpired = Date.parse(deadline) <= openedAt;
+  // Свободная запись — ADR-076: срок действует, только если его задали;
+  // без него запись идёт, пока организатор её не закроет.
+  const deadline = tournament.registrationEndsAt;
+  const isExpired = deadline !== null && Date.parse(deadline) <= openedAt;
+  // Сняться самому можно до жеребьёвки; после старта — только у организатора.
+  const canLeave = ['PUBLISHED', 'REG_OPEN', 'REG_CLOSED'].includes(tournament.status);
 
   const mine =
     user?.playerId == null
@@ -141,7 +146,9 @@ export default function RegistrationPanel({
       <Conditions tournament={tournament} registrations={registrations} />
 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-        {t('registration.deadline')} {formatDateTime(deadline, locale)}
+        {deadline === null
+          ? t('registration.untilClosed')
+          : `${t('registration.deadline')} ${formatDateTime(deadline, locale)}`}
       </Typography>
 
       <Box sx={{ mt: 2 }}>
@@ -151,9 +158,9 @@ export default function RegistrationPanel({
             {mine.status === 'REJECTED' ? null : (
               <OwnCoach registration={mine} editable={isCoachEditable(tournament.status)} />
             )}
-            {mine.status === 'REJECTED' ? null : isExpired ? (
-              // Отмена только до дедлайна — ТЗ 4.3. После него снять участника
-              // может организатор, и просить об этом придётся его.
+            {mine.status === 'REJECTED' ? null : !canLeave ? (
+              // После старта снять участника может организатор (ADR-076):
+              // уход меняет уже идущий этап.
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                 {t('registration.cancelClosed')}
               </Typography>
@@ -513,10 +520,16 @@ function Refusal({ error }: { readonly error: unknown }): ReactNode {
   }
 
   const problems = eligibilityProblems(error);
+  // Жеребьёвка уже прошла — сняться можно только через организатора (ADR-076).
+  const drawn =
+    isAppError(error) &&
+    (error.details as { readonly reason?: unknown } | undefined)?.reason === 'DRAWN';
 
   return (
     <Alert severity="error" sx={{ mt: 2 }}>
-      {problems.length === 0 ? (
+      {drawn ? (
+        t('registration.cancelDrawn')
+      ) : problems.length === 0 ? (
         t(errorMessageKey(error))
       ) : (
         <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
