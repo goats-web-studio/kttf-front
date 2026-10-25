@@ -1,19 +1,16 @@
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT, type MessageKey } from '@/common/i18n';
-import RouterLink from '@/common/ui/router-link';
 
 export type SettingsSection = 'profile' | 'account';
 
-const SECTIONS: readonly (readonly [SettingsSection, string, MessageKey])[] = [
-  ['profile', '/settings/profile', 'settings.profile.tab'],
-  ['account', '/settings/account', 'settings.account.tab'],
-];
+const TITLES: Readonly<Record<SettingsSection, MessageKey>> = {
+  profile: 'settings.profile.tab',
+  account: 'settings.account.tab',
+};
 
 /**
  * Настройки — две страницы под одним заголовком, ADR-048.
@@ -41,28 +38,10 @@ export default function SettingsLayout({
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Typography variant="h1">{t('page.settings.title')}</Typography>
+      {/* Профиль и аккаунт — пунктами бокового меню кабинета (ADR-074). */}
+      <Typography variant="h1">{t(TITLES[section])}</Typography>
 
-      <Tabs
-        value={section}
-        aria-label={t('settings.nav')}
-        variant="scrollable"
-        scrollButtons={false}
-        sx={{ mt: 3 }}
-      >
-        {SECTIONS.map(([value, href, label]) => (
-          <Tab
-            key={value}
-            value={value}
-            label={t(label)}
-            component={RouterLink}
-            href={href}
-            aria-current={value === section ? 'page' : undefined}
-          />
-        ))}
-      </Tabs>
-
-      <Typography color="text.secondary" sx={{ mt: 2.5, maxWidth: '68ch' }}>
+      <Typography color="text.secondary" sx={{ mt: 1.5, maxWidth: '68ch' }}>
         {lead}
       </Typography>
 

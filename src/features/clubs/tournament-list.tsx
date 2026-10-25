@@ -33,12 +33,21 @@ export default function TournamentList({
           <Box
             component="li"
             key={tournament.id}
-            sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+            // На телефоне действие — под карточкой во всю ширину: сбоку оно
+            // сжимало карточку до трёх слов в строке и уезжало за край.
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: { xs: 1, sm: 2 },
+            }}
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <TournamentCard tournament={tournament} club={clubOf?.(tournament) ?? club} />
             </Box>
-            {extra !== undefined && extra !== null && <Box sx={{ flexShrink: 0 }}>{extra}</Box>}
+            {extra !== undefined && extra !== null && (
+              <Box sx={{ flexShrink: 0, display: 'grid' }}>{extra}</Box>
+            )}
           </Box>
         );
       })}

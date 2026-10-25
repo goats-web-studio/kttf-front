@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as ConsoleRouteImport } from './routes/console'
+import { Route as AppCabinetRouteImport } from './routes/_app/cabinet'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicFeedbackRouteImport } from './routes/_public/feedback'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
@@ -75,9 +77,19 @@ const ConsoleRoute = ConsoleRouteImport.update({
   path: '/console',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppCabinetRoute = AppCabinetRouteImport.update({
+  id: '/cabinet',
+  path: '/cabinet',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
@@ -121,44 +133,44 @@ const ScreenPublicTokenRoute = ScreenPublicTokenRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppCabinetIndexRoute = AppCabinetIndexRouteImport.update({
-  id: '/cabinet/',
-  path: '/cabinet/',
-  getParentRoute: () => AppRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetApplicationsRoute = AppCabinetApplicationsRouteImport.update({
-  id: '/cabinet/applications',
-  path: '/cabinet/applications',
-  getParentRoute: () => AppRoute,
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetCatalogRoute = AppCabinetCatalogRouteImport.update({
-  id: '/cabinet/catalog',
-  path: '/cabinet/catalog',
-  getParentRoute: () => AppRoute,
+  id: '/catalog',
+  path: '/catalog',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetCoachRoute = AppCabinetCoachRouteImport.update({
-  id: '/cabinet/coach',
-  path: '/cabinet/coach',
-  getParentRoute: () => AppRoute,
+  id: '/coach',
+  path: '/coach',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetContentRoute = AppCabinetContentRouteImport.update({
-  id: '/cabinet/content',
-  path: '/cabinet/content',
-  getParentRoute: () => AppRoute,
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetDuelsRoute = AppCabinetDuelsRouteImport.update({
-  id: '/cabinet/duels',
-  path: '/cabinet/duels',
-  getParentRoute: () => AppRoute,
+  id: '/duels',
+  path: '/duels',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetForumRoute = AppCabinetForumRouteImport.update({
-  id: '/cabinet/forum',
-  path: '/cabinet/forum',
-  getParentRoute: () => AppRoute,
+  id: '/forum',
+  path: '/forum',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetPlacesRoute = AppCabinetPlacesRouteImport.update({
-  id: '/cabinet/places',
-  path: '/cabinet/places',
-  getParentRoute: () => AppRoute,
+  id: '/places',
+  path: '/places',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppDuelsMineRoute = AppDuelsMineRouteImport.update({
   id: '/duels/mine',
@@ -176,19 +188,19 @@ const AppForumNewRoute = AppForumNewRouteImport.update({
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
-  getParentRoute: () => AppRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
-  id: '/settings/account',
-  path: '/settings/account',
-  getParentRoute: () => AppRoute,
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
-  id: '/settings/profile',
-  path: '/settings/profile',
-  getParentRoute: () => AppRoute,
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppTournamentsNewRoute = AppTournamentsNewRouteImport.update({
   id: '/tournaments/new',
@@ -283,19 +295,19 @@ const PublicTrainingsTrainingIdRoute =
     getParentRoute: () => PublicRoute,
   } as any)
 const AppCabinetClubClubIdRoute = AppCabinetClubClubIdRouteImport.update({
-  id: '/cabinet/club/$clubId',
-  path: '/cabinet/club/$clubId',
-  getParentRoute: () => AppRoute,
+  id: '/club/$clubId',
+  path: '/club/$clubId',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetClubsIndexRoute = AppCabinetClubsIndexRouteImport.update({
-  id: '/cabinet/clubs/',
-  path: '/cabinet/clubs/',
-  getParentRoute: () => AppRoute,
+  id: '/clubs/',
+  path: '/clubs/',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppCabinetClubsNewRoute = AppCabinetClubsNewRouteImport.update({
-  id: '/cabinet/clubs/new',
-  path: '/cabinet/clubs/new',
-  getParentRoute: () => AppRoute,
+  id: '/clubs/new',
+  path: '/clubs/new',
+  getParentRoute: () => AppCabinetRoute,
 } as any)
 const AppTournamentsTournamentIdEditRoute =
   AppTournamentsTournamentIdEditRouteImport.update({
@@ -328,7 +340,9 @@ const PublicMarketItemsSlugRoute = PublicMarketItemsSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/console': typeof ConsoleRouteWithChildren
+  '/cabinet': typeof AppCabinetRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
+  '/settings': typeof AppSettingsRouteWithChildren
   '/feedback': typeof PublicFeedbackRoute
   '/login': typeof PublicLoginRoute
   '/ratings': typeof PublicRatingsRoute
@@ -433,7 +447,9 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/console': typeof ConsoleRouteWithChildren
+  '/_app/cabinet': typeof AppCabinetRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
+  '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_public/feedback': typeof PublicFeedbackRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/ratings': typeof PublicRatingsRoute
@@ -488,7 +504,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/console'
+    | '/cabinet'
     | '/notifications'
+    | '/settings'
     | '/feedback'
     | '/login'
     | '/ratings'
@@ -592,7 +610,9 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_public'
     | '/console'
+    | '/_app/cabinet'
     | '/_app/notifications'
+    | '/_app/settings'
     | '/_public/feedback'
     | '/_public/login'
     | '/_public/ratings'
@@ -673,11 +693,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsoleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/cabinet': {
+      id: '/_app/cabinet'
+      path: '/cabinet'
+      fullPath: '/cabinet'
+      preLoaderRoute: typeof AppCabinetRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/notifications': {
       id: '/_app/notifications'
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_public/': {
@@ -738,59 +772,59 @@ declare module '@tanstack/react-router' {
     }
     '/_app/cabinet/': {
       id: '/_app/cabinet/'
-      path: '/cabinet'
+      path: '/'
       fullPath: '/cabinet/'
       preLoaderRoute: typeof AppCabinetIndexRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/applications': {
       id: '/_app/cabinet/applications'
-      path: '/cabinet/applications'
+      path: '/applications'
       fullPath: '/cabinet/applications'
       preLoaderRoute: typeof AppCabinetApplicationsRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/catalog': {
       id: '/_app/cabinet/catalog'
-      path: '/cabinet/catalog'
+      path: '/catalog'
       fullPath: '/cabinet/catalog'
       preLoaderRoute: typeof AppCabinetCatalogRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/coach': {
       id: '/_app/cabinet/coach'
-      path: '/cabinet/coach'
+      path: '/coach'
       fullPath: '/cabinet/coach'
       preLoaderRoute: typeof AppCabinetCoachRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/content': {
       id: '/_app/cabinet/content'
-      path: '/cabinet/content'
+      path: '/content'
       fullPath: '/cabinet/content'
       preLoaderRoute: typeof AppCabinetContentRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/duels': {
       id: '/_app/cabinet/duels'
-      path: '/cabinet/duels'
+      path: '/duels'
       fullPath: '/cabinet/duels'
       preLoaderRoute: typeof AppCabinetDuelsRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/forum': {
       id: '/_app/cabinet/forum'
-      path: '/cabinet/forum'
+      path: '/forum'
       fullPath: '/cabinet/forum'
       preLoaderRoute: typeof AppCabinetForumRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/places': {
       id: '/_app/cabinet/places'
-      path: '/cabinet/places'
+      path: '/places'
       fullPath: '/cabinet/places'
       preLoaderRoute: typeof AppCabinetPlacesRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/duels/mine': {
       id: '/_app/duels/mine'
@@ -815,24 +849,24 @@ declare module '@tanstack/react-router' {
     }
     '/_app/settings/': {
       id: '/_app/settings/'
-      path: '/settings'
+      path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof AppSettingsIndexRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/account': {
       id: '/_app/settings/account'
-      path: '/settings/account'
+      path: '/account'
       fullPath: '/settings/account'
       preLoaderRoute: typeof AppSettingsAccountRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/profile': {
       id: '/_app/settings/profile'
-      path: '/settings/profile'
+      path: '/profile'
       fullPath: '/settings/profile'
       preLoaderRoute: typeof AppSettingsProfileRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppSettingsRoute
     }
     '/_app/tournaments/new': {
       id: '/_app/tournaments/new'
@@ -962,24 +996,24 @@ declare module '@tanstack/react-router' {
     }
     '/_app/cabinet/club/$clubId': {
       id: '/_app/cabinet/club/$clubId'
-      path: '/cabinet/club/$clubId'
+      path: '/club/$clubId'
       fullPath: '/cabinet/club/$clubId'
       preLoaderRoute: typeof AppCabinetClubClubIdRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/clubs/': {
       id: '/_app/cabinet/clubs/'
-      path: '/cabinet/clubs'
+      path: '/clubs'
       fullPath: '/cabinet/clubs/'
       preLoaderRoute: typeof AppCabinetClubsIndexRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/cabinet/clubs/new': {
       id: '/_app/cabinet/clubs/new'
-      path: '/cabinet/clubs/new'
+      path: '/clubs/new'
       fullPath: '/cabinet/clubs/new'
       preLoaderRoute: typeof AppCabinetClubsNewRouteImport
-      parentRoute: typeof AppRoute
+      parentRoute: typeof AppCabinetRoute
     }
     '/_app/tournaments/$tournamentId/edit': {
       id: '/_app/tournaments/$tournamentId/edit'
@@ -1019,8 +1053,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AppRouteChildren {
-  AppNotificationsRoute: typeof AppNotificationsRoute
+interface AppCabinetRouteChildren {
   AppCabinetApplicationsRoute: typeof AppCabinetApplicationsRoute
   AppCabinetCatalogRoute: typeof AppCabinetCatalogRoute
   AppCabinetCoachRoute: typeof AppCabinetCoachRoute
@@ -1028,22 +1061,13 @@ interface AppRouteChildren {
   AppCabinetDuelsRoute: typeof AppCabinetDuelsRoute
   AppCabinetForumRoute: typeof AppCabinetForumRoute
   AppCabinetPlacesRoute: typeof AppCabinetPlacesRoute
-  AppDuelsMineRoute: typeof AppDuelsMineRoute
-  AppDuelsNewRoute: typeof AppDuelsNewRoute
-  AppForumNewRoute: typeof AppForumNewRoute
-  AppSettingsAccountRoute: typeof AppSettingsAccountRoute
-  AppSettingsProfileRoute: typeof AppSettingsProfileRoute
-  AppTournamentsNewRoute: typeof AppTournamentsNewRoute
   AppCabinetIndexRoute: typeof AppCabinetIndexRoute
-  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
   AppCabinetClubClubIdRoute: typeof AppCabinetClubClubIdRoute
   AppCabinetClubsNewRoute: typeof AppCabinetClubsNewRoute
-  AppTournamentsTournamentIdEditRoute: typeof AppTournamentsTournamentIdEditRoute
   AppCabinetClubsIndexRoute: typeof AppCabinetClubsIndexRoute
 }
 
-const AppRouteChildren: AppRouteChildren = {
-  AppNotificationsRoute: AppNotificationsRoute,
+const AppCabinetRouteChildren: AppCabinetRouteChildren = {
   AppCabinetApplicationsRoute: AppCabinetApplicationsRoute,
   AppCabinetCatalogRoute: AppCabinetCatalogRoute,
   AppCabinetCoachRoute: AppCabinetCoachRoute,
@@ -1051,18 +1075,52 @@ const AppRouteChildren: AppRouteChildren = {
   AppCabinetDuelsRoute: AppCabinetDuelsRoute,
   AppCabinetForumRoute: AppCabinetForumRoute,
   AppCabinetPlacesRoute: AppCabinetPlacesRoute,
+  AppCabinetIndexRoute: AppCabinetIndexRoute,
+  AppCabinetClubClubIdRoute: AppCabinetClubClubIdRoute,
+  AppCabinetClubsNewRoute: AppCabinetClubsNewRoute,
+  AppCabinetClubsIndexRoute: AppCabinetClubsIndexRoute,
+}
+
+const AppCabinetRouteWithChildren = AppCabinetRoute._addFileChildren(
+  AppCabinetRouteChildren,
+)
+
+interface AppSettingsRouteChildren {
+  AppSettingsAccountRoute: typeof AppSettingsAccountRoute
+  AppSettingsProfileRoute: typeof AppSettingsProfileRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
+}
+
+const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsAccountRoute: AppSettingsAccountRoute,
+  AppSettingsProfileRoute: AppSettingsProfileRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
+}
+
+const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
+  AppSettingsRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppCabinetRoute: typeof AppCabinetRouteWithChildren
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppSettingsRoute: typeof AppSettingsRouteWithChildren
+  AppDuelsMineRoute: typeof AppDuelsMineRoute
+  AppDuelsNewRoute: typeof AppDuelsNewRoute
+  AppForumNewRoute: typeof AppForumNewRoute
+  AppTournamentsNewRoute: typeof AppTournamentsNewRoute
+  AppTournamentsTournamentIdEditRoute: typeof AppTournamentsTournamentIdEditRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCabinetRoute: AppCabinetRouteWithChildren,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppSettingsRoute: AppSettingsRouteWithChildren,
   AppDuelsMineRoute: AppDuelsMineRoute,
   AppDuelsNewRoute: AppDuelsNewRoute,
   AppForumNewRoute: AppForumNewRoute,
-  AppSettingsAccountRoute: AppSettingsAccountRoute,
-  AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppTournamentsNewRoute: AppTournamentsNewRoute,
-  AppCabinetIndexRoute: AppCabinetIndexRoute,
-  AppSettingsIndexRoute: AppSettingsIndexRoute,
-  AppCabinetClubClubIdRoute: AppCabinetClubClubIdRoute,
-  AppCabinetClubsNewRoute: AppCabinetClubsNewRoute,
   AppTournamentsTournamentIdEditRoute: AppTournamentsTournamentIdEditRoute,
-  AppCabinetClubsIndexRoute: AppCabinetClubsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

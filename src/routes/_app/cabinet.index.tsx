@@ -3,7 +3,6 @@ import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { createFileRoute } from '@tanstack/react-router';
-import { Settings } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
@@ -12,7 +11,6 @@ import { useSessionStore } from '@/features/auth/session-store';
 import MyDuels from '@/features/duels/my-duels';
 import MyTrialRequests from '@/features/trial-requests/my-requests';
 
-import AdminDesk from './-cabinet/admin-desk';
 import ClubDesk from './-cabinet/club-desk';
 import CoachDesk from './-cabinet/coach-desk';
 import PlayerDesk from './-cabinet/player-desk';
@@ -39,22 +37,8 @@ function CabinetPage(): ReactNode {
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
-      <Stack
-        direction="row"
-        useFlexGap
-        spacing={2}
-        sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}
-      >
-        <Typography variant="h1">{t('page.cabinet.title')}</Typography>
-        <Button
-          variant="text"
-          href="/settings"
-          startIcon={<Settings size={16} aria-hidden />}
-          sx={{ color: 'text.secondary' }}
-        >
-          {t('nav.settings')}
-        </Button>
-      </Stack>
+      {/* Настройки и разделы — в боковом меню каркаса (ADR-074). */}
+      <Typography variant="h1">{t('page.cabinet.title')}</Typography>
 
       {/* Охрана оболочки `_app` без сессии сюда не пускает: ветка нужна типу. */}
       {user !== null && (
@@ -82,8 +66,6 @@ function CabinetPage(): ReactNode {
 
           {/* Страница тренера строится на профиле игрока (ADR-059). */}
           {(user.playerId !== null || user.coach !== null) && <CoachDesk user={user} />}
-
-          {user.isAdmin && <AdminDesk />}
         </Stack>
       )}
     </Container>

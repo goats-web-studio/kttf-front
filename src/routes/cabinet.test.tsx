@@ -1,7 +1,7 @@
 import type { AuthUserView, PlayerProfileView, TournamentView } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
@@ -431,10 +431,12 @@ describe('кабинет — рабочий стол', () => {
     expect(create.getAttribute('href')).toBe(PROFILE);
   });
 
-  it('владельцу — клуб с ролью словом и созданием турнира', async () => {
+  it('владельцу — клуб в меню кабинета и создание турнира в его клубе (ADR-074)', async () => {
     renderAt(CABINET, USER_WITH_PROFILE);
 
-    expect(await screen.findByText(new RegExp(ru['club.role.OWNER']))).toBeDefined();
+    const nav = await screen.findByRole('navigation', { name: ru['cabinet.nav.label'] });
+    const club = await within(nav).findByRole('link', { name: CLUB.name });
+    expect(club.getAttribute('href')).toBe(`/cabinet/club/${CLUB.id}`);
 
     const create = await screen.findByRole('link', { name: ru['tournament.form.create'] });
     expect(create.getAttribute('href')).toContain(`club=${CLUB.id}`);
@@ -618,7 +620,9 @@ describe('справочник в кабинете', () => {
   it('администратору — ссылка на страны и города', async () => {
     renderAt(CABINET, ADMIN_USER);
 
-    const link = await screen.findByRole('link', { name: ru['page.places.title'] });
+    // Администрирование — пунктами бокового меню (ADR-074).
+    const nav = await screen.findByRole('navigation', { name: ru['cabinet.nav.label'] });
+    const link = within(nav).getByRole('link', { name: ru['page.places.title'] });
 
     expect(link.getAttribute('href')).toBe('/cabinet/places');
   });
@@ -647,7 +651,12 @@ describe('мои клубы у владельца', () => {
   it('администратору — заявки клубов, а не создание клуба', async () => {
     renderAt('/cabinet/clubs', { ...ADMIN_USER, clubRoles: USER_WITH_PROFILE.clubRoles });
 
-    const applications = await screen.findByRole('link', { name: ru['page.applications.title'] });
+    // Та же ссылка есть и в меню кабинета: проверяется раздел, а не меню.
+    const main = (await screen.findByRole('navigation', { name: ru['cabinet.nav.label'] }))
+      .nextElementSibling as HTMLElement;
+    const applications = await within(main).findByRole('link', {
+      name: ru['page.applications.title'],
+    });
 
     expect(applications.getAttribute('href')).toBe('/cabinet/applications');
     expect(screen.queryByRole('link', { name: ru['club.create'] })).toBeNull();

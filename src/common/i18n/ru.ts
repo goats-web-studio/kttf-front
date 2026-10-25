@@ -72,18 +72,12 @@ export const ru = {
   'nav.myProfile': 'Мой профиль',
   'nav.createProfile': 'Создать профиль игрока',
   'nav.settings': 'Настройки',
-  'page.settings.title': 'Настройки',
-  'settings.nav': 'Разделы настроек',
   'settings.profile.tab': 'Профиль игрока',
   'settings.account.tab': 'Аккаунт',
   'settings.profile.lead':
     'То, что видят другие на вашей странице игрока: фото, имя, клуб, анкета и инвентарь.',
   'settings.account.signIn': 'Вход и связь',
   'cabinet.clubs.all': 'Все клубы',
-  'cabinet.clubs.manage': 'Управление',
-  'cabinet.clubs.running': 'идут: {count}',
-  'cabinet.clubs.open': 'анонсов: {count}',
-  'cabinet.clubs.drafts': 'черновиков: {count}',
   'cabinet.tournaments.title': 'Турниры клубов',
   'cabinet.tournaments.recent': 'Недавно завершённые',
   'cabinet.player.title': 'Мой рейтинг',
@@ -1391,8 +1385,6 @@ export const ru = {
   'places.save': 'Сохранить',
   'places.cancel': 'Отмена',
   'cabinet.admin.title': 'Администрирование',
-  'cabinet.admin.lead':
-    'Заявки клубов с сайта, контент клубов, справочник стран и городов, каталог маркета.',
   'page.applications.title': 'Заявки клубов',
   'applications.lead':
     'Заявки с формы «Напишите нам», свежие сверху. Свяжитесь с клубом и отметьте заявку обработанной.',
@@ -1408,7 +1400,6 @@ export const ru = {
   'applications.fromAccount': 'Отправлена из аккаунта на сайте',
   'applications.forbidden.title': 'Заявки видит администратор платформы',
   'cabinet.admin.applications': 'Заявки клубов',
-  'cabinet.admin.applicationsNew': 'Заявки клубов · новых: {count}',
 
   // Маркет: каталог, страница товара, администрирование — ADR-058, docs/10.
   'nav.market': 'Маркет',
@@ -1995,7 +1986,6 @@ export const ru = {
   'player.form.coachOpen': 'Показать тренеров',
   'player.form.coachWithPage': 'Тренеры KTTF',
   'cabinet.admin.coaches': 'Заявки тренеров',
-  'cabinet.admin.coachesNew': 'Заявки тренеров: {count}',
   'applications.title': 'Заявки',
   'applications.tab.clubs': 'Клубы',
   'applications.tab.coaches': 'Тренеры',
@@ -2377,7 +2367,6 @@ export const ru = {
   'nav.menu.forum.new.title': 'Новая тема',
   'nav.menu.forum.new.text': 'Задать вопрос или начать обсуждение',
   'cabinet.admin.forum': 'Форум',
-  'cabinet.admin.forumNew': 'Форум · жалоб: {count}',
   'error.api.FORUM_PROFILE_REQUIRED':
     'Писать на форуме можно с профилем игрока — заполните его в настройках',
   'error.api.FORUM_MUTED': 'Модератор запретил вам писать на форуме',
@@ -2843,7 +2832,6 @@ export const ru = {
   'duel.admin.annulHint':
     'Обоим игрокам в журнал уйдут обратные записи с этой причиной. Последующие начисления не пересчитываются',
   'cabinet.admin.duels': 'Дуэли',
-  'cabinet.admin.duelsNew': 'Дуэли · споров: {count}',
   'profile.challenge': 'Вызвать на дуэль',
   'profile.chart.openDuel': 'Открыть дуэль',
   'player.history.duel': 'Дуэль с {name}',
@@ -3013,4 +3001,13 @@ export const ru = {
   'home.strip.find': 'Найти турнир',
   'home.strip.unrated.title': 'Уже играли? Найдите свой профиль с рейтингом',
   'home.strip.unrated.action': 'Найти себя',
+
+  // Кабинет с боковым меню — ADR-074.
+  'cabinet.nav.label': 'Разделы кабинета',
+  'cabinet.nav.overview': 'Обзор',
+  'cabinet.nav.player': 'Игрок',
+  'cabinet.nav.findProfile': 'Найти свой профиль',
+  'cabinet.nav.hidden': 'скрыт',
+  'cabinet.nav.referee': 'судья',
+  'cabinet.nav.coach': 'Тренер',
 } as const satisfies Record<string, string>;

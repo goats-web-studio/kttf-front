@@ -74,18 +74,12 @@ export const kk: Record<MessageKey, string> = {
   'nav.myProfile': 'Менің профилім',
   'nav.createProfile': 'Ойыншы профилін құру',
   'nav.settings': 'Баптаулар',
-  'page.settings.title': 'Баптаулар',
-  'settings.nav': 'Баптаулар бөлімдері',
   'settings.profile.tab': 'Ойыншы профилі',
   'settings.account.tab': 'Аккаунт',
   'settings.profile.lead':
     'Ойыншы бетіңізде басқалар көретін нәрсе: фото, аты-жөні, клуб, сауалнама және құрал-жабдық.',
   'settings.account.signIn': 'Кіру және байланыс',
   'cabinet.clubs.all': 'Барлық клубтар',
-  'cabinet.clubs.manage': 'Басқару',
-  'cabinet.clubs.running': 'жүріп жатыр: {count}',
-  'cabinet.clubs.open': 'анонс: {count}',
-  'cabinet.clubs.drafts': 'жоба: {count}',
   'cabinet.tournaments.title': 'Клуб турнирлері',
   'cabinet.tournaments.recent': 'Жақында аяқталғандар',
   'cabinet.player.title': 'Менің рейтингім',
@@ -1402,8 +1396,6 @@ export const kk: Record<MessageKey, string> = {
   'places.save': 'Сақтау',
   'places.cancel': 'Болдырмау',
   'cabinet.admin.title': 'Әкімшілік',
-  'cabinet.admin.lead':
-    'Сайттан келген клуб өтінімдері, клубтар контенті, елдер мен қалалар анықтамалығы, маркет каталогы.',
   'page.applications.title': 'Клуб өтінімдері',
   'applications.lead':
     '«Бізге жазыңыз» пішінінен келген өтінімдер, жаңалары жоғарыда. Клубпен байланысып, өтінімді өңделді деп белгілеңіз.',
@@ -1419,7 +1411,6 @@ export const kk: Record<MessageKey, string> = {
   'applications.fromAccount': 'Сайттағы аккаунттан жіберілді',
   'applications.forbidden.title': 'Өтінімдерді платформа әкімшісі көреді',
   'cabinet.admin.applications': 'Клуб өтінімдері',
-  'cabinet.admin.applicationsNew': 'Клуб өтінімдері · жаңа: {count}',
 
   // Маркет: каталог, страница товара, администрирование — ADR-058, docs/10.
   'nav.market': 'Маркет',
@@ -2011,7 +2002,6 @@ export const kk: Record<MessageKey, string> = {
   'player.form.coachOpen': 'Жаттықтырушыларды көрсету',
   'player.form.coachWithPage': 'KTTF жаттықтырушылары',
   'cabinet.admin.coaches': 'Жаттықтырушылардың өтінімдері',
-  'cabinet.admin.coachesNew': 'Жаттықтырушылардың өтінімдері: {count}',
   'applications.title': 'Өтінімдер',
   'applications.tab.clubs': 'Клубтар',
   'applications.tab.coaches': 'Жаттықтырушылар',
@@ -2395,7 +2385,6 @@ export const kk: Record<MessageKey, string> = {
   'nav.menu.forum.new.title': 'Жаңа тақырып',
   'nav.menu.forum.new.text': 'Сұрақ қою немесе талқылау бастау',
   'cabinet.admin.forum': 'Форум',
-  'cabinet.admin.forumNew': 'Форум · шағым: {count}',
   'error.api.FORUM_PROFILE_REQUIRED':
     'Форумда ойыншы профилімен ғана жазуға болады — оны баптауларда толтырыңыз',
   'error.api.FORUM_MUTED': 'Модератор сізге форумда жазуға тыйым салды',
@@ -2866,7 +2855,6 @@ export const kk: Record<MessageKey, string> = {
   'duel.admin.annulHint':
     'Екі ойыншының журналына осы себеппен кері жазбалар түседі. Кейінгі есептеулер қайта саналмайды',
   'cabinet.admin.duels': 'Дуэльдер',
-  'cabinet.admin.duelsNew': 'Дуэльдер · даулар: {count}',
   'profile.challenge': 'Дуэльге шақыру',
   'profile.chart.openDuel': 'Дуэльді ашу',
   'player.history.duel': '{name} ойыншысымен дуэль',
@@ -3039,4 +3027,13 @@ export const kk: Record<MessageKey, string> = {
   'home.strip.find': 'Турнир табу',
   'home.strip.unrated.title': 'Бұрын ойнадыңыз ба? Рейтингі бар профиліңізді табыңыз',
   'home.strip.unrated.action': 'Өзімді табу',
+
+  // Кабинет с боковым меню — ADR-074.
+  'cabinet.nav.label': 'Кабинет бөлімдері',
+  'cabinet.nav.overview': 'Шолу',
+  'cabinet.nav.player': 'Ойыншы',
+  'cabinet.nav.findProfile': 'Профиліңізді табу',
+  'cabinet.nav.hidden': 'жасырылған',
+  'cabinet.nav.referee': 'төреші',
+  'cabinet.nav.coach': 'Жаттықтырушы',
 };
