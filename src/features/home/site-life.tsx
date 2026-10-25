@@ -16,8 +16,6 @@ import { Birthdays } from '@/features/forum/sidebar';
 
 /** Тем в «Жизни на сайте» — как у RTTF, экран-полтора колонки. */
 const ACTIVE_TOPICS = 8;
-/** Новостей клубов и тренеров. */
-const NEWS = 5;
 /** Открытых вызовов и сыгранных дуэлей. */
 const DUELS = 4;
 
@@ -30,14 +28,14 @@ const rowSx = {
 
 /**
  * Правая колонка главной — «жизнь на сайте», как у RTTF (ADR-071): свежее на
- * форуме, новости клубов и тренеров, дуэли, дни рождения и два коротких
- * приглашения — клубам и тренерам. Пустые блоки не выводятся.
+ * форуме, дуэли, дни рождения и два коротких приглашения — клубам и
+ * тренерам. Новости клубов и тренеров — в ленте (ADR-073). Пустые блоки не
+ * выводятся.
  */
 export default function SiteLife(): ReactNode {
   return (
     <Box sx={{ display: 'grid', gap: 3, alignContent: 'start' }}>
       <ForumActivity />
-      <ClubNews />
       <Duels />
       <Birthdays />
       <PartnerBanner
@@ -81,35 +79,6 @@ function ForumActivity(): ReactNode {
   );
 }
 
-function ClubNews(): ReactNode {
-  const t = useT();
-  const news = useQuery(forumTopicsQuery({ section: 'news', sort: 'NEW', limit: NEWS }));
-
-  if ((news.data?.items.length ?? 0) === 0) return null;
-
-  return (
-    <Surface
-      flush
-      title={t('home.clubNews.title')}
-      action={
-        <Link href="/forum/news" variant="body2" underline="hover" sx={{ whiteSpace: 'nowrap' }}>
-          {t('home.clubNews.all')}
-        </Link>
-      }
-    >
-      <Box component="ul" sx={{ m: 0, p: 0 }} data-home-club-news>
-        {news.data?.items.map((topic) => (
-          <TopicLine key={topic.id} topic={topic} tag={topic.subject?.owner?.name ?? null} />
-        ))}
-      </Box>
-    </Surface>
-  );
-}
-
-/**
- * Строка темы: метка, заголовок, ответы и кто писал последним. Метка серая:
- * красный на главной — у действий и «live», а не у каждой строки (07, 1.3).
- */
 function TopicLine({
   topic,
   tag,

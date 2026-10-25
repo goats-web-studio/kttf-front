@@ -9,6 +9,8 @@ import { fill, formatDate, formatTime, useLocale, useT } from '@/common/i18n';
 import { Reveal } from '@/common/ui/motion';
 import RatingCapBadge from '@/features/tournaments/rating-cap-badge';
 
+import { railSx } from './rail';
+
 /** Цвет точки места — медаль, как в профиле игрока. */
 const MEDAL = ['var(--gold)', 'var(--silver)', 'var(--bronze)'] as const;
 
@@ -22,16 +24,13 @@ export default function Podiums({ items }: { readonly items: readonly HomePodium
     <Box
       component="ul"
       data-home-podiums
+      // На телефоне — ряд с прокруткой вбок и краешком следующей карточки:
+      // столбик из шести карточек уводил ленту на три экрана вниз.
       sx={{
-        m: 0,
-        p: 0,
-        listStyle: 'none',
-        display: 'grid',
+        ...railSx({ sm: 2, md: 2 }),
         gap: 1.5,
-        // На телефоне карточки идут столбиком — хватает четырёх свежих.
-        '& > li:nth-of-type(n+5)': { display: { xs: 'none', sm: 'block' } },
         gridTemplateColumns: {
-          xs: 'minmax(0, 1fr)',
+          xs: 'none',
           sm: 'repeat(2, minmax(0, 1fr))',
           lg: 'repeat(3, minmax(0, 1fr))',
         },

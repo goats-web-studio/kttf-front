@@ -18,6 +18,7 @@ import { isMissingResource } from '@/common/api';
 import { fill, useT } from '@/common/i18n';
 import AdSlot from '@/common/ui/ad-slot';
 import { BackLink } from '@/common/ui/page-header';
+import FollowButton from '@/features/follows/follow-button';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -230,14 +231,23 @@ function ClubDetails({ club }: { readonly club: ClubView }): ReactNode {
               </Box>
             </Box>
           </Stack>
-          {isClubStaff(user, club.id) && (
-            <Button
-              href={`/cabinet/club/${club.id}?tab=page`}
-              startIcon={<Settings size={16} aria-hidden />}
-            >
-              {t('club.manage')}
-            </Button>
-          )}
+          <Stack
+            direction="row"
+            useFlexGap
+            spacing={1.5}
+            sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+          >
+            {/* Подписка — новости, акции и турниры клуба в ленте (ADR-073). */}
+            <FollowButton type="CLUB" id={club.id} />
+            {isClubStaff(user, club.id) && (
+              <Button
+                href={`/cabinet/club/${club.id}?tab=page`}
+                startIcon={<Settings size={16} aria-hidden />}
+              >
+                {t('club.manage')}
+              </Button>
+            )}
+          </Stack>
         </Stack>
 
         <Box sx={{ mt: 3 }}>

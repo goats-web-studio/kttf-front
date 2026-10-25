@@ -12,26 +12,22 @@ import { z } from 'zod';
 import { useLocale, useT } from '@/common/i18n';
 import { searchId } from '@/common/search';
 import AdSlot from '@/common/ui/ad-slot';
-import { Reveal } from '@/common/ui/motion';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
+import { useSessionStore } from '@/features/auth/session-store';
 import { clubCities } from '@/features/clubs/cities';
-import { clubDirectoryQuery, clubsQuery } from '@/features/clubs/queries';
-import { CoachCard } from '@/features/coaches/coach-cards';
-import { coachesQuery } from '@/features/coaches/queries';
+import { clubDirectoryQuery } from '@/features/clubs/queries';
+import FeedSection from '@/features/feed/feed-section';
+import FollowSuggestions from '@/features/follows/suggestions';
 import HeroPoster from '@/features/home/hero-poster';
 import HomeStats from '@/features/home/home-stats';
 import InterestTiles from '@/features/home/interest-tiles';
+import PersonalStrip from '@/features/home/personal-strip';
 import Podiums from '@/features/home/podiums';
-import PopularClubs from '@/features/home/popular-clubs';
-import { railSx } from '@/features/home/rail';
+import RatingLeaders from '@/features/home/rating-leaders';
 import SiteLife from '@/features/home/site-life';
 import { homePodiumsQuery } from '@/features/home/stats-queries';
-import TopPlayers from '@/features/home/top-players';
 import TournamentRail from '@/features/home/tournament-rail';
-import { CHOICE_PICKS, choiceQuery } from '@/features/market/players-choice-query';
-import ProductGrid from '@/features/market/product-grid';
-import { productsQuery } from '@/features/market/queries';
 
 /**
  * Город лидеров и город ближайших турниров — по идентификатору справочника
@@ -44,25 +40,23 @@ export const Route = createFileRoute('/_public/')({
   component: HomePage,
 });
 
-/** Клубов и тренеров — ряд по три в средней колонке; товаров — ряд по четыре. */
-const CLUBS = 3;
-const COACHES = 3;
-const GEAR = 4;
+/** Призёров в центре — два ряда по три: дальше уже архив, он в турнирах. */
+const PODIUMS = 6;
 
 /**
- * Главная — портал, как у RTTF (ADR-071): под постером бренда три колонки.
+ * Главная — ADR-071, ADR-073.
  *
- * Слева турниры строками: что идёт и что ближайшее по дням. В центре итоги
- * и цифры: призёры, статистика с лучшими победами, лидеры рейтинга, клубы,
- * тренеры, инвентарь. Справа «жизнь на сайте»: форум, новости клубов, дуэли,
- * дни рождения и короткие приглашения клубам и тренерам — подробные блоки
- * переехали на страницы клубов и тренеров.
+ * Гостю — постер бренда и плитки разделов: он пришёл узнать, что это.
+ * Вошедшему — личная полоса: рейтинг, уровень, куда записан.
+ *
+ * Ниже три колонки. Слева турниры строками: что идёт и что ближайшее по
+ * дням. В центре — интересное: итоги с призёрами, статистика и лучшие
+ * победы, под ними лента — новости и акции клубов и тренеров, новости
+ * KTTF, турниры, события и записи игроков. Справа — короткое: лидеры
+ * рейтинга, на кого подписаться, жизнь на форуме, дуэли, дни рождения.
  *
  * На планшете правая колонка встаёт под левую; на телефоне всё в одну
- * колонку: турниры, итоги, жизнь сайта.
- *
- * Места «популярного» — будущие рекламные: клубы, тренеры и товары стоят
- * в порядке каталога, пока нет тарифов (бэклог рекламы, `05-state` 5).
+ * колонку: турниры, итоги, лента, остальное.
  *
  * Пустой блок не показывается вовсе, а не пишет «нет данных»: на пилотной
  * базе главная иначе выглядела бы заброшенной.
@@ -72,15 +66,11 @@ function HomePage(): ReactNode {
   const locale = useLocale();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const user = useSessionStore((state) => state.user);
   const [period, setPeriod] = useState<HomeStatsPeriod>('MONTH');
 
   const clubs = useQuery(clubDirectoryQuery);
   const podiums = useQuery(homePodiumsQuery);
-  const popularClubs = useQuery(clubsQuery({ page: 1, limit: CLUBS }));
-  const coaches = useQuery(coachesQuery({ page: 1, limit: COACHES }));
-  // «Чем играют» — первая подборка «Выбора игроков» маркета, без планки.
-  const gear = useQuery(productsQuery(choiceQuery(CHOICE_PICKS[0], 'all')));
-  const gearItems = (gear.data?.items ?? []).filter((item) => item.playerCount > 0).slice(0, GEAR);
 
   const cities = useMemo(
     () => clubCities(clubs.data?.values() ?? [], locale),
@@ -97,29 +87,32 @@ function HomePage(): ReactNode {
 
   return (
     <>
-      <HeroPoster />
+      {user === null ? <HeroPoster /> : <PersonalStrip user={user} />}
 
       {/* Ширина — как у шапки и подвала: колонки встают ровно под логотип. */}
       <Container maxWidth="lg" sx={{ pb: { xs: 8, sm: 12 } }}>
-        {/* Плитки заходят на постер: первый экран и разделы — одно целое. */}
-        <Box component="section" sx={{ mt: { xs: -3, md: -5 }, position: 'relative' }}>
-          <Typography variant="h2" sx={VISUALLY_HIDDEN}>
-            {t('home.interests.title')}
-          </Typography>
-          <InterestTiles />
-        </Box>
+        {user === null && (
+          // Плитки заходят на постер: первый экран и разделы — одно целое.
+          <Box component="section" sx={{ mt: { xs: -3, md: -5 }, position: 'relative' }}>
+            <Typography variant="h2" sx={VISUALLY_HIDDEN}>
+              {t('home.interests.title')}
+            </Typography>
+            <InterestTiles />
+          </Box>
+        )}
 
         <Box
           data-home-portal
           sx={{
-            mt: { xs: 5, sm: 7 },
+            mt: user === null ? { xs: 5, sm: 7 } : { xs: 4, sm: 5 },
+            position: 'relative',
             display: 'grid',
             gap: { xs: 5, md: 3 },
             alignItems: 'start',
             gridTemplateColumns: {
               xs: 'minmax(0, 1fr)',
               md: '264px minmax(0, 1fr)',
-              lg: '264px minmax(0, 1fr) 280px',
+              lg: '264px minmax(0, 1fr) 300px',
             },
             // На планшете центр занимает обе строки; без `auto 1fr` первая
             // строка растягивалась бы под него, и между турнирами и жизнью
@@ -132,7 +125,16 @@ function HomePage(): ReactNode {
             },
           }}
         >
-          <Box component="aside" sx={{ gridArea: 'rail', minWidth: 0 }}>
+          <Box
+            component="aside"
+            sx={{
+              gridArea: 'rail',
+              minWidth: 0,
+              // Турниры под рукой, пока листается лента.
+              position: { lg: 'sticky' },
+              top: { lg: 88 },
+            }}
+          >
             <Typography variant="h2" sx={VISUALLY_HIDDEN}>
               {t('home.rail.title')}
             </Typography>
@@ -157,75 +159,31 @@ function HomePage(): ReactNode {
                   title={t('home.results.title')}
                   more={{ href: '/tournaments?status=RATED', label: t('home.results.all') }}
                 >
-                  <Podiums items={podiums.data?.items ?? []} />
+                  <Podiums items={(podiums.data?.items ?? []).slice(0, PODIUMS)} />
                 </Section>
               )
             )}
-
-            <AdSlot placement="home-feed" />
 
             <Section title={t('home.stats.title')}>
               <HomeStats period={period} onPeriod={setPeriod} />
             </Section>
 
-            <Section
-              title={t('home.top.title')}
-              more={{
-                href:
-                  search.city === undefined
-                    ? '/players'
-                    : `/players?${new URLSearchParams({ city: search.city }).toString()}`,
-                label: t('home.top.all'),
-              }}
-            >
-              <TopPlayers
-                city={search.city}
-                cities={cities}
-                onCity={(city) => {
-                  setSearch({ city });
-                }}
-              />
+            <AdSlot placement="home-feed" />
+
+            <Section title={t('feed.title')} more={{ href: '/forum', label: t('feed.forum') }}>
+              <FeedSection />
             </Section>
-
-            {(popularClubs.data?.items.length ?? 0) > 0 && (
-              <Section
-                title={t('home.popularClubs.title')}
-                more={{ href: '/clubs', label: t('home.popularClubs.all') }}
-              >
-                <PopularClubs clubs={popularClubs.data?.items ?? []} />
-              </Section>
-            )}
-
-            {(coaches.data?.items.length ?? 0) > 0 && (
-              <Section
-                title={t('home.coaches.title')}
-                more={{ href: '/trainings?view=coaches', label: t('home.coaches.all') }}
-              >
-                <Box component="ul" sx={railSx({ sm: 2, md: 3 })}>
-                  {coaches.data?.items.map((coach, index) => (
-                    <Reveal component="li" key={coach.id} delay={index * 60}>
-                      <CoachCard coach={coach} />
-                    </Reveal>
-                  ))}
-                </Box>
-              </Section>
-            )}
-
-            {gearItems.length > 0 && (
-              <Section
-                title={t('home.gear.title')}
-                more={{ href: '/market', label: t('home.gear.all') }}
-              >
-                <ProductGrid products={gearItems} showPlayers />
-              </Section>
-            )}
           </Stack>
 
           <Box component="aside" sx={{ gridArea: 'life', minWidth: 0 }}>
             <Typography variant="h2" sx={VISUALLY_HIDDEN}>
               {t('home.life.title')}
             </Typography>
-            <SiteLife />
+            <Box sx={{ display: 'grid', gap: 3, alignContent: 'start' }}>
+              <RatingLeaders />
+              <FollowSuggestions />
+              <SiteLife />
+            </Box>
           </Box>
         </Box>
       </Container>

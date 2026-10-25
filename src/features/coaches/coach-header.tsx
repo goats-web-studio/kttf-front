@@ -9,6 +9,7 @@ import { useMemo, type ReactNode } from 'react';
 
 import { fill, formatCount, formatMoney, useLocale, useT } from '@/common/i18n';
 import RatingValue from '@/common/ui/rating-value';
+import FollowButton from '@/features/follows/follow-button';
 import { usePlaceName } from '@/features/places/place-name';
 import ProfilePhoto from '@/features/players/profile-photo';
 
@@ -156,6 +157,13 @@ export default function CoachHeader({ coach }: { readonly coach: CoachView }): R
 
           {coach.headline !== null && (
             <Typography sx={{ mt: 2, fontWeight: 500, maxWidth: 620 }}>{coach.headline}</Typography>
+          )}
+
+          {/* Подписка — новости и акции тренера в ленте (ADR-073). */}
+          {coach.status === 'APPROVED' && (
+            <Box sx={{ mt: 2 }}>
+              <FollowButton type="COACH" id={coach.id} />
+            </Box>
           )}
 
           {badges.length > 0 && (

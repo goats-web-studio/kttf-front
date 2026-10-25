@@ -27,6 +27,8 @@ import LevelBadge from '@/common/ui/level-badge';
 import { LEVEL_NAME } from '@/common/ui/level-name';
 import RatingValue from '@/common/ui/rating-value';
 
+import FollowButton from '@/features/follows/follow-button';
+
 import FormStrip from './form-strip';
 import { playerName } from './player-name';
 import ProfilePhoto from './profile-photo';
@@ -166,8 +168,15 @@ export default function ProfileHeader({
               </Button>
             </Stack>
           ) : (
-            (onCompare !== undefined || challengeHref !== undefined) && (
-              <Stack direction="row" useFlexGap spacing={1} sx={{ mt: 2.5, flexWrap: 'wrap' }}>
+            (onCompare !== undefined || challengeHref !== undefined || player.confirmed) && (
+              <Stack
+                direction="row"
+                useFlexGap
+                spacing={1}
+                sx={{ mt: 2.5, flexWrap: 'wrap', alignItems: 'center' }}
+              >
+                {/* Подписка — медали и уровни игрока в ленте (ADR-073). */}
+                {player.confirmed && <FollowButton type="PLAYER" id={player.id} />}
                 {onCompare !== undefined && (
                   <Button
                     onClick={onCompare}
