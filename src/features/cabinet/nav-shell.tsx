@@ -151,7 +151,18 @@ function NavList({
     >
       {groups.map((group, index) =>
         group.items.length === 0 ? null : (
-          <Box key={group.title ?? `group-${String(index)}`} sx={{ display: 'grid', gap: 0.25 }}>
+          <Box
+            key={group.title ?? `group-${String(index)}`}
+            sx={{
+              display: 'grid',
+              gap: 0.25,
+              // Группа без заголовка в середине меню — под чертой: иначе её
+              // пункт читается как часть группы выше.
+              ...(group.title === null && index > 0
+                ? { mt: 1, pt: 1, borderTop: '1px solid var(--line)' }
+                : {}),
+            }}
+          >
             {group.title !== null && (
               <Typography
                 variant="caption"
