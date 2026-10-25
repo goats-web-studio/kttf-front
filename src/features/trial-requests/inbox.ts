@@ -33,7 +33,7 @@ export function inboxHref(inbox: TrialInbox): string {
 
 /** «Мои заявки» на рабочем столе — сюда ведёт уведомление об ответе. */
 export const MY_REQUESTS_ANCHOR = 'my-requests';
-export const MY_REQUESTS_HREF = `/cabinet#${MY_REQUESTS_ANCHOR}`;
+export const MY_REQUESTS_HREF = `/cabinet/trainings#${MY_REQUESTS_ANCHOR}`;
 
 export const TRIAL_STATUS_KEYS: Readonly<Record<TrialStatus, MessageKey>> = {
   NEW: 'trial.status.NEW',

@@ -38,6 +38,7 @@ import { searchTraining } from '@/features/coaches/trainings-search';
 import Gallery from '@/features/content/gallery';
 import { coachOwner } from '@/features/content/owner';
 import Posts from '@/features/content/posts';
+import PostsEditor from '@/features/content/posts-editor';
 import SubjectThread from '@/features/forum/subject-thread';
 
 const SECTION_GAP = { xs: 4, md: 6 };
@@ -151,7 +152,15 @@ function CoachDetails({ coach }: { readonly coach: CoachView }): ReactNode {
           На телефоне тот же порядок одной колонкой (07, 1.2). */}
       <Box data-coach-layout={desktop ? 'desktop' : 'phone'}>
         {services}
-        <Posts owner={owner} mt={SECTION_GAP} />
+        {/* Хозяин пишет новости и акции прямо со своей страницы (ADR-075):
+            тот же редактор, что в кабинете, на месте ленты записей. */}
+        {isOwner ? (
+          <Box sx={{ mt: SECTION_GAP }} data-coach-posts-editor>
+            <PostsEditor owner={owner} />
+          </Box>
+        ) : (
+          <Posts owner={owner} mt={SECTION_GAP} />
+        )}
         <FactRow>
           {[
             <QualificationBlock key="qualification" coach={coach} />,

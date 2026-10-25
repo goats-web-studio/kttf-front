@@ -172,14 +172,14 @@ describe('форма «Напишите нам»', () => {
 
 describe('заявки у администратора', () => {
   it('не администратору раздел закрыт и ничего не запрашивает', async () => {
-    renderAt('/cabinet/applications', USER_WITH_PROFILE);
+    renderAt('/admin/applications', USER_WITH_PROFILE);
 
     expect(await screen.findByText(ru['applications.forbidden.title'])).toBeDefined();
     expect(sent.some((request) => request.url.includes('/admin/'))).toBe(false);
   });
 
   it('новые заявки видны, «Обработано» уходит правкой статуса', async () => {
-    renderAt('/cabinet/applications', ADMIN_USER);
+    renderAt('/admin/applications', ADMIN_USER);
 
     expect(await screen.findByText(`${APPLICATION.clubName} · ${APPLICATION.city}`)).toBeDefined();
     expect(sent.some((request) => request.url.includes('status=NEW'))).toBe(true);

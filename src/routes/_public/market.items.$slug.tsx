@@ -132,7 +132,7 @@ function ProductDetails({ product }: { readonly product: ProductView }): ReactNo
       )}
       {user?.isAdmin === true && (
         <Button
-          href={`/cabinet/catalog?edit=${product.id}`}
+          href={`/admin/catalog?edit=${product.id}`}
           startIcon={<Settings size={16} aria-hidden />}
           sx={{ mt: 2, minHeight: 44 }}
         >

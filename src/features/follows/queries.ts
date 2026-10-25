@@ -1,7 +1,7 @@
 import type { FollowTarget } from '@kttf/shared/types';
 import { queryOptions } from '@tanstack/react-query';
 
-import { fetchFollowState, fetchFollowSuggestions } from './api';
+import { fetchFollowState, fetchFollowSuggestions, fetchMyFollows } from './api';
 
 export const followKeys = {
   all: ['follows'] as const,
@@ -26,3 +26,8 @@ export function followSuggestionsQuery(signedIn: boolean) {
     queryFn: () => fetchFollowSuggestions(SUGGESTIONS),
   });
 }
+
+export const myFollowsQuery = queryOptions({
+  queryKey: ['follows', 'mine'] as const,
+  queryFn: fetchMyFollows,
+});

@@ -617,14 +617,22 @@ describe('дата рождения', () => {
 
 /** Раздел администратора — ADR-046. */
 describe('справочник в кабинете', () => {
-  it('администратору — ссылка на страны и города', async () => {
+  it('администратору — вход в модуль администрирования, там — страны и города', async () => {
     renderAt(CABINET, ADMIN_USER);
 
-    // Администрирование — пунктами бокового меню (ADR-074).
+    // Администрирование — отдельным модулем (ADR-075): в меню кабинета одна ссылка.
     const nav = await screen.findByRole('navigation', { name: ru['cabinet.nav.label'] });
+    const admin = within(nav).getByRole('link', { name: ru['cabinet.admin.title'] });
+    expect(admin.getAttribute('href')).toBe('/admin');
+  });
+
+  it('в модуле администрирования — страны и города в меню', async () => {
+    renderAt('/admin', ADMIN_USER);
+
+    const nav = await screen.findByRole('navigation', { name: ru['admin.nav.label'] });
     const link = within(nav).getByRole('link', { name: ru['page.places.title'] });
 
-    expect(link.getAttribute('href')).toBe('/cabinet/places');
+    expect(link.getAttribute('href')).toBe('/admin/places');
   });
 
   it('остальным ссылки нет', async () => {
@@ -658,7 +666,7 @@ describe('мои клубы у владельца', () => {
       name: ru['page.applications.title'],
     });
 
-    expect(applications.getAttribute('href')).toBe('/cabinet/applications');
+    expect(applications.getAttribute('href')).toBe('/admin/applications');
     expect(screen.queryByRole('link', { name: ru['club.create'] })).toBeNull();
     expect(screen.queryByRole('heading', { name: ru['myClubs.more.title'] })).toBeNull();
   });

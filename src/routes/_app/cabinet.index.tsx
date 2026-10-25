@@ -11,6 +11,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import MyDuels from '@/features/duels/my-duels';
 import MyTrialRequests from '@/features/trial-requests/my-requests';
 
+import CabinetGuide from './-cabinet/cabinet-guide';
 import ClubDesk from './-cabinet/club-desk';
 import CoachDesk from './-cabinet/coach-desk';
 import PlayerDesk from './-cabinet/player-desk';
@@ -52,6 +53,9 @@ function CabinetPage(): ReactNode {
               </Button>
             </Surface>
           )}
+
+          {/* Что где лежит — мини-гид, пока не закрыли (ADR-075). */}
+          {user.playerId !== null && <CabinetGuide playerId={user.playerId} />}
 
           {user.clubRoles.length > 0 && <ClubDesk user={user} />}
 

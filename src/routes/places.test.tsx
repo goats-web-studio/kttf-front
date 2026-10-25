@@ -80,7 +80,7 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
 function renderPlaces(user: AuthUserView): void {
   useSessionStore.setState({ user, accessToken: 'access-token', isRestoring: false });
-  window.history.pushState({}, '', '/cabinet/places');
+  window.history.pushState({}, '', '/admin/places');
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createAppRouter({ queryClient, session: user });

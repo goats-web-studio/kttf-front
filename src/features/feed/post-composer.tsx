@@ -11,7 +11,7 @@ import Composer, { WriteGate } from '@/features/forum/composer';
 import { forumKeys, forumSectionsQuery } from '@/features/forum/queries';
 
 import { postTitle } from './labels';
-import { feedKeys } from './queries';
+import { feedKeys, wallKeys } from './queries';
 
 /**
  * «Поделиться» — запись игрока в ленту (ADR-073). Это тема раздела форума
@@ -74,6 +74,7 @@ export default function PostComposer(): ReactNode {
           onDone={() => {
             setOpen(false);
             void queryClient.invalidateQueries({ queryKey: feedKeys.all });
+            void queryClient.invalidateQueries({ queryKey: wallKeys.all });
             void queryClient.invalidateQueries({ queryKey: forumKeys.all });
           }}
           onCancel={() => {

@@ -810,7 +810,7 @@ describe('тренировки клуба', () => {
 
 describe('заявки тренеров у администратора', () => {
   it('по умолчанию — ждущие проверки; отклонить можно только с причиной', async () => {
-    renderAt('/cabinet/applications?tab=coaches', ADMIN_USER);
+    renderAt('/admin/applications?tab=coaches', ADMIN_USER);
 
     const card = await screen.findByRole('button', { name: ru['applications.coaches.reject'] });
     expect(requests('GET', '/admin/coaches?')[0]?.url).toContain('status=PENDING');
@@ -842,7 +842,7 @@ describe('заявки тренеров у администратора', () => 
         })),
       },
     ];
-    renderAt('/cabinet/applications?tab=coaches', ADMIN_USER);
+    renderAt('/admin/applications?tab=coaches', ADMIN_USER);
 
     fireEvent.click(await screen.findByRole('switch', { name: ru['coach.credential.verified'] }));
 

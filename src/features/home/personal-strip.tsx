@@ -2,7 +2,6 @@ import { ratingLevel } from '@kttf/shared/rating';
 import { MAX_PAGE_SIZE, type AuthUserView, type TournamentStatus } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -42,12 +41,24 @@ const AHEAD: ReadonlySet<TournamentStatus> = new Set<TournamentStatus>([
  * с красным свечением, крупное число рейтинга.
  */
 export default function PersonalStrip({ user }: { readonly user: AuthUserView }): ReactNode {
+  // Под постером бренда, заходя на него, как плитки у гостя (ADR-075):
+  // постер остаётся у всех, своё — сразу под ним.
   return (
-    <Atmosphere component="section" glow={[78, 30]}>
-      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 }, pb: { xs: 5, md: 7 } }}>
-        {user.playerId === null ? <NoProfile /> : <Player playerId={user.playerId} />}
-      </Container>
-    </Atmosphere>
+    <Box
+      component="section"
+      sx={{
+        position: 'relative',
+        borderRadius: 4,
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow-pop)',
+      }}
+    >
+      <Atmosphere glow={[82, 20]}>
+        <Box sx={{ px: { xs: 2.5, md: 4 }, py: { xs: 2.5, md: 3 } }}>
+          {user.playerId === null ? <NoProfile /> : <Player playerId={user.playerId} />}
+        </Box>
+      </Atmosphere>
+    </Box>
   );
 }
 

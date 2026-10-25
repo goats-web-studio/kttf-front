@@ -145,6 +145,8 @@ const TOURNAMENT_ROW: PlayerTournamentView = {
 };
 
 let summary = SUMMARY;
+/** Записи на стене игрока. */
+let wall: unknown[] = [];
 let bestWins = BEST_WINS;
 let tournaments: PlayerTournamentView[] = [TOURNAMENT_ROW];
 /** Всего турниров у игрока: больше страницы — появляется «Показать ещё». */
@@ -201,6 +203,11 @@ function answer(url: string): Response {
     return reply(pageOf([CLUB]));
   }
 
+  // Стена игрока (ADR-075) — пустая: её проверяют отдельно.
+  if (url.includes('/feed/players/')) {
+    return reply({ items: wall, total: wall.length, page: 1, limit: 10 });
+  }
+
   if (url.includes('/players/')) {
     return reply(profile);
   }
@@ -235,6 +242,7 @@ beforeEach(() => {
   history = RATING_HISTORY;
   missing = false;
   summary = SUMMARY;
+  wall = [];
   bestWins = BEST_WINS;
   profile = PLAYER_PROFILE;
   tournaments = [TOURNAMENT_ROW];
@@ -971,5 +979,58 @@ describe('анкета без рейтинга — ADR-072', () => {
     await waitFor(() => {
       expect(posts).toEqual([expect.stringContaining(`/players/${CANDIDATE.id}/claim`)]);
     });
+  });
+});
+
+describe('стена игрока — ADR-075', () => {
+  const POST = {
+    id: 'topic:00000000-0000-4000-8000-0000000000f1',
+    type: 'PLAYER_POST',
+    at: '2026-10-24T10:00:00.000Z',
+    source: {
+      kind: 'PLAYER',
+      id: PLAYER_ID,
+      name: playerName(PLAYERS.first),
+      imageUrl: null,
+      slug: null,
+    },
+    discussion: {
+      topicId: '00000000-0000-4000-8000-0000000000f1',
+      postId: '00000000-0000-4000-8000-0000000000f2',
+      comments: 2,
+      likes: 5,
+      views: 40,
+    },
+    pinned: false,
+    hidden: false,
+    title: 'Новая накладка',
+    excerpt: 'Поставил новую накладку, впечатления после турнира',
+    images: [],
+    archived: false,
+  };
+
+  it('чужая пустая стена не показывается', async () => {
+    const { container } = renderProfile();
+
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    expect(container.querySelector('[data-player-wall]')).toBeNull();
+  });
+
+  it('записи игрока — на его странице, без меню хозяина у постороннего', async () => {
+    wall = [POST];
+    const { container } = renderProfile();
+
+    expect(await screen.findByText(POST.excerpt)).toBeDefined();
+    expect(container.querySelector('[data-wall-actions]')).toBeNull();
+  });
+
+  it('у себя — меню «Изменить / В архив»', async () => {
+    wall = [POST];
+    renderProfile(PLAYER_ID, USER_WITH_PROFILE);
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['wall.actions'] }));
+
+    expect(await screen.findByRole('menuitem', { name: ru['wall.edit'] })).toBeDefined();
+    expect(screen.getByRole('menuitem', { name: ru['wall.archive'] })).toBeDefined();
   });
 });

@@ -72,7 +72,7 @@ function NewClubPage(): ReactNode {
             title={t('clubs.new.fromApplicationOnly.title')}
             text={t('clubs.new.fromApplicationOnly.text')}
             action={
-              <Button variant="contained" href="/cabinet/applications">
+              <Button variant="contained" href="/admin/applications">
                 {t('page.applications.title')}
               </Button>
             }

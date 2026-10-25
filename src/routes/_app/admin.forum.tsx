@@ -60,7 +60,7 @@ const searchSchema = z.object({
   page: z.coerce.number().int().positive().catch(1),
 });
 
-export const Route = createFileRoute('/_app/cabinet/forum')({
+export const Route = createFileRoute('/_app/admin/forum')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: ForumModerationPage,
 });

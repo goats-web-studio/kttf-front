@@ -365,7 +365,7 @@ describe('кабинет тренера: «Фото и видео»', () => {
 
 describe('модерация контента тренеров', () => {
   it('вкладка «Тренеры»: ссылка на страницу, «Скрыть» с причиной', async () => {
-    renderAt('/cabinet/content?tab=coaches', ADMIN_USER);
+    renderAt('/admin/content?tab=coaches', ADMIN_USER);
 
     const row = await waitFor(() => element(`[data-content-item="${POST.id}"]`));
     expect(within(row).getByRole('link', { name: 'Иванов Иван' }).getAttribute('href')).toBe(
@@ -388,7 +388,7 @@ describe('модерация контента тренеров', () => {
 
   it('скрытое — с причиной и «Вернуть»; вкладка «Клубы» — прежняя лента', async () => {
     feed = [{ ...COACH_ITEM, kind: 'MEDIA', hidden: true, hiddenReason: 'чужое фото' }];
-    renderAt('/cabinet/content?tab=coaches', ADMIN_USER);
+    renderAt('/admin/content?tab=coaches', ADMIN_USER);
 
     const row = await waitFor(() => element(`[data-content-item="${POST.id}"]`));
     expect(row.textContent).toContain(`${ru['manage.content.hidden']}: чужое фото`);

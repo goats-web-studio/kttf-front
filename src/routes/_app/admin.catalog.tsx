@@ -38,7 +38,7 @@ const searchSchema = z.object({
   edit: z.coerce.string().trim().min(1).max(200).optional().catch(undefined),
 });
 
-export const Route = createFileRoute('/_app/cabinet/catalog')({
+export const Route = createFileRoute('/_app/admin/catalog')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: CatalogPage,
 });

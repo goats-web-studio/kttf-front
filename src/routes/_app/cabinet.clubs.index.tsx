@@ -43,7 +43,7 @@ function MyClubsPage(): ReactNode {
   // Клуб заводится только из заявки (ADR-049): администратор — разбирая
   // заявки, остальные — подавая её.
   const newClub = (
-    <Button variant="contained" href={isAdmin ? '/cabinet/applications' : '/feedback'}>
+    <Button variant="contained" href={isAdmin ? '/admin/applications' : '/feedback'}>
       {t(isAdmin ? 'page.applications.title' : 'clubs.apply')}
     </Button>
   );

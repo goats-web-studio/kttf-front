@@ -235,7 +235,7 @@ function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
           </MenuItem>
         )}
         {user.isAdmin && (
-          <MenuItem component={RouterLink} href="/cabinet/applications" {...item}>
+          <MenuItem component={RouterLink} href="/admin" {...item}>
             {t('nav.admin')}
           </MenuItem>
         )}

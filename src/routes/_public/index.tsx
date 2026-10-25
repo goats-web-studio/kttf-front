@@ -87,24 +87,29 @@ function HomePage(): ReactNode {
 
   return (
     <>
-      {user === null ? <HeroPoster /> : <PersonalStrip user={user} />}
+      {/* Постер бренда — у всех (ADR-075); у вошедшего под ним своё, у гостя — разделы. */}
+      <HeroPoster />
 
       {/* Ширина — как у шапки и подвала: колонки встают ровно под логотип. */}
       <Container maxWidth="lg" sx={{ pb: { xs: 8, sm: 12 } }}>
-        {user === null && (
-          // Плитки заходят на постер: первый экран и разделы — одно целое.
-          <Box component="section" sx={{ mt: { xs: -3, md: -5 }, position: 'relative' }}>
-            <Typography variant="h2" sx={VISUALLY_HIDDEN}>
-              {t('home.interests.title')}
-            </Typography>
-            <InterestTiles />
-          </Box>
-        )}
+        {/* Плитки и личная полоса заходят на постер: первый экран — одно целое. */}
+        <Box component="section" sx={{ mt: { xs: -3, md: -5 }, position: 'relative' }}>
+          {user === null ? (
+            <>
+              <Typography variant="h2" sx={VISUALLY_HIDDEN}>
+                {t('home.interests.title')}
+              </Typography>
+              <InterestTiles />
+            </>
+          ) : (
+            <PersonalStrip user={user} />
+          )}
+        </Box>
 
         <Box
           data-home-portal
           sx={{
-            mt: user === null ? { xs: 5, sm: 7 } : { xs: 4, sm: 5 },
+            mt: { xs: 5, sm: 7 },
             position: 'relative',
             display: 'grid',
             gap: { xs: 5, md: 3 },

@@ -46,7 +46,7 @@ const searchSchema = z.object({
   page: z.coerce.number().int().positive().catch(1),
 });
 
-export const Route = createFileRoute('/_app/cabinet/applications')({
+export const Route = createFileRoute('/_app/admin/applications')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
   component: ApplicationsPage,
 });

@@ -14,7 +14,7 @@ import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { Eye, Heart, MessageSquare, TrendingUp, Trophy } from 'lucide-react';
+import { Eye, Heart, MessageSquare, Pin, TrendingUp, Trophy } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import {
@@ -53,10 +53,13 @@ function postImage(url: string): string {
 export default function FeedCard({
   item,
   also = [],
+  actions,
 }: {
   readonly item: FeedItem;
   /** Следующие достижения того же игрока — одной карточкой (`foldAchievements`). */
   readonly also?: readonly FeedAchievementItem[];
+  /** Кнопки владельца или администратора — справа в шапке карточки. */
+  readonly actions?: ReactNode;
 }): ReactNode {
   return (
     <Paper
@@ -65,7 +68,7 @@ export default function FeedCard({
       data-feed-item={item.type}
       sx={{ p: { xs: 2, sm: 2.5 }, overflow: 'hidden' }}
     >
-      <CardHead item={item} />
+      <CardHead item={item} actions={actions} />
       <Box sx={{ mt: 1.5 }}>
         {item.type === 'POST' && <PostBody item={item} />}
         {(item.type === 'PORTAL' || item.type === 'PLAYER_POST') && <TopicBody item={item} />}
@@ -93,7 +96,13 @@ const TAG_KEYS: Readonly<Record<FeedItem['type'], MessageKey>> = {
   ACHIEVEMENT: 'feed.tag.achievement',
 };
 
-function CardHead({ item }: { readonly item: FeedItem }): ReactNode {
+function CardHead({
+  item,
+  actions,
+}: {
+  readonly item: FeedItem;
+  readonly actions: ReactNode;
+}): ReactNode {
   const t = useT();
   const locale = useLocale();
   const href = sourceHref(item.source);
@@ -120,8 +129,14 @@ function CardHead({ item }: { readonly item: FeedItem }): ReactNode {
         )}
         <Typography variant="caption" color="text.secondary" component="p" noWrap>
           {t(promo ? 'feed.tag.promo' : TAG_KEYS[item.type])} · {formatAgo(item.at, locale)}
+          {item.pinned && ` · ${t('feed.pinned')}`}
+          {item.hidden && ` · ${t('feed.hidden')}`}
         </Typography>
       </Box>
+      {item.pinned && (
+        <Pin size={16} aria-hidden style={{ flexShrink: 0, color: 'var(--red-600)' }} />
+      )}
+      {actions}
     </Stack>
   );
 }

@@ -15,6 +15,7 @@ import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { newDuelHref } from '@/features/duels/labels';
+import PlayerWall from '@/features/feed/player-wall';
 import PlayerForumPosts from '@/features/forum/player-posts';
 import { usePlaceName } from '@/features/places/place-name';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -202,6 +203,13 @@ function PlayerPage(): ReactNode {
             onSelectOpponent={setOpponentId}
           />
         </Stack>
+      )}
+
+      {/* Стена — записи игрока после результатов, форумная жизнь — ниже (ADR-075). */}
+      {player.data !== undefined && (
+        <Box sx={{ mt: { xs: 5, md: 6 } }}>
+          <PlayerWall playerId={playerId} own={isOwn} />
+        </Box>
       )}
 
       {/* Сообщения на форуме — после истории игры (ADR-064, F2). */}

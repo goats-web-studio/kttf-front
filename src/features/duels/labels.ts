@@ -17,7 +17,7 @@ type T = (key: MessageKey) => string;
 
 /** Адреса дуэлей — `docs/13` 5. */
 export const DUELS_HREF = '/duels';
-export const MY_DUELS_HREF = '/duels/mine';
+export const MY_DUELS_HREF = '/cabinet/duels';
 
 export const duelHref = (duelId: string): string => `/duels/${duelId}`;
 

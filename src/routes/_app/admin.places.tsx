@@ -26,7 +26,7 @@ import { usePlaceName } from '@/features/places/place-name';
 import PlaceTable from '@/features/places/place-table';
 import { adminCitiesQuery, adminCountriesQuery, placeKeys } from '@/features/places/queries';
 
-export const Route = createFileRoute('/_app/cabinet/places')({
+export const Route = createFileRoute('/_app/admin/places')({
   component: PlacesPage,
 });
 

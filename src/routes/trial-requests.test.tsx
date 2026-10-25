@@ -436,7 +436,7 @@ describe('уведомления', () => {
     renderAt('/notifications', USER_WITHOUT_PROFILE);
 
     const answered = await waitFor(() => element(`[data-notification="${NOTE_ANSWERED.id}"]`));
-    expect(answered.getAttribute('href')).toBe('/cabinet#my-requests');
+    expect(answered.getAttribute('href')).toBe('/cabinet/trainings#my-requests');
     expect(answered.getAttribute('data-unread')).toBeNull();
     expect(answered.textContent).toContain(
       fill(ru['notifications.TRIAL_REQUEST_ACCEPTED'], {

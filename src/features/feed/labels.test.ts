@@ -15,6 +15,8 @@ function medal(id: string, playerId: string): FeedItem {
     at: '2026-10-18T12:00:00.000Z',
     source: player(playerId),
     discussion: null,
+    pinned: false,
+    hidden: false,
     achievement: { kind: 'MEDAL', place: 1, tournament },
   };
 }
@@ -25,6 +27,8 @@ const result: FeedItem = {
   at: '2026-10-18T12:00:00.000Z',
   source: { kind: 'CLUB', id: 'c-1', name: 'KTTF Тест', imageUrl: null, slug: null },
   discussion: null,
+  pinned: false,
+  hidden: false,
   tournament: { ...tournament, club: { id: 'c-1', name: 'KTTF Тест' } },
   participants: 8,
   places: [],

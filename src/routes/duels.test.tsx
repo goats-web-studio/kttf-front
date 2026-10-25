@@ -713,7 +713,7 @@ describe('«Мои дуэли»', () => {
       opponent: ME_PLAYER,
     };
     mine = [{ ...OPEN_ITEM, author: ME_PLAYER, responsesNew: 0 }, waiting];
-    renderAt('/duels/mine');
+    renderAt('/cabinet/duels');
 
     await waitFor(() => element(`[data-my-duel="${waiting.id}"]`));
     const rows = [...document.querySelectorAll('[data-my-duel]')];
@@ -737,7 +737,7 @@ describe('дуэли в админке', () => {
 
   it('пометки с объяснением, число встреч пары; «Решить спор» шлёт счёт и комментарий', async () => {
     admin = [DISPUTED];
-    renderAt('/cabinet/duels', ADMIN_USER);
+    renderAt('/admin/duels', ADMIN_USER);
 
     const card = await waitFor(() => element(`[data-admin-duel="${DUEL_ID}"]`));
     expect(within(card).getByText(ru['duel.flag.PAIR_FREQUENT.hint'])).toBeDefined();
@@ -762,7 +762,7 @@ describe('дуэли в админке', () => {
   });
 
   it('фильтр «С пометками» — в адрес и в запрос', async () => {
-    const router = renderAt('/cabinet/duels', ADMIN_USER);
+    const router = renderAt('/admin/duels', ADMIN_USER);
 
     fireEvent.click(await screen.findByRole('radio', { name: ru['duel.admin.flagged'] }));
     await waitFor(() => {
@@ -774,7 +774,7 @@ describe('дуэли в админке', () => {
   });
 
   it('не администратору — отказ без запроса очереди', async () => {
-    renderAt('/cabinet/duels');
+    renderAt('/admin/duels');
 
     expect(await screen.findByText(ru['error.api.FORBIDDEN'])).toBeDefined();
     expect(requests('GET', '/admin/duels')).toHaveLength(0);
