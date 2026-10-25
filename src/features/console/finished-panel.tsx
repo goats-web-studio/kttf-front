@@ -13,6 +13,7 @@ import { fill, useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 
 import PlacesList from './places-list';
+import { actualDeltas } from './state';
 import { consoleResultsQuery } from './use-console';
 
 interface FinishedPanelProps {
@@ -145,6 +146,8 @@ export default function FinishedPanel({
                 participants={results.data.participants.filter(
                   (participant) => participant.place !== null && participant.place <= PODIUM,
                 )}
+                // Начисленное — по журналу (ADR-077).
+                {...(rated ? { deltas: actualDeltas(results.data.ratings) } : {})}
               />
             )}
           </QueryState>

@@ -7,6 +7,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { ChevronLeft, Copy, SlidersHorizontal, Tv, Users } from 'lucide-react';
 import { lazy, Suspense, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -32,12 +33,12 @@ import {
 import QueueZone from '@/features/console/queue-zone';
 import { matchSetsToWin } from '@/features/console/score';
 import StandingsPanel from '@/features/console/standings-panel';
-import { namesOf, ratingsOf, withdrawnOf } from '@/features/console/state';
+import { actualDeltas, deltasOf, namesOf, ratingsOf, withdrawnOf } from '@/features/console/state';
 import SyncBadge, { SyncRejections } from '@/features/console/sync-badge';
 import TableDialog from '@/features/console/table-dialog';
 import TablesZone from '@/features/console/tables-zone';
 import TiePanel from '@/features/console/tie-panel';
-import { useConsole } from '@/features/console/use-console';
+import { consoleResultsQuery, useConsole } from '@/features/console/use-console';
 import { useNow } from '@/features/console/use-now';
 
 /**
@@ -128,6 +129,8 @@ function ConsoleScreen(): ReactNode {
       suggested: suggestedTable(tables),
       names: namesOf(snapshot),
       ratings: ratingsOf(snapshot),
+      // Прогноз рейтинга по сыгранному — ADR-077.
+      deltas: deltasOf(snapshot),
       progress: progressOf(snapshot.stages, withdrawn),
       done: allPlayed(snapshot.stages, withdrawn),
       bracket: hasBracket(snapshot.stages),
@@ -137,6 +140,14 @@ function ConsoleScreen(): ReactNode {
       ),
     };
   }, [snapshot, t]);
+
+  // После начисления — фактическая дельта из журнала, до него — прогноз.
+  const rated = snapshot?.tournament.status === 'RATED';
+  const ratedResults = useQuery({ ...consoleResultsQuery(tournamentId), enabled: rated });
+  const deltas =
+    rated && ratedResults.data !== undefined
+      ? actualDeltas(ratedResults.data.ratings)
+      : view?.deltas;
 
   function setsToWinOf(match: MatchView): number {
     const stage = snapshot?.stages.find((current) => current.id === match.stageId);
@@ -516,6 +527,7 @@ function ConsoleScreen(): ReactNode {
                         stages={snapshot.stages}
                         names={view.names}
                         ratings={view.ratings}
+                        {...(deltas === undefined ? {} : { deltas })}
                         advance={advanceOf(snapshot.tournament.formatConfig)}
                       />
                     </>
@@ -582,6 +594,7 @@ function ConsoleScreen(): ReactNode {
       {confirming && running && (
         <FinishDialog
           tournamentId={tournamentId}
+          project={(placements) => deltasOf(snapshot, placements)}
           isPending={finish.isPending}
           error={finish.error}
           onConfirm={() => {

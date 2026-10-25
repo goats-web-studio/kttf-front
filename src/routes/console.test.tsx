@@ -466,3 +466,36 @@ describe('завершение турнира', () => {
     expect(back.getAttribute('href')).toBe(`/tournaments/${TOURNAMENT_ID}`);
   });
 });
+
+describe('изменение рейтинга в таблице — ADR-077', () => {
+  it('у сыгравших — прогноз дельты, у не игравших — прочерк', async () => {
+    const stage = CONSOLE_SNAPSHOT.stages[0];
+    const first = stage?.matches[0];
+    if (stage === undefined || first === undefined) throw new Error('фикстура без встречи');
+
+    snapshot = {
+      ...CONSOLE_SNAPSHOT,
+      stages: [
+        {
+          ...stage,
+          matches: stage.matches.map((match) =>
+            match.id === first.id
+              ? // Слабый обыграл сильного: при разрыве больше 100 победа фаворита дельты не даёт.
+                { ...match, status: 'FINISHED', setsA: 1, setsB: 3, resultType: 'NORMAL' }
+              : match,
+          ),
+        },
+        ...CONSOLE_SNAPSHOT.stages.slice(1),
+      ],
+    };
+
+    renderConsole();
+
+    await screen.findByRole('heading', { name: ru['console.standings.title'] });
+    const cells = [...document.querySelectorAll('[data-delta]')].map((cell) => cell.textContent);
+
+    // Проигравший сильный — в минусе; кто ещё не играл рейтинговых — прочерк.
+    expect(cells).toContain('-7.00');
+    expect(cells).toContain('—');
+  });
+});

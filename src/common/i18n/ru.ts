@@ -1096,6 +1096,13 @@ export const ru = {
   'console.participants.close': 'Готово',
   'console.participants.offline':
     'Состав меняется только при сети: добавление, замена и снятие уходят на сервер сразу. Счёт можно вносить и без сети.',
+  'console.standings.delta': '±',
+  'console.standings.deltaHint':
+    'Изменение рейтинга по турниру: прогноз по сыгранному, после начисления — начисленное',
+  'console.finish.deltaHint':
+    'Справа — изменение рейтинга, которое начислится, с бонусом призёрам. Техпобеды и неявки рейтинг не двигают.',
+  'console.places.withdrawn': 'снялся',
+  'console.places.noShow': 'не явился',
   'console.settings.open': 'Столы и длины',
   'console.settings.title': 'Настройки по ходу турнира',
   'console.settings.lead': 'Жеребьёвка не меняется. Сыгранное остаётся как есть.',

@@ -19,6 +19,13 @@ interface FinishDialogProps {
   readonly error: unknown;
   readonly onConfirm: () => void;
   readonly onClose: () => void;
+  /**
+   * Прогноз рейтинга по местам — ADR-077: с бонусом призёрам он совпадает
+   * с тем, что начислится. Организатор видит дельты до «Завершить».
+   */
+  readonly project: (
+    placements: readonly { readonly playerId: string; readonly place: number }[],
+  ) => ReadonlyMap<string, number>;
 }
 
 /**
@@ -35,6 +42,7 @@ export default function FinishDialog({
   error,
   onConfirm,
   onClose,
+  project,
 }: FinishDialogProps): ReactNode {
   const t = useT();
   const results = useQuery(consoleResultsQuery(tournamentId));
@@ -65,7 +73,19 @@ export default function FinishDialog({
                   {t('console.finish.ties')}
                 </Alert>
               )}
-              <PlacesList participants={results.data.participants} />
+              <PlacesList
+                participants={results.data.participants}
+                deltas={project(
+                  results.data.participants.flatMap((participant) =>
+                    participant.place !== null && participant.place <= 3
+                      ? [{ playerId: participant.player.id, place: participant.place }]
+                      : [],
+                  ),
+                )}
+              />
+              <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 1 }}>
+                {t('console.finish.deltaHint')}
+              </Typography>
             </DialogSection>
           )}
         </QueryState>

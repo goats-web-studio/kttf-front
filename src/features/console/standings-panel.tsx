@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
+import DeltaPill from '@/common/ui/delta-pill';
 import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 
 import { matchesOf } from './group-matches';
@@ -19,6 +20,11 @@ interface StandingsPanelProps {
   readonly stages: readonly StageView[];
   readonly names: ReadonlyMap<string, string>;
   readonly ratings: ReadonlyMap<string, string>;
+  /**
+   * Изменение рейтинга по турниру — ADR-077: прогноз по сыгранному, после
+   * начисления — фактическое. Нет в карте — пока не сыграл рейтинговых.
+   */
+  readonly deltas?: ReadonlyMap<string, number>;
   /** Сколько выходит из группы дальше; `null` — схема без выхода. */
   readonly advance?: number | null;
 }
@@ -31,14 +37,17 @@ interface StandingsPanelProps {
  * в её чанки (ADR-004). Здесь и содержание другое — матрица «каждый с
  * каждым» и рейтинг рядом с фамилией, которые нужны судье, а не зрителю.
  *
- * Ни одно число не считается: всё приходит от сервера, посчитанное общим
- * движком. Второй расчёт таблицы на клиенте — запрет №2 брифа.
+ * Таблица не считается: всё приходит от сервера, посчитанное общим
+ * движком. Второй расчёт таблицы на клиенте — запрет №2 брифа. Дельта
+ * рейтинга — прогноз тем же общим движком рейтинга (ADR-077), после
+ * начисления её заменяет фактическая.
  */
 export default function StandingsPanel({
   groups,
   stages,
   names,
   ratings,
+  deltas,
   advance = null,
 }: StandingsPanelProps): ReactNode {
   const t = useT();
@@ -60,6 +69,7 @@ export default function StandingsPanel({
           matches={matchesOf(stages, group)}
           names={names}
           ratings={ratings}
+          deltas={deltas}
           advance={advance}
         />
       ))}
@@ -98,12 +108,14 @@ function GroupTable({
   matches,
   names,
   ratings,
+  deltas,
   advance,
 }: {
   readonly group: GroupStandingsView;
   readonly matches: readonly MatchView[];
   readonly names: ReadonlyMap<string, string>;
   readonly ratings: ReadonlyMap<string, string>;
+  readonly deltas: ReadonlyMap<string, number> | undefined;
   readonly advance: number | null;
 }): ReactNode {
   const t = useT();
@@ -170,6 +182,13 @@ function GroupTable({
             <TableCell scope="col" align="center" sx={{ width: 56 }}>
               {t('console.standings.sets')}
             </TableCell>
+            {deltas !== undefined && (
+              <TableCell scope="col" align="center" sx={{ width: 72 }}>
+                <abbr title={t('console.standings.deltaHint')} style={{ textDecoration: 'none' }}>
+                  {t('console.standings.delta')}
+                </abbr>
+              </TableCell>
+            )}
           </TableRow>
         </TableHead>
         <TableBody>
@@ -237,6 +256,17 @@ function GroupTable({
                 <TableCell align="center" sx={{ fontSize: 14 }}>
                   {row.setsWon}:{row.setsLost}
                 </TableCell>
+                {deltas !== undefined && (
+                  <TableCell align="center" data-delta>
+                    {deltas.has(row.participant) ? (
+                      <DeltaPill value={String(deltas.get(row.participant) ?? 0)} />
+                    ) : (
+                      <Box component="span" sx={{ color: 'text.disabled' }}>
+                        —
+                      </Box>
+                    )}
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

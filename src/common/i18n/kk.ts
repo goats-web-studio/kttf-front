@@ -1108,6 +1108,13 @@ export const kk: Record<MessageKey, string> = {
   'console.participants.close': 'Дайын',
   'console.participants.offline':
     'Құрам тек желі болғанда өзгереді: қосу, ауыстыру және шығару серверге бірден кетеді. Есепті желісіз де енгізуге болады.',
+  'console.standings.delta': '±',
+  'console.standings.deltaHint':
+    'Турнир бойынша рейтинг өзгерісі: ойналғаны бойынша болжам, есептелгеннен кейін — есептелгені',
+  'console.finish.deltaHint':
+    'Оң жақта — есептелетін рейтинг өзгерісі, жүлдегерлерге бонуспен. Техникалық жеңістер мен келмеу рейтингті қозғамайды.',
+  'console.places.withdrawn': 'шықты',
+  'console.places.noShow': 'келмеді',
   'console.settings.open': 'Үстелдер мен ұзақтық',
   'console.settings.title': 'Турнир барысындағы баптаулар',
   'console.settings.lead': 'Жеребе өзгермейді. Ойналғаны сол күйінде қалады.',

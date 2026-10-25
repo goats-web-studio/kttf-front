@@ -5,6 +5,8 @@ import type {
   TournamentSnapshotView,
 } from '@kttf/shared/types';
 
+import { projectDeltas, type RatedPlacement } from '@kttf/shared/rating';
+
 import { formatRating } from '@/common/i18n';
 
 /**
@@ -149,5 +151,52 @@ export function ratingsOf(state: TournamentSnapshotView): ReadonlyMap<string, st
       registration.player.id,
       formatRating(registration.ratingAtStart ?? registration.player.rating),
     ]),
+  );
+}
+
+/**
+ * Прогноз изменения рейтинга — ADR-077: тот же движок, что начислит рейтинг
+ * при завершении, на уже сыгранном. С местами призёров — вместе с бонусом.
+ * Организатор видит дельту каждого по ходу турнира, а не только в конце.
+ */
+export function deltasOf(
+  state: TournamentSnapshotView,
+  placements: readonly RatedPlacement[] = [],
+): ReadonlyMap<string, number> {
+  const participants = state.registrations.map((registration) => ({
+    playerId: registration.player.id,
+    isRated: registration.isRated,
+    ratingAtStart: registration.ratingAtStart === null ? null : Number(registration.ratingAtStart),
+    matchesAtStart: registration.matchesAtStart ?? registration.player.ratedMatches,
+    tournamentsAtStart: registration.tournamentsAtStart ?? 0,
+  }));
+  const matches = state.stages.flatMap((stage) =>
+    stage.matches
+      .filter((match) => match.status !== 'CANCELLED')
+      .map((match) => ({
+        id: match.id,
+        a: match.playerAId,
+        b: match.playerBId,
+        setsA: match.setsA,
+        setsB: match.setsB,
+        resultType: match.resultType ?? 'NORMAL',
+      })),
+  );
+
+  return projectDeltas(participants, matches, placements);
+}
+
+/** Начисленное изменение рейтинга по участнику — из итогов турнира. */
+export function actualDeltas(
+  ratings: readonly {
+    readonly playerId: string;
+    readonly totalDelta: string;
+    readonly ratingAfter: string | null;
+  }[],
+): ReadonlyMap<string, number> {
+  return new Map(
+    ratings.flatMap((row) =>
+      row.ratingAfter === null ? [] : [[row.playerId, Number(row.totalDelta)] as const],
+    ),
   );
 }
