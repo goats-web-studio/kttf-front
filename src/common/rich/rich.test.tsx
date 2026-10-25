@@ -49,7 +49,7 @@ function Field({ initial }: { readonly initial: string }): ReactNode {
 describe('редактор — ADR-076', () => {
   it('«Ж» оборачивает выделение в жирный', () => {
     render(<Field initial="важно" />);
-    const field = screen.getByRole('textbox', { name: 'Текст' }) as HTMLTextAreaElement;
+    const field = screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Текст' });
     field.setSelectionRange(0, 5);
 
     fireEvent.click(screen.getByRole('button', { name: ru['rich.bold'] }));
@@ -59,7 +59,7 @@ describe('редактор — ADR-076', () => {
 
   it('список — маркер в начало строк выделения', () => {
     render(<Field initial={'дети\nвзрослые'} />);
-    const field = screen.getByRole('textbox', { name: 'Текст' }) as HTMLTextAreaElement;
+    const field = screen.getByRole<HTMLTextAreaElement>('textbox', { name: 'Текст' });
     field.setSelectionRange(0, field.value.length);
 
     fireEvent.click(screen.getByRole('button', { name: ru['rich.bullets'] }));

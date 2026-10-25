@@ -15,7 +15,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
 import { ImagePlus, X } from 'lucide-react';
-import { forwardRef, useId, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useId, useRef, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
 import RichField from '@/common/rich/rich-field';
@@ -158,9 +158,10 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
 ) {
   const t = useT();
   const fileId = useId();
-  // Поле наружу — «Цитировать» ставит в него курсор.
+  // Поле наружу — «Цитировать» ставит в него курсор: ссылку снаружи поле
+  // получает как есть, без своей.
   const field = useRef<HTMLTextAreaElement | null>(null);
-  useImperativeHandle(ref, () => field.current!);
+  const fieldRef = typeof ref === 'object' && ref !== null ? ref : field;
   const fileInput = useRef<HTMLInputElement>(null);
   const [body, setBody] = useState(initial?.body ?? readDraft(draftKey));
   const [images, setImages] = useState<readonly ForumImage[]>(initial?.images ?? []);
@@ -277,7 +278,7 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
 
       {/* Разметка, ссылки и отметки — ADR-076. */}
       <RichField
-        inputRef={field}
+        inputRef={fieldRef}
         value={body}
         onChange={(next) => {
           setBody(next);
