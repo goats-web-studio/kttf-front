@@ -125,6 +125,21 @@ describe('экран зала', () => {
     expect(requested).toHaveLength(before);
   });
 
+  it('слайд, закреплённый из консоли, — на стене, пока не истёк (ADR-082)', async () => {
+    renderScreen();
+    await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name });
+
+    act(() => {
+      openStreams[0]?.emit(SCREEN_EVENTS.state, {
+        ...SCREEN_STATE,
+        control: { pin: 'groups', until: new Date(Date.now() + 60_000).toISOString() },
+      });
+    });
+
+    expect(await screen.findByRole('table', { name: 'Группа A' })).toBeDefined();
+    expect(screen.queryByText(ru['screen.now.title'])).toBeNull();
+  });
+
   it('обрыв связи не гасит стену, а помечает состояние', async () => {
     renderScreen();
     await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name });

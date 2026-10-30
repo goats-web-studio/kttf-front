@@ -1,4 +1,9 @@
-import type { ScreenView, TournamentResultsView } from '@kttf/shared/types';
+import type {
+  ScreenControlView,
+  ScreenView,
+  SetScreenControlInput,
+  TournamentResultsView,
+} from '@kttf/shared/types';
 
 import { API_BASE_URL, apiRequest } from '@/common/api';
 
@@ -29,4 +34,20 @@ export function fetchScreenResults(tournamentId: string): Promise<TournamentResu
 /** Адрес потока состояния. `EventSource` открывает его сам и сам переподключается. */
 export function screenStreamUrl(publicToken: string): string {
   return `${API_BASE_URL}/public/screen/${publicToken}/stream`;
+}
+
+/** Закреплённый слайд — для консоли судьи, со входом (ADR-082). */
+export function fetchScreenControl(tournamentId: string): Promise<ScreenControlView> {
+  return apiRequest<ScreenControlView>(`/tournaments/${tournamentId}/screen`);
+}
+
+/** Закрепить слайд на несколько минут или вернуть «Авто» (`pin: null`). */
+export function putScreenControl(
+  tournamentId: string,
+  input: SetScreenControlInput,
+): Promise<ScreenControlView> {
+  return apiRequest<ScreenControlView>(`/tournaments/${tournamentId}/screen`, {
+    method: 'PUT',
+    body: input,
+  });
 }

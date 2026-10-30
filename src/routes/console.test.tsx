@@ -99,7 +99,7 @@ describe('экран проведения', () => {
   it('показывает столы и очередь', async () => {
     renderConsole();
 
-    expect(await screen.findByText(ru['console.tables.title'])).toBeDefined();
+    expect(await screen.findByRole('heading', { name: ru['console.tables.title'] })).toBeDefined();
     // Первый в очереди отмечен как ждущий дольше всех — ТЗ 6.1.
     // Подсказки — одной строкой через точку, поэтому ищется вхождение.
     expect(await screen.findByText(new RegExp(ru['console.hint.waiting']))).toBeDefined();
@@ -152,6 +152,51 @@ describe('экран проведения', () => {
     );
   });
 
+  it('закрепляет слайд на ТВ из консоли и возвращает «Авто» — ADR-082', async () => {
+    const puts: unknown[] = [];
+    const until = new Date(Date.now() + 5 * 60_000).toISOString();
+
+    vi.stubGlobal('fetch', (input: unknown, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.endsWith(`/tournaments/${TOURNAMENT_ID}/screen`)) {
+        if (init?.method === 'PUT') {
+          const body = JSON.parse(typeof init.body === 'string' ? init.body : '{}') as {
+            pin: string | null;
+          };
+          puts.push(body);
+
+          return Promise.resolve(reply({ pin: body.pin, until: body.pin === null ? null : until }));
+        }
+
+        return Promise.resolve(reply({ pin: null, until: null }));
+      }
+
+      return answer(url);
+    });
+    renderConsole();
+
+    const control = await screen.findByRole('group', { name: ru['console.tv.control'] });
+    fireEvent.click(within(control).getByRole('button', { name: ru['screen.tables.title'] }));
+
+    await waitFor(() => {
+      expect(puts).toEqual([{ pin: 'tables', minutes: 5 }]);
+    });
+    // Закреплённое видно кнопкой и подписью: судья знает, что зал на нём.
+    await waitFor(() => {
+      expect(
+        within(control)
+          .getByRole('button', { name: ru['screen.tables.title'] })
+          .getAttribute('aria-pressed'),
+      ).toBe('true');
+    });
+
+    fireEvent.click(within(control).getByRole('button', { name: ru['console.tv.auto'] }));
+    await waitFor(() => {
+      expect(puts.at(-1)).toEqual({ pin: null, minutes: 5 });
+    });
+  });
+
   it('введённое ложится в очередь на диск — ТЗ 6.4', async () => {
     renderConsole();
 
@@ -201,7 +246,7 @@ describe('экран проведения', () => {
     renderConsole();
 
     // Судья открыл консоль в зале без интернета и обязан увидеть турнир.
-    expect(await screen.findByText(ru['console.tables.title'])).toBeDefined();
+    expect(await screen.findByRole('heading', { name: ru['console.tables.title'] })).toBeDefined();
     expect(sent).toHaveLength(0);
   });
 });

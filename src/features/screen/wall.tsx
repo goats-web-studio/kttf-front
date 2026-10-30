@@ -82,6 +82,11 @@ export default function Wall({
   const t = useT();
   const locale = useLocale();
   const closed = isClosed(view.tournament.status);
+  // Слайд, закреплённый судьёй из консоли (ADR-082), — пока не истёк. Адрес
+  // экрана (`?show=`) сильнее: ТВ, поставленный только под сетку, им и остаётся.
+  const until = view.control?.until == null ? 0 : Date.parse(view.control.until);
+  const pinned = view.control?.pin != null && until > now ? view.control.pin : null;
+  const shown = show ?? pinned;
 
   const model = useMemo(() => {
     // Снявшиеся (ADR-061): их встречи не стоят в «Кто следующий» — правило
@@ -96,9 +101,9 @@ export default function Wall({
       names: shortNamesOf(view.players),
       ratings: ratingsOf(view.players),
       stage: currentStage(view.stages, withdrawn),
-      slides: wallSlides(view, results, show),
+      slides: wallSlides(view, results, shown),
     };
-  }, [view, results, show, t]);
+  }, [view, results, shown, t]);
 
   // Столы — каждую секунду заново: сыгранная встреча держит стол минуту.
   const tables = buildTables(view.tournament.tableCount, view.stages, model.withdrawn, now);
