@@ -2,7 +2,7 @@ import type { GroupStandingsView, StageView, TournamentResultsView } from '@kttf
 import { describe, expect, it } from 'vitest';
 
 import { shortNamesOf } from './names';
-import { SLIDE_SECONDS, groupPages, slideAt, slidesOf, type Slide } from './slides';
+import { SLIDE_SECONDS, groupPages, placeOrder, slideAt, slidesOf, type Slide } from './slides';
 import {
   BODY_HEIGHT,
   GAP,
@@ -94,7 +94,8 @@ describe('слайды', () => {
 
   it('после турнира — итоги первыми, столов нет', () => {
     const results = {
-      participants: [{ player: { id: 'x' } }],
+      participants: [{ player: { id: 'x' }, place: 1 }],
+      shared: [],
     } as unknown as TournamentResultsView;
     const slides = slidesOf({
       stages: [knockout],
@@ -162,6 +163,22 @@ describe('имена и места', () => {
     expect(names.get('1')).toBe('Ким Виктор');
     expect(names.get('2')).toBe('Ким Вадим');
     expect(names.get('3')).toBe('Организаторова О.');
+  });
+
+  it('места идут сверху вниз: делившие 5–8 — до деливших 9–10', () => {
+    const order = placeOrder({
+      participants: [
+        { player: { id: 'nine' }, place: null },
+        { player: { id: 'five' }, place: null },
+        { player: { id: 'one' }, place: 1 },
+      ],
+      shared: [
+        { participants: ['five'], places: [5, 6, 7, 8] },
+        { participants: ['nine'], places: [9, 10] },
+      ],
+    } as unknown as TournamentResultsView);
+
+    expect(order.map((participant) => participant.player.id)).toEqual(['one', 'five', 'nine']);
   });
 
   it('делившие места — диапазоном, а не прочерком', () => {

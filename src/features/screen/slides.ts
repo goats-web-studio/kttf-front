@@ -171,7 +171,7 @@ export function slidesOf(input: SlidesInput): readonly Slide[] {
   let slides: Slide[];
 
   if (input.closed) {
-    const participants = input.results?.participants ?? [];
+    const participants = placeOrder(input.results);
     const perPage = PLACES_PER_COLUMN * PLACES_COLUMNS;
     const pages = Math.ceil(participants.length / perPage);
     const results: Slide[] = Array.from({ length: pages }, (_unused, index) => ({
@@ -189,6 +189,32 @@ export function slidesOf(input: SlidesInput): readonly Slide[] {
   const pinned = input.show === null ? [] : slides.filter((slide) => slide.kind === input.show);
 
   return pinned.length > 0 ? pinned : slides;
+}
+
+/**
+ * Места по порядку: занявшие место — по нему, делившие — по началу диапазона.
+ * Сервер отдаёт деливших вперемешку («5–8» после «9–10»), а на стене строки
+ * должны идти сверху вниз. Внутри одного места порядок сервера сохраняется.
+ */
+export function placeOrder(
+  results: TournamentResultsView | undefined,
+): readonly ResultParticipantView[] {
+  if (results === undefined) {
+    return [];
+  }
+
+  const shared = new Map<string, number>();
+
+  for (const group of results.shared) {
+    for (const id of group.participants) {
+      shared.set(id, group.places[0] ?? Number.MAX_SAFE_INTEGER);
+    }
+  }
+
+  const rank = (participant: ResultParticipantView): number =>
+    participant.place ?? shared.get(participant.player.id) ?? Number.MAX_SAFE_INTEGER;
+
+  return [...results.participants].sort((left, right) => rank(left) - rank(right));
 }
 
 /**
