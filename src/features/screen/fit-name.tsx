@@ -43,6 +43,8 @@ export default function FitName({
       element.style.fontSize = '1em';
 
       if (!overflows()) {
+        element.style.fontStretch = '';
+        element.style.fontSize = '';
         setFit({ stretch: 100, scale: 1 });
         return;
       }
@@ -50,6 +52,9 @@ export default function FitName({
       element.style.fontStretch = `${String(STRETCH)}%`;
       const ratio = element.clientWidth / element.scrollWidth;
       const scale = ratio >= 1 ? 1 : Math.max(SMALLEST, Math.floor(ratio * 98) / 100);
+      // Итог пишется и в DOM: повторный замер сбросил стиль, а React при том
+      // же состоянии его не вернёт.
+      element.style.fontSize = `${String(scale)}em`;
       setFit({ stretch: STRETCH, scale });
     };
 
