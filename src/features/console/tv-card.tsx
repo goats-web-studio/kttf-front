@@ -170,7 +170,15 @@ export default function TvCard({
           change.mutate(pin);
         }}
         aria-label={t('console.tv.control')}
-        sx={{ mt: 1.5, '& .MuiToggleButton-root': { minHeight: 44, textTransform: 'none' } }}
+        sx={{
+          mt: 1.5,
+          '& .MuiToggleButton-root': { minHeight: 44, textTransform: 'none', fontWeight: 600 },
+          // Что сейчас на ТВ — видно сразу: залитая кнопка, а не бледно-серая.
+          '& .MuiToggleButton-root.Mui-selected, & .MuiToggleButton-root.Mui-selected:hover': {
+            bgcolor: 'primary.main',
+            color: 'primary.contrastText',
+          },
+        }}
       >
         <ToggleButton value={AUTO}>{t('console.tv.auto')}</ToggleButton>
         {kinds.map((kind) => (
