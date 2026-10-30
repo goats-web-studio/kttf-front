@@ -507,7 +507,7 @@ describe('страница дуэли', () => {
     const result = await waitFor(() => element('[data-duel-result]'));
     expect(element('[data-duel-score]', result).textContent).toContain('3:1');
     expect(within(result).getByText('+6.20')).toBeDefined();
-    expect(within(result).getByText('-6.20')).toBeDefined();
+    expect(within(result).getByText('−6.20')).toBeDefined();
   });
 });
 

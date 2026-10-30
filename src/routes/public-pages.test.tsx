@@ -634,7 +634,7 @@ describe('главная', () => {
 
     expect(within(table).getByText('3:1')).toBeDefined();
     expect(within(table).getByText('+14.50')).toBeDefined();
-    expect(within(table).getByText('-14.50')).toBeDefined();
+    expect(within(table).getByText('−14.50')).toBeDefined();
   });
 
   it('ближайшие турниры — строками в колонке турниров, со ссылкой на календарь', async () => {

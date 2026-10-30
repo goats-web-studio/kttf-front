@@ -38,6 +38,7 @@ import SyncBadge, { SyncRejections } from '@/features/console/sync-badge';
 import TableDialog from '@/features/console/table-dialog';
 import TablesZone from '@/features/console/tables-zone';
 import TiePanel from '@/features/console/tie-panel';
+import { shortNamesOf } from '@/features/screen/names';
 import { consoleResultsQuery, useConsole } from '@/features/console/use-console';
 import { useNow } from '@/features/console/use-now';
 
@@ -51,6 +52,13 @@ const RunningSettings = lazy(() => import('@/features/console/running-settings')
 // Состав с поиском и формой игрока — отдельным чанком: в офлайн-бюджет
 // консоли (ADR-004) он не входит, нужен он только при сети.
 const ParticipantsDialog = lazy(() => import('@/features/console/participants-dialog'));
+
+/**
+ * Предпросмотр ТВ — отдельным чанком (ADR-082): стена тянет за собой свои
+ * модули, а судье для работы они не нужны. Чанк всё равно предзагружен
+ * service worker'ом и открывается без сети.
+ */
+const TvCard = lazy(() => import('@/features/console/tv-card'));
 
 export const Route = createFileRoute('/console/$tournamentId')({
   component: ConsoleScreen,
@@ -119,7 +127,8 @@ function ConsoleScreen(): ReactNode {
     // Снявшиеся и не явившиеся (ADR-061): их встречи не зовутся к столу,
     // не занимают его и не держат ни панель равенства, ни завершение.
     const withdrawn = withdrawnOf(snapshot);
-    const tables = buildTables(snapshot.tournament.tableCount, snapshot.stages, withdrawn);
+    // Сыгранная встреча держит стол минуту (ADR-082), потом стол свободен.
+    const tables = buildTables(snapshot.tournament.tableCount, snapshot.stages, withdrawn, now);
 
     return {
       tables,
@@ -128,6 +137,8 @@ function ConsoleScreen(): ReactNode {
       played: playedMatches(snapshot.stages),
       suggested: suggestedTable(tables),
       names: namesOf(snapshot),
+      // На плитке стола — «Фамилия И.», как на ТВ: многоточие не читается.
+      short: shortNamesOf(snapshot.registrations.map((registration) => registration.player)),
       ratings: ratingsOf(snapshot),
       // Прогноз рейтинга по сыгранному — ADR-077.
       deltas: deltasOf(snapshot),
@@ -139,7 +150,7 @@ function ConsoleScreen(): ReactNode {
           group.unresolved.length > 0 && isPlayedOut(matchesOf(snapshot.stages, group), withdrawn),
       ),
     };
-  }, [snapshot, t]);
+  }, [snapshot, t, now]);
 
   // После начисления — фактическая дельта из журнала, до него — прогноз.
   const rated = snapshot?.tournament.status === 'RATED';
@@ -456,7 +467,7 @@ function ConsoleScreen(): ReactNode {
                 >
                   <TablesZone
                     tables={view.tables}
-                    names={view.names}
+                    names={view.short}
                     labelOf={(match) => matchLabel(snapshot.stages, match, t)}
                     now={now}
                     onOpen={(table) => {
@@ -467,19 +478,32 @@ function ConsoleScreen(): ReactNode {
                       );
                     }}
                   />
-                  <QueueZone
-                    queue={view.queue}
-                    suggested={view.suggested}
-                    names={view.names}
-                    onAssign={(matchId, tableNumber) => {
-                      const match = findMatch(matchId);
+                  <Box sx={{ display: 'grid', gap: 3, alignContent: 'start' }}>
+                    <QueueZone
+                      queue={view.queue}
+                      suggested={view.suggested}
+                      names={view.names}
+                      playing={view.tables
+                        .filter((table) => table.status === 'PLAYING')
+                        .map((table) => table.number)}
+                      onAssign={(matchId, tableNumber) => {
+                        const match = findMatch(matchId);
 
-                      if (match !== undefined) doAssign(match, tableNumber);
-                    }}
-                    onOpen={(matchId) => {
-                      setOpened({ kind: 'match', matchId });
-                    }}
-                  />
+                        if (match !== undefined) doAssign(match, tableNumber);
+                      }}
+                      onOpen={(matchId) => {
+                        setOpened({ kind: 'match', matchId });
+                      }}
+                    />
+                    <Suspense fallback={null}>
+                      <TvCard
+                        snapshot={snapshot}
+                        withdrawn={view.withdrawn}
+                        results={undefined}
+                        online={online}
+                      />
+                    </Suspense>
+                  </Box>
                 </Box>
               )}
 

@@ -133,7 +133,23 @@ describe('экран проведения', () => {
       await screen.findByText(fill(ru['console.toast.recorded'], { score: '3:1' })),
     ).toBeDefined();
     // Стол со введённым счётом свободен, а сыгранная пара видна подписью.
-    expect(screen.getByText(ru['console.table.justPlayed'])).toBeDefined();
+    // Ищется в зоне столов: то же слово есть и на предпросмотре ТВ.
+    const zone = screen
+      .getByRole('heading', { name: ru['console.tables.title'] })
+      .closest('section');
+    if (zone === null) throw new Error('нет зоны столов');
+    expect(within(zone).getByText(ru['console.table.justPlayed'])).toBeDefined();
+  });
+
+  it('показывает, что сейчас на ТВ в зале, — ADR-082', async () => {
+    renderConsole();
+
+    // Предпросмотр грузится отдельным чанком — ждём его.
+    expect(await screen.findByRole('heading', { name: ru['console.tv.title'] })).toBeDefined();
+    expect(screen.getByText(/^Сейчас: /)).toBeDefined();
+    expect(screen.getByRole('link', { name: ru['console.tv.open'] }).getAttribute('href')).toBe(
+      `/screen/${CONSOLE_SNAPSHOT.tournament.publicToken}`,
+    );
   });
 
   it('введённое ложится в очередь на диск — ТЗ 6.4', async () => {
@@ -495,7 +511,7 @@ describe('изменение рейтинга в таблице — ADR-077', ()
     const cells = [...document.querySelectorAll('[data-delta]')].map((cell) => cell.textContent);
 
     // Проигравший сильный — в минусе; кто ещё не играл рейтинговых — прочерк.
-    expect(cells).toContain('-7.00');
+    expect(cells).toContain('−7.00');
     expect(cells).toContain('—');
   });
 });

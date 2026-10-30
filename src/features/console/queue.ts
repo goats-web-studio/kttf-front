@@ -228,19 +228,36 @@ export interface TableState {
 }
 
 /**
+ * Сколько сыгранная встреча держит стол — ADR-082.
+ *
+ * Минуты хватает, чтобы игроки увидели счёт на своём столе и ушли. Дальше
+ * стол свободен: раньше результат висел до вызова следующей пары, то есть
+ * часто до конца турнира, и в зале «Сыграли» стояло на половине столов.
+ */
+export const TABLE_HOLD_MS = 60_000;
+
+/**
  * Столы зала с тем, что на них происходит.
  *
  * Столы перечисляются все до одного, включая свободные: судья смотрит на зону
  * столов, чтобы увидеть, куда поставить следующую встречу, а не чтобы
  * пересчитать занятые.
+ *
+ * Сыгранная встреча (`AWAITING`) держит стол не дольше `TABLE_HOLD_MS` от
+ * закрытия, если передано `now`, и никогда — если один из двоих уже сел за
+ * другой стол: иначе один игрок стоял сразу на двух столах.
  */
 export function buildTables(
   tableCount: number,
   stages: readonly StageView[],
   withdrawn: ReadonlySet<string> = NOBODY,
+  now?: number,
 ): readonly TableState[] {
   const matches = allMatches(stages);
   const playing = matches.filter((match) => isPlaying(match, withdrawn));
+  const seated = new Set(
+    playing.flatMap((match) => [match.playerAId, match.playerBId]).filter((id) => id !== null),
+  );
   const finished = matches.filter(
     (match) => match.status === 'FINISHED' && match.tableNumber !== null,
   );
@@ -263,10 +280,36 @@ export function buildTables(
         null,
       );
 
-    return last === null
+    const gone =
+      last !== null &&
+      ((last.playerAId !== null && seated.has(last.playerAId)) ||
+        (last.playerBId !== null && seated.has(last.playerBId)));
+    const stale =
+      last !== null &&
+      now !== undefined &&
+      (last.finishedAt === null || now - Date.parse(last.finishedAt) >= TABLE_HOLD_MS);
+
+    return last === null || gone || stale
       ? { number, status: 'FREE', match: null }
       : { number, status: 'AWAITING', match: last };
   });
+}
+
+/**
+ * Этап, который идёт сейчас: где играют, иначе первый с незакрытой встречей.
+ *
+ * Снявшиеся учитываются (`isSettled`): их несыгранная групповая встреча
+ * решена снятием и не держит групповой этап «текущим», когда идёт плей-офф.
+ */
+export function currentStage(
+  stages: readonly StageView[],
+  withdrawn: ReadonlySet<string> = NOBODY,
+): StageView | undefined {
+  return (
+    stages.find((stage) => stage.matches.some((match) => isPlaying(match, withdrawn))) ??
+    stages.find((stage) => stage.matches.some((match) => !isSettled(match, withdrawn))) ??
+    stages.at(-1)
+  );
 }
 
 /** Встречи, идущие прямо сейчас. Порядок — по номеру стола, как в зале. */

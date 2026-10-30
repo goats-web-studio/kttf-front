@@ -28,8 +28,8 @@ function reply(body: unknown): Response {
 
 let requested: string[] = [];
 
-function renderScreen(): void {
-  window.history.pushState({}, '', `/screen/${SCREEN_TOKEN}`);
+function renderScreen(search = ''): void {
+  window.history.pushState({}, '', `/screen/${SCREEN_TOKEN}${search}`);
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createAppRouter({ queryClient, session: null });
@@ -56,8 +56,8 @@ afterEach(() => {
 });
 
 describe('экран зала', () => {
-  it('открывается по токену без входа и показывает столы, очередь и таблицы', async () => {
-    renderScreen();
+  it('открывается по токену без входа: экран столов — столы, очередь, результаты', async () => {
+    renderScreen('?show=tables');
 
     expect(
       await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name }),
@@ -69,9 +69,34 @@ describe('экран зала', () => {
     expect(screen.getByText(fill(ru['screen.free'], { list: '2' }))).toBeDefined();
     expect(screen.getByText(ru['screen.next.title'])).toBeDefined();
     expect(screen.getByText(ru['screen.recent.title'])).toBeDefined();
-    // Группа — матрицей «каждый с каждым».
-    expect(screen.getByText(ru['screen.standings.title'])).toBeDefined();
+  });
+
+  it('на досках — «Фамилия И.», а не многоточие (ADR-082)', async () => {
+    renderScreen('?show=tables');
+    await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name });
+
+    const short = `${PLAYERS.first.lastName} ${PLAYERS.first.firstName.slice(0, 1)}.`;
+    expect(screen.getAllByText(short).length).toBeGreaterThan(0);
+  });
+
+  it('встреча, забытая за столом, — «идёт», а не тысячи минут', async () => {
+    renderScreen('?show=tables');
+    await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name });
+
+    // В образце встреча позвана 5 сентября: счётчик без верхней границы
+    // показывал бы «80000 мин», как «9545 мин» на снимке владельца.
+    expect(screen.queryByText(/\d{3,} мин/)).toBeNull();
+    expect(screen.getAllByText(ru['screen.match.long']).length).toBeGreaterThan(0);
+  });
+
+  it('экран групп — все группы матрицей «каждый с каждым» и полоса вызова', async () => {
+    renderScreen('?show=groups');
+    await screen.findByRole('heading', { name: SCREEN_STATE.tournament.name });
+
     expect(screen.getByRole('table', { name: 'Группа A' })).toBeDefined();
+    // Позванный не ждёт экрана столов: свободные столы и вызов — внизу.
+    expect(screen.getByRole('complementary', { name: ru['screen.call'] })).toBeDefined();
+    expect(screen.getByText(fill(ru['screen.free'], { list: '2' }))).toBeDefined();
   });
 
   it('запрашивает состояние по публичному маршруту', async () => {
@@ -137,7 +162,7 @@ describe('стена после турнира', () => {
 
   it('закрытый турнир показывает пьедестал и итоговые места', async () => {
     serve(closed as typeof SCREEN_STATE);
-    renderScreen();
+    renderScreen('?show=results');
 
     expect(await screen.findByRole('heading', { name: ru['screen.podium.title'] })).toBeDefined();
     expect(screen.getByRole('heading', { name: ru['screen.places.title'] })).toBeDefined();

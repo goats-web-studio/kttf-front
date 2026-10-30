@@ -26,8 +26,13 @@ describe('formatRating', () => {
 describe('formatDelta', () => {
   it('знак обязателен, два знака после точки', () => {
     expect(formatDelta('3.5')).toBe('+3.50');
-    expect(formatDelta('-7.94')).toBe('-7.94');
-    expect(formatDelta('-7.9')).toBe('-7.90');
+    expect(formatDelta('-7.94')).toBe('−7.94');
+    expect(formatDelta('-7.9')).toBe('−7.90');
+  });
+
+  it('минус — настоящий, а не дефис: в столбце он одной ширины с плюсом', () => {
+    expect(formatDelta('-27.3')).toBe('−27.30');
+    expect(formatDelta('-27.3')).not.toContain('-');
   });
 
   it('пришедший плюс не удваивается', () => {
@@ -37,6 +42,7 @@ describe('formatDelta', () => {
   it('ноль — без знака', () => {
     expect(formatDelta('0')).toBe('0.00');
     expect(formatDelta('0.00')).toBe('0.00');
+    expect(formatDelta('-0')).toBe('0.00');
   });
 });
 

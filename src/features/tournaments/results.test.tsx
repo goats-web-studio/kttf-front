@@ -207,12 +207,12 @@ describe('изменения рейтинга', () => {
     render(<ResultsRatings ratings={RESULTS.ratings} stages={RESULTS.stages} model={MODEL} />);
   }
 
-  it('показывает прибавку со знаком, а убыль как есть', () => {
+  it('показывает прибавку со знаком, а убыль — с настоящим минусом', () => {
     renderRatings();
 
     // Итог — значком, и та же цифра в раскрытии по встречам.
     expect(screen.getAllByText('+20.00').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('-10.00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('−10.00').length).toBeGreaterThan(0);
   });
 
   it('не выдаёт неначисленный рейтинг за ноль', () => {

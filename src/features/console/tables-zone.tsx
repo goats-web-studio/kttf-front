@@ -23,6 +23,12 @@ interface TablesZoneProps {
 const LONG_MATCH_MINUTES = 30;
 
 /**
+ * Дольше — встречу, скорее всего, забыли закрыть: на ТВ минуты уже не пишутся
+ * (ADR-082), а судье это сказано словом.
+ */
+const STALE_MATCH_MINUTES = 90;
+
+/**
  * Зона столов — ТЗ 6.1. Главный экран судьи.
  *
  * Каждый стол — кнопка. Касание идущего стола открывает ввод счёта,
@@ -135,6 +141,20 @@ export default function TablesZone({
                       </Typography>
                     )}
                     <Pair match={table.match} names={names} />
+                    {(minutesSince(table.match.startedAt, now) ?? 0) >= STALE_MATCH_MINUTES && (
+                      <Typography
+                        component="span"
+                        variant="caption"
+                        sx={{
+                          mt: 0.75,
+                          display: 'block',
+                          fontWeight: 600,
+                          color: 'var(--warn-text)',
+                        }}
+                      >
+                        {t('console.table.long')}
+                      </Typography>
+                    )}
                   </>
                 ) : table.match !== null ? (
                   <>

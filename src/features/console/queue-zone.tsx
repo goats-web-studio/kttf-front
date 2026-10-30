@@ -14,6 +14,8 @@ interface QueueZoneProps {
   readonly queue: readonly QueuedMatch[];
   readonly suggested: number | null;
   readonly names: ReadonlyMap<string, string>;
+  /** Столы, где сейчас играют: пустая очередь ждёт именно их. */
+  readonly playing?: readonly number[];
   readonly onAssign: (matchId: string, tableNumber: number) => void;
   /** Открыть встречу: выбрать другой стол или ввести счёт без стола. */
   readonly onOpen: (matchId: string) => void;
@@ -36,6 +38,7 @@ export default function QueueZone({
   queue,
   suggested,
   names,
+  playing = [],
   onAssign,
   onOpen,
 }: QueueZoneProps): ReactNode {
@@ -64,7 +67,10 @@ export default function QueueZone({
 
       {queue.length === 0 ? (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-          {t('console.queue.empty')}
+          {/* Пустая очередь посреди турнира — ожидание, а не остановка. */}
+          {playing.length > 0
+            ? fill(t('console.queue.after'), { list: playing.join(', ') })
+            : t('console.queue.empty')}
         </Typography>
       ) : (
         <Paper variant="outlined" component="ol" sx={{ mt: 1.5, mb: 0, p: 0, listStyle: 'none' }}>

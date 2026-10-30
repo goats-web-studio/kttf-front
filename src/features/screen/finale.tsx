@@ -1,43 +1,38 @@
-import type { ParticipantRatingView, ResultParticipantView } from '@kttf/shared/types';
+import type {
+  ParticipantRatingView,
+  ResultParticipantView,
+  TournamentResultsView,
+} from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { Trophy } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { formatRating, useT } from '@/common/i18n';
+import { formatDelta, formatRating, useT } from '@/common/i18n';
 
-import { BOARD_TITLE, DISPLAY, size } from './scale';
+import FitName from './fit-name';
+import { BOARD_TITLE, DISPLAY, TYPE, size } from './scale';
+import { PLACES_COLUMNS, PLACES_PER_COLUMN } from './slides';
+import { placeLabels } from './wall-model';
 
 /**
- * Стена после турнира — ТЗ 6.5.
+ * Стена после турнира — ТЗ 6.5, ADR-082.
  *
  * Пока турнир идёт, стена отвечает на «кто где играет». Когда он закрыт, тот же
- * экран в зале отвечает на «кто победил»: пьедестал, итоговые места и рост
- * рейтинга. Места приходят от сервера (ADR-023) — ни одно из них здесь не
- * считается.
+ * экран отвечает на «кто победил»: призёры строкой сверху, под ними места с
+ * рейтингом после турнира и прибавкой. Отдельного слайда «Изменения рейтинга»
+ * больше нет: дельта стоит в строке игрока. Места приходят от сервера
+ * (ADR-023) — ни одно из них здесь не считается.
  */
 
 /** Призовые места: цвета медалей — те же токены, что у пьедестала на сайте. */
 const MEDALS = {
-  1: { fill: 'var(--gold)', tint: 'var(--gold-50)', text: 'var(--gold-text)', height: '36vh' },
-  2: {
-    fill: 'var(--silver)',
-    tint: 'var(--silver-50)',
-    text: 'var(--silver-text)',
-    height: '27vh',
-  },
-  3: {
-    fill: 'var(--bronze)',
-    tint: 'var(--bronze-50)',
-    text: 'var(--bronze-text)',
-    height: '20vh',
-  },
+  1: { fill: 'var(--gold)', tint: 'var(--gold-50)', text: 'var(--gold-text)' },
+  2: { fill: 'var(--silver)', tint: 'var(--silver-50)', text: 'var(--silver-text)' },
+  3: { fill: 'var(--bronze)', tint: 'var(--bronze-50)', text: 'var(--bronze-text)' },
 } as const;
 
 type Medal = keyof typeof MEDALS;
-
-/** Порядок на пьедестале — 2, 1, 3: победитель в центре и выше всех. */
-const ORDER: readonly Medal[] = [2, 1, 3];
 
 function isMedal(place: number | null): place is Medal {
   return place === 1 || place === 2 || place === 3;
@@ -47,92 +42,86 @@ function nameOf(participant: ResultParticipantView): string {
   return `${participant.player.lastName} ${participant.player.firstName}`;
 }
 
-/**
- * Пьедестал во всю левую колонку стены.
- *
- * Третье место может делиться: без матча за третье оба проигравших в
- * полуфиналах стоят на одной ступени.
- */
-export function PodiumBoard({
+function deltaTone(delta: string): string {
+  const value = Number(delta);
+
+  return value > 0 ? 'var(--ok-text)' : value < 0 ? 'var(--red-700)' : 'text.secondary';
+}
+
+/** Призёры одной строкой: место, имя, рейтинг после и прибавка. */
+function PodiumRow({
   participants,
+  ratings,
 }: {
   readonly participants: readonly ResultParticipantView[];
+  readonly ratings: ReadonlyMap<string, ParticipantRatingView>;
 }): ReactNode {
   const t = useT();
-  const places = new Map<Medal, ResultParticipantView[]>();
-
-  for (const participant of participants) {
-    if (isMedal(participant.place)) {
-      places.set(participant.place, [...(places.get(participant.place) ?? []), participant]);
-    }
-  }
+  const medalists = participants.filter((participant) => isMedal(participant.place));
 
   return (
-    <Box
-      component="section"
-      aria-label={t('screen.podium.title')}
-      sx={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}
-    >
-      <Typography component="h2" sx={BOARD_TITLE}>
+    <Box component="section" aria-label={t('screen.podium.title')}>
+      <Typography component="h2" sx={{ ...BOARD_TITLE, mb: '12px' }}>
         {t('screen.podium.title')}
       </Typography>
       <Box
         sx={{
-          mt: '1vh',
-          flexGrow: 1,
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-          alignItems: 'end',
-          gap: '0.8vw',
+          // Без матча за 3-е место бронзовых двое — четыре карточки в ряд.
+          gridTemplateColumns: `repeat(${String(Math.max(3, medalists.length))}, minmax(0, 1fr))`,
+          gap: '16px',
         }}
       >
-        {ORDER.map((medal) => {
-          const winners = places.get(medal) ?? [];
-          const style = MEDALS[medal];
+        {medalists.map((participant) => {
+          const medal = MEDALS[participant.place as Medal];
+          const rating = ratings.get(participant.player.id);
 
           return (
-            <Box key={medal} sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-              {winners.map((participant) => (
-                <Typography
-                  key={participant.player.id}
-                  component="p"
-                  sx={{
-                    mb: '1vh',
-                    textAlign: 'center',
-                    fontSize: size(medal === 1 ? 1.35 : 1.1),
-                    fontWeight: medal === 1 ? 700 : 600,
-                    lineHeight: 1.2,
-                    overflowWrap: 'anywhere',
-                  }}
-                >
-                  {nameOf(participant)}
-                </Typography>
-              ))}
+            <Box
+              key={participant.player.id}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '64px minmax(0, 1fr) auto',
+                alignItems: 'center',
+                gap: '16px',
+                px: '20px',
+                height: 104,
+                borderRadius: '12px',
+                borderTop: `6px solid ${medal.fill}`,
+                bgcolor: medal.tint,
+              }}
+            >
               <Box
+                component="span"
                 sx={{
-                  height: winners.length === 0 ? '3vh' : style.height,
-                  borderRadius: '1vw 1vw 0 0',
-                  bgcolor: style.tint,
-                  borderTop: `0.6vh solid ${style.fill}`,
-                  display: 'grid',
-                  placeItems: 'center',
+                  fontFamily: DISPLAY,
+                  fontWeight: 700,
+                  fontSize: 56,
+                  lineHeight: 1,
+                  color: medal.text,
+                  textAlign: 'center',
                 }}
               >
-                {winners.length > 0 && (
-                  <Typography
-                    component="span"
-                    sx={{
-                      fontFamily: DISPLAY,
-                      fontWeight: 700,
-                      fontSize: size(medal === 1 ? 4 : 3),
-                      lineHeight: 1,
-                      color: style.text,
-                    }}
-                  >
-                    {medal}
-                  </Typography>
-                )}
+                {participant.place}
               </Box>
+              <Box
+                component="span"
+                sx={{ minWidth: 0, fontSize: TYPE.l, fontWeight: 700, lineHeight: 1.15 }}
+              >
+                <FitName text={nameOf(participant)} width={360} font={TYPE.l} />
+              </Box>
+              {rating?.ratingAfter != null && (
+                <Box sx={{ textAlign: 'right', fontFamily: DISPLAY, lineHeight: 1.25 }}>
+                  <Box sx={{ fontSize: TYPE.m, fontWeight: 700 }}>
+                    {formatRating(rating.ratingAfter)}
+                  </Box>
+                  <Box
+                    sx={{ fontSize: TYPE.s, fontWeight: 700, color: deltaTone(rating.totalDelta) }}
+                  >
+                    {formatDelta(rating.totalDelta)}
+                  </Box>
+                </Box>
+              )}
             </Box>
           );
         })}
@@ -141,162 +130,162 @@ export function PodiumBoard({
   );
 }
 
-/** Строк в колонке итоговых мест; на странице — две колонки. */
-export const PLACES_PER_COLUMN = 10;
-
 /**
- * Итоговые места — двумя колонками, чтобы двадцать фамилий читались без
- * прокрутки. Порядок задаёт сервер: занявшие места по возрастанию.
+ * Слайд «Итоги»: призёры и места тремя колонками по 14 строк.
+ *
+ * Рейтинг — после турнира, целым (ADR-053); «±» — за турнир, два знака и
+ * настоящий минус (`formatDelta`). Пока рейтинг не начислен, колонки пусты.
  */
-export function PlacesBoard({
+export function ResultsSlide({
+  results,
   participants,
+  page,
+  pages,
 }: {
+  readonly results: TournamentResultsView;
   readonly participants: readonly ResultParticipantView[];
+  readonly page: number;
+  readonly pages: number;
 }): ReactNode {
-  const columns = [
-    participants.slice(0, PLACES_PER_COLUMN),
-    participants.slice(PLACES_PER_COLUMN, PLACES_PER_COLUMN * 2),
-  ];
+  const t = useT();
+  const ratings = new Map(results.ratings.map((rating) => [rating.playerId, rating]));
+  const places = placeLabels(results);
+  const columns = Array.from({ length: PLACES_COLUMNS }, (_unused, index) =>
+    participants.slice(index * PLACES_PER_COLUMN, (index + 1) * PLACES_PER_COLUMN),
+  ).filter((column) => column.length > 0);
+  const best = [...results.ratings]
+    .filter((rating) => rating.ratingAfter !== null)
+    .sort((left, right) => Number(right.totalDelta) - Number(left.totalDelta))[0];
+  const bestName =
+    best === undefined
+      ? undefined
+      : results.participants.find((item) => item.player.id === best.playerId);
 
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1.4vw' }}>
-      {columns.map((column, index) => (
-        <Box key={index} component="ol" sx={{ m: 0, p: 0, listStyle: 'none', alignSelf: 'start' }}>
-          {column.map((participant) => {
-            const medal = isMedal(participant.place) ? MEDALS[participant.place] : null;
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <PodiumRow participants={results.participants} ratings={ratings} />
 
-            return (
+      <Box component="section" aria-label={t('screen.places.title')} sx={{ minHeight: 0 }}>
+        {/* Подпись рядом с заголовком, а не внутри: имя заголовка — «Итоговые места». */}
+        <Box sx={{ ...BOARD_TITLE, alignItems: 'baseline' }}>
+          <Typography component="h2" sx={{ font: 'inherit' }}>
+            {t('screen.places.title')}
+          </Typography>
+          <Box
+            component="span"
+            sx={{ fontSize: TYPE.xs, fontWeight: 500, color: 'text.secondary' }}
+          >
+            {best !== undefined && bestName !== undefined && Number(best.totalDelta) > 0 && (
+              <>
+                {t('screen.places.best')}{' '}
+                <Box component="b" sx={{ color: 'text.primary' }}>
+                  {nameOf(bestName)}
+                </Box>{' '}
+                <Box component="b" sx={{ fontFamily: DISPLAY, color: 'var(--ok-text)' }}>
+                  {formatDelta(best.totalDelta)}
+                </Box>
+                {' · '}
+              </>
+            )}
+            {pages > 1
+              ? `${t('screen.places.legend')} · ${String(page)}/${String(pages)}`
+              : t('screen.places.legend')}
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            mt: '8px',
+            display: 'grid',
+            gridTemplateColumns: `repeat(${String(PLACES_COLUMNS)}, minmax(0, 1fr))`,
+            gap: '0 24px',
+          }}
+        >
+          {columns.map((column, index) => (
+            <Box key={index} component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
               <Box
-                key={participant.player.id}
                 component="li"
+                aria-hidden
                 sx={{
-                  display: 'grid',
-                  gridTemplateColumns: `${size(2.6)} minmax(0, 1fr)`,
-                  alignItems: 'center',
-                  gap: '0.8vw',
-                  px: '0.8vw',
-                  py: '0.7vh',
-                  mb: '0.6vh',
-                  borderRadius: 3,
-                  border: 1,
-                  borderColor: 'divider',
-                  bgcolor: medal?.tint ?? 'background.paper',
+                  ...ROW,
+                  height: 30,
+                  fontSize: 15,
+                  color: 'text.secondary',
+                  borderColor: 'var(--line-strong)',
                 }}
               >
-                <Typography
-                  component="span"
-                  sx={{
-                    fontFamily: DISPLAY,
-                    fontWeight: 700,
-                    fontSize: size(1.3),
-                    textAlign: 'center',
-                    color: medal?.text ?? 'text.primary',
-                  }}
-                >
-                  {participant.place ?? '—'}
-                </Typography>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: size(1.2),
-                    fontWeight: medal === null ? 500 : 700,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {nameOf(participant)}
-                </Typography>
+                <span>{t('screen.standings.place')}</span>
+                <span>{t('screen.standings.player')}</span>
+                <Box component="span" sx={{ textAlign: 'right' }}>
+                  {t('screen.places.rating')}
+                </Box>
+                <Box component="span" sx={{ textAlign: 'right' }}>
+                  ±
+                </Box>
               </Box>
-            );
-          })}
+              {column.map((participant) => {
+                const rating = ratings.get(participant.player.id);
+                const medal = isMedal(participant.place) ? MEDALS[participant.place] : null;
+
+                return (
+                  <Box key={participant.player.id} component="li" sx={ROW}>
+                    <Box
+                      component="span"
+                      sx={{
+                        fontFamily: DISPLAY,
+                        fontWeight: 700,
+                        color: medal?.text ?? 'text.secondary',
+                      }}
+                    >
+                      {places.get(participant.player.id) ?? '—'}
+                    </Box>
+                    <Box
+                      component="span"
+                      sx={{ minWidth: 0, fontWeight: medal === null ? 400 : 700 }}
+                    >
+                      <FitName text={nameOf(participant)} width={330} font={TYPE.s} />
+                    </Box>
+                    <Box
+                      component="span"
+                      sx={{ fontFamily: DISPLAY, textAlign: 'right', color: 'text.secondary' }}
+                    >
+                      {rating?.ratingAfter == null ? '' : formatRating(rating.ratingAfter)}
+                    </Box>
+                    <Box
+                      component="span"
+                      sx={{
+                        fontFamily: DISPLAY,
+                        fontWeight: 700,
+                        textAlign: 'right',
+                        color:
+                          rating === undefined ? 'text.secondary' : deltaTone(rating.totalDelta),
+                      }}
+                    >
+                      {rating?.ratingAfter == null ? '' : formatDelta(rating.totalDelta)}
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          ))}
         </Box>
-      ))}
+      </Box>
     </Box>
   );
 }
 
-/** Сколько строк рейтинга показывает стена. */
-export const RATINGS_SHOWN = 10;
-
-/**
- * Изменения рейтинга за турнир, сверху — выросшие сильнее всех: о них говорят
- * у стены после призёров.
- *
- * Строки уже отобраны и упорядочены вызывающим. Числа — строками от сервера
- * (ADR-014): здесь только знак плюса перед ростом.
- */
-export function RatingsBoard({
-  ratings,
-  names,
-}: {
-  readonly ratings: readonly ParticipantRatingView[];
-  readonly names: ReadonlyMap<string, string>;
-}): ReactNode {
-  return (
-    <Box component="ol" sx={{ m: 0, p: 0, listStyle: 'none' }}>
-      {ratings.map((rating) => {
-        const grew = !rating.totalDelta.startsWith('-') && Number(rating.totalDelta) !== 0;
-
-        return (
-          <Box
-            key={rating.playerId}
-            component="li"
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: `minmax(0, 1fr) ${size(6)} ${size(6)}`,
-              alignItems: 'center',
-              gap: '1vw',
-              px: '0.8vw',
-              py: '0.7vh',
-              mb: '0.6vh',
-              borderRadius: 3,
-              border: 1,
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
-            }}
-          >
-            <Typography
-              component="span"
-              sx={{
-                fontSize: size(1.2),
-                fontWeight: 600,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {names.get(rating.playerId) ?? ''}
-            </Typography>
-            <Typography
-              component="span"
-              sx={{
-                fontFamily: DISPLAY,
-                fontWeight: 700,
-                fontSize: size(1.3),
-                textAlign: 'right',
-                color: grew ? 'success.main' : 'text.secondary',
-              }}
-            >
-              {grew ? `+${rating.totalDelta}` : rating.totalDelta}
-            </Typography>
-            <Typography
-              component="span"
-              sx={{
-                fontFamily: DISPLAY,
-                fontSize: size(1.1),
-                textAlign: 'right',
-                color: 'text.secondary',
-              }}
-            >
-              {rating.ratingAfter === null ? '' : formatRating(rating.ratingAfter)}
-            </Typography>
-          </Box>
-        );
-      })}
-    </Box>
-  );
-}
+const ROW = {
+  display: 'grid',
+  gridTemplateColumns: '72px minmax(0, 1fr) 64px 100px',
+  alignItems: 'center',
+  gap: '12px',
+  px: '8px',
+  height: 42,
+  borderBottom: 1,
+  borderColor: 'divider',
+  fontSize: TYPE.s,
+  fontVariantNumeric: 'tabular-nums',
+} as const;
 
 /**
  * Заставка в момент закрытия турнира.
@@ -320,32 +309,33 @@ export function FinishedSplash({
     <Box
       role="status"
       sx={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         zIndex: 10,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '2vh',
-        px: '4vw',
+        gap: '24px',
+        px: '80px',
         textAlign: 'center',
         bgcolor: 'background.default',
         animation: 'kttf-splash 600ms ease-out',
         '@keyframes kttf-splash': { from: { opacity: 0 }, to: { opacity: 1 } },
+        '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
       }}
     >
       <Box sx={{ color: 'var(--gold)', width: size(6), height: size(6) }}>
         <Trophy width="100%" height="100%" aria-hidden />
       </Box>
-      <Typography component="p" sx={{ fontSize: size(4.2), fontWeight: 700, lineHeight: 1.1 }}>
+      <Typography component="p" sx={{ fontSize: 80, fontWeight: 700, lineHeight: 1.1 }}>
         {t('screen.finished')}
       </Typography>
-      <Typography component="p" color="text.secondary" sx={{ fontSize: size(1.8) }}>
+      <Typography component="p" color="text.secondary" sx={{ fontSize: 34 }}>
         {name}
       </Typography>
       {winner !== undefined && (
-        <Typography component="p" sx={{ mt: '2vh', fontSize: size(2.4), lineHeight: 1.2 }}>
+        <Typography component="p" sx={{ mt: '24px', fontSize: 46, lineHeight: 1.2 }}>
           {t('screen.winner')}{' '}
           <Box component="span" sx={{ fontWeight: 700, color: 'primary.main' }}>
             {nameOf(winner)}

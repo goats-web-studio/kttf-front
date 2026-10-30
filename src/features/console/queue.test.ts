@@ -7,7 +7,9 @@ import {
   allPlayed,
   buildQueue,
   buildTables,
+  currentStage,
   matchLabel,
+  TABLE_HOLD_MS,
   playingMatches,
   progressOf,
   suggestedTable,
@@ -386,5 +388,77 @@ describe('снявшиеся — ADR-061', () => {
 
   it('и считается закрытой в прогрессе', () => {
     expect(progressOf([group], out)).toEqual({ done: 1, total: 2 });
+  });
+});
+
+describe('стол после игры и текущий этап — ADR-082', () => {
+  const finishedAt = '2026-10-23T18:34:31.000Z';
+  const done = match({
+    id: 'quarter',
+    playerAId: A,
+    playerBId: B,
+    status: 'FINISHED',
+    tableNumber: 1,
+    setsA: 3,
+    setsB: 0,
+    finishedAt,
+  });
+
+  it('сыгранная встреча держит стол минуту, потом стол свободен', () => {
+    const at = Date.parse(finishedAt);
+
+    expect(buildTables(1, [stage([done])], undefined, at + 30_000)[0]?.status).toBe('AWAITING');
+    expect(buildTables(1, [stage([done])], undefined, at + TABLE_HOLD_MS)[0]).toMatchObject({
+      status: 'FREE',
+      match: null,
+    });
+  });
+
+  it('один игрок не стоит на двух столах: ушёл за другой — прежний стол свободен', () => {
+    // Снимок владельца: Игроков доиграл четвертьфинал на столе 1 и сел за
+    // полуфинал на столе 2, а на столе 1 всё висело «Сыграли».
+    const semi = match({
+      id: 'semi',
+      playerAId: A,
+      playerBId: C,
+      status: 'PLAYING',
+      tableNumber: 2,
+      bracketRound: 2,
+    });
+    const tables = buildTables(2, [stage([done, semi])]);
+
+    expect(tables[0]).toMatchObject({ status: 'FREE', match: null });
+    expect(tables[1]?.match?.id).toBe('semi');
+  });
+
+  it('текущий этап — плей-офф, хотя в группе осталась встреча снявшегося', () => {
+    const groups = stage([match({ id: 'g', playerAId: A, playerBId: D })], {
+      id: 'groups',
+      name: 'Групповой этап',
+    });
+    const knockout = stage(
+      [
+        match({
+          id: 'f',
+          stageId: 'ko',
+          playerAId: B,
+          playerBId: C,
+          status: 'PLAYING',
+          tableNumber: 1,
+        }),
+      ],
+      { id: 'ko', type: 'KNOCKOUT', name: 'Плей-офф' },
+    );
+    const out = new Set([D]);
+
+    expect(currentStage([groups, knockout], out)?.name).toBe('Плей-офф');
+    // Когда за столами никого, решает первая незакрытая встреча.
+    const idle = stage([match({ id: 'f2', stageId: 'ko', playerAId: B, playerBId: C })], {
+      id: 'ko',
+      type: 'KNOCKOUT',
+      name: 'Плей-офф',
+    });
+    expect(currentStage([groups, idle], out)?.name).toBe('Плей-офф');
+    expect(currentStage([groups, idle])?.name).toBe('Групповой этап');
   });
 });
