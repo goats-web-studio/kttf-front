@@ -39,7 +39,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
       manifest: {
-        name: 'KTTF — настольный теннис Казахстана',
+        name: 'KTTF — Казахский форум настольного тенниса',
         short_name: 'KTTF',
         description:
           'Турниры, рейтинг и календарь настольного тенниса Казахстана. Консоль судьи работает без интернета.',

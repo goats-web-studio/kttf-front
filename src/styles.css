@@ -548,8 +548,8 @@ svg .motion-pop {
   animation-delay: var(--motion-delay, 0ms);
 }
 
-/* Первый экран главной: заголовок и поиск поднимаются, игроки входят с
- * боков. Один раз при загрузке — это и есть фирменный жест страницы. */
+/* Первый экран главной: заголовок и поиск поднимаются. Один раз при
+ * загрузке — это и есть фирменный жест страницы. */
 @keyframes kttf-rise {
   from {
     opacity: 0;
@@ -561,39 +561,7 @@ svg .motion-pop {
   }
 }
 
-@keyframes kttf-enter-left {
-  from {
-    opacity: 0;
-    transform: translateX(-32px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes kttf-enter-right {
-  from {
-    opacity: 0;
-    transform: translateX(32px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 .hero-rise {
   animation: kttf-rise var(--dur-reveal) var(--ease-out) both;
   animation-delay: var(--motion-delay, 0ms);
-}
-
-.hero-enter-left,
-.hero-enter-right {
-  animation: kttf-enter-left calc(var(--dur-reveal) * 1.6) var(--ease-out) both;
-  animation-delay: var(--motion-delay, 0ms);
-}
-
-.hero-enter-right {
-  animation-name: kttf-enter-right;
 }
