@@ -49,7 +49,7 @@ export default function HeroPoster(): ReactNode {
         sx={{
           position: 'relative',
           pt: { xs: 4, md: 7 },
-          pb: { xs: 6, md: 4 },
+          pb: { xs: 6, md: 10 },
           textAlign: 'center',
         }}
       >
