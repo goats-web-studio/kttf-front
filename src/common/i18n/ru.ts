@@ -21,6 +21,7 @@ export const ru = {
   'nav.tournaments': 'Турниры',
   'nav.clubs': 'Клубы',
   'nav.sections': 'Разделы сайта',
+  'nav.language': 'Язык',
   'nav.menu.players.rating.title': 'Рейтинг страны',
   'nav.menu.players.rating.text': 'Все игроки по рейтингу, фильтры по городу и клубу',
   'nav.menu.players.women.title': 'Женский рейтинг',
@@ -167,6 +168,8 @@ export const ru = {
   'home.hero.line': 'KTTF · турниры · рейтинг · клубы · игроки',
   'home.hero.forum': 'KTTF — Казахский форум настольного тенниса',
   'home.hero.placeholder': 'Фамилия игрока',
+  'home.hero.about':
+    'Дом настольного тенниса Казахстана: турниры, рейтинг игроков, клубы и тренеры в одном месте.',
   'home.counts.players': 'Игроки',
   'home.counts.clubs': 'Клубы',
   'home.counts.tournaments': 'Турниры',

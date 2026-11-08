@@ -43,13 +43,13 @@ export default function HeroPoster(): ReactNode {
   };
 
   return (
-    <Atmosphere component="section" glow={[50, 58]} minHeight={{ md: 600 }}>
+    <Atmosphere component="section" glow={[50, 58]} minHeight={{ md: 460 }}>
       <Container
         maxWidth="lg"
         sx={{
           position: 'relative',
-          pt: { xs: 5, md: 11 },
-          pb: { xs: 8, md: 4 },
+          pt: { xs: 4, md: 7 },
+          pb: { xs: 6, md: 4 },
           textAlign: 'center',
         }}
       >
@@ -63,8 +63,8 @@ export default function HeroPoster(): ReactNode {
           sx={{
             fontWeight: 800,
             textTransform: 'uppercase',
-            fontSize: { xs: 36, sm: 56, md: 64 },
-            lineHeight: 0.98,
+            fontSize: { xs: 28, sm: 36, md: 44 },
+            lineHeight: 1.02,
             letterSpacing: '-0.01em',
             textShadow: '0 2px 6px rgb(0 0 0 / 0.55), 0 8px 32px rgb(0 0 0 / 0.5)',
           }}
@@ -80,9 +80,9 @@ export default function HeroPoster(): ReactNode {
           className="hero-rise"
           style={{ '--motion-delay': '80ms' } as CSSProperties}
           sx={{
-            mt: { xs: 2, sm: 3 },
+            mt: { xs: 1.5, sm: 2 },
             fontWeight: 700,
-            fontSize: { xs: 13, sm: 15 },
+            fontSize: { xs: 12, sm: 14 },
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
           }}
@@ -111,6 +111,22 @@ export default function HeroPoster(): ReactNode {
           </Box>
         </Typography>
 
+        {/* Кто мы — одной фразой, под строкой бренда. */}
+        <Typography
+          className="hero-rise"
+          style={{ '--motion-delay': '120ms' } as CSSProperties}
+          sx={{
+            mt: { xs: 1.5, sm: 2 },
+            mx: 'auto',
+            maxWidth: 560,
+            fontSize: { xs: 14, sm: 16 },
+            lineHeight: 1.5,
+            color: 'rgb(255 255 255 / 0.78)',
+          }}
+        >
+          {t('home.hero.about')}
+        </Typography>
+
         <Box
           className="hero-rise"
           style={{ '--motion-delay': '160ms' } as CSSProperties}
@@ -118,7 +134,7 @@ export default function HeroPoster(): ReactNode {
           role="search"
           onSubmit={submit}
           sx={{
-            mt: { xs: 4, sm: 5 },
+            mt: { xs: 3, sm: 4 },
             mx: 'auto',
             maxWidth: 560,
             display: 'flex',

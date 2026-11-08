@@ -21,6 +21,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import NotificationsBell from '@/features/notifications/bell';
 import { playerQuery } from '@/features/players/queries';
 
+import LanguageSwitch from './language-switch';
 import NavDropdown from './nav-dropdown';
 import { SECTIONS } from './sections';
 
@@ -74,6 +75,7 @@ export default function SiteHeader(): ReactNode {
             ))}
           </Stack>
           <Box sx={{ flexGrow: 1 }} />
+          <LanguageSwitch />
           {user === null ? (
             <NavButton to="/login">{t('page.login.title')}</NavButton>
           ) : (

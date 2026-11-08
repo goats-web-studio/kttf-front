@@ -5,12 +5,13 @@ import { DEFAULT_LOCALE, DICTIONARIES, type Locale, type MessageKey } from './lo
 export interface I18nValue {
   readonly locale: Locale;
   readonly t: (key: MessageKey) => string;
+  readonly setLocale: (locale: Locale) => void;
 }
 
-function createValue(locale: Locale): I18nValue {
+function createValue(locale: Locale, setLocale: (locale: Locale) => void = () => undefined): I18nValue {
   const dictionary = DICTIONARIES[locale];
 
-  return { locale, t: (key) => dictionary[key] };
+  return { locale, t: (key) => dictionary[key], setLocale };
 }
 
 export const I18nContext = createContext<I18nValue>(createValue(DEFAULT_LOCALE));
@@ -29,4 +30,9 @@ export function useT(): (key: MessageKey) => string {
 
 export function useLocale(): Locale {
   return use(I18nContext).locale;
+}
+
+/** Смена языка из переключателя в шапке. */
+export function useSetLocale(): (locale: Locale) => void {
+  return use(I18nContext).setLocale;
 }

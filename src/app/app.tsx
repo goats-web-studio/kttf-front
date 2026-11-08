@@ -1,9 +1,18 @@
 import Box from '@mui/material/Box';
 import { QueryClientProvider, type QueryClient } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
-import { detectLocale, I18nProvider, useT } from '@/common/i18n';
+import { detectLocale, I18nProvider, isLocale, type Locale, useT } from '@/common/i18n';
+
+const LOCALE_KEY = 'kttf.locale';
+
+/** Выбор из переключателя важнее языка браузера. */
+function initialLocale(): Locale {
+  const saved = localStorage.getItem(LOCALE_KEY);
+
+  return saved !== null && isLocale(saved) ? saved : detectLocale(navigator.languages);
+}
 import { connectSessionToApi, restoreSession } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 
@@ -13,7 +22,15 @@ import UpdatePrompt from './update-prompt';
 
 export default function App(): ReactNode {
   const [queryClient] = useState(createQueryClient);
-  const [locale] = useState(() => detectLocale(navigator.languages));
+  const [locale, setLocale] = useState(initialLocale);
+  const changeLocale = useCallback((next: Locale) => {
+    localStorage.setItem(LOCALE_KEY, next);
+    setLocale(next);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const isRestoring = useSessionStore((state) => state.isRestoring);
 
@@ -24,7 +41,7 @@ export default function App(): ReactNode {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider locale={locale}>
+      <I18nProvider locale={locale} onLocaleChange={changeLocale}>
         {isRestoring ? <Restoring /> : <Routes queryClient={queryClient} />}
         <UpdatePrompt />
       </I18nProvider>

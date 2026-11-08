@@ -1,9 +1,9 @@
 import CssBaseline from '@mui/material/CssBaseline';
 import GlobalStyles from '@mui/material/GlobalStyles';
-import { kkKZ, ruRU } from '@mui/material/locale';
+import { enUS, kkKZ, ruRU } from '@mui/material/locale';
 import { createTheme, StyledEngineProvider, ThemeProvider, type Theme } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { ruRU as pickersRuRU } from '@mui/x-date-pickers/locales';
+import { enUS as pickersEnUS, ruRU as pickersRuRU } from '@mui/x-date-pickers/locales';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/kk';
 import 'dayjs/locale/ru';
@@ -97,6 +97,7 @@ const NIGHT: Tokens = {
 const MUI_LOCALES = {
   ru: [ruRU, pickersRuRU],
   kk: [kkKZ, pickersRuRU],
+  en: [enUS, pickersEnUS],
 } as const satisfies Record<Locale, readonly object[]>;
 
 function build(tokens: Tokens, locale: Locale): Theme {

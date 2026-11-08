@@ -1,3 +1,4 @@
+import { en } from './en';
 import { kk } from './kk';
 import { ru } from './ru';
 
@@ -9,21 +10,22 @@ import { ru } from './ru';
  * русского и казахского. Добавление третьего словаря не меняет ничего, кроме
  * этого файла: тип ключей уже обязывает заполнить его целиком.
  */
-export const LOCALES = ['ru', 'kk'] as const;
+export const LOCALES = ['kk', 'en', 'ru'] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
-/** Русский первый по ТЗ 11: «приоритет наполнения — русский → казахский». */
-export const DEFAULT_LOCALE: Locale = 'ru';
+/** Казахский — основной язык платформы: порядок переключателя каз → англ → рус. */
+export const DEFAULT_LOCALE: Locale = 'kk';
 
 export type MessageKey = keyof typeof ru;
 
 export const DICTIONARIES: Readonly<Record<Locale, Readonly<Record<MessageKey, string>>>> = {
-  ru,
   kk,
+  en,
+  ru,
 };
 
-function isLocale(value: string): value is Locale {
+export function isLocale(value: string): value is Locale {
   return LOCALES.some((locale) => locale === value);
 }
 

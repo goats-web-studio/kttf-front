@@ -5,6 +5,7 @@ import { type Locale } from './locale';
 
 interface I18nProviderProps {
   readonly locale: Locale;
+  readonly onLocaleChange?: (locale: Locale) => void;
   readonly children: ReactNode;
 }
 
@@ -14,8 +15,12 @@ interface I18nProviderProps {
  * Переключатель языка и сохранение выбора в профиле — задача локализации
  * (ТЗ 11). Здесь только доставка словаря до компонентов.
  */
-export default function I18nProvider({ locale, children }: I18nProviderProps): ReactNode {
-  const value = useMemo(() => createI18nValue(locale), [locale]);
+export default function I18nProvider({
+  locale,
+  onLocaleChange,
+  children,
+}: I18nProviderProps): ReactNode {
+  const value = useMemo(() => createI18nValue(locale, onLocaleChange), [locale, onLocaleChange]);
 
   return <I18nContext value={value}>{children}</I18nContext>;
 }
