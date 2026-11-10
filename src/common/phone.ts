@@ -21,8 +21,15 @@ export function nationalDigits(raw: string): string {
 
   const digits = trimmed.replace(/\D/g, '');
 
-  // Вставили номер целиком с восьмёркой или семёркой впереди.
-  if (digits.length > NATIONAL_LENGTH && (digits.startsWith('8') || digits.startsWith('7'))) {
+  // Восьмёрка впереди — привычная замена «+7»: казахстанский номер после
+  // кода страны с восьмёрки не начинается. Так и при вставке, и при наборе
+  // по цифре: первая набранная «8» не становится цифрой номера.
+  if (digits.startsWith('8')) {
+    return digits.slice(1, NATIONAL_LENGTH + 1);
+  }
+
+  // Вставили номер целиком с семёркой впереди.
+  if (digits.length > NATIONAL_LENGTH && digits.startsWith('7')) {
     return digits.slice(1, NATIONAL_LENGTH + 1);
   }
 

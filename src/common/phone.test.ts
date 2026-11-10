@@ -15,6 +15,16 @@ describe('маска телефона', () => {
     }
   });
 
+  it('восьмёрка, набранная первой, — это «+7», а не цифра номера', () => {
+    let display = '';
+
+    for (const digit of '87011234567') {
+      display = formatPhone(nationalDigits(display + digit));
+    }
+
+    expect(display).toBe('+7 (701) 123-45-67');
+  });
+
   it('первая семёрка в пустом поле — начало номера, а не код страны', () => {
     expect(nationalDigits('7')).toBe('7');
     expect(formatPhone(nationalDigits('7'))).toBe('+7 (7');
