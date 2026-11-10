@@ -47,7 +47,12 @@ export function roundName(fromFinal: number, t: (key: MessageKey) => string): st
   if (fromFinal === 1) return t('results.bracket.semifinal');
   if (fromFinal === 2) return t('results.bracket.quarterfinal');
 
-  return fill(t('results.bracket.of'), { n: String(2 ** fromFinal) });
+  // Русский считает доли финала («1/8»), английский, корейский и японский —
+  // игроков в круге («Round of 16», «16강», «ベスト16»): словарь берёт нужное.
+  return fill(t('results.bracket.of'), {
+    n: String(2 ** fromFinal),
+    players: String(2 ** (fromFinal + 1)),
+  });
 }
 
 /** Этапы, у которых есть сетка. Круговая и группы рисуются таблицами. */

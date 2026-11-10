@@ -5,6 +5,14 @@ import { ru } from './ru';
 
 let DICTIONARIES: Record<string, Dictionary> = {};
 
+/**
+ * Строки, где код подставляет больше, чем нужно русскому: язык берёт свою
+ * величину. Круг сетки: «1/{n} финала» против «Round of {players}».
+ */
+const ALTERNATIVE_PLACEHOLDERS: Readonly<Record<string, readonly string[]>> = {
+  'results.bracket.of': ['{n}', '{players}'],
+};
+
 beforeAll(async () => {
   const entries = await Promise.all(
     LOCALES.map(async (locale) => [locale, await loadDictionary(locale)] as const),
@@ -26,9 +34,14 @@ describe('словари', () => {
 
     for (const [locale, dictionary] of Object.entries(DICTIONARIES)) {
       for (const [key, value] of Object.entries(ru)) {
-        expect(placeholders(dictionary[key as keyof typeof ru]), `${locale}: ${key}`).toEqual(
-          placeholders(value),
-        );
+        const translated = placeholders(dictionary[key as keyof typeof ru]);
+        const alternative = ALTERNATIVE_PLACEHOLDERS[key];
+
+        if (alternative !== undefined && translated.every((name) => alternative.includes(name))) {
+          continue;
+        }
+
+        expect(translated, `${locale}: ${key}`).toEqual(placeholders(value));
       }
     }
   });
