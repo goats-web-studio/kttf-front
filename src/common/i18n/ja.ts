@@ -327,7 +327,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'error.form.credentials': 'ログイン名または電話番号とパスワードを入力してください',
   'error.form.login': 'ログイン名：3〜32文字、英字・数字・ピリオド・ハイフン・アンダースコア',
   'error.form.password': 'パスワードは8文字以上にしてください',
-  'error.form.phone': '番号をすべて入力してください：+7と10桁',
+  'error.form.phone': '番号をすべて入力してください',
   'error.form.name': '入力してください',
   'error.form.birthYear': '生まれた年は4桁で入力してください',
   'error.form.gender': '選択してください',

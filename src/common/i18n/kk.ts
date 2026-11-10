@@ -340,7 +340,7 @@ export const kk: Record<MessageKey, string> = {
   'error.form.login': 'Логин: 3–32 таңба, латын әрпі, сан, нүкте, дефис немесе астыңғы сызық',
   'error.form.password': 'Құпия сөз кемінде сегіз таңба',
 
-  'error.form.phone': 'Нөмірді толық енгізіңіз: +7 және 10 сан',
+  'error.form.phone': 'Нөмірді толық енгізіңіз',
   'error.form.name': 'Өрісті толтырыңыз',
   'error.form.birthYear': 'Туған жылы — төрт сан',
   'error.form.gender': 'Мәнді таңдаңыз',

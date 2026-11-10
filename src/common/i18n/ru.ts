@@ -338,7 +338,7 @@ export const ru = {
   'error.form.login': 'Логин: 3–32 знака, латиница, цифры, точка, дефис или подчёркивание',
   'error.form.password': 'Пароль не короче восьми знаков',
 
-  'error.form.phone': 'Введите номер полностью: +7 и 10 цифр',
+  'error.form.phone': 'Введите номер полностью',
   'error.form.name': 'Заполните поле',
   'error.form.birthYear': 'Год рождения — четыре цифры',
   'error.form.gender': 'Выберите значение',

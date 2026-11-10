@@ -323,7 +323,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'error.form.credentials': '아이디 또는 전화번호와 비밀번호를 입력하세요',
   'error.form.login': '아이디: 3~32자, 영문, 숫자, 점, 하이픈, 밑줄',
   'error.form.password': '비밀번호는 8자 이상이어야 합니다',
-  'error.form.phone': '번호를 끝까지 입력해 주세요: +7과 숫자 10자리',
+  'error.form.phone': '번호를 끝까지 입력해 주세요',
   'error.form.name': '필수 입력 항목이에요',
   'error.form.birthYear': '출생 연도는 4자리 숫자예요',
   'error.form.gender': '값을 선택하세요',

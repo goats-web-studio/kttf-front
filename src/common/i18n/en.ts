@@ -333,7 +333,7 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'error.form.login':
     'Username: 3–32 characters — Latin letters, digits, dot, hyphen or underscore',
   'error.form.password': 'Password must be at least 8 characters',
-  'error.form.phone': 'Enter the full number: +7 and 10 digits',
+  'error.form.phone': 'Enter the full number',
   'error.form.name': 'Fill in this field',
   'error.form.birthYear': 'Birth year must be four digits',
   'error.form.gender': 'Choose an option',

@@ -311,7 +311,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'error.form.credentials': '请输入用户名或手机号和密码',
   'error.form.login': '用户名：3–32个字符，可用拉丁字母、数字、点、连字符或下划线',
   'error.form.password': '密码至少8个字符',
-  'error.form.phone': '请输入完整号码：+7 加 10 位数字',
+  'error.form.phone': '请输入完整号码',
   'error.form.name': '请填写此项',
   'error.form.birthYear': '出生年份为四位数字',
   'error.form.gender': '请选择',
