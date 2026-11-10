@@ -2428,6 +2428,7 @@ export const ru = {
   'forum.newTopic': 'Новая тема',
   'forum.sections': 'Разделы',
   'forum.active': 'Обсуждают сейчас',
+  'forum.allTopics': 'Все обсуждения',
   'forum.empty.title': 'Пока тихо',
   'forum.empty.text': 'Начните первую тему — вопрос, отзыв или идея',
   'forum.section.counts': 'тем: {topics} · сообщений: {posts}',

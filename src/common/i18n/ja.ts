@@ -2234,6 +2234,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'forum.newTopic': '新規トピック',
   'forum.sections': 'カテゴリ',
   'forum.active': '話題のトピック',
+  'forum.allTopics': 'すべてのトピック',
   'forum.empty.title': 'まだ投稿はありません',
   'forum.empty.text': '最初のトピックを始めましょう。質問、レビュー、アイデアなど',
   'forum.section.counts': 'トピック：{topics}・投稿：{posts}',

@@ -2447,6 +2447,7 @@ export const kk: Record<MessageKey, string> = {
   'forum.newTopic': 'Жаңа тақырып',
   'forum.sections': 'Бөлімдер',
   'forum.active': 'Қазір талқылануда',
+  'forum.allTopics': 'Барлық талқылаулар',
   'forum.empty.title': 'Әзірге тыныш',
   'forum.empty.text': 'Алғашқы тақырыпты бастаңыз — сұрақ, пікір немесе идея',
   'forum.section.counts': 'тақырып: {topics} · хабарлама: {posts}',

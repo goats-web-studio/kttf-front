@@ -2234,6 +2234,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'forum.newTopic': '새 글',
   'forum.sections': '게시판',
   'forum.active': '활발한 토론',
+  'forum.allTopics': '전체 토론',
   'forum.empty.title': '아직 조용합니다',
   'forum.empty.text': '첫 글을 시작해 보세요. 질문, 후기, 아이디어 모두 좋아요',
   'forum.section.counts': '글 {topics} · 메시지 {posts}',

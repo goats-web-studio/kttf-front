@@ -2234,6 +2234,7 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'forum.newTopic': 'New topic',
   'forum.sections': 'Sections',
   'forum.active': 'Active discussions',
+  'forum.allTopics': 'All discussions',
   'forum.empty.title': 'Quiet for now',
   'forum.empty.text': 'Start the first topic — a question, a review or an idea',
   'forum.section.counts': 'topics: {topics} · messages: {posts}',

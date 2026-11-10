@@ -2234,6 +2234,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'forum.newTopic': '发新帖',
   'forum.sections': '版块',
   'forum.active': '热议中',
+  'forum.allTopics': '全部讨论',
   'forum.empty.title': '暂时很安静',
   'forum.empty.text': '发起第一个主题吧——提问、评价或想法',
   'forum.section.counts': '主题：{topics} · 消息：{posts}',

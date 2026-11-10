@@ -9,11 +9,8 @@ import { fill, formatCount, useLocale, useT } from '@/common/i18n';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import Surface from '@/common/ui/surface';
 
-import { FEED_HREF, RULES_HREF, splitName, topicHref } from './labels';
-import { forumBirthdaysQuery, forumOnlineQuery, forumTopicsQuery } from './queries';
-
-/** Сколько тем в «Обсуждение турниров». */
-const TOURNAMENT_TOPICS = 5;
+import { FEED_HREF, RULES_HREF, splitName } from './labels';
+import { forumBirthdaysQuery, forumOnlineQuery } from './queries';
 
 const rowSx = {
   listStyle: 'none',
@@ -23,22 +20,8 @@ const rowSx = {
   '&:first-of-type': { borderTop: 0 },
 } as const;
 
-/**
- * Боковая колонка форума — ADR-067 §6, как у RTTF: сколько игроков на сайте,
- * ссылки на ленту и правила, «Обсуждение турниров» и дни рождения. Пустые
- * блоки не выводятся.
- */
-export default function ForumSidebar(): ReactNode {
-  return (
-    <Box sx={{ display: 'grid', gap: 3, alignContent: 'start' }}>
-      <OnlineAndLinks />
-      <TournamentTalk />
-      <Birthdays />
-    </Box>
-  );
-}
-
-function OnlineAndLinks(): ReactNode {
+/** Сколько игроков на сайте и ссылки на ленту и правила — под разделами форума. */
+export function OnlineAndLinks(): ReactNode {
   const t = useT();
   const locale = useLocale();
   const online = useQuery(forumOnlineQuery);
@@ -75,38 +58,6 @@ function OnlineAndLinks(): ReactNode {
           <ScrollText size={18} aria-hidden />
           {t('forum.rules.title')}
         </Link>
-      </Box>
-    </Surface>
-  );
-}
-
-function TournamentTalk(): ReactNode {
-  const t = useT();
-  const topics = useQuery(
-    forumTopicsQuery({ subjectType: 'TOURNAMENT', limit: TOURNAMENT_TOPICS }),
-  );
-
-  if ((topics.data?.items.length ?? 0) === 0) return null;
-
-  return (
-    <Surface title={t('forum.side.tournaments')} flush component="section">
-      <Box component="ul" sx={{ m: 0, p: 0 }} data-forum-tournament-talk>
-        {topics.data?.items.map((topic) => (
-          <Box component="li" key={topic.id} sx={rowSx}>
-            <Link
-              href={topicHref(topic.id)}
-              underline="hover"
-              color="text.primary"
-              sx={{ fontWeight: 600 }}
-            >
-              {topic.title}
-            </Link>
-            <Typography variant="body2" color="text.secondary">
-              {fill(t('forum.topic.replies'), { count: String(Math.max(0, topic.postsCount - 1)) })}
-              {topic.lastAuthorName !== null && ` · ${topic.lastAuthorName}`}
-            </Typography>
-          </Box>
-        ))}
       </Box>
     </Surface>
   );
