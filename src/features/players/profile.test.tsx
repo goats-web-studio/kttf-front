@@ -969,7 +969,7 @@ describe('анкета без рейтинга — ADR-072', () => {
     expect(screen.getByText(ru['claim.sheet'])).toBeDefined();
 
     fireEvent.change(screen.getByLabelText(ru['claim.search']), { target: { value: 'Ержанов' } });
-    fireEvent.click(screen.getByRole('button', { name: ru['claim.find'] }));
+    // Поиск — по мере набора, без кнопки «Найти».
     fireEvent.click(await screen.findByRole('button', { name: ru['claim.action'] }));
 
     // Первое нажатие только спрашивает: привязку самому не отменить.

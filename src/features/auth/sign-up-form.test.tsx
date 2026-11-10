@@ -112,7 +112,7 @@ describe('регистрация', () => {
   it('ищет только игроков без кабинета', async () => {
     await renderPage();
 
-    fireEvent.change(screen.getByPlaceholderText(ru['signUp.player.search']), {
+    fireEvent.change(screen.getByLabelText(ru['signUp.player.search']), {
       target: { value: 'Тле' },
     });
 
@@ -125,14 +125,16 @@ describe('регистрация', () => {
     await renderPage();
     fillRequired();
 
-    fireEvent.change(screen.getByPlaceholderText(ru['signUp.player.search']), {
+    fireEvent.change(screen.getByLabelText(ru['signUp.player.search']), {
       target: { value: 'Тле' },
     });
 
     const list = await screen.findByRole('list', { name: ru['signUp.player.title'] });
-    fireEvent.click(
-      within(list).getByRole('button', { name: new RegExp(playerName(PLAYERS.third)) }),
-    );
+    fireEvent.click(within(list).getByRole('button', { name: ru['claim.action'] }));
+
+    // Выбранный профиль остаётся карточкой с пояснением, список уходит.
+    expect(screen.getByText(playerName(PLAYERS.third))).toBeDefined();
+    expect(screen.getByText(ru['signUp.player.chosen'])).toBeDefined();
 
     fireEvent.click(screen.getByRole('button', { name: ru['signUp.submit'] }));
 

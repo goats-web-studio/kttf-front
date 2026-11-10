@@ -1,30 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isAppError } from '@kttf/shared/errors';
-import { LOGIN_PATTERN, PASSWORD_MIN_LENGTH, type PlayerView } from '@kttf/shared/types';
+import { LOGIN_PATTERN, PASSWORD_MIN_LENGTH, type PlayerListItemView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { errorMessageKey } from '@/common/api';
-import { formatRating, useT, type MessageKey } from '@/common/i18n';
+import { useT, type MessageKey } from '@/common/i18n';
 import { toE164 } from '@/common/phone';
 import PasswordField from '@/common/ui/password-field';
 import PhoneField from '@/common/ui/phone-field';
-import { usePlaceName } from '@/features/places/place-name';
-import { playerName } from '@/features/players/player-name';
-import { playersQuery } from '@/features/players/queries';
+import { PlayerCandidate, PlayerSearchField } from '@/features/players/player-pick';
+import { usePlayerSearch } from '@/features/players/player-search';
 
 import { signUp } from './api';
 import { useSessionStore } from './session-store';
@@ -78,11 +73,10 @@ export default function SignUpForm({
   signInHref = '/login',
 }: SignUpFormProps): ReactNode {
   const t = useT();
-  const placeName = usePlaceName();
   const signedIn = useSessionStore((state) => state.signedIn);
 
   const [search, setSearch] = useState('');
-  const [chosen, setChosen] = useState<PlayerView | null>(null);
+  const [chosen, setChosen] = useState<PlayerListItemView | null>(null);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -90,12 +84,8 @@ export default function SignUpForm({
     defaultValues: { phone: '', login: '', password: '', repeat: '' },
   });
 
-  // Запрос идёт только после того, как человек начал искать: пустой поиск
-  // вернул бы всех игроков страны.
-  const found = useQuery({
-    ...playersQuery({ search, withoutAccount: true, page: 1, limit: 10 }),
-    enabled: search.trim().length >= 2,
-  });
+  // Поиск — по мере набора, от двух букв (`usePlayerSearch`).
+  const found = usePlayerSearch(search);
 
   const register = useMutation({
     mutationFn: signUp,
@@ -202,69 +192,84 @@ export default function SignUpForm({
         slotProps={ANNOUNCED}
       />
 
-      <Paper component="fieldset" variant="outlined" sx={{ m: 0, px: 2, pt: 1, pb: 2 }}>
-        <Typography component="legend" variant="body2" color="text.secondary" sx={{ px: 0.5 }}>
+      {/* Привязка к профилю, который завёл организатор (ADR-034, ADR-072). */}
+      <Box
+        component="fieldset"
+        sx={{
+          m: 0,
+          p: 2,
+          border: '1px solid var(--line)',
+          borderRadius: 2,
+          display: 'grid',
+          gap: 1.5,
+        }}
+      >
+        <Typography component="legend" sx={{ px: 0.5, fontWeight: 600 }}>
           {t('signUp.player.title')}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
           {t('signUp.player.lead')}
         </Typography>
 
         {chosen === null ? (
           <>
-            <TextField
+            <PlayerSearchField
+              label={t('signUp.player.search')}
               value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-              }}
-              type="search"
-              placeholder={t('signUp.player.search')}
-              sx={{ mt: 1.5 }}
-              slotProps={{ htmlInput: { 'aria-label': t('signUp.player.search') } }}
+              onChange={setSearch}
+              loading={found.isFetching}
             />
-
-            {found.data !== undefined && (
-              <List dense aria-label={t('signUp.player.title')} sx={{ mt: 1, py: 0 }}>
-                {found.data.items.length === 0 ? (
-                  <ListItem sx={{ px: 0 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {t('signUp.player.empty')}
-                    </Typography>
-                  </ListItem>
-                ) : (
-                  found.data.items.map((player) => (
-                    <ListItem key={player.id} disablePadding>
-                      <ListItemButton
-                        onClick={() => {
-                          setChosen(player);
-                        }}
-                        sx={{ minHeight: 44, borderRadius: 1 }}
-                      >
-                        <ListItemText
-                          primary={playerName(player)}
-                          secondary={`${placeName(player.city)} · ${formatRating(player.rating)}`}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  ))
-                )}
-              </List>
-            )}
+            {found.items !== undefined &&
+              (found.items.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  {t('signUp.player.empty')}
+                </Typography>
+              ) : (
+                <Box
+                  component="ul"
+                  aria-label={t('signUp.player.title')}
+                  sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 1 }}
+                >
+                  {found.items.map((player) => (
+                    <li key={player.id}>
+                      <PlayerCandidate
+                        player={player}
+                        action={
+                          <Button
+                            variant="outlined"
+                            onClick={() => {
+                              setChosen(player);
+                            }}
+                            sx={{ minHeight: 40 }}
+                          >
+                            {t('claim.action')}
+                          </Button>
+                        }
+                      />
+                    </li>
+                  ))}
+                </Box>
+              ))}
           </>
         ) : (
-          <Stack direction="row" spacing={1} sx={{ mt: 1.5, alignItems: 'center' }}>
-            <Typography sx={{ fontWeight: 500, flexGrow: 1 }}>{playerName(chosen)}</Typography>
-            <Button
-              variant="text"
-              onClick={() => {
-                setChosen(null);
-              }}
-            >
-              {t('signUp.player.reset')}
-            </Button>
-          </Stack>
+          <PlayerCandidate
+            player={chosen}
+            selected
+            note={t('signUp.player.chosen')}
+            action={
+              <Button
+                variant="text"
+                onClick={() => {
+                  setChosen(null);
+                }}
+                sx={{ minHeight: 40 }}
+              >
+                {t('signUp.player.reset')}
+              </Button>
+            }
+          />
         )}
-      </Paper>
+      </Box>
 
       {register.error !== null && !fieldTaken && (
         <Alert severity="error">{t(errorMessageKey(register.error))}</Alert>

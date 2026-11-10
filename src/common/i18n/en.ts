@@ -329,6 +329,9 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'signUp.player.search': 'Last name',
   'signUp.player.empty': 'No players found. You can continue without selecting one.',
   'signUp.player.reset': "That's not me",
+  'pick.born': 'born {year}',
+  'signUp.player.chosen': "This profile's match history and rating will become yours.",
+  'claim.confirm': "Is this really you? You can't undo the link yourself.",
   'error.form.credentials': 'Enter your username or phone and password',
   'error.form.login':
     'Username: 3–32 characters — Latin letters, digits, dot, hyphen or underscore',
