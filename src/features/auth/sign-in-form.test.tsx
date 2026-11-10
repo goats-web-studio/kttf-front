@@ -71,55 +71,71 @@ afterEach(() => {
 });
 
 describe('форма входа', () => {
-  it('пустые поля на сервер не уходят', async () => {
+  it('пустые поля на сервер не уходят, ошибка — у каждого поля', async () => {
     const fetchMock = vi.fn<typeof fetch>();
     vi.stubGlobal('fetch', fetchMock);
 
     await renderForm();
     press(ru['login.submit']);
 
-    // Текст берётся из словаря, а не из схемы: сообщения внутри схем общие
-    // с сервером и не локализуются — бриф 3.4.
-    expect(await screen.findByRole('alert')).toHaveProperty(
-      'textContent',
-      ru['error.form.credentials'],
-    );
+    // Тексты — из словаря, а не из схемы: сообщения схем не локализуются (бриф 3.4).
+    expect(await screen.findByText(ru['error.form.phone'])).toBeDefined();
+    expect(screen.getByText(ru['error.form.passwordEmpty'])).toBeDefined();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('логин с паролем — и сессия сохранена', async () => {
+  it('телефон набирается маской и уходит на сервер как +7XXXXXXXXXX', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(reply(200, SESSION));
     vi.stubGlobal('fetch', fetchMock);
 
     await renderForm();
-    type(ru['login.identifier.label'], 'aslan');
+    type(ru['login.phone.label'], '8 701 123 45 67');
+    expect((screen.getByLabelText(ru['login.phone.label']) as HTMLInputElement).value).toBe(
+      '+7 (701) 123-45-67',
+    );
     type(ru['login.password.label'], 'parol123');
     press(ru['login.submit']);
 
     await waitFor(() => {
       expect(useSessionStore.getState().user?.phone).toBe(PHONE);
     });
-    expect(globalThis.localStorage.getItem('kttf.refresh-token')).toBe('refresh-1');
     expect(fetchMock.mock.calls[0]?.[0] as string).toContain('/auth/login');
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)).toMatchObject({
+      identifier: PHONE,
+    });
+    expect(globalThis.localStorage.getItem('kttf.refresh-token')).toBe('refresh-1');
   });
 
-  it('телефон принимается тем же полем', async () => {
+  it('неполный номер не уходит на сервер', async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await renderForm();
+    type(ru['login.phone.label'], '701 123');
+    type(ru['login.password.label'], 'parol123');
+    press(ru['login.submit']);
+
+    expect(await screen.findByText(ru['error.form.phone'])).toBeDefined();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('вход по логину — своей вкладкой, и способ запоминается', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(reply(200, SESSION));
     vi.stubGlobal('fetch', fetchMock);
 
     await renderForm();
-    type(ru['login.identifier.label'], PHONE);
+    fireEvent.click(screen.getByRole('radio', { name: ru['login.method.login'] }));
+    type(ru['login.login.label'], 'aslan');
     type(ru['login.password.label'], 'parol123');
     press(ru['login.submit']);
 
-    // Первый запрос — вход. После него шапка вошедшего уже спрашивает свои
-    // данные (колокольчик уведомлений), поэтому считается не число запросов.
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalled();
     });
-    expect(fetchMock.mock.calls[0]?.[0] as string).toContain('/auth/login');
-    const sent = fetchMock.mock.calls[0]?.[1]?.body as string;
-    expect(sent).toContain(PHONE);
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)).toMatchObject({
+      identifier: 'aslan',
+    });
+    expect(globalThis.localStorage.getItem('kttf.login-method')).toBe('login');
   });
 
   it('отказ сервера показывается на языке интерфейса', async () => {
@@ -134,7 +150,7 @@ describe('форма входа', () => {
     );
 
     await renderForm();
-    type(ru['login.identifier.label'], 'aslan');
+    type(ru['login.phone.label'], '+77011234567');
     type(ru['login.password.label'], 'ne-parol');
     press(ru['login.submit']);
 

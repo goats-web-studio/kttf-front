@@ -15,6 +15,8 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
+import { toE164 } from '@/common/phone';
+import PhoneField from '@/common/ui/phone-field';
 import CityPicker from '@/features/places/city-picker';
 
 import { telegramHandle } from './contacts';
@@ -68,7 +70,18 @@ export default function ClubForm({
   const t = useT();
 
   const form = useForm({
-    resolver: zodResolver(createClubSchema),
+    // Телефон и WhatsApp — полным номером: обрывок маски не сохраняется.
+    resolver: zodResolver(
+      createClubSchema.superRefine((values, context) => {
+        for (const name of ['phone', 'whatsapp'] as const) {
+          const value = values[name];
+
+          if (value !== undefined && toE164(value) === null) {
+            context.addIssue({ code: 'custom', path: [name], message: name });
+          }
+        }
+      }),
+    ),
     defaultValues: {
       name: club?.name ?? initial?.name ?? '',
       cityId: club?.city.id ?? '',
@@ -155,19 +168,26 @@ export default function ClubForm({
             NUMERIC,
           )}
         />
-        <TextField
-          label={t('club.field.phone')}
-          type="tel"
-          autoComplete="tel"
-          {...register('phone', optionalText)}
-          {...hint(t, undefined)}
-        />
-        <TextField
-          label={t('club.field.whatsapp')}
-          type="tel"
-          {...register('whatsapp', optionalText)}
-          {...hint(t, undefined)}
-        />
+        {(['phone', 'whatsapp'] as const).map((name) => (
+          <Controller
+            key={name}
+            control={form.control}
+            name={name}
+            render={({ field }) => (
+              <PhoneField
+                label={t(name === 'phone' ? 'club.field.phone' : 'club.field.whatsapp')}
+                value={field.value ?? ''}
+                onChange={(next) => {
+                  field.onChange(next === '' ? undefined : next);
+                }}
+                onBlur={field.onBlur}
+                name={field.name}
+                inputRef={field.ref}
+                {...hint(t, errors[name] === undefined ? undefined : 'error.form.phone')}
+              />
+            )}
+          />
+        ))}
         <TextField
           label={t('club.field.instagram')}
           {...register('instagram', optionalText)}

@@ -17,6 +17,8 @@ import {
 
 import { telegramHandle } from '@/features/clubs/contacts';
 
+import { toE164 } from '@/common/phone';
+
 /**
  * Формы кабинета тренера — в тела запросов (ADR-059).
  *
@@ -157,6 +159,14 @@ export function coachPatch(
   }
 
   if (Object.keys(patch).length === 0) return { kind: 'unchanged' };
+
+  // Телефон и WhatsApp — полным номером: обрывок маски не сохраняется.
+  const brokenPhones = (['phone', 'whatsapp'] as const).filter((key) => {
+    const value = patch[key];
+    return typeof value === 'string' && toE164(value) === null;
+  });
+
+  if (brokenPhones.length > 0) return { kind: 'invalid', fields: brokenPhones };
 
   const parsed = updateCoachSchema.safeParse(patch);
 

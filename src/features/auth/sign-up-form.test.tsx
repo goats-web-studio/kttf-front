@@ -67,9 +67,10 @@ function type(label: string, value: string): void {
 }
 
 function fillRequired(): void {
+  type(ru['signUp.phone.label'], '+77011234567');
   type(ru['signUp.login.label'], 'aslan');
   type(ru['signUp.password.label'], 'parol123');
-  type(ru['signUp.phone.label'], '+77011234567');
+  type(ru['signUp.passwordRepeat.label'], 'parol123');
 }
 
 beforeEach(() => {
@@ -103,7 +104,9 @@ describe('регистрация', () => {
     await waitFor(() => {
       expect(useSessionStore.getState().user?.login).toBe('aslan');
     });
-    expect(sent.some((request) => request.url.endsWith('/auth/sign-up'))).toBe(true);
+    const request = sent.find((current) => current.url.endsWith('/auth/sign-up'));
+    // Повтор пароля и маска остаются на клиенте: сервер получает номер в E.164.
+    expect(request?.body).toEqual({ phone: '+77011234567', login: 'aslan', password: 'parol123' });
   });
 
   it('ищет только игроков без кабинета', async () => {
@@ -139,11 +142,40 @@ describe('регистрация', () => {
     });
   });
 
+  it('несовпадающий повтор пароля не уходит на сервер', async () => {
+    await renderPage();
+    fillRequired();
+    type(ru['signUp.passwordRepeat.label'], 'parol124');
+
+    fireEvent.click(screen.getByRole('button', { name: ru['signUp.submit'] }));
+
+    expect(await screen.findByText(ru['error.form.passwordMismatch'])).toBeDefined();
+    expect(sent.some((request) => request.url.endsWith('/auth/sign-up'))).toBe(false);
+  });
+
+  it('занятый номер показывается у поля телефона', async () => {
+    vi.stubGlobal('fetch', (input: unknown) =>
+      Promise.resolve(
+        String(input).endsWith('/auth/sign-up')
+          ? reply(400, {
+              error: { code: 'VALIDATION_FAILED', message: 'taken', details: { field: 'phone' } },
+            })
+          : reply(200, pageOf([])),
+      ),
+    );
+
+    await renderPage();
+    fillRequired();
+    fireEvent.click(screen.getByRole('button', { name: ru['signUp.submit'] }));
+
+    expect(await screen.findByText(ru['error.form.phoneTaken'])).toBeDefined();
+  });
+
   it('короткий пароль не уходит на сервер', async () => {
     await renderPage();
-    type(ru['signUp.login.label'], 'aslan');
+    fillRequired();
     type(ru['signUp.password.label'], 'korotk1');
-    type(ru['signUp.phone.label'], '+77011234567');
+    type(ru['signUp.passwordRepeat.label'], 'korotk1');
 
     fireEvent.click(screen.getByRole('button', { name: ru['signUp.submit'] }));
 

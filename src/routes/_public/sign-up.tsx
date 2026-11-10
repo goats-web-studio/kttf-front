@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 import AuthCard from '@/common/ui/auth-card';
-import { redirectSearchSchema } from '@/features/auth/redirect';
+import { authHref, redirectSearchSchema } from '@/features/auth/redirect';
 import SignUpForm from '@/features/auth/sign-up-form';
 
 /** Куда вернуться после регистрации — приходит со страницы входа. */
@@ -26,6 +26,7 @@ function SignUpPage(): ReactNode {
   return (
     <AuthCard title={t('page.signUp.title')}>
       <SignUpForm
+        signInHref={authHref('/login', redirect)}
         onSignedUp={() => {
           // Пришёл с адресом возврата — туда: гость нажал «Стать тренером»
           // или «Оставить заявку» и зарегистрировался по дороге. Без адреса —

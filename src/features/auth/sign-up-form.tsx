@@ -1,7 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signUpSchema, type PlayerView } from '@kttf/shared/types';
+import { isAppError } from '@kttf/shared/errors';
+import { LOGIN_PATTERN, PASSWORD_MIN_LENGTH, type PlayerView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -12,10 +14,14 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { errorMessageKey } from '@/common/api';
-import { formatRating, useT } from '@/common/i18n';
+import { formatRating, useT, type MessageKey } from '@/common/i18n';
+import { toE164 } from '@/common/phone';
+import PasswordField from '@/common/ui/password-field';
+import PhoneField from '@/common/ui/phone-field';
 import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
@@ -25,7 +31,32 @@ import { useSessionStore } from './session-store';
 
 interface SignUpFormProps {
   readonly onSignedUp: () => void;
+  /** Ссылка «Войти» — с адресом возврата, если он есть. */
+  readonly signInHref?: string;
 }
+
+/**
+ * Проверки формы. Правила логина и пароля — общие с сервером
+ * (`LOGIN_PATTERN`, `PASSWORD_MIN_LENGTH`), иначе форма приняла бы то, что
+ * сервер отвергнет. Сообщение каждой ошибки — ключ словаря.
+ */
+const formSchema = z
+  .object({
+    phone: z.string().refine((value) => toE164(value) !== null, 'error.form.phone'),
+    login: z.string().trim().regex(LOGIN_PATTERN, 'error.form.login'),
+    password: z.string().min(PASSWORD_MIN_LENGTH, 'error.form.password').max(200),
+    repeat: z.string(),
+  })
+  .refine((values) => values.repeat === values.password, {
+    path: ['repeat'],
+    message: 'error.form.passwordMismatch',
+  });
+
+/** Отказ сервера по занятому телефону или логину — к своему полю (`details.field`). */
+const TAKEN_KEYS: Readonly<Record<string, MessageKey>> = {
+  phone: 'error.form.phoneTaken',
+  login: 'error.form.loginTaken',
+};
 
 /** Ошибка поля объявляется сразу, как и до перехода на MUI (раздел 9). */
 const ANNOUNCED = { formHelperText: { role: 'alert' } } as const;
@@ -42,7 +73,10 @@ const ANNOUNCED = { formHelperText: { role: 'alert' } } as const;
  * Поиск, а не список целиком: игроков в стране больше, чем помещается в
  * выпадающий список, и выбирать себя из чужих фамилий человеку незачем.
  */
-export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
+export default function SignUpForm({
+  onSignedUp,
+  signInHref = '/login',
+}: SignUpFormProps): ReactNode {
   const t = useT();
   const placeName = usePlaceName();
   const signedIn = useSessionStore((state) => state.signedIn);
@@ -51,8 +85,9 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
   const [chosen, setChosen] = useState<PlayerView | null>(null);
 
   const form = useForm({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: { login: '', password: '', phone: '' },
+    resolver: zodResolver(formSchema),
+    mode: 'onTouched',
+    defaultValues: { phone: '', login: '', password: '', repeat: '' },
   });
 
   // Запрос идёт только после того, как человек начал искать: пустой поиск
@@ -68,12 +103,27 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
       signedIn(session);
       onSignedUp();
     },
+    onError: (error) => {
+      const field = isAppError(error) ? error.details?.field : undefined;
+      const key = typeof field === 'string' ? TAKEN_KEYS[field] : undefined;
+
+      if ((field === 'phone' || field === 'login') && key !== undefined) {
+        form.setError(field, { message: key }, { shouldFocus: true });
+      }
+    },
   });
+
+  // Занятый телефон или логин показан у поля — общий отказ над кнопкой лишний.
+  const fieldTaken =
+    form.formState.errors.phone?.type === 'manual' ||
+    form.formState.errors.login?.type === 'manual';
+  const message = (key: string | undefined): string | undefined =>
+    key === undefined ? undefined : t(key as MessageKey);
 
   const { errors } = form.formState;
   const { ref: loginRef, ...login } = form.register('login');
   const { ref: passwordRef, ...password } = form.register('password');
-  const { ref: phoneRef, ...phone } = form.register('phone');
+  const { ref: repeatRef, ...repeat } = form.register('repeat');
 
   return (
     <Stack
@@ -82,8 +132,14 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
       noValidate
       onSubmit={(event) => {
         void form.handleSubmit((values) => {
+          const phone = toE164(values.phone);
+
+          if (phone === null) return;
+
           register.mutate({
-            ...values,
+            phone,
+            login: values.login.trim(),
+            password: values.password,
             ...(chosen === null ? {} : { playerId: chosen.id }),
           });
         })(event);
@@ -91,40 +147,59 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
     >
       <Typography color="text.secondary">{t('signUp.lead')}</Typography>
 
+      <Controller
+        control={form.control}
+        name="phone"
+        render={({ field }) => (
+          <PhoneField
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            name={field.name}
+            inputRef={field.ref}
+            label={t('signUp.phone.label')}
+            autoFocus
+            size="medium"
+            error={errors.phone !== undefined}
+            helperText={message(errors.phone?.message)}
+            slotProps={ANNOUNCED}
+          />
+        )}
+      />
+
       <TextField
         {...login}
         inputRef={loginRef}
         label={t('signUp.login.label')}
         autoComplete="username"
+        autoCapitalize="none"
+        spellCheck={false}
         size="medium"
         error={errors.login !== undefined}
-        helperText={errors.login === undefined ? undefined : t('error.form.login')}
+        helperText={message(errors.login?.message) ?? t('signUp.login.hint')}
         slotProps={ANNOUNCED}
       />
 
-      <TextField
+      <PasswordField
         {...password}
         inputRef={passwordRef}
         label={t('signUp.password.label')}
-        type="password"
         autoComplete="new-password"
         size="medium"
         error={errors.password !== undefined}
-        helperText={errors.password === undefined ? undefined : t('error.form.password')}
+        helperText={message(errors.password?.message) ?? t('signUp.password.hint')}
         slotProps={ANNOUNCED}
       />
 
-      <TextField
-        {...phone}
-        inputRef={phoneRef}
-        label={t('signUp.phone.label')}
-        type="tel"
-        autoComplete="tel"
-        placeholder={t('login.phone.placeholder')}
+      <PasswordField
+        {...repeat}
+        inputRef={repeatRef}
+        label={t('signUp.passwordRepeat.label')}
+        autoComplete="new-password"
         size="medium"
-        error={errors.phone !== undefined}
-        helperText={errors.phone === undefined ? undefined : t('error.form.phone')}
-        slotProps={{ ...ANNOUNCED, htmlInput: { inputMode: 'tel' } }}
+        error={errors.repeat !== undefined}
+        helperText={message(errors.repeat?.message)}
+        slotProps={ANNOUNCED}
       />
 
       <Paper component="fieldset" variant="outlined" sx={{ m: 0, px: 2, pt: 1, pb: 2 }}>
@@ -191,7 +266,7 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
         )}
       </Paper>
 
-      {register.error !== null && (
+      {register.error !== null && !fieldTaken && (
         <Alert severity="error">{t(errorMessageKey(register.error))}</Alert>
       )}
 
@@ -200,11 +275,16 @@ export default function SignUpForm({ onSignedUp }: SignUpFormProps): ReactNode {
         type="submit"
         size="large"
         fullWidth
+        sx={{ minHeight: 48 }}
         loading={register.isPending}
         loadingPosition="start"
       >
         {t('signUp.submit')}
       </Button>
+
+      <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+        {t('signUp.haveAccount')} <Link href={signInHref}>{t('signUp.signIn')}</Link>
+      </Typography>
     </Stack>
   );
 }

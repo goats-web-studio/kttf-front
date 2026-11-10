@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
 import { fill, useT, type MessageKey } from '@/common/i18n';
+import PhoneField from '@/common/ui/phone-field';
 import EditorSection from '@/features/clubs/page-editor/editor-section';
 import CityPicker from '@/features/places/city-picker';
 
@@ -81,8 +82,7 @@ export default function CoachPageEditor({ coach }: { readonly coach: CoachView }
   const editor = useFieldsEditor(coach, PAGE_FIELDS);
   const { form, set, isInvalid } = editor;
   const text = (
-    key:
-      'headline' | 'coachingSince' | 'visitAreas' | 'phone' | 'whatsapp' | 'telegram' | 'instagram',
+    key: 'headline' | 'coachingSince' | 'visitAreas' | 'telegram' | 'instagram',
     label: MessageKey,
     maxLength: number,
     extra: { readonly hint?: MessageKey; readonly numeric?: boolean } = {},
@@ -161,8 +161,18 @@ export default function CoachPageEditor({ coach }: { readonly coach: CoachView }
             {t('coach.editor.contactsHint')}
           </Typography>
           <Box sx={GRID}>
-            {text('phone', 'club.field.phone', 30)}
-            {text('whatsapp', 'club.field.whatsapp', 30)}
+            {(['phone', 'whatsapp'] as const).map((key) => (
+              <PhoneField
+                key={key}
+                label={t(key === 'phone' ? 'club.field.phone' : 'club.field.whatsapp')}
+                value={form[key]}
+                onChange={(next) => {
+                  set(key, next);
+                }}
+                error={isInvalid(key)}
+                {...(isInvalid(key) ? { helperText: t('error.form.phone') } : {})}
+              />
+            ))}
             {text('telegram', 'club.field.telegram', 64)}
             {text('instagram', 'club.field.instagram', 100)}
             <TextField
