@@ -237,12 +237,25 @@ function SectionNav({
     ];
 
   return (
-    <Box component="nav" aria-label={t('forum.sections')} sx={{ minWidth: 0 }}>
+    <Box
+      component="nav"
+      aria-label={t('forum.sections')}
+      sx={{
+        minWidth: 0,
+        // На широком экране — карточкой: фон страницы с линиями корта
+        // проходил прямо под названиями разделов.
+        p: { md: 1 },
+        borderRadius: { md: 2 },
+        bgcolor: { md: 'background.paper' },
+        border: { md: '1px solid var(--line)' },
+      }}
+    >
       <Typography
         component="h2"
         sx={{
           display: { xs: 'none', md: 'block' },
           px: 1.5,
+          pt: 1,
           mb: 0.5,
           fontSize: 12,
           fontWeight: 700,
@@ -277,7 +290,8 @@ function SectionNav({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
-                minHeight: 44,
+                // Палец — 44px, мышь — компактнее: разделы целиком на первом экране.
+                minHeight: { xs: 44, md: 36 },
                 px: 1.5,
                 borderRadius: { xs: 999, md: 1 },
                 border: { xs: '1px solid var(--line)', md: 0 },
@@ -397,8 +411,10 @@ function BoardRow({
               {topic.section.title}
             </Link>
           )}
-          {topic.subject !== null && <span>{t(SUBJECT_KEYS[topic.subject.type])}</span>}
-          <span>{authorName}</span>
+          <span>
+            {topic.subject !== null && `${t(SUBJECT_KEYS[topic.subject.type])} · `}
+            {authorName}
+          </span>
           {unread && (
             <Link
               href={topicHref(topic.id, topic.firstUnread ?? undefined)}
@@ -410,7 +426,7 @@ function BoardRow({
             </Link>
           )}
           {/* На телефоне ответы и время — в той же строке. */}
-          <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+          <Box component="span" sx={{ display: { xs: 'block', sm: 'none' }, width: '100%' }}>
             {fill(t('forum.topic.replies'), { count: String(replies) })}
             {' · '}
             {formatDateTime(topic.lastPostAt, locale)}
