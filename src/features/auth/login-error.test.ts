@@ -1,11 +1,11 @@
 import { AppError } from '@kttf/shared/errors';
 import { describe, expect, it } from 'vitest';
 
-import { DICTIONARIES } from '@/common/i18n/locale';
+import { ru } from '@/common/i18n/ru';
 
 import { loginErrorText } from './login-error';
 
-const t = (key: keyof (typeof DICTIONARIES)['ru']): string => DICTIONARIES.ru[key];
+const t = (key: keyof typeof ru): string => ru[key];
 
 describe('отказ на форме входа', () => {
   it('предел попыток — со сроком в минутах, округлённым вверх', () => {
@@ -18,10 +18,10 @@ describe('отказ на форме входа', () => {
 
   it('без срока и прочие отказы — общим текстом', () => {
     expect(loginErrorText(new AppError('RATE_LIMITED', 'x'), t)).toBe(
-      DICTIONARIES.ru['error.api.RATE_LIMITED'],
+      ru['error.api.RATE_LIMITED'],
     );
     expect(loginErrorText(new AppError('UNAUTHORIZED', 'x'), t)).toBe(
-      DICTIONARIES.ru['error.api.UNAUTHORIZED'],
+      ru['error.api.UNAUTHORIZED'],
     );
   });
 });

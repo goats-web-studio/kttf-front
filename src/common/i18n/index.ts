@@ -21,5 +21,6 @@ export {
   detectLocale,
   isLocale,
   LOCALE_NAMES,
+  loadDictionary,
   LOCALES, type Locale, type MessageKey } from './locale';
 export { default as I18nProvider } from './provider';

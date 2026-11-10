@@ -38,6 +38,8 @@ function answer(url: string): Response {
 
 beforeEach(() => {
   localStorage.setItem('kttf.refresh-token', 'refresh-1');
+  // Тексты теста — русские; язык jsdom (en-US) иначе включил бы английский.
+  localStorage.setItem('kttf.locale', 'ru');
   useSessionStore.setState({ user: null, accessToken: null, isRestoring: true });
   vi.stubGlobal('fetch', (input: unknown) => Promise.resolve(answer(String(input))));
 });
@@ -71,6 +73,7 @@ describe('прямая ссылка на защищённую страницу',
     // Охрана обязана остаться охраной: правка меняла момент, когда сессия
     // попадает в контекст, а не само правило.
     localStorage.clear();
+    localStorage.setItem('kttf.locale', 'ru');
     window.history.pushState({}, '', '/cabinet');
 
     render(<App />);

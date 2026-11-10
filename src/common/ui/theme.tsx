@@ -1,22 +1,13 @@
 import CssBaseline from '@mui/material/CssBaseline';
 import GlobalStyles from '@mui/material/GlobalStyles';
-import { enUS, jaJP, kkKZ, koKR, ruRU, zhCN } from '@mui/material/locale';
+import { kkKZ, ruRU } from '@mui/material/locale';
 import { createTheme, StyledEngineProvider, ThemeProvider, type Theme } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import {
-  enUS as pickersEnUS,
-  jaJP as pickersJaJP,
-  koKR as pickersKoKR,
-  ruRU as pickersRuRU,
-  zhCN as pickersZhCN,
-} from '@mui/x-date-pickers/locales';
+import { ruRU as pickersRuRU } from '@mui/x-date-pickers/locales';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import 'dayjs/locale/ja';
 import 'dayjs/locale/kk';
-import 'dayjs/locale/ko';
 import 'dayjs/locale/ru';
-import 'dayjs/locale/zh';
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { useLocale, type Locale } from '@/common/i18n';
 
@@ -102,17 +93,41 @@ const NIGHT: Tokens = {
  * Встроенные строки MUI — подписи пагинации, «Нет вариантов», кнопки
  * календаря — по языку интерфейса, а не английские (бриф 3.4). У календарей
  * казахского пакета нет: там русский, его в Казахстане читают все.
+ *
+ * Русский и казахский — в основном бандле, остальные догружаются
+ * (`mui-locales.ts`): консоли нужен офлайн-набор в пределах бюджета.
  */
-const MUI_LOCALES = {
+const EAGER_MUI_LOCALES: Partial<Record<Locale, readonly object[]>> = {
   ru: [ruRU, pickersRuRU],
   kk: [kkKZ, pickersRuRU],
-  en: [enUS, pickersEnUS],
-  zh: [zhCN, pickersZhCN],
-  ko: [koKR, pickersKoKR],
-  ja: [jaJP, pickersJaJP],
-} as const satisfies Record<Locale, readonly object[]>;
+};
 
-function build(tokens: Tokens, locale: Locale): Theme {
+/** Строки MUI для языка; пока пакет языка грузится — встроенные английские. */
+function useMuiLocale(locale: Locale): readonly object[] {
+  const [loaded, setLoaded] = useState(EAGER_MUI_LOCALES);
+
+  useEffect(() => {
+    if (loaded[locale] !== undefined) {
+      return undefined;
+    }
+
+    let live = true;
+
+    void import('./mui-locales').then(({ LAZY_MUI_LOCALES }) => {
+      if (live) {
+        setLoaded((previous) => ({ ...previous, ...LAZY_MUI_LOCALES }));
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [locale, loaded]);
+
+  return loaded[locale] ?? [];
+}
+
+function build(tokens: Tokens, locale: Locale, muiLocale: readonly object[]): Theme {
   const onPrimary = tokens.mode === 'light' ? '#ffffff' : 'var(--night)';
   const light = tokens.mode === 'light';
 
@@ -404,7 +419,7 @@ function build(tokens: Tokens, locale: Locale): Theme {
         MuiSkeleton: { defaultProps: { animation: 'pulse' } },
       },
     },
-    ...MUI_LOCALES[locale],
+    ...muiLocale,
   );
 }
 
@@ -425,7 +440,11 @@ interface ThemeRootProps {
  */
 export default function ThemeRoot({ theme = 'light', children }: ThemeRootProps): ReactNode {
   const locale = useLocale();
-  const built = useMemo(() => build(theme === 'night' ? NIGHT : LIGHT, locale), [theme, locale]);
+  const muiLocale = useMuiLocale(locale);
+  const built = useMemo(
+    () => build(theme === 'night' ? NIGHT : LIGHT, locale, muiLocale),
+    [theme, locale, muiLocale],
+  );
 
   return (
     <StyledEngineProvider enableCssLayer>

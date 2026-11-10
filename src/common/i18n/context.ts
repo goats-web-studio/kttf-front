@@ -1,6 +1,7 @@
 import { createContext, use } from 'react';
 
-import { DEFAULT_LOCALE, DICTIONARIES, type Locale, type MessageKey } from './locale';
+import { ru } from './ru';
+import { type Dictionary, type Locale, type MessageKey } from './locale';
 
 export interface I18nValue {
   readonly locale: Locale;
@@ -8,13 +9,16 @@ export interface I18nValue {
   readonly setLocale: (locale: Locale) => void;
 }
 
-function createValue(locale: Locale, setLocale: (locale: Locale) => void = () => undefined): I18nValue {
-  const dictionary = DICTIONARIES[locale];
-
+function createValue(
+  locale: Locale,
+  dictionary: Dictionary,
+  setLocale: (locale: Locale) => void = () => undefined,
+): I18nValue {
   return { locale, t: (key) => dictionary[key], setLocale };
 }
 
-export const I18nContext = createContext<I18nValue>(createValue(DEFAULT_LOCALE));
+/** Без провайдера — русский эталон: на нём написаны тесты компонентов. */
+export const I18nContext = createContext<I18nValue>(createValue('ru', ru));
 
 export { createValue as createI18nValue };
 
