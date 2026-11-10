@@ -289,6 +289,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'login.login.label': 'ユーザー名',
   'password.show': 'パスワードを表示',
   'password.hide': 'パスワードを隠す',
+  'phone.country': '国番号',
   'error.form.loginEmpty': 'ユーザー名を入力してください',
   'error.form.passwordEmpty': 'パスワードを入力してください',
   'signUp.login.hint': '3〜32文字：半角英字・数字・ピリオド・ハイフン・アンダースコア',

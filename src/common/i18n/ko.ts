@@ -286,6 +286,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'login.login.label': '아이디',
   'password.show': '비밀번호 보기',
   'password.hide': '비밀번호 숨기기',
+  'phone.country': '국가 번호',
   'error.form.loginEmpty': '아이디를 입력해 주세요',
   'error.form.passwordEmpty': '비밀번호를 입력해 주세요',
   'signUp.login.hint': '3–32자: 영문, 숫자, 마침표, 하이픈, 밑줄',

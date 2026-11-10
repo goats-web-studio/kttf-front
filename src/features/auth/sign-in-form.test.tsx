@@ -90,8 +90,10 @@ describe('форма входа', () => {
 
     await renderForm();
     type(ru['login.phone.label'], '8 701 123 45 67');
-    expect((screen.getByLabelText(ru['login.phone.label']) as HTMLInputElement).value).toBe(
-      '+7 (701) 123-45-67',
+    // Код страны — слева, в поле — номер по маске страны.
+    expect(screen.getByLabelText(ru['login.phone.label'])).toHaveProperty(
+      'value',
+      '(701) 123-45-67',
     );
     type(ru['login.password.label'], 'parol123');
     press(ru['login.submit']);

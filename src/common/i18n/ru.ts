@@ -300,6 +300,7 @@ export const ru = {
   'login.login.label': 'Логин',
   'password.show': 'Показать пароль',
   'password.hide': 'Скрыть пароль',
+  'phone.country': 'Код страны',
   'error.form.loginEmpty': 'Введите логин',
   'error.form.passwordEmpty': 'Введите пароль',
   'signUp.login.hint': '3–32 знака: латиница, цифры, точка, дефис, подчёркивание',

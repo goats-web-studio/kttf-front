@@ -276,6 +276,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'login.login.label': '用户名',
   'password.show': '显示密码',
   'password.hide': '隐藏密码',
+  'phone.country': '国家/地区代码',
   'error.form.loginEmpty': '请输入用户名',
   'error.form.passwordEmpty': '请输入密码',
   'signUp.login.hint': '3–32 个字符：英文字母、数字、点、连字符、下划线',

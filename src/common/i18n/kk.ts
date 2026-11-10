@@ -302,6 +302,7 @@ export const kk: Record<MessageKey, string> = {
   'login.login.label': 'Логин',
   'password.show': 'Құпиясөзді көрсету',
   'password.hide': 'Құпиясөзді жасыру',
+  'phone.country': 'Ел коды',
   'error.form.loginEmpty': 'Логинді енгізіңіз',
   'error.form.passwordEmpty': 'Құпиясөзді енгізіңіз',
   'signUp.login.hint': '3–32 таңба: латын әріптері, сандар, нүкте, дефис, астын сызу',

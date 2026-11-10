@@ -296,6 +296,7 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'login.login.label': 'Username',
   'password.show': 'Show password',
   'password.hide': 'Hide password',
+  'phone.country': 'Country code',
   'error.form.loginEmpty': 'Enter your username',
   'error.form.passwordEmpty': 'Enter your password',
   'signUp.login.hint': '3–32 characters: Latin letters, digits, dot, hyphen, underscore',
