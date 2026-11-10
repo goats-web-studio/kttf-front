@@ -1,3 +1,4 @@
+import { ja, ko, zh } from './asian';
 import { en } from './en';
 import { kk } from './kk';
 import { ru } from './ru';
@@ -10,7 +11,7 @@ import { ru } from './ru';
  * русского и казахского. Добавление третьего словаря не меняет ничего, кроме
  * этого файла: тип ключей уже обязывает заполнить его целиком.
  */
-export const LOCALES = ['kk', 'en', 'ru'] as const;
+export const LOCALES = ['kk', 'en', 'ru', 'zh', 'ko', 'ja'] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
@@ -23,6 +24,19 @@ export const DICTIONARIES: Readonly<Record<Locale, Readonly<Record<MessageKey, s
   kk,
   en,
   ru,
+  zh,
+  ko,
+  ja,
+};
+
+/** Названия языков на самих языках: человек ищет свой язык, а не перевод его названия. */
+export const LOCALE_NAMES: Readonly<Record<Locale, string>> = {
+  kk: 'Қазақша',
+  en: 'English',
+  ru: 'Русский',
+  zh: '中文',
+  ko: '한국어',
+  ja: '日本語',
 };
 
 export function isLocale(value: string): value is Locale {

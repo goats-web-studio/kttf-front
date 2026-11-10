@@ -16,7 +16,7 @@ import type { ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
-import { useT, type MessageKey } from '@/common/i18n';
+import { LOCALE_NAMES, LOCALES, useLocale, useSetLocale, useT, type MessageKey } from '@/common/i18n';
 import { updateAccount } from '@/features/auth/api';
 import { useSessionStore } from '@/features/auth/session-store';
 
@@ -47,6 +47,8 @@ const ANNOUNCED = { formHelperText: { role: 'alert' } } as const;
  */
 export default function AccountForm({ user }: { readonly user: AuthUserView }): ReactNode {
   const t = useT();
+  const locale = useLocale();
+  const setLocale = useSetLocale();
   const userChanged = useSessionStore((state) => state.userChanged);
 
   const form = useForm({
@@ -133,21 +135,39 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
           slotProps={ANNOUNCED}
         />
 
+        {/* Язык интерфейса меняется сразу и запоминается в браузере. В
+            аккаунт он пишется при сохранении, если сервер его знает: там
+            пока только русский, казахский и английский. */}
         <Controller
           control={form.control}
           name="locale"
-          render={({ field: { ref, value, ...field } }) => (
+          render={({ field: { ref, onChange, onBlur, name } }) => (
             <TextField
-              {...field}
+              name={name}
+              onBlur={onBlur}
               inputRef={ref}
-              value={value ?? ''}
+              value={locale}
               select
               label={t('account.form.locale')}
               sx={TOUCH}
+              onChange={(event) => {
+                const next = LOCALES.find((item) => item === event.target.value);
+
+                if (next === undefined) {
+                  return;
+                }
+
+                setLocale(next);
+                const upper = next.toUpperCase();
+
+                if (isLocale(upper)) {
+                  onChange(upper);
+                }
+              }}
             >
-              {localeSchema.options.map((option) => (
-                <MenuItem key={option} value={option}>
-                  {t(LOCALE_KEYS[option])}
+              {LOCALES.map((option) => (
+                <MenuItem key={option} value={option} lang={option}>
+                  {LOCALE_NAMES[option]}
                 </MenuItem>
               ))}
             </TextField>
@@ -196,12 +216,6 @@ export default function AccountForm({ user }: { readonly user: AuthUserView }): 
 function isLocale(value: string): value is UpdateAccountInput['locale'] & string {
   return localeSchema.options.some((option) => option === value);
 }
-
-const LOCALE_KEYS: Readonly<Record<'RU' | 'KK' | 'EN', MessageKey>> = {
-  RU: 'account.locale.RU',
-  KK: 'account.locale.KK',
-  EN: 'account.locale.EN',
-};
 
 /** Подпись необязательного поля: пометка мельче и тише самой подписи. */
 function Optional({ label }: { readonly label: MessageKey }): ReactNode {

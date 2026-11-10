@@ -7,12 +7,6 @@ import { detectLocale, I18nProvider, isLocale, type Locale, useT } from '@/commo
 
 const LOCALE_KEY = 'kttf.locale';
 
-/** Выбор из переключателя важнее языка браузера. */
-function initialLocale(): Locale {
-  const saved = localStorage.getItem(LOCALE_KEY);
-
-  return saved !== null && isLocale(saved) ? saved : detectLocale(navigator.languages);
-}
 import { connectSessionToApi, restoreSession } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 
@@ -20,12 +14,25 @@ import { createQueryClient } from './query-client';
 import { createAppRouter } from './router';
 import UpdatePrompt from './update-prompt';
 
+/** Язык, выбранный на этом устройстве, — из переключателя или кабинета. */
+function savedLocale(): Locale | undefined {
+  const saved = localStorage.getItem(LOCALE_KEY);
+
+  return saved !== null && isLocale(saved) ? saved : undefined;
+}
+
 export default function App(): ReactNode {
   const [queryClient] = useState(createQueryClient);
-  const [locale, setLocale] = useState(initialLocale);
+  // Порядок: выбор на этом устройстве → язык из настроек аккаунта → язык браузера.
+  const [chosen, setChosen] = useState(savedLocale);
+  const accountLocale = useSessionStore((state) => state.user?.locale.toLowerCase());
+  const locale =
+    chosen ??
+    (accountLocale !== undefined && isLocale(accountLocale) ? accountLocale : undefined) ??
+    detectLocale(navigator.languages);
   const changeLocale = useCallback((next: Locale) => {
     localStorage.setItem(LOCALE_KEY, next);
-    setLocale(next);
+    setChosen(next);
   }, []);
 
   useEffect(() => {
