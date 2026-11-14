@@ -4,7 +4,6 @@ import {
   CalendarClock,
   CalendarDays,
   CircleDot,
-  Clock,
   Flag,
   GraduationCap,
   Layers,
@@ -16,7 +15,6 @@ import {
   Radio,
   Send,
   ShoppingBag,
-  Sparkles,
   Swords,
   Tag,
   TentTree,
@@ -53,24 +51,38 @@ const category = (value: ProductCategory, key: string, icon: LucideIcon): NavMen
  * работать: заявка клуба, «Стать тренером».
  */
 export const NAV_MENUS: Readonly<Record<string, readonly NavMenuItem[]>> = {
-  '/players': [
-    { href: '/players', icon: ListOrdered, key: 'players.rating' },
-    { href: '/players?gender=FEMALE', icon: Venus, key: 'players.women' },
-    { href: '/players?view=equipment', icon: Layers, key: 'players.equipment' },
-    // Дуэли и спарринги — ADR-065, `docs/13` 5.1.
-    { href: '/duels', icon: Swords, key: 'players.duels' },
-  ],
   '/tournaments': [
     { href: '/tournaments', icon: CalendarDays, key: 'tournaments.calendar' },
     { href: '/tournaments?status=REG_OPEN&view=list', icon: Flag, key: 'tournaments.open' },
     { href: '/tournaments?status=RUNNING&view=list', icon: Radio, key: 'tournaments.running' },
     { href: '/tournaments?status=FINISHED&view=list', icon: Trophy, key: 'tournaments.results' },
   ],
+  '/players': [
+    { href: '/players', icon: ListOrdered, key: 'players.rating' },
+    { href: '/players?gender=FEMALE', icon: Venus, key: 'players.women' },
+    { href: '/players?view=equipment', icon: Layers, key: 'players.equipment' },
+  ],
+  // Где играть: залы, тренеры и группы — одна задача «куда пойти» (раньше
+  // три раздела: «Клубы» и «Тренировки» со списком тренеров внутри).
   '/clubs': [
     { href: '/clubs', icon: Building2, key: 'clubs.all' },
-    { href: '/clubs?upcoming=true', icon: Clock, key: 'clubs.upcoming' },
-    { href: '/clubs?kids=true', icon: Sparkles, key: 'clubs.kids' },
+    { href: '/trainings', icon: CalendarClock, key: 'trainings.all' },
+    { href: '/trainings?view=coaches', icon: GraduationCap, key: 'trainings.coaches' },
+    { href: '/trainings?kind=INDIVIDUAL', icon: User, key: 'trainings.individual' },
+    { href: '/trainings?audience=KIDS', icon: Users, key: 'trainings.kids' },
+    { href: '/trainings?kind=CAMP', icon: TentTree, key: 'trainings.camps' },
     { href: '/feedback', icon: Send, key: 'clubs.apply' },
+    { href: '/cabinet/coach', icon: UserPlus, key: 'trainings.become' },
+  ],
+  // Сообщество: форум и дуэли — всё, где игроки находят друг друга.
+  '/forum': [
+    { href: '/forum', icon: MessagesSquare, key: 'forum.all' },
+    // Дуэли и спарринги — ADR-065, `docs/13` 5.1.
+    { href: '/duels', icon: Swords, key: 'players.duels' },
+    { href: '/forum/tournaments', icon: Trophy, key: 'forum.tournaments' },
+    { href: '/forum/equipment', icon: Layers, key: 'forum.equipment' },
+    { href: '/forum/site', icon: Lightbulb, key: 'forum.site' },
+    { href: '/forum/new', icon: PenLine, key: 'forum.new' },
   ],
   '/market': [
     category('BLADE', 'market.blades', CircleDot),
@@ -78,21 +90,6 @@ export const NAV_MENUS: Readonly<Record<string, readonly NavMenuItem[]>> = {
     category('BALL', 'market.balls', Medal),
     { href: '/market/brands', icon: Tag, key: 'market.brands' },
     { href: '/market', icon: ShoppingBag, key: 'market.all' },
-  ],
-  '/trainings': [
-    { href: '/trainings', icon: CalendarClock, key: 'trainings.all' },
-    { href: '/trainings?view=coaches', icon: GraduationCap, key: 'trainings.coaches' },
-    { href: '/trainings?kind=INDIVIDUAL', icon: User, key: 'trainings.individual' },
-    { href: '/trainings?audience=KIDS', icon: Users, key: 'trainings.kids' },
-    { href: '/trainings?kind=CAMP', icon: TentTree, key: 'trainings.camps' },
-    { href: '/cabinet/coach', icon: UserPlus, key: 'trainings.become' },
-  ],
-  '/forum': [
-    { href: '/forum', icon: MessagesSquare, key: 'forum.all' },
-    { href: '/forum/tournaments', icon: Trophy, key: 'forum.tournaments' },
-    { href: '/forum/equipment', icon: Layers, key: 'forum.equipment' },
-    { href: '/forum/site', icon: Lightbulb, key: 'forum.site' },
-    { href: '/forum/new', icon: PenLine, key: 'forum.new' },
   ],
 };
 

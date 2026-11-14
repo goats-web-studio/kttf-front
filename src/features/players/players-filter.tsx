@@ -116,7 +116,7 @@ export default function PlayersFilter({
         display: 'grid',
         gap: 1.5,
         alignItems: 'end',
-        gridTemplateColumns: { xs: '1fr auto', sm: 'repeat(6, 1fr)', md: 'repeat(12, 1fr)' },
+        gridTemplateColumns: { xs: '1fr auto', sm: '1fr auto auto' },
       }}
     >
       <TextField
@@ -127,10 +127,12 @@ export default function PlayersFilter({
           setName(event.target.value);
         }}
         autoComplete="off"
-        sx={{ gridColumn: { xs: '1 / -1', sm: 'span 6', md: 'span 5' } }}
+        sx={{ gridColumn: { xs: '1 / -1', sm: 'auto' } }}
       />
 
-      {/* На телефоне — кнопка раскрытия; с 600px поля стоят в сетке сами. */}
+      {/* Остальные фильтры — за кнопкой на любой ширине: открыв «Рейтинг»,
+          человек ищет себя или соперника по фамилии, и таблица должна быть
+          на первом экране, а не под восемью полями. */}
       <Button
         variant="outlined"
         startIcon={<SlidersHorizontal size={18} aria-hidden />}
@@ -139,19 +141,21 @@ export default function PlayersFilter({
         onClick={() => {
           setOpen((value) => !value);
         }}
-        sx={{ display: { sm: 'none' }, minHeight: 48 }}
+        sx={{ minHeight: 48 }}
       >
         {extra > 0 ? `${t('players.filter.more')} · ${String(extra)}` : t('players.filter.more')}
       </Button>
-      <Button type="submit" variant="contained" sx={{ display: { sm: 'none' }, minHeight: 48 }}>
+      <Button type="submit" variant="contained" sx={{ minHeight: 48, px: { sm: 4 } }}>
         {t('players.filter.submit')}
       </Button>
 
       <Box
         id={moreId}
         sx={{
-          display: { xs: open ? 'grid' : 'none', sm: 'contents' },
+          display: open ? 'grid' : 'none',
           gridColumn: '1 / -1',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(6, 1fr)', md: 'repeat(12, 1fr)' },
+          alignItems: 'end',
           gap: 1.5,
         }}
       >
@@ -180,7 +184,7 @@ export default function PlayersFilter({
           onChange={setGender}
           span={{ sm: 'span 3', md: 'span 3' }}
         />
-        <Box sx={{ gridColumn: { sm: 'span 6', md: 'span 4' } }}>
+        <Box sx={{ gridColumn: { sm: 'span 6', md: 'span 5' } }}>
           <CitiesFilter label={t('players.filter.cities')} value={cities} onChange={setCities} />
         </Box>
         <TextField
@@ -204,10 +208,10 @@ export default function PlayersFilter({
           value={hand}
           options={HANDS}
           onChange={setHand}
-          span={{ sm: 'span 3', md: 'span 5' }}
+          span={{ sm: 'span 3', md: 'span 3' }}
         />
         {/* Инвентарь — товаром каталога, «Кто играет» RTTF (ADR-058). */}
-        <Box sx={{ gridColumn: { sm: 'span 3', md: 'span 5' } }}>
+        <Box sx={{ gridColumn: { sm: 'span 3', md: 'span 3' } }}>
           <ProductPicker
             category="BLADE"
             label={t('players.filter.blade')}
@@ -215,7 +219,7 @@ export default function PlayersFilter({
             onChange={setBlade}
           />
         </Box>
-        <Box sx={{ gridColumn: { sm: 'span 3', md: 'span 5' } }}>
+        <Box sx={{ gridColumn: { sm: 'span 3', md: 'span 3' } }}>
           <ProductPicker
             category="RUBBER"
             label={t('players.filter.rubber')}
@@ -224,20 +228,6 @@ export default function PlayersFilter({
           />
         </Box>
       </Box>
-
-      <Button
-        type="submit"
-        variant="contained"
-        sx={{
-          display: { xs: 'none', sm: 'inline-flex' },
-          gridColumn: { sm: '1 / -1', md: 'span 2' },
-          justifySelf: { sm: 'end', md: 'stretch' },
-          minHeight: 48,
-          px: 4,
-        }}
-      >
-        {t('players.filter.submit')}
-      </Button>
     </Box>
   );
 }

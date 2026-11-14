@@ -1,14 +1,12 @@
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Paper from '@mui/material/Paper';
-import { useMatchRoute } from '@tanstack/react-router';
 import {
-  Building2,
   CalendarDays,
+  MapPin,
   MessagesSquare,
   ShoppingBag,
-  Users,
-  Whistle,
+  Trophy,
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -16,6 +14,7 @@ import type { ReactNode } from 'react';
 import { useT } from '@/common/i18n';
 import RouterLink from '@/common/ui/router-link';
 
+import { useActiveSection } from './active-section';
 import { SECTIONS } from './sections';
 
 /** Высота панели — по ней оболочка оставляет место под подвал. */
@@ -23,12 +22,11 @@ export const BOTTOM_NAV_HEIGHT = 64;
 
 /** Иконки разделов. Только вместе с подписью — запрет №11. */
 const ICONS: Readonly<Record<string, LucideIcon>> = {
-  '/players': Users,
   '/tournaments': CalendarDays,
-  '/clubs': Building2,
-  '/market': ShoppingBag,
-  '/trainings': Whistle,
+  '/players': Trophy,
+  '/clubs': MapPin,
   '/forum': MessagesSquare,
+  '/market': ShoppingBag,
 };
 
 /**
@@ -41,8 +39,7 @@ const ICONS: Readonly<Record<string, LucideIcon>> = {
  */
 export default function BottomNav(): ReactNode {
   const t = useT();
-  const matchRoute = useMatchRoute();
-  const current = SECTIONS.find((section) => matchRoute({ to: section.to, fuzzy: true }) !== false);
+  const current = useActiveSection();
 
   return (
     <Paper
@@ -76,8 +73,8 @@ export default function BottomNav(): ReactNode {
               aria-current={current?.to === section.to ? 'page' : undefined}
               // Подпись одного размера в выбранном и прочих пунктах: по
               // умолчанию MUI увеличивает выбранную, и соседние подписи едут.
-              // Пять разделов в 360px (ADR-059): по 72px на пункт, и
-              // «Тренировки» влезает только без боковых полей и в 11px —
+              // Пять разделов в 360px: по 72px на пункт, и «Где играть» и
+              // «Сообщество» влезают только без боковых полей и в 11px —
               // нижняя ступень шкалы (07, 3.5).
               sx={{
                 minWidth: 0,

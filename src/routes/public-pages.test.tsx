@@ -344,10 +344,10 @@ describe('игроки — ADR-054', () => {
     expect(rows[1]?.textContent).toContain('—');
   });
 
-  it('раздел в шапке — «Игроки», ведёт на /players', async () => {
+  it('раздел в шапке — «Рейтинг», ведёт на /players (ADR-084)', async () => {
     renderAt('/players');
 
-    const [link] = await screen.findAllByRole('link', { name: ru['nav.players'] });
+    const [link] = await screen.findAllByRole('link', { name: ru['nav.ratings'] });
 
     expect(link?.getAttribute('href')).toBe('/players');
   });
@@ -668,12 +668,28 @@ describe('главная', () => {
 });
 
 describe('клубы', () => {
-  it('раздел есть в шапке на любой публичной странице', async () => {
+  it('раздел «Где играть» есть в шапке на любой публичной странице (ADR-084)', async () => {
     renderAt('/players');
 
-    const links = await screen.findAllByRole('link', { name: ru['nav.clubs'] });
+    const links = await screen.findAllByRole('link', { name: ru['nav.places'] });
 
     expect(links[0]?.getAttribute('href')).toBe('/clubs');
+  });
+
+  it('тренировки — внутри «Где играть»: пункт подсвечен как текущий (ADR-084)', async () => {
+    renderAt('/trainings');
+
+    const [link] = await screen.findAllByRole('link', { name: ru['nav.places'] });
+
+    expect(link?.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('дуэли — внутри «Сообщества»: пункт подсвечен как текущий (ADR-084)', async () => {
+    renderAt('/duels');
+
+    const [link] = await screen.findAllByRole('link', { name: ru['nav.community'] });
+
+    expect(link?.getAttribute('aria-current')).toBe('page');
   });
 
   it('клуб не заводится со списка — только заявкой', async () => {

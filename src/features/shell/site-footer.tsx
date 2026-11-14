@@ -5,7 +5,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { useT } from '@/common/i18n';
+import { useT, type MessageKey } from '@/common/i18n';
 import Atmosphere from '@/common/ui/atmosphere';
 
 import { SECTIONS } from './sections';
@@ -28,6 +28,12 @@ const footerLink = {
  * Разделы повторяют шапку одним списком `SECTIONS` — у человека, дочитавшего
  * до конца, следующий шаг под рукой.
  */
+const FOOTER_PAGES: readonly { readonly href: string; readonly label: MessageKey }[] = [
+  { href: '/trainings', label: 'nav.trainings' },
+  { href: '/trainings?view=coaches', label: 'nav.menu.trainings.coaches.title' },
+  { href: '/duels', label: 'nav.menu.players.duels.title' },
+];
+
 export default function SiteFooter(): ReactNode {
   const t = useT();
 
@@ -81,6 +87,13 @@ export default function SiteFooter(): ReactNode {
             {SECTIONS.map((section) => (
               <Link key={section.to} href={section.to} underline="hover" sx={footerLink}>
                 {t(section.label)}
+              </Link>
+            ))}
+            {/* Страницы внутри разделов — прямыми ссылками: в шапке они за
+                меню «Где играть» и «Сообщество», здесь их видно сразу. */}
+            {FOOTER_PAGES.map((page) => (
+              <Link key={page.href} href={page.href} underline="hover" sx={footerLink}>
+                {t(page.label)}
               </Link>
             ))}
             <Link href="/feedback" underline="hover" sx={footerLink}>

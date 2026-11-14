@@ -58,6 +58,20 @@ export default function TournamentSummary({
   const t = useT();
   const locale = useLocale();
 
+  const fee =
+    tournament.entryFee === 0
+      ? t('tournament.entryFee.free')
+      : formatMoney(tournament.entryFee, locale);
+  const level = t(TOURNAMENT_LEVEL_KEYS[tournament.level]);
+  const average = facts?.average == null ? '—' : `★${String(facts.average)}`;
+  const progress =
+    facts == null
+      ? '—'
+      : fill(t('results.facts.progress'), {
+          played: String(facts.progress.played),
+          total: String(facts.progress.total),
+        });
+
   return (
     <Paper variant="outlined" component="header" sx={{ p: { xs: 2.5, sm: 4 } }}>
       <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
@@ -110,48 +124,44 @@ export default function TournamentSummary({
           label={t('tournament.participants')}
           value={<Count value={tournament.participantCount} />}
         />
-        <StatTile
-          icon={Trophy}
-          label={t('tournament.level')}
-          value={t(TOURNAMENT_LEVEL_KEYS[tournament.level])}
-        />
-        <StatTile
-          icon={Wallet}
-          label={t('tournament.entryFee')}
-          value={
-            tournament.entryFee === 0
-              ? t('tournament.entryFee.free')
-              : formatMoney(tournament.entryFee, locale)
-          }
-        />
+        <StatTile icon={Wallet} label={t('tournament.entryFee')} value={fee} />
         <StatTile
           icon={Network}
           label={t('results.facts.format')}
           value={formatLine(tournament.formatConfig, t)}
         />
-        <StatTile
-          icon={Star}
-          label={t('results.facts.average')}
-          value={facts?.average == null ? '—' : `★${String(facts.average)}`}
-        />
-        <StatTile
-          icon={ListChecks}
-          label={t('results.facts.matches')}
-          value={
-            facts === null
-              ? '—'
-              : fill(t('results.facts.progress'), {
-                  played: String(facts.progress.played),
-                  total: String(facts.progress.total),
-                })
-          }
-        />
-        <StatTile
-          icon={LayoutGrid}
-          label={t('tournament.form.tableCount')}
-          value={tournament.tableCount}
-        />
+        {/* Второй ряд — справочный. На телефоне он строкой ниже: восемь
+            плиток занимали весь первый экран, и до итогов надо было листать. */}
+        <Box sx={SECONDARY}>
+          <StatTile icon={Trophy} label={t('tournament.level')} value={level} />
+        </Box>
+        <Box sx={SECONDARY}>
+          <StatTile icon={Star} label={t('results.facts.average')} value={average} />
+        </Box>
+        <Box sx={SECONDARY}>
+          <StatTile icon={ListChecks} label={t('results.facts.matches')} value={progress} />
+        </Box>
+        <Box sx={SECONDARY}>
+          <StatTile
+            icon={LayoutGrid}
+            label={t('tournament.form.tableCount')}
+            value={tournament.tableCount}
+          />
+        </Box>
       </Box>
+
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ display: { xs: 'block', sm: 'none' }, mt: 1.5 }}
+      >
+        {[
+          `${t('tournament.level')}: ${level}`,
+          `${t('results.facts.average')}: ${average}`,
+          `${t('results.facts.matches')}: ${progress}`,
+          `${t('tournament.form.tableCount')}: ${String(tournament.tableCount)}`,
+        ].join(' · ')}
+      </Typography>
 
       {tournament.prizeInfo !== null && tournament.prizeInfo !== '' && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2, whiteSpace: 'pre-line' }}>
@@ -164,6 +174,9 @@ export default function TournamentSummary({
     </Paper>
   );
 }
+
+/** Справочная плитка: с 600px — в сетке, на телефоне — в строке под ней. */
+const SECONDARY = { display: { xs: 'none', sm: 'block' } } as const;
 
 const FORMAT_KEYS: Readonly<Record<FormatConfig['type'], MessageKey>> = {
   ROUND_ROBIN: 'tournament.format.ROUND_ROBIN',

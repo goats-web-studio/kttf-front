@@ -437,7 +437,7 @@ function TrainingsPage(): ReactNode {
             onClick={() => {
               setFiltersOpen((open) => !open);
             }}
-            sx={{ display: { xs: 'inline-flex', sm: 'none' }, minHeight: 44, justifySelf: 'start' }}
+            sx={{ minHeight: 44, justifySelf: 'start' }}
           >
             {hidden === 0
               ? t('clubs.filter.open')
@@ -445,7 +445,9 @@ function TrainingsPage(): ReactNode {
           </Button>
           <Box
             id={`${id}-filters`}
-            sx={{ display: { xs: filtersOpen ? 'block' : 'none', sm: 'block' } }}
+            // Фильтры — за кнопкой на любой ширине: открытые, они занимали
+            // весь первый экран, и самих тренировок не было видно.
+            sx={{ display: filtersOpen ? 'block' : 'none' }}
           >
             {panel}
           </Box>

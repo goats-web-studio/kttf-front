@@ -406,6 +406,42 @@ function TournamentsPage(): ReactNode {
             onRetry={() => void calendar.refetch()}
             loading={<RowsSkeleton />}
           >
+            {/* Пустой месяц — не тупик: пустая сетка с «Найдено 0» выглядела
+                как поломка. Ведём туда, где турниры есть. */}
+            {!calendar.isPlaceholderData && calendar.data?.length === 0 && (
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                sx={{
+                  mb: 2,
+                  p: 2,
+                  gap: 1.5,
+                  alignItems: { sm: 'center' },
+                  borderRadius: 3,
+                  border: '1px solid var(--line)',
+                  bgcolor: 'var(--paper)',
+                }}
+              >
+                <Typography sx={{ flex: 1, fontWeight: 600 }}>
+                  {t('tournaments.calendar.empty')}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    filter({ view: 'list' });
+                  }}
+                  sx={{ minHeight: 44 }}
+                >
+                  {t('tournaments.calendar.toList')}
+                </Button>
+                <Button
+                  variant="text"
+                  href="/tournaments?status=FINISHED&view=list"
+                  sx={{ minHeight: 44 }}
+                >
+                  {t('nav.menu.tournaments.results.title')}
+                </Button>
+              </Stack>
+            )}
             <Box sx={{ opacity: calendar.isPlaceholderData ? 0.6 : 1 }}>
               <TournamentCalendar
                 month={month}

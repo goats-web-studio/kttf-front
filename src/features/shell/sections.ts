@@ -1,19 +1,31 @@
 import type { MessageKey } from '@/common/i18n';
 
+export interface Section {
+  /** Куда ведёт сам пункт. */
+  readonly to: string;
+  readonly label: MessageKey;
+  /**
+   * Адреса, на которых пункт подсвечен как текущий. Раздел собран из
+   * нескольких страниц: «Где играть» — это клубы, тренеры и тренировки.
+   */
+  readonly match: readonly string[];
+}
+
 /**
- * Разделы сайта — один список на шапку и нижнюю панель.
+ * Разделы сайта — один список на шапку, нижнюю панель и подвал.
  *
  * Две навигации, собранные каждая своим списком, расходятся при первом же
  * новом разделе: на телефоне он появится, а на десктопе нет.
+ *
+ * Разделы — по задачам человека, а не по модулям API. Пришёл сыграть —
+ * «Турниры»; узнать силу — «Рейтинг»; найти зал, тренера или группу —
+ * «Где играть»; поговорить и найти соперника — «Сообщество»; выбрать
+ * инвентарь — «Маркет». Пять пунктов помещаются в нижнюю панель на 360px.
  */
-export const SECTIONS: readonly { readonly to: string; readonly label: MessageKey }[] = [
-  { to: '/players', label: 'nav.players' },
-  { to: '/tournaments', label: 'nav.tournaments' },
-  { to: '/clubs', label: 'nav.clubs' },
-  // Четвёртым после клубов — ADR-058, `docs/10` 2.
-  { to: '/market', label: 'nav.market' },
-  // Пятым — ADR-059, `docs/11` 2.
-  { to: '/trainings', label: 'nav.trainings' },
-  // Шестым — ADR-064, `docs/12`.
-  { to: '/forum', label: 'nav.forum' },
+export const SECTIONS: readonly Section[] = [
+  { to: '/tournaments', label: 'nav.tournaments', match: ['/tournaments'] },
+  { to: '/players', label: 'nav.ratings', match: ['/players'] },
+  { to: '/clubs', label: 'nav.places', match: ['/clubs', '/trainings', '/coaches'] },
+  { to: '/forum', label: 'nav.community', match: ['/forum', '/duels'] },
+  { to: '/market', label: 'nav.market', match: ['/market'] },
 ];

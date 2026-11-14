@@ -21,6 +21,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import NotificationsBell from '@/features/notifications/bell';
 import { playerQuery } from '@/features/players/queries';
 
+import { useActiveSection } from './active-section';
 import LanguageSwitch from './language-switch';
 import NavDropdown from './nav-dropdown';
 import { SECTIONS } from './sections';
@@ -38,6 +39,10 @@ import { SECTIONS } from './sections';
 export default function SiteHeader(): ReactNode {
   const t = useT();
   const user = useSessionStore((state) => state.user);
+  const current = useActiveSection();
+  // Организатор приходит работать: путь к новому турниру — из любой страницы,
+  // а не через кабинет. Остальным кнопка ни к чему.
+  const organizer = user !== null && user.clubRoles.length > 0;
 
   return (
     <Box
@@ -71,10 +76,25 @@ export default function SiteHeader(): ReactNode {
           >
             {/* У каждого раздела — меню быстрых переходов (nav-menus.ts). */}
             {SECTIONS.map((section) => (
-              <NavDropdown key={section.to} to={section.to} label={t(section.label)} />
+              <NavDropdown
+                key={section.to}
+                to={section.to}
+                label={t(section.label)}
+                active={current === section}
+              />
             ))}
           </Stack>
           <Box sx={{ flexGrow: 1 }} />
+          {organizer && (
+            <Button
+              variant="outlined"
+              size="small"
+              href="/tournaments/new"
+              sx={{ display: { xs: 'none', lg: 'inline-flex' }, minHeight: 40, flexShrink: 0 }}
+            >
+              {t('nav.runTournament')}
+            </Button>
+          )}
           <LanguageSwitch />
           {user === null ? (
             <NavButton to="/login">{t('page.login.title')}</NavButton>

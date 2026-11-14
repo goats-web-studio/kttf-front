@@ -125,8 +125,12 @@ function TournamentPage(): ReactNode {
                   }
                 />
                 {/* Проведение турнира — ТЗ 4.1. Панель показывается только
-                    организатору клуба-хозяина и молчит у всех остальных. */}
-                <LifecyclePanel tournament={data.tournament} names={names} />
+                    организатору клуба-хозяина и молчит у всех остальных.
+                    У завершённого турнира делать уже нечего, кроме экрана и
+                    повтора, — панель уходит под итоги и не заслоняет их. */}
+                {data.tournament.finishedAt === null && (
+                  <LifecyclePanel tournament={data.tournament} names={names} />
+                )}
                 {/* Запись и состав идут сразу за карточкой: пока турнир не
                     сыгран, это единственное, ради чего его страницу
                     открывают. Результаты ниже до старта пусты. */}
@@ -137,7 +141,9 @@ function TournamentPage(): ReactNode {
                 {/* «Повторить прошлый» — ТЗ 4.2. Стоит у турнира, а не в
                     форме создания: копирует настройки сервер, и брать их
                     неоткуда, кроме как у самого турнира. */}
-                <RepeatTournament tournament={data.tournament} />
+                {data.tournament.finishedAt === null && (
+                  <RepeatTournament tournament={data.tournament} />
+                )}
                 {/* Результаты — у начатого турнира. До старта места «не
                     определены», а изменения рейтинга нулевые у всех: такие
                     таблицы выглядят поломкой, а не пустотой. */}
@@ -185,6 +191,12 @@ function TournamentPage(): ReactNode {
                       />
                     }
                   />
+                )}
+                {data.tournament.finishedAt !== null && (
+                  <>
+                    <LifecyclePanel tournament={data.tournament} names={names} />
+                    <RepeatTournament tournament={data.tournament} />
+                  </>
                 )}
                 {/* Обсуждение турнира — тема форума (ADR-064, F2). У черновика
                     его нет: сервер отвечает «не найдено», и блок молчит. */}

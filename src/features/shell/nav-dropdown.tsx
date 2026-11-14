@@ -3,7 +3,6 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import { useMatchRoute } from '@tanstack/react-router';
 import { ChevronDown } from 'lucide-react';
 import {
   useEffect,
@@ -37,13 +36,14 @@ const CLOSE_DELAY = 180;
 export default function NavDropdown({
   to,
   label,
+  active,
 }: {
   readonly to: string;
   readonly label: string;
+  /** Текущий ли раздел — решает шапка по `Section.match`. */
+  readonly active: boolean;
 }): ReactNode {
   const t = useT();
-  const matchRoute = useMatchRoute();
-  const active = matchRoute({ to, fuzzy: true }) !== false;
   const items = NAV_MENUS[to] ?? [];
   const panelId = useId();
   const [open, setOpen] = useState(false);
