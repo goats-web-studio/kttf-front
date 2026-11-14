@@ -15,16 +15,24 @@ import TextField from '@mui/material/TextField';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { useQuery } from '@tanstack/react-query';
 import dayjs, { type Dayjs } from 'dayjs';
-import { useState, type ReactNode, type Ref } from 'react';
-import { Controller, useForm, type DefaultValues } from 'react-hook-form';
+import { useMemo, useState, type ReactNode, type Ref } from 'react';
+import {
+  Controller,
+  useForm,
+  useWatch,
+  type DefaultValues,
+  type FieldError,
+} from 'react-hook-form';
 import type { z } from 'zod';
 
 import { errorMessageKey } from '@/common/api';
-import { useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, useLocale, useT, type MessageKey } from '@/common/i18n';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 
 import FormatEditor, { Section } from './format-editor';
 import { FORM_UI_TEXTS } from './format-texts';
+import { isCheckKey, tournamentFormSchema } from './tournament-form-schema';
+import { FORM_CHECK_TEXTS } from './tournament-form-texts';
 import { DEFAULT_DRAFT, fromFormatConfig, toFormatConfig, type FormatDraft } from './format-draft';
 
 interface TournamentFormProps {
@@ -72,8 +80,13 @@ export default function TournamentForm({
   onSubmit,
 }: TournamentFormProps): ReactNode {
   const t = useT();
-  // Подписи шагов — не в общем словаре: см. `format-texts.ts`.
-  const ui = FORM_UI_TEXTS[useLocale()];
+  // Подписи шагов и проверок — не в общем словаре: см. `format-texts.ts`.
+  const locale = useLocale();
+  const ui = FORM_UI_TEXTS[locale];
+  const check = FORM_CHECK_TEXTS[locale];
+  const isNew = tournament === undefined;
+  // Схема с проверками у полей — одна на жизнь формы (ADR-088).
+  const schema = useMemo(() => tournamentFormSchema(isNew), [isNew]);
   const clubs = useQuery(clubDirectoryQuery);
 
   // Черновик схемы живёт отдельно: у формы плоские поля, а `formatConfig` —
@@ -94,12 +107,28 @@ export default function TournamentForm({
   );
 
   const form = useForm<FormValues, unknown, CreateTournamentInput>({
-    resolver: zodResolver(createTournamentSchema),
+    resolver: zodResolver(schema),
     defaultValues:
       tournament === undefined ? NEW_TOURNAMENT(clubIds[0] ?? '') : toValues(tournament),
   });
 
-  const { errors } = form.formState;
+  const { errors, submitCount } = form.formState;
+  const errorCount = Object.keys(errors).length;
+  // Недописанная дата в форме — пустота: тип поля строже, чем то, что в нём бывает.
+  const startsAt = useWatch({ control: form.control, name: 'startsAt' }) as string | undefined;
+
+  /**
+   * Текст ошибки поля: своя проверка формы — из `tournament-form-texts.ts`,
+   * ошибка общей схемы — общим текстом поля.
+   */
+  const fieldError = (
+    error: FieldError | undefined,
+    fallback: MessageKey | undefined,
+  ): string | undefined => {
+    if (error === undefined) return undefined;
+    if (isCheckKey(error.message)) return check[error.message];
+    return fallback === undefined ? undefined : t(fallback);
+  };
 
   /**
    * Регистрация родного поля внутри `TextField`: ссылка обязана указывать на
@@ -123,12 +152,23 @@ export default function TournamentForm({
       noValidate
       sx={{ mt: 3 }}
       onSubmit={(event) => {
-        void form.handleSubmit(onSubmit)(event);
+        void form.handleSubmit(onSubmit, (invalid) => {
+          // Ошибка в свёрнутых ограничениях — раскрыть их, иначе её не видно.
+          const limits = [
+            'maxParticipants',
+            'ratingCapMin',
+            'ratingCapMax',
+            'birthYearFrom',
+            'birthYearTo',
+          ];
+          if (Object.keys(invalid).some((key) => limits.includes(key))) setLimitsOpen(true);
+        })(event);
       }}
     >
       <Section step={1} legend={ui.basics} description={ui.basicsText}>
         <Box sx={GRID}>
           <TextField
+            required
             label={t('tournament.form.name')}
             {...register('name')}
             {...hint(t, errors.name === undefined ? undefined : 'error.form.name')}
@@ -140,6 +180,7 @@ export default function TournamentForm({
             render={({ field: { ref, ...field } }) => (
               <TextField
                 select
+                required
                 label={t('tournament.form.club')}
                 {...field}
                 inputRef={ref}
@@ -161,13 +202,17 @@ export default function TournamentForm({
             name="startsAt"
             render={({ field }) => (
               <MomentPicker
+                required
+                disablePast={isNew}
                 label={t('tournament.form.startsAt')}
                 name={field.name}
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 inputRef={field.ref}
-                {...(errors.startsAt === undefined ? {} : { error: t('error.form.startsAt') })}
+                {...(errors.startsAt === undefined
+                  ? {}
+                  : { error: fieldError(errors.startsAt, undefined) ?? check.startsRequired })}
               />
             )}
           />
@@ -179,12 +224,23 @@ export default function TournamentForm({
             name="registrationEndsAt"
             render={({ field }) => (
               <MomentPicker
+                disablePast={isNew}
+                // Запись закрывается не позже начала: позже в календаре не выбрать.
+                {...(startsAt === undefined || startsAt === ''
+                  ? {}
+                  : { maxDateTime: dayjs(startsAt) })}
                 label={t('tournament.form.registrationEndsAt')}
                 name={field.name}
                 value={field.value}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 inputRef={field.ref}
+                {...(errors.registrationEndsAt === undefined
+                  ? {}
+                  : {
+                      error:
+                        fieldError(errors.registrationEndsAt, undefined) ?? check.regAfterStart,
+                    })}
               />
             )}
           />
@@ -211,6 +267,7 @@ export default function TournamentForm({
             Новый турнир уходит «Клубным» из значений по умолчанию, у
             заведённого раньше уровень сохраняется как был. */}
           <TextField
+            required
             label={t('tournament.form.tableCount')}
             type="number"
             {...register('tableCount', { valueAsNumber: true })}
@@ -299,7 +356,7 @@ export default function TournamentForm({
               label={t('tournament.form.maxParticipants')}
               type="number"
               {...register('maxParticipants', optionalNumber)}
-              {...hint(t, undefined, { ...NUMERIC, min: 1 })}
+              {...hintText(fieldError(errors.maxParticipants, undefined), { ...NUMERIC, min: 2 })}
             />
 
             <Controller
@@ -338,7 +395,7 @@ export default function TournamentForm({
               label={t('tournament.form.ratingCapMax')}
               type="number"
               {...register('ratingCapMax', optionalNumber)}
-              {...hint(t, undefined, NUMERIC)}
+              {...hintText(fieldError(errors.ratingCapMax, undefined), NUMERIC)}
             />
 
             {/* Заявки вне планки — ADR-044. Возраст и пол галочка не трогает:
@@ -376,7 +433,7 @@ export default function TournamentForm({
               label={t('tournament.form.birthYearTo')}
               type="number"
               {...register('birthYearTo', optionalNumber)}
-              {...hint(t, undefined, NUMERIC)}
+              {...hintText(fieldError(errors.birthYearTo, undefined), NUMERIC)}
             />
           </Box>
 
@@ -412,6 +469,13 @@ export default function TournamentForm({
       {error !== null && error !== undefined && (
         <Alert severity="error" sx={{ mt: 2 }}>
           {t(errorMessageKey(error))}
+        </Alert>
+      )}
+      {/* После нажатия «Создать» с ошибками — сколько полей исправить. Сами
+          поля отмечены красным, фокус встаёт на первое из них. */}
+      {submitCount > 0 && errorCount > 0 && (
+        <Alert severity="error" role="alert" sx={{ mt: 2 }} data-form-summary>
+          {fill(check.summary, { count: String(errorCount) })}
         </Alert>
       )}
 
@@ -470,6 +534,19 @@ function hint(
   return { slotProps: input };
 }
 
+/** То же, что `hint`, но готовым текстом ошибки — у проверок формы свой словарь. */
+function hintText(error: string | undefined, htmlInput?: Readonly<Record<string, unknown>>) {
+  const input = htmlInput === undefined ? {} : { htmlInput };
+  if (error !== undefined) {
+    return {
+      error: true,
+      helperText: error,
+      slotProps: { ...input, formHelperText: { role: 'alert' } },
+    };
+  }
+  return { slotProps: input };
+}
+
 /**
  * Момент времени — дата и время начала.
  *
@@ -490,7 +567,16 @@ function MomentPicker({
   inputRef,
   error,
   hint,
+  required = false,
+  disablePast = false,
+  maxDateTime,
 }: {
+  /** Обязательное — звёздочка у подписи. */
+  readonly required?: boolean;
+  /** Прошедшие дни и часы в календаре недоступны. */
+  readonly disablePast?: boolean;
+  /** Позже этого момента в календаре не выбрать. */
+  readonly maxDateTime?: Dayjs;
   readonly label: string;
   readonly name: string;
   readonly value: string | undefined;
@@ -511,6 +597,8 @@ function MomentPicker({
       label={label}
       name={name}
       value={picked}
+      disablePast={disablePast}
+      {...(maxDateTime === undefined ? {} : { maxDateTime })}
       inputRef={inputRef}
       onChange={(next) => {
         setPicked(next);
@@ -519,9 +607,10 @@ function MomentPicker({
       slotProps={{
         textField:
           error === undefined
-            ? { onBlur, ...(hint === undefined ? {} : { helperText: hint }) }
+            ? { onBlur, required, ...(hint === undefined ? {} : { helperText: hint }) }
             : {
                 onBlur,
+                required,
                 error: true,
                 helperText: error,
                 slotProps: { formHelperText: { role: 'alert' } },

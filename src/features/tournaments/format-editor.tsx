@@ -1,22 +1,38 @@
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
+import { CircleHelp, Maximize2, Sparkles } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 
-import { useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, useLocale, useT, type MessageKey } from '@/common/i18n';
 import IntegerField from '@/common/ui/integer-field';
 
+import {
+  adviceApplied,
+  adviseGroups,
+  applyAdvice,
+  MAX_FOR_ROUND_ROBIN,
+  MIN_FOR_GROUPS,
+} from './format-advice';
 import FormatPicker from './format-picker';
 import { FORM_UI_TEXTS } from './format-texts';
 import { previewFormat } from './format-preview';
 import { toFormatConfig, type FormatDraft } from './format-draft';
 import PlayoffLengths from './playoff-lengths';
 import SetsField from './sets-field';
+import StructurePreview from './structure-preview';
+import { FORM_CHECK_TEXTS, type FormCheckText } from './tournament-form-texts';
 
 interface FormatEditorProps {
   readonly draft: FormatDraft;
@@ -54,6 +70,7 @@ export default function FormatEditor({
 }: FormatEditorProps): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const check = FORM_CHECK_TEXTS[locale];
 
   const set = <K extends keyof FormatDraft>(key: K, value: FormatDraft[K]): void => {
     onChange({ ...draft, [key]: value });
@@ -67,6 +84,26 @@ export default function FormatEditor({
       legend={t('tournament.form.format')}
       description={FORM_UI_TEXTS[locale].formatText}
     >
+      {/* Число участников — первым: по нему считаются встречи на карточках
+          схем, совет по группам и схема турнира ниже. */}
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          alignItems: 'start',
+          gridTemplateColumns: { xs: '1fr', sm: '240px 1fr' },
+          mb: 3,
+        }}
+      >
+        <IntegerField
+          label={check.participants}
+          value={participants}
+          onChange={onParticipantsChange}
+          helperText={check.participantsHint}
+        />
+        <Advice draft={draft} participants={participants} texts={check} onChange={onChange} />
+      </Box>
+
       <FormatPicker
         draft={draft}
         participants={participants}
@@ -182,11 +219,16 @@ export default function FormatEditor({
             select
             label={t('tournament.form.tieBreak')}
             value={draft.tieBreak}
-            helperText={t(
-              draft.tieBreak === 'SET_RATIO'
-                ? 'tournament.form.tieBreak.ratioHint'
-                : 'tournament.form.tieBreak.diffHint',
-            )}
+            helperText={
+              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                {t(
+                  draft.tieBreak === 'SET_RATIO'
+                    ? 'tournament.form.tieBreak.ratioHint'
+                    : 'tournament.form.tieBreak.diffHint',
+                )}
+                <TieBreakHelp texts={check} />
+              </Box>
+            }
             onChange={(event) => {
               set('tieBreak', event.target.value === 'SET_RATIO' ? 'SET_RATIO' : 'SET_DIFF');
             }}
@@ -226,11 +268,7 @@ export default function FormatEditor({
         />
       )}
 
-      <Preview
-        draft={draft}
-        participants={participants}
-        onParticipantsChange={onParticipantsChange}
-      />
+      <Structure draft={draft} participants={participants} texts={check} />
     </Section>
   );
 }
@@ -307,11 +345,9 @@ export function Section({
 function Preview({
   draft,
   participants,
-  onParticipantsChange,
 }: {
   readonly draft: FormatDraft;
   readonly participants: number;
-  readonly onParticipantsChange: (participants: number) => void;
 }): ReactNode {
   const t = useT();
   const preview = previewFormat(toFormatConfig(draft), participants);
@@ -356,13 +392,6 @@ function Preview({
 
   return (
     <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-      <IntegerField
-        label={t('tournament.preview.participants')}
-        value={participants}
-        onChange={onParticipantsChange}
-        sx={{ width: 160 }}
-      />
-
       <Box
         component="dl"
         sx={{
@@ -437,4 +466,226 @@ function NumberField({
   const t = useT();
 
   return <IntegerField label={t(label)} value={value} onChange={onChange} />;
+}
+
+/**
+ * Совет по группам под ожидаемый состав — `format-advice.ts`.
+ *
+ * У схем с группами — «Подобрать»: число групп ставится так, чтобы
+ * вышедших было ровно на сетку. У круговой на большой состав и у групп на
+ * маленький — «Переключить» на подходящую схему. Совет только предлагает:
+ * поля остаются в руках организатора.
+ */
+function Advice({
+  draft,
+  participants,
+  texts,
+  onChange,
+}: {
+  readonly draft: FormatDraft;
+  readonly participants: number;
+  readonly texts: FormCheckText;
+  readonly onChange: (draft: FormatDraft) => void;
+}): ReactNode {
+  const n = String(participants);
+  const hasGroups = draft.type === 'GROUPS_KNOCKOUT' || draft.type === 'GROUPS_FINAL_GROUPS';
+
+  if (draft.type === 'ROUND_ROBIN' && participants > MAX_FOR_ROUND_ROBIN) {
+    const matches = previewFormat(toFormatConfig(draft), participants).totalMatches;
+    const advice = adviseGroups('GROUPS_KNOCKOUT', participants);
+    return (
+      <AdviceBox
+        text={fill(texts.adviceRoundRobin, { n, matches: String(matches) })}
+        action={texts.adviceSwitch}
+        onAction={() => {
+          const next = { ...draft, type: 'GROUPS_KNOCKOUT' as const };
+          onChange(advice === null ? next : applyAdvice(next, advice));
+        }}
+      />
+    );
+  }
+
+  if (hasGroups && participants < MIN_FOR_GROUPS) {
+    return (
+      <AdviceBox
+        text={fill(texts.adviceSmall, { n })}
+        action={texts.adviceSwitch}
+        onAction={() => {
+          onChange({ ...draft, type: 'ROUND_ROBIN' });
+        }}
+      />
+    );
+  }
+
+  const advice = adviseGroups(draft.type, participants);
+  if (advice === null) return null;
+
+  if (adviceApplied(draft, advice)) {
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ pt: { sm: 2 } }}>
+        {fill(texts.adviceApplied, { n })}
+      </Typography>
+    );
+  }
+
+  const sizes = previewFormat(toFormatConfig(applyAdvice(draft, advice)), participants).groups;
+  const min = Math.min(...sizes);
+  const max = Math.max(...sizes);
+
+  return (
+    <AdviceBox
+      text={fill(texts.adviceGroups, {
+        n,
+        groups: String(advice.groupCount),
+        sizes: min === max ? String(min) : `${String(min)}–${String(max)}`,
+        advance: String(advice.advancePerGroup),
+      })}
+      action={texts.adviceApply}
+      onAction={() => {
+        onChange(applyAdvice(draft, advice));
+      }}
+    />
+  );
+}
+
+function AdviceBox({
+  text,
+  action,
+  onAction,
+}: {
+  readonly text: string;
+  readonly action: string;
+  readonly onAction: () => void;
+}): ReactNode {
+  return (
+    <Box
+      data-format-advice
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 1.5,
+        p: 1.5,
+        borderRadius: 3,
+        bgcolor: 'var(--gold-50)',
+        border: '1px solid var(--line)',
+      }}
+    >
+      <Sparkles size={18} aria-hidden style={{ flexShrink: 0 }} />
+      <Typography variant="body2" sx={{ flex: 1, minWidth: 200 }}>
+        {text}
+      </Typography>
+      <Button variant="outlined" size="small" onClick={onAction} sx={{ minHeight: 40 }}>
+        {action}
+      </Button>
+    </Box>
+  );
+}
+
+/** Что такое «равенство очков» — по наведению или касанию значка. */
+function TieBreakHelp({ texts }: { readonly texts: FormCheckText }): ReactNode {
+  const t = useT();
+
+  return (
+    <Tooltip
+      arrow
+      enterTouchDelay={0}
+      leaveTouchDelay={8000}
+      title={
+        <Box sx={{ display: 'grid', gap: 1, p: 0.5 }}>
+          <span>{texts.tieBreakHelp}</span>
+          <span>
+            <b>{t('tournament.form.tieBreak.diff')}</b> — {t('tournament.form.tieBreak.diffHint')}
+          </span>
+          <span>
+            <b>{t('tournament.form.tieBreak.ratio')}</b> — {t('tournament.form.tieBreak.ratioHint')}
+          </span>
+        </Box>
+      }
+    >
+      <Box
+        component="span"
+        tabIndex={0}
+        role="button"
+        aria-label={texts.tieBreakHelp}
+        sx={{ display: 'inline-flex', cursor: 'help', color: 'var(--ink-500)' }}
+      >
+        <CircleHelp size={16} aria-hidden />
+      </Box>
+    </Tooltip>
+  );
+}
+
+/** «Как это будет выглядеть»: схема турнира, числа и полный вид в окне. */
+function Structure({
+  draft,
+  participants,
+  texts,
+}: {
+  readonly draft: FormatDraft;
+  readonly participants: number;
+  readonly texts: FormCheckText;
+}): ReactNode {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const preview = previewFormat(toFormatConfig(draft), participants);
+
+  return (
+    <Box sx={{ mt: 3, pt: 3, borderTop: 1, borderColor: 'divider' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 1,
+          mb: 1.5,
+        }}
+      >
+        <Typography variant="h3">{texts.structureTitle}</Typography>
+        <Button
+          variant="text"
+          startIcon={<Maximize2 size={16} aria-hidden />}
+          onClick={() => {
+            setOpen(true);
+          }}
+          sx={{ minHeight: 44 }}
+        >
+          {texts.structureOpen}
+        </Button>
+      </Box>
+      <StructurePreview draft={draft} preview={preview} participants={participants} texts={texts} />
+      <Preview draft={draft} participants={participants} />
+
+      <Dialog
+        open={open}
+        onClose={() => {
+          setOpen(false);
+        }}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle variant="h2">{texts.structureTitle}</DialogTitle>
+        <DialogContent>
+          <StructurePreview
+            draft={draft}
+            preview={preview}
+            participants={participants}
+            texts={texts}
+            full
+          />
+          <Preview draft={draft} participants={participants} />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
+            {t('club.gallery.close')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
 }

@@ -8,6 +8,7 @@ import { createAppRouter } from '@/app/router';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
 import { FORM_UI_TEXTS, FORMAT_TEXTS } from '@/features/tournaments/format-texts';
+import { FORM_CHECK_TEXTS } from '@/features/tournaments/tournament-form-texts';
 import { CLUB, pageOf, TOURNAMENT, USER_WITH_PROFILE } from '@/test/fixtures';
 
 /**
@@ -85,7 +86,7 @@ function pickFormat(title: string): void {
  */
 function setStartsAt(value: string): void {
   const input = screen
-    .getAllByLabelText(ru['tournament.form.startsAt'])
+    .getAllByLabelText(required(ru['tournament.form.startsAt']))
     .find((node) => node instanceof HTMLInputElement);
 
   if (input === undefined) {
@@ -93,6 +94,11 @@ function setStartsAt(value: string): void {
   }
 
   fireEvent.change(input, { target: { value } });
+}
+
+/** Подпись обязательного поля: у неё звёздочка после текста (ADR-088). */
+function required(label: string): RegExp {
+  return new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
 }
 
 /** Организатор клуба-хозяина: у фикстуры это владелец `CLUB`. */
@@ -161,10 +167,10 @@ describe('форма создания', () => {
   it('создаёт турнир телом, которое принимает контракт', async () => {
     renderAt('/tournaments/new', ORGANIZER);
 
-    fireEvent.change(await screen.findByLabelText(ru['tournament.form.name']), {
+    fireEvent.change(await screen.findByLabelText(required(ru['tournament.form.name'])), {
       target: { value: 'Кубок Достык' },
     });
-    setStartsAt('01.10.2026 09:00');
+    setStartsAt('01.10.2030 09:00');
 
     fireEvent.click(screen.getByRole('button', { name: ru['tournament.form.create'] }));
 
@@ -187,10 +193,10 @@ describe('форма создания', () => {
   it('схема уходит той же, что выбрана в редакторе', async () => {
     renderAt('/tournaments/new', ORGANIZER);
 
-    fireEvent.change(await screen.findByLabelText(ru['tournament.form.name']), {
+    fireEvent.change(await screen.findByLabelText(required(ru['tournament.form.name'])), {
       target: { value: 'Кубок Достык' },
     });
-    setStartsAt('01.10.2026 09:00');
+    setStartsAt('01.10.2030 09:00');
 
     pickFormat(ru['tournament.format.GROUPS_KNOCKOUT']);
     await choose(ru['tournament.form.groupRounds'], ru['tournament.form.twoRounds']);
@@ -211,10 +217,10 @@ describe('форма создания', () => {
   it('уровня в форме нет — турнир уходит клубным (ADR-087)', async () => {
     renderAt('/tournaments/new', ORGANIZER);
 
-    fireEvent.change(await screen.findByLabelText(ru['tournament.form.name']), {
+    fireEvent.change(await screen.findByLabelText(required(ru['tournament.form.name'])), {
       target: { value: 'Пятничный турнир' },
     });
-    setStartsAt('01.10.2026 19:00');
+    setStartsAt('01.10.2030 19:00');
     expect(screen.queryByRole('combobox', { name: ru['tournament.form.level'] })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: ru['tournament.form.create'] }));
@@ -224,6 +230,39 @@ describe('форма создания', () => {
     });
     const [request] = sent.filter((row) => row.method === 'POST');
     expect(request?.body).toMatchObject({ level: 'CLUB' });
+  });
+
+  it('запись позже начала — ошибка у поля и сводка у кнопки, запроса нет (ADR-088)', async () => {
+    renderAt('/tournaments/new', ORGANIZER);
+
+    fireEvent.change(await screen.findByLabelText(required(ru['tournament.form.name'])), {
+      target: { value: 'Пятничный турнир' },
+    });
+    setStartsAt('01.10.2030 19:00');
+    const closes = screen
+      .getAllByLabelText(ru['tournament.form.registrationEndsAt'])
+      .find((node) => node instanceof HTMLInputElement);
+    if (closes === undefined) throw new Error('нет поля «Запись до»');
+    fireEvent.change(closes, { target: { value: '02.10.2030 06:30' } });
+
+    fireEvent.click(screen.getByRole('button', { name: ru['tournament.form.create'] }));
+
+    expect(await screen.findByText(FORM_CHECK_TEXTS.ru.regAfterStart)).toBeDefined();
+    expect(document.querySelector('[data-form-summary]')).not.toBeNull();
+    expect(sent.some((request) => request.method === 'POST')).toBe(false);
+  });
+
+  it('начало в прошлом — ошибка у поля, запроса нет (ADR-088)', async () => {
+    renderAt('/tournaments/new', ORGANIZER);
+
+    fireEvent.change(await screen.findByLabelText(required(ru['tournament.form.name'])), {
+      target: { value: 'Вчерашний турнир' },
+    });
+    setStartsAt('01.10.2020 19:00');
+    fireEvent.click(screen.getByRole('button', { name: ru['tournament.form.create'] }));
+
+    expect(await screen.findByText(FORM_CHECK_TEXTS.ru.startsPast)).toBeDefined();
+    expect(sent.some((request) => request.method === 'POST')).toBe(false);
   });
 
   it('без названия и даты запроса не уходит', async () => {
