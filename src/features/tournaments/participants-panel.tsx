@@ -2,6 +2,7 @@ import type { RegistrationView, TournamentView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -117,11 +118,17 @@ export default function ParticipantsPanel({
       ) : (
         // Органы управления шире телефона: таблица прокручивается вбок
         // целиком, а не сминает имена.
-        <TableContainer sx={{ mt: 2 }}>
+        // На карточке, как остальные блоки страницы: на фоне сайта строки
+        // таблицы терялись среди рисунка.
+        <TableContainer
+          component={Paper}
+          variant="outlined"
+          sx={{ mt: 2, borderRadius: 4, bgcolor: 'background.paper' }}
+        >
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell align="right" sx={{ width: 48 }}>
+                <TableCell align="right" sx={{ width: isStaff ? 96 : 48 }}>
                   {t('participants.seed')}
                 </TableCell>
                 <TableCell>{t('participants.player')}</TableCell>
@@ -189,13 +196,39 @@ function Row({
   return (
     <TableRow sx={{ verticalAlign: 'top' }}>
       <TableCell align="right" sx={{ color: 'text.secondary', ...NUM }}>
-        {registration.seed ?? '—'}
+        {/* Посев правится в своей колонке: в «Действиях» поле не помещалось
+            и переносилось на новую строку. */}
+        {isStaff ? (
+          <TextField
+            size="small"
+            aria-label={t('participants.seed')}
+            placeholder="—"
+            type="number"
+            defaultValue={registration.seed ?? ''}
+            onBlur={(event) => {
+              const raw = event.target.value.trim();
+              const seed = raw === '' ? null : Number(raw);
+
+              if (seed === registration.seed || (seed !== null && !Number.isInteger(seed))) {
+                return;
+              }
+
+              update.mutate({ seed });
+            }}
+            slotProps={{
+              htmlInput: { inputMode: 'numeric', min: 1, sx: { ...NUM, textAlign: 'right' } },
+            }}
+            sx={{ width: 72 }}
+          />
+        ) : (
+          (registration.seed ?? '—')
+        )}
       </TableCell>
       <TableCell>
         <Link
           href={`/players/${registration.player.id}`}
           color="text.primary"
-          sx={{ fontWeight: 500 }}
+          sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}
         >
           {playerName(registration.player)}
         </Link>
@@ -268,7 +301,7 @@ function Row({
             direction="row"
             useFlexGap
             spacing={1}
-            sx={{ flexWrap: 'wrap', alignItems: 'center', minWidth: 280 }}
+            sx={{ flexWrap: 'nowrap', alignItems: 'center', whiteSpace: 'nowrap' }}
           >
             <Button
               variant="text"
@@ -338,24 +371,6 @@ function Row({
                 {t('participants.remove')}
               </Button>
             )}
-
-            <TextField
-              label={t('participants.seed')}
-              type="number"
-              defaultValue={registration.seed ?? ''}
-              onBlur={(event) => {
-                const raw = event.target.value.trim();
-                const seed = raw === '' ? null : Number(raw);
-
-                if (seed === registration.seed || (seed !== null && !Number.isInteger(seed))) {
-                  return;
-                }
-
-                update.mutate({ seed });
-              }}
-              slotProps={{ htmlInput: { inputMode: 'numeric', min: 1, sx: NUM } }}
-              sx={{ width: 88 }}
-            />
           </Stack>
           {replacing && (
             <ReplaceParticipant
