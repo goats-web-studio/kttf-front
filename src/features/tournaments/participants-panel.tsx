@@ -194,7 +194,7 @@ function Row({
   const error = update.error ?? remove.error;
 
   return (
-    <TableRow sx={{ verticalAlign: 'top' }}>
+    <TableRow sx={{ verticalAlign: 'middle' }}>
       <TableCell align="right" sx={{ color: 'text.secondary', ...NUM }}>
         {/* Посев правится в своей колонке: в «Действиях» поле не помещалось
             и переносилось на новую строку. */}
