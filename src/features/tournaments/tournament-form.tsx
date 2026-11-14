@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createTournamentSchema,
   genderSchema,
-  tournamentLevelSchema,
   type CreateTournamentInput,
   type TournamentView,
 } from '@kttf/shared/types';
@@ -27,7 +26,6 @@ import { clubDirectoryQuery } from '@/features/clubs/queries';
 import FormatEditor, { Section } from './format-editor';
 import { FORM_UI_TEXTS } from './format-texts';
 import { DEFAULT_DRAFT, fromFormatConfig, toFormatConfig, type FormatDraft } from './format-draft';
-import { TOURNAMENT_LEVEL_KEYS } from './labels';
 
 interface TournamentFormProps {
   /** Клубы, которыми человек управляет. Пустой список сюда не доходит. */
@@ -208,28 +206,10 @@ export default function TournamentForm({
             })}
           />
 
-          {/* Подпись турнира. На рейтинг не влияет: коэффициент турнира
-            движок считает из среднего рейтинга участников (ADR-069). */}
-          <Controller
-            control={form.control}
-            name="level"
-            render={({ field: { ref, ...field } }) => (
-              <TextField
-                select
-                label={t('tournament.form.level')}
-                {...field}
-                inputRef={ref}
-                {...hint(t, errors.level === undefined ? undefined : 'error.form.level')}
-              >
-                {tournamentLevelSchema.options.map((level) => (
-                  <MenuItem key={level} value={level}>
-                    {t(TOURNAMENT_LEVEL_KEYS[level])}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
-          />
-
+          {/* Уровня в форме нет (ADR-087): KTTF проводит только клубные
+            турниры, городских и республиканских лиг с методикой пока нет.
+            Новый турнир уходит «Клубным» из значений по умолчанию, у
+            заведённого раньше уровень сохраняется как был. */}
           <TextField
             label={t('tournament.form.tableCount')}
             type="number"

@@ -208,6 +208,24 @@ describe('форма создания', () => {
     });
   });
 
+  it('уровня в форме нет — турнир уходит клубным (ADR-087)', async () => {
+    renderAt('/tournaments/new', ORGANIZER);
+
+    fireEvent.change(await screen.findByLabelText(ru['tournament.form.name']), {
+      target: { value: 'Пятничный турнир' },
+    });
+    setStartsAt('01.10.2026 19:00');
+    expect(screen.queryByRole('combobox', { name: ru['tournament.form.level'] })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: ru['tournament.form.create'] }));
+
+    await waitFor(() => {
+      expect(sent.some((request) => request.method === 'POST')).toBe(true);
+    });
+    const [request] = sent.filter((row) => row.method === 'POST');
+    expect(request?.body).toMatchObject({ level: 'CLUB' });
+  });
+
   it('без названия и даты запроса не уходит', async () => {
     renderAt('/tournaments/new', ORGANIZER);
 
