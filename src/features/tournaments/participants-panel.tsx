@@ -1,7 +1,10 @@
 import type { RegistrationView, TournamentView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
@@ -13,7 +16,7 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check } from 'lucide-react';
+import { Check, MoreHorizontal } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
@@ -184,6 +187,10 @@ function Row({
 
   const [editingCoach, setEditingCoach] = useState(false);
   const [replacing, setReplacing] = useState(false);
+  const [menu, setMenu] = useState<HTMLElement | null>(null);
+  const closeMenu = (): void => {
+    setMenu(null);
+  };
   // Заменить можно, пока расстановка есть, а турнир не закончен (ADR-062);
   // сыгравшего сервер заменить не даст.
   const replaceable =
@@ -297,12 +304,10 @@ function Row({
       )}
       {isStaff && (
         <TableCell>
-          <Stack
-            direction="row"
-            useFlexGap
-            spacing={1}
-            sx={{ flexWrap: 'nowrap', alignItems: 'center', whiteSpace: 'nowrap' }}
-          >
+          {/* В строке — одно частое действие фиксированной ширины, остальные
+              в меню «⋯»: пять кнопок в ряд не помещались в карточку и
+              обрезались, а разная их ширина разводила столбцы. */}
+          <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5, whiteSpace: 'nowrap' }}>
             <Button
               variant="text"
               size="small"
@@ -310,67 +315,79 @@ function Row({
               onClick={() => {
                 update.mutate({ isRated: !registration.isRated });
               }}
-              sx={ROW_ACTION}
+              sx={{ ...ROW_ACTION, minWidth: 176, justifyContent: 'flex-start' }}
             >
               {registration.isRated ? t('participants.markUnrated') : t('participants.markRated')}
             </Button>
 
-            <Button
-              variant="text"
+            <IconButton
               size="small"
-              disabled={update.isPending}
-              onClick={() => {
-                update.mutate({ status: isWithdrawn ? 'CONFIRMED' : 'WITHDRAWN' });
+              aria-label={t('participants.actions')}
+              aria-haspopup="menu"
+              aria-expanded={menu !== null}
+              onClick={(event) => {
+                setMenu(event.currentTarget);
               }}
-              sx={ROW_ACTION}
+              sx={{ width: 40, height: 40 }}
             >
-              {isWithdrawn ? t('participants.restore') : t('participants.withdraw')}
-            </Button>
-
-            {replaceable && !replacing && (
-              <Button
-                variant="text"
-                size="small"
+              <MoreHorizontal size={18} aria-hidden />
+            </IconButton>
+            <Menu
+              anchorEl={menu}
+              open={menu !== null}
+              onClose={closeMenu}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MenuItem
+                disabled={update.isPending}
                 onClick={() => {
-                  setReplacing(true);
+                  closeMenu();
+                  update.mutate({ status: isWithdrawn ? 'CONFIRMED' : 'WITHDRAWN' });
                 }}
-                sx={ROW_ACTION}
+                sx={{ minHeight: 44 }}
               >
-                {t('participants.replace')}
-              </Button>
-            )}
-
-            {/* Тренер на турнире — до старта (ADR-059, T3): после него по
-                записи уже считаются медали учеников. */}
-            {isCoachEditable(tournament.status) && (
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => {
-                  setEditingCoach(true);
-                }}
-                sx={ROW_ACTION}
-              >
-                {t('participants.editCoach')}
-              </Button>
-            )}
-
-            {/* Удалить запись можно только до старта: после него участник
-                снимается, а не исчезает — его встречи уже в таблице (ADR-009). */}
-            {tournament.startedAt === null && (
-              <Button
-                variant="text"
-                color="error"
-                size="small"
-                disabled={remove.isPending}
-                onClick={() => {
-                  remove.mutate();
-                }}
-                sx={ROW_ACTION}
-              >
-                {t('participants.remove')}
-              </Button>
-            )}
+                {isWithdrawn ? t('participants.restore') : t('participants.withdraw')}
+              </MenuItem>
+              {replaceable && !replacing && (
+                <MenuItem
+                  onClick={() => {
+                    closeMenu();
+                    setReplacing(true);
+                  }}
+                  sx={{ minHeight: 44 }}
+                >
+                  {t('participants.replace')}
+                </MenuItem>
+              )}
+              {/* Тренер на турнире — до старта (ADR-059, T3): после него по
+                  записи уже считаются медали учеников. */}
+              {isCoachEditable(tournament.status) && (
+                <MenuItem
+                  onClick={() => {
+                    closeMenu();
+                    setEditingCoach(true);
+                  }}
+                  sx={{ minHeight: 44 }}
+                >
+                  {t('participants.editCoach')}
+                </MenuItem>
+              )}
+              {/* Удалить запись можно только до старта: после него участник
+                  снимается, а не исчезает — его встречи уже в таблице (ADR-009). */}
+              {tournament.startedAt === null && (
+                <MenuItem
+                  disabled={remove.isPending}
+                  onClick={() => {
+                    closeMenu();
+                    remove.mutate();
+                  }}
+                  sx={{ minHeight: 44, color: 'error.main' }}
+                >
+                  {t('participants.remove')}
+                </MenuItem>
+              )}
+            </Menu>
           </Stack>
           {replacing && (
             <ReplaceParticipant

@@ -402,14 +402,11 @@ describe('панель организатора', () => {
 
     renderTournament(USER_WITH_PROFILE);
 
-    // Кнопка у каждого участника своя: снимаем первого.
-    const [withdraw] = await screen.findAllByRole('button', {
-      name: ru['participants.withdraw'],
-    });
-
-    if (withdraw === undefined) {
-      throw new Error('Кнопка снятия не найдена');
-    }
+    // Действия — в меню «⋯» у каждого участника (ADR-089): снимаем первого.
+    const [menu] = await screen.findAllByRole('button', { name: ru['participants.actions'] });
+    if (menu === undefined) throw new Error('Меню действий не найдено');
+    fireEvent.click(menu);
+    const withdraw = await screen.findByRole('menuitem', { name: ru['participants.withdraw'] });
 
     fireEvent.click(withdraw);
 
@@ -628,9 +625,10 @@ describe('тренер на турнире — ADR-059, T3', () => {
 
     renderTournament(USER_WITH_PROFILE);
 
-    const [edit] = await screen.findAllByRole('button', { name: ru['participants.editCoach'] });
-    if (edit === undefined) throw new Error('Кнопка тренера в составе не найдена');
-    fireEvent.click(edit);
+    const [menu] = await screen.findAllByRole('button', { name: ru['participants.actions'] });
+    if (menu === undefined) throw new Error('Меню действий не найдено');
+    fireEvent.click(menu);
+    fireEvent.click(await screen.findByRole('menuitem', { name: ru['participants.editCoach'] }));
 
     const dialog = await screen.findByRole('dialog');
     fireEvent.click(within(dialog).getByLabelText(ru['player.form.coachClear']));
