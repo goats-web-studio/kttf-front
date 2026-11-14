@@ -45,6 +45,17 @@ function ConsoleLayout(): ReactNode {
           flexDirection: 'column',
           bgcolor: 'background.default',
           color: 'text.primary',
+          // Фон сайта, облегчённый: тёплые пятна и сетка точек — одним CSS,
+          // без рисунка столов. Консоль — часть KTTF, а не чужая программа,
+          // но её набор упирается в бюджет 420 КБ gzip (ТС 8.1,
+          // `precache.test.ts`): сам `SiteBackdrop` с его SVG сюда не влез бы.
+          backgroundImage: [
+            'radial-gradient(ellipse 900px 620px at 88% 12%, var(--red-50) 0, transparent 70%)',
+            'radial-gradient(ellipse 820px 600px at 6% 60%, var(--gold-50) 0, transparent 70%)',
+            'radial-gradient(circle at 2px 2px, color-mix(in srgb, var(--ink-300) 45%, transparent) 1.2px, transparent 1.3px)',
+          ].join(', '),
+          backgroundSize: '100% 100%, 100% 100%, 24px 24px',
+          backgroundAttachment: 'fixed',
         }}
       >
         <Outlet />

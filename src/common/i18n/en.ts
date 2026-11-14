@@ -801,9 +801,7 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'participants.new.title': 'New player',
   'participants.new.lead':
     "The profile is created in the tournament's club and the player is registered right away. They'll fill in the rest of their profile themselves.",
-  'participants.new.rating': 'Rating based on skill level',
-  'participants.new.ratingHint':
-    "Your estimate of the player's strength, used for seeding. Their first five tournaments will adjust it",
+  'participants.new.rating': 'Starting rating',
   'participants.new.submit': 'Create and register',
   'participants.new.cancel': 'Cancel',
   'registration.status.REGISTERED': 'Registered',

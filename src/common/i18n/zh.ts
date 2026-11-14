@@ -760,8 +760,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'participants.new.title': '新建球员',
   'participants.new.lead':
     '将在比赛所属俱乐部创建球员主页，并直接报名。资料卡的其余内容由球员本人填写。',
-  'participants.new.rating': '按水平估算的积分',
-  'participants.new.ratingHint': '这是你对球员实力的估计，种子排位以此为准，前五场比赛后会逐步修正',
+  'participants.new.rating': '初始积分',
   'participants.new.submit': '创建并报名',
   'participants.new.cancel': '取消',
   'registration.status.REGISTERED': '已报名',

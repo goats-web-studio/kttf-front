@@ -793,9 +793,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'participants.new.title': '新規選手',
   'participants.new.lead':
     'プロフィールは大会のクラブに作成され、選手はすぐにエントリーされます。残りの項目は本人が入力します。',
-  'participants.new.rating': '実力に応じたレーティング',
-  'participants.new.ratingHint':
-    'あなたが見積もった選手の実力です。シードはこれに基づきます。最初の5大会で補正されます',
+  'participants.new.rating': '初期レーティング',
   'participants.new.submit': '登録してエントリー',
   'participants.new.cancel': 'キャンセル',
   'registration.status.REGISTERED': 'エントリー済み',

@@ -8,11 +8,13 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
-import { useT, type MessageKey } from '@/common/i18n';
+import { useLocale, useT, type MessageKey } from '@/common/i18n';
 import IntegerField from '@/common/ui/integer-field';
 
+import FormatPicker from './format-picker';
+import { FORM_UI_TEXTS } from './format-texts';
 import { previewFormat } from './format-preview';
-import { toFormatConfig, type FormatDraft, type FormatType } from './format-draft';
+import { toFormatConfig, type FormatDraft } from './format-draft';
 import PlayoffLengths from './playoff-lengths';
 import SetsField from './sets-field';
 
@@ -51,6 +53,7 @@ export default function FormatEditor({
   onParticipantsChange,
 }: FormatEditorProps): ReactNode {
   const t = useT();
+  const locale = useLocale();
 
   const set = <K extends keyof FormatDraft>(key: K, value: FormatDraft[K]): void => {
     onChange({ ...draft, [key]: value });
@@ -59,23 +62,20 @@ export default function FormatEditor({
   const hasGroups = draft.type === 'GROUPS_KNOCKOUT' || draft.type === 'GROUPS_FINAL_GROUPS';
 
   return (
-    <Section legend={t('tournament.form.format')}>
-      <Box sx={GRID}>
-        <TextField
-          select
-          label={t('tournament.form.formatType')}
-          value={draft.type}
-          onChange={(event) => {
-            set('type', event.target.value as FormatType);
-          }}
-        >
-          {FORMAT_KEYS.map(([value, key]) => (
-            <MenuItem key={value} value={value}>
-              {t(key)}
-            </MenuItem>
-          ))}
-        </TextField>
+    <Section
+      step={3}
+      legend={t('tournament.form.format')}
+      description={FORM_UI_TEXTS[locale].formatText}
+    >
+      <FormatPicker
+        draft={draft}
+        participants={participants}
+        onType={(type) => {
+          set('type', type);
+        }}
+      />
 
+      <Box sx={{ ...GRID, mt: 3 }}>
         {draft.type === 'ROUND_ROBIN' && (
           <RoundsField
             label="tournament.form.rounds"
@@ -236,26 +236,62 @@ export default function FormatEditor({
 }
 
 /**
- * Раздел формы турнира: рамка без тени (запрет №13), подпись — название
- * группы полей. Общий у редактора схемы и формы создания: разделы одной
- * формы обязаны выглядеть одинаково.
+ * Раздел формы турнира — шаг с номером, названием и строкой «зачем он».
+ *
+ * Рамка без тени (запрет №13). Номер шага показывает, сколько осталось:
+ * форма длинная, и без него организатор не знает, где он в ней. Общий у
+ * редактора схемы и формы создания: разделы одной формы обязаны выглядеть
+ * одинаково.
  */
 export function Section({
   legend,
+  description,
+  step,
   children,
 }: {
   readonly legend: string;
+  readonly description?: string;
+  readonly step?: number;
   readonly children: ReactNode;
 }): ReactNode {
   return (
     <Paper
       variant="outlined"
       component="fieldset"
-      sx={{ m: 0, mt: 4, px: { xs: 2, sm: 3 }, pt: 1, pb: { xs: 2, sm: 3 }, minWidth: 0 }}
+      sx={{ m: 0, mt: 3, p: { xs: 2, sm: 3 }, minWidth: 0, borderRadius: 4 }}
     >
-      <Typography component="legend" variant="h3" sx={{ px: 0.5, mb: 1 }}>
-        {legend}
-      </Typography>
+      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', mb: 2.5 }}>
+        {step !== undefined && (
+          <Box
+            aria-hidden
+            sx={{
+              flexShrink: 0,
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              display: 'grid',
+              placeItems: 'center',
+              bgcolor: 'var(--red-600)',
+              color: 'var(--paper)',
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {step}
+          </Box>
+        )}
+        <Box sx={{ minWidth: 0 }}>
+          {/* legend — первым потомком fieldset, иначе браузер кладёт его на рамку. */}
+          <Typography component="legend" variant="h3" sx={{ p: 0, float: 'left', width: '100%' }}>
+            {legend}
+          </Typography>
+          {description !== undefined && (
+            <Typography variant="body2" color="text.secondary" sx={{ clear: 'both', pt: 0.5 }}>
+              {description}
+            </Typography>
+          )}
+        </Box>
+      </Box>
       {children}
     </Paper>
   );
@@ -362,19 +398,6 @@ function Preview({
     </Box>
   );
 }
-
-/**
- * Схемы — в тексты интерфейса.
- *
- * Тип обязывает перечислить все: новая схема в общем коде ломает сборку
- * здесь, а не выходит к человеку английской строкой.
- */
-const FORMAT_KEYS: readonly (readonly [FormatType, MessageKey])[] = [
-  ['ROUND_ROBIN', 'tournament.format.ROUND_ROBIN'],
-  ['KNOCKOUT', 'tournament.format.KNOCKOUT'],
-  ['GROUPS_KNOCKOUT', 'tournament.format.GROUPS_KNOCKOUT'],
-  ['GROUPS_FINAL_GROUPS', 'tournament.format.GROUPS_FINAL_GROUPS'],
-];
 
 function RoundsField({
   label,

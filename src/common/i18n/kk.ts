@@ -820,9 +820,7 @@ export const kk: Record<MessageKey, string> = {
   'participants.new.title': 'Жаңа ойыншы',
   'participants.new.lead':
     'Профиль турнир клубында ашылады, ойыншы бірден жазылады. Қалған сауалнаманы өзі толтырады.',
-  'participants.new.rating': 'Ойын деңгейі бойынша рейтинг',
-  'participants.new.ratingHint':
-    'Ойыншы күшін сіздің бағалауыңыз: себу соған қарай. Алғашқы бес турнир оны түзетеді',
+  'participants.new.rating': 'Бастапқы рейтинг',
   'participants.new.submit': 'Ашу және жазу',
   'participants.new.cancel': 'Болдырмау',
 

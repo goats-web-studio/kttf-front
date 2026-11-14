@@ -789,8 +789,6 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'participants.new.lead':
     '대회를 여는 클럽에 프로필이 만들어지고 선수는 바로 참가 신청돼요. 나머지 정보는 선수가 직접 입력해요.',
   'participants.new.rating': '초기 레이팅',
-  'participants.new.ratingHint':
-    '주최자가 평가한 선수 실력이에요. 이 값으로 시드가 정해지고, 처음 5개 대회를 거치며 보정돼요.',
   'participants.new.submit': '등록 및 신청',
   'participants.new.cancel': '취소',
   'registration.status.REGISTERED': '신청 완료',

@@ -813,9 +813,7 @@ export const ru = {
   'participants.new.title': 'Новый игрок',
   'participants.new.lead':
     'Профиль заведётся в клубе турнира, игрок сразу будет записан. Остальную анкету он заполнит сам.',
-  'participants.new.rating': 'Рейтинг по уровню игры',
-  'participants.new.ratingHint':
-    'Ваша оценка силы игрока: по ней он посеется. Первые пять турниров её поправят',
+  'participants.new.rating': 'Стартовый рейтинг',
   'participants.new.submit': 'Завести и записать',
   'participants.new.cancel': 'Отмена',
 

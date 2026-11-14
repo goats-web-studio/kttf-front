@@ -439,7 +439,7 @@ describe('панель организатора', () => {
     expect(request?.body).toEqual({ playerId: PLAYERS.second.id });
   });
 
-  it('пришедшему с анкетой организатор задаёт рейтинг по уровню и записывает (ADR-072)', async () => {
+  it('пришедшему с анкетой организатор задаёт точный рейтинг и записывает (ADR-072, ADR-085)', async () => {
     found = [{ ...PLAYERS.second, confirmed: false }];
 
     renderTournament(USER_WITH_PROFILE);
@@ -458,10 +458,11 @@ describe('панель организатора', () => {
     const submit = screen.getByRole('button', { name: ru['participants.confirm.submit'] });
     expect(submit.hasAttribute('disabled')).toBe(true);
 
-    fireEvent.mouseDown(
-      screen.getByRole('combobox', { name: new RegExp(ru['participants.new.rating']) }),
+    // Точное число до сотых, запятой — как пишут на телефоне (ADR-085).
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(ru['participants.new.rating']) }),
+      { target: { value: '384,15' } },
     );
-    fireEvent.click(await screen.findByRole('option', { name: '400' }));
     fireEvent.click(submit);
 
     await waitFor(() => {
@@ -470,7 +471,7 @@ describe('панель организатора', () => {
     const [confirm, register] = sent.filter((row) => row.method === 'POST');
 
     expect(confirm?.url).toContain(`/players/${PLAYERS.second.id}/confirm`);
-    expect(confirm?.body).toEqual({ clubId: TOURNAMENT.clubId, startRating: 400 });
+    expect(confirm?.body).toEqual({ clubId: TOURNAMENT.clubId, startRating: 384.15 });
     expect(register?.body).toEqual({ playerId: PLAYERS.second.id });
   });
 

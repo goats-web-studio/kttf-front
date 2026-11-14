@@ -138,7 +138,7 @@ export default function NewParticipant({ tournament, lastName }: NewParticipantP
         <StartRatingField
           value={form.startRating}
           label={t('participants.new.rating')}
-          helperText={t('participants.new.ratingHint')}
+          withHint
           onChange={(startRating) => {
             setForm({ ...form, startRating });
           }}

@@ -1,12 +1,13 @@
 import { createTournamentSchema, type AuthUserView } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
+import { FORM_UI_TEXTS, FORMAT_TEXTS } from '@/features/tournaments/format-texts';
 import { CLUB, pageOf, TOURNAMENT, USER_WITH_PROFILE } from '@/test/fixtures';
 
 /**
@@ -69,6 +70,11 @@ function renderAt(path: string, user: AuthUserView | null): void {
 async function choose(field: string, option: string): Promise<void> {
   fireEvent.mouseDown(screen.getByRole('combobox', { name: field }));
   fireEvent.click(await screen.findByRole('option', { name: option }));
+}
+
+/** Схема — карточкой: выбор схемы больше не список (ADR-086). */
+function pickFormat(title: string): void {
+  fireEvent.click(screen.getByRole('radio', { name: new RegExp(title) }));
 }
 
 /**
@@ -186,7 +192,7 @@ describe('форма создания', () => {
     });
     setStartsAt('01.10.2026 09:00');
 
-    await choose(ru['tournament.form.formatType'], ru['tournament.format.GROUPS_KNOCKOUT']);
+    pickFormat(ru['tournament.format.GROUPS_KNOCKOUT']);
     await choose(ru['tournament.form.groupRounds'], ru['tournament.form.twoRounds']);
 
     fireEvent.click(screen.getByRole('button', { name: ru['tournament.form.create'] }));
@@ -228,7 +234,7 @@ describe('предпросчёт схемы', () => {
     renderAt('/tournaments/new', ORGANIZER);
 
     await screen.findByText(ru['tournament.preview.totalMatches']);
-    await choose(ru['tournament.form.formatType'], ru['tournament.format.GROUPS_KNOCKOUT']);
+    pickFormat(ru['tournament.format.GROUPS_KNOCKOUT']);
 
     // Четыре группы по четверо: 24 встречи в группах, восемь выходят, сетка
     // на восьмерых — семь встреч плюс матч за третье место. Не вышедшие
@@ -238,11 +244,33 @@ describe('предпросчёт схемы', () => {
     expect(screen.getByText('40')).toBeDefined();
   });
 
+  it('карточка схемы объясняет её и выбирает из окна (ADR-086)', async () => {
+    renderAt('/tournaments/new', ORGANIZER);
+
+    await screen.findByText(ru['tournament.preview.totalMatches']);
+    const card = document.querySelector<HTMLElement>('[data-format-card="GROUPS_FINAL_GROUPS"]');
+    if (card === null) throw new Error('нет карточки схемы');
+
+    fireEvent.click(within(card).getByRole('button', { name: FORM_UI_TEXTS.ru.how }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(FORMAT_TEXTS.ru.GROUPS_FINAL_GROUPS.fit)).toBeDefined();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: FORM_UI_TEXTS.ru.choose }));
+
+    await waitFor(() => {
+      expect(
+        screen
+          .getByRole('radio', { name: new RegExp(ru['tournament.format.GROUPS_FINAL_GROUPS']) })
+          .getAttribute('aria-checked'),
+      ).toBe('true');
+    });
+  });
+
   it('предупреждает о схеме, которую отвергнет жеребьёвка', async () => {
     renderAt('/tournaments/new', ORGANIZER);
 
     await screen.findByText(ru['tournament.preview.totalMatches']);
-    await choose(ru['tournament.form.formatType'], ru['tournament.format.GROUPS_KNOCKOUT']);
+    pickFormat(ru['tournament.format.GROUPS_KNOCKOUT']);
     await choose(ru['tournament.form.sizing'], ru['tournament.form.byGroupCount']);
     fireEvent.change(screen.getByLabelText(ru['tournament.form.groupCount']), {
       target: { value: '1' },

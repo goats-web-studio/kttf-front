@@ -21,10 +21,11 @@ import { Controller, useForm, type DefaultValues } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { errorMessageKey } from '@/common/api';
-import { useT, type MessageKey } from '@/common/i18n';
+import { useLocale, useT, type MessageKey } from '@/common/i18n';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 
 import FormatEditor, { Section } from './format-editor';
+import { FORM_UI_TEXTS } from './format-texts';
 import { DEFAULT_DRAFT, fromFormatConfig, toFormatConfig, type FormatDraft } from './format-draft';
 import { TOURNAMENT_LEVEL_KEYS } from './labels';
 
@@ -73,6 +74,8 @@ export default function TournamentForm({
   onSubmit,
 }: TournamentFormProps): ReactNode {
   const t = useT();
+  // Подписи шагов — не в общем словаре: см. `format-texts.ts`.
+  const ui = FORM_UI_TEXTS[useLocale()];
   const clubs = useQuery(clubDirectoryQuery);
 
   // Черновик схемы живёт отдельно: у формы плоские поля, а `formatConfig` —
@@ -125,113 +128,119 @@ export default function TournamentForm({
         void form.handleSubmit(onSubmit)(event);
       }}
     >
-      <Box sx={GRID}>
-        <TextField
-          label={t('tournament.form.name')}
-          {...register('name')}
-          {...hint(t, errors.name === undefined ? undefined : 'error.form.name')}
-        />
+      <Section step={1} legend={ui.basics} description={ui.basicsText}>
+        <Box sx={GRID}>
+          <TextField
+            label={t('tournament.form.name')}
+            {...register('name')}
+            {...hint(t, errors.name === undefined ? undefined : 'error.form.name')}
+          />
 
-        <Controller
-          control={form.control}
-          name="clubId"
-          render={({ field: { ref, ...field } }) => (
-            <TextField
-              select
-              label={t('tournament.form.club')}
-              {...field}
-              inputRef={ref}
-              // Турнир остаётся в клубе, где создан (ТС 7.5).
-              disabled={tournament !== undefined}
-              {...hint(t, errors.clubId === undefined ? undefined : 'error.form.club')}
-            >
-              {clubIds.map((clubId) => (
-                <MenuItem key={clubId} value={clubId}>
-                  {clubs.data?.get(clubId)?.name ?? clubId}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
+          <Controller
+            control={form.control}
+            name="clubId"
+            render={({ field: { ref, ...field } }) => (
+              <TextField
+                select
+                label={t('tournament.form.club')}
+                {...field}
+                inputRef={ref}
+                // Турнир остаётся в клубе, где создан (ТС 7.5).
+                disabled={tournament !== undefined}
+                {...hint(t, errors.clubId === undefined ? undefined : 'error.form.club')}
+              >
+                {clubIds.map((clubId) => (
+                  <MenuItem key={clubId} value={clubId}>
+                    {clubs.data?.get(clubId)?.name ?? clubId}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
 
-        <Controller
-          control={form.control}
-          name="startsAt"
-          render={({ field }) => (
-            <MomentPicker
-              label={t('tournament.form.startsAt')}
-              name={field.name}
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              inputRef={field.ref}
-              {...(errors.startsAt === undefined ? {} : { error: t('error.form.startsAt') })}
-            />
-          )}
-        />
+          <Controller
+            control={form.control}
+            name="startsAt"
+            render={({ field }) => (
+              <MomentPicker
+                label={t('tournament.form.startsAt')}
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                inputRef={field.ref}
+                {...(errors.startsAt === undefined ? {} : { error: t('error.form.startsAt') })}
+              />
+            )}
+          />
 
-        {/* По умолчанию — время начала турнира (ТЗ 4.2). Умолчание ставит
+          {/* По умолчанию — время начала турнира (ТЗ 4.2). Умолчание ставит
             сервер, а не форма: иначе оно жило бы в двух местах. */}
-        <Controller
-          control={form.control}
-          name="registrationEndsAt"
-          render={({ field }) => (
-            <MomentPicker
-              label={t('tournament.form.registrationEndsAt')}
-              name={field.name}
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              inputRef={field.ref}
-            />
-          )}
-        />
+          <Controller
+            control={form.control}
+            name="registrationEndsAt"
+            render={({ field }) => (
+              <MomentPicker
+                label={t('tournament.form.registrationEndsAt')}
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                inputRef={field.ref}
+              />
+            )}
+          />
+        </Box>
+      </Section>
 
-        <TextField
-          label={t('tournament.form.entryFee')}
-          type="number"
-          // Стёртый взнос — бесплатный турнир, а не ошибка формы.
-          {...register('entryFee', {
-            setValueAs: (value: string) => (value === '' ? 0 : Number(value)),
-          })}
-          {...hint(t, errors.entryFee === undefined ? undefined : 'error.form.entryFee', {
-            ...NUMERIC,
-            min: 0,
-          })}
-        />
+      <Section step={2} legend={ui.terms} description={ui.termsText}>
+        <Box sx={GRID}>
+          <TextField
+            label={t('tournament.form.entryFee')}
+            type="number"
+            // Стёртый взнос — бесплатный турнир, а не ошибка формы.
+            {...register('entryFee', {
+              setValueAs: (value: string) => (value === '' ? 0 : Number(value)),
+            })}
+            {...hint(t, errors.entryFee === undefined ? undefined : 'error.form.entryFee', {
+              ...NUMERIC,
+              min: 0,
+            })}
+          />
 
-        {/* Подпись турнира. На рейтинг не влияет: коэффициент турнира
+          {/* Подпись турнира. На рейтинг не влияет: коэффициент турнира
             движок считает из среднего рейтинга участников (ADR-069). */}
-        <Controller
-          control={form.control}
-          name="level"
-          render={({ field: { ref, ...field } }) => (
-            <TextField
-              select
-              label={t('tournament.form.level')}
-              {...field}
-              inputRef={ref}
-              {...hint(t, errors.level === undefined ? undefined : 'error.form.level')}
-            >
-              {tournamentLevelSchema.options.map((level) => (
-                <MenuItem key={level} value={level}>
-                  {t(TOURNAMENT_LEVEL_KEYS[level])}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-        />
+          <Controller
+            control={form.control}
+            name="level"
+            render={({ field: { ref, ...field } }) => (
+              <TextField
+                select
+                label={t('tournament.form.level')}
+                {...field}
+                inputRef={ref}
+                {...hint(t, errors.level === undefined ? undefined : 'error.form.level')}
+              >
+                {tournamentLevelSchema.options.map((level) => (
+                  <MenuItem key={level} value={level}>
+                    {t(TOURNAMENT_LEVEL_KEYS[level])}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
 
-        <TextField
-          label={t('tournament.form.tableCount')}
-          type="number"
-          {...register('tableCount', { valueAsNumber: true })}
-          {...hint(t, errors.tableCount === undefined ? undefined : 'error.form.tableCount', {
-            ...NUMERIC,
-            min: 1,
-          })}
-        />
-      </Box>
+          <TextField
+            label={t('tournament.form.tableCount')}
+            type="number"
+            {...register('tableCount', { valueAsNumber: true })}
+            {...hint(t, errors.tableCount === undefined ? undefined : 'error.form.tableCount', {
+              ...NUMERIC,
+              min: 1,
+            })}
+          />
+        </Box>
+      </Section>
 
       <FormatEditor
         draft={draft}
@@ -245,7 +254,7 @@ export default function TournamentForm({
         onParticipantsChange={setParticipants}
       />
 
-      <Section legend={t('tournament.form.seeding')}>
+      <Section step={4} legend={t('tournament.form.seeding')} description={ui.seedingText}>
         <Box sx={{ ...GRID, alignItems: 'center' }}>
           <Controller
             control={form.control}
@@ -304,7 +313,7 @@ export default function TournamentForm({
       )}
 
       {limitsOpen && (
-        <Section legend={t('tournament.form.limits')}>
+        <Section step={5} legend={t('tournament.form.limits')} description={ui.limitsText}>
           <Box sx={GRID}>
             <TextField
               label={t('tournament.form.maxParticipants')}
