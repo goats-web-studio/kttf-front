@@ -41,6 +41,8 @@ export default function RepeatTournament({
   const queryClient = useQueryClient();
   const user = useSessionStore((state) => state.user);
 
+  // Свёрнуто: повтор нужен раз в неделю, а не на каждом заходе на страницу.
+  const [open, setOpen] = useState(false);
   const [startsAt, setStartsAt] = useState<Dayjs | null>(null);
   // Дата обязательна: копия без неё — тот же турнир в тот же день.
   const isComplete = startsAt?.isValid() === true;
@@ -62,41 +64,71 @@ export default function RepeatTournament({
 
   return (
     <Paper variant="outlined" component="section" sx={{ mt: 4, p: { xs: 2, sm: 3 } }}>
-      <Typography variant="h2">{t('tournament.repeat.title')}</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-        {t('tournament.repeat.hint')}
-      </Typography>
-
-      <Stack
-        component="form"
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={1.5}
-        sx={{ mt: 2, alignItems: { sm: 'flex-start' } }}
-        onSubmit={(event) => {
-          event.preventDefault();
-
-          if (startsAt?.isValid() === true) {
-            repeat.mutate(toMoment(startsAt));
-          }
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
         }}
       >
-        <Box sx={{ width: { xs: '100%', sm: 280 } }}>
-          <DateTimePicker
-            label={t('tournament.form.startsAt')}
-            value={startsAt}
-            onChange={setStartsAt}
-            slotProps={{ field: { clearable: true } }}
-          />
+        <Box>
+          <Typography variant="h3" component="h2">
+            {t('tournament.repeat.title')}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {t('tournament.repeat.hint')}
+          </Typography>
         </Box>
+        {!open && (
+          <Button
+            variant="outlined"
+            aria-expanded={false}
+            onClick={() => {
+              setOpen(true);
+            }}
+            sx={{ minHeight: 44 }}
+          >
+            {t('tournament.repeat.submit')}
+          </Button>
+        )}
+      </Box>
 
-        <Button
-          type="submit"
-          disabled={!isComplete || repeat.isPending}
-          sx={{ minHeight: { xs: 44, sm: 40 } }}
+      {open && (
+        <Stack
+          component="form"
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1.5}
+          sx={{ mt: 2, alignItems: { sm: 'flex-start' } }}
+          onSubmit={(event) => {
+            event.preventDefault();
+
+            if (startsAt?.isValid() === true) {
+              repeat.mutate(toMoment(startsAt));
+            }
+          }}
         >
-          {repeat.isPending ? t('common.loading') : t('tournament.repeat.submit')}
-        </Button>
-      </Stack>
+          <Box sx={{ width: { xs: '100%', sm: 280 } }}>
+            <DateTimePicker
+              label={t('tournament.form.startsAt')}
+              value={startsAt}
+              onChange={setStartsAt}
+              // Копия — будущий турнир: прошедшая дата здесь всегда ошибка.
+              disablePast
+              slotProps={{ field: { clearable: true } }}
+            />
+          </Box>
+
+          <Button
+            type="submit"
+            disabled={!isComplete || repeat.isPending}
+            sx={{ minHeight: { xs: 44, sm: 40 } }}
+          >
+            {repeat.isPending ? t('common.loading') : t('tournament.repeat.submit')}
+          </Button>
+        </Stack>
+      )}
 
       {repeat.error !== null && (
         <Alert severity="error" sx={{ mt: 2 }}>

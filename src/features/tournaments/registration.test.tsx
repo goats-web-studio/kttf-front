@@ -28,6 +28,8 @@ import {
   USER_WITHOUT_PROFILE,
 } from '@/test/fixtures';
 
+import { OWN_COACH_TEXTS } from './own-coach-texts';
+
 /**
  * Запись на турнир — ТЗ 4.3.
  *
@@ -496,6 +498,9 @@ describe('панель организатора', () => {
     // с теми же настройками. Копирует сервер — форма их не пересобирает.
     renderTournament(USER_WITH_PROFILE);
 
+    // Блок свёрнут (ADR-089): форма с датой открывается кнопкой.
+    fireEvent.click(await screen.findByRole('button', { name: ru['tournament.repeat.submit'] }));
+
     // Поле выбора разбито на секции; скрытое поле под ними принимает дату
     // строкой в формате языка интерфейса.
     const [field] = (await screen.findAllByLabelText(ru['tournament.form.startsAt'])).filter(
@@ -506,7 +511,7 @@ describe('панель организатора', () => {
       throw new Error('Поле даты начала не найдено');
     }
 
-    fireEvent.change(field, { target: { value: '01.12.2026 10:00' } });
+    fireEvent.change(field, { target: { value: '01.12.2030 10:00' } });
     fireEvent.click(screen.getByRole('button', { name: ru['tournament.repeat.submit'] }));
 
     await waitFor(() => {
@@ -515,7 +520,7 @@ describe('панель организатора', () => {
 
     const [request] = sent.filter((row) => row.url.includes('/duplicate'));
 
-    expect(request?.body).toEqual({ startsAt: new Date('2026-12-01T10:00').toISOString() });
+    expect(request?.body).toEqual({ startsAt: new Date('2030-12-01T10:00').toISOString() });
   });
 
   it('игроку без роли в клубе повторение не предлагается', async () => {
@@ -564,7 +569,7 @@ describe('тренер на турнире — ADR-059, T3', () => {
     expect(within(line).getByRole('link', { name: 'Ким Ольга' }).getAttribute('href')).toBe(
       '/coaches/kim',
     );
-    expect(within(line).getByText(ru['registration.coach.hint'])).toBeDefined();
+    expect(within(line).getByText(OWN_COACH_TEXTS.ru.hint)).toBeDefined();
 
     fireEvent.click(within(line).getByRole('button', { name: ru['registration.coach.edit'] }));
 
@@ -593,13 +598,29 @@ describe('тренер на турнире — ADR-059, T3', () => {
     });
   });
 
-  it('без тренера — «Тренер не указан»', async () => {
+  it('без тренера — «Тренер не указан» и «Добавить тренера» (ADR-089)', async () => {
     registrations = [OWN_REGISTRATION];
 
     renderTournament({ ...USER_WITH_PROFILE, clubRoles: [] });
 
     expect(await screen.findByText(ru['registration.coach.none'])).toBeDefined();
-    expect(screen.getByRole('button', { name: ru['registration.coach.edit'] })).toBeDefined();
+    expect(screen.getByRole('button', { name: OWN_COACH_TEXTS.ru.add })).toBeDefined();
+    // Убирать нечего — кнопки «Убрать» нет.
+    expect(screen.queryByRole('button', { name: OWN_COACH_TEXTS.ru.remove })).toBeNull();
+  });
+
+  it('записанный с тренером убирает его одной кнопкой — оба поля null (ADR-089)', async () => {
+    registrations = [COACHED];
+
+    renderTournament({ ...USER_WITH_PROFILE, clubRoles: [] });
+
+    const line = await ownCoach();
+    fireEvent.click(within(line).getByRole('button', { name: OWN_COACH_TEXTS.ru.remove }));
+
+    await waitFor(() => {
+      expect(coachRequests()).toHaveLength(1);
+    });
+    expect(coachRequests()[0]?.body).toEqual({ coachPlayerId: null, coachName: null });
   });
 
   it('организатор убирает тренера у участника — оба поля null', async () => {
@@ -629,7 +650,7 @@ describe('тренер на турнире — ADR-059, T3', () => {
 
     const line = await ownCoach();
     expect(within(line).getByRole('link', { name: 'Ким Ольга' })).toBeDefined();
-    expect(within(line).queryByText(ru['registration.coach.hint'])).toBeNull();
+    expect(within(line).queryByText(OWN_COACH_TEXTS.ru.hint)).toBeNull();
     expect(screen.queryByRole('button', { name: ru['registration.coach.edit'] })).toBeNull();
     expect(screen.queryByRole('button', { name: ru['participants.editCoach'] })).toBeNull();
   });

@@ -12,6 +12,7 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Check } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
@@ -200,9 +201,25 @@ function Row({
         </Link>
         {!registration.isRated && (
           // Вне зачёта: играет, но результаты не рейтинговые — ТЗ 4.4.
-          <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+          // Меткой-состоянием, а не серой припиской: организатор должен
+          // видеть её в длинном составе с первого взгляда.
+          <Box
+            component="span"
+            data-unrated
+            sx={{
+              ml: 1,
+              px: 0.75,
+              py: 0.25,
+              borderRadius: 1,
+              typography: 'caption',
+              fontWeight: 600,
+              color: 'var(--warn-text)',
+              bgcolor: 'var(--warn-50)',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {t('participants.unrated')}
-          </Typography>
+          </Box>
         )}
         <CoachNote coach={registration.coach} />
         {error !== null && (
@@ -222,12 +239,20 @@ function Row({
         <TableCell>
           {/* Учёт наличных в зале, не платёж (ADR-062): одно касание
               ставит и снимает, сервер пишет каждое в журнал. */}
+          {/* Состояние и действие читаются сразу: зелёное «Оплачено» с
+              галочкой — оплата отмечена; «Отметить оплату» — ещё нет, и
+              кнопка говорит, что сделает. Повторное касание снимает отметку. */}
           <Button
             variant={registration.paid ? 'contained' : 'outlined'}
             color={registration.paid ? 'success' : 'secondary'}
             size="small"
             disabled={update.isPending}
             aria-pressed={registration.paid}
+            data-paid={registration.paid}
+            // Подсказка — родным title: всплывашка MUI не влезла бы в бюджет
+            // консоли, где эта же панель открывается «Составом».
+            title={registration.paid ? t('participants.paid.undo') : undefined}
+            {...(registration.paid ? { startIcon: <Check size={16} aria-hidden /> } : {})}
             onClick={() => {
               update.mutate({ paid: !registration.paid });
             }}

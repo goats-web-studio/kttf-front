@@ -7,6 +7,7 @@ import { detectLocale, I18nProvider, isLocale, type Locale, useT } from '@/commo
 
 const LOCALE_KEY = 'kttf.locale';
 
+import { installLeadingZeroGuard } from '@/common/ui/leading-zero';
 import { connectSessionToApi, restoreSession } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 
@@ -45,6 +46,9 @@ export default function App(): ReactNode {
     connectSessionToApi();
     void restoreSession();
   }, []);
+
+  // Ведущий ноль в числовых полях — «03500» — убирается во всех полях сразу.
+  useEffect(() => installLeadingZeroGuard(), []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -15,13 +15,15 @@ import { errorMessageKey } from '@/common/api';
 import { formatDateTime, useLocale, useT, type MessageKey } from '@/common/i18n';
 import { useSessionStore } from '@/features/auth/session-store';
 import { isClubStaff } from '@/features/clubs/roles';
+import { initialCoachOption } from '@/features/players/coach-options';
 import { playerQuery } from '@/features/players/queries';
 
-import { registerForTournament, removeRegistration } from './api';
+import { registerForTournament, removeRegistration, setRegistrationCoach } from './api';
 import CoachDialog from './coach-dialog';
 import { CoachName } from './coach-note';
 import { eligibilityProblems, problemKeys } from './eligibility-problems';
 import { tournamentKeys } from './queries';
+import { OWN_COACH_TEXTS } from './own-coach-texts';
 import { isCoachEditable } from './registration-coach';
 
 /**
@@ -207,8 +209,13 @@ export default function RegistrationPanel({
 }
 
 /**
- * Тренер на турнире — ADR-059, T3. Взят из анкеты при записи; до старта
- * его можно поменять, после — это история, по ней считаются медали.
+ * Тренер на турнире — ADR-059, T3, ADR-089.
+ *
+ * По умолчанию не указан: тренер — тот, кому засчитаются медали, и
+ * подставлять его молча из анкеты значило бы решать за игрока. «Добавить»
+ * открывает выбор с тренером из анкеты наготове — одно нажатие «Сохранить»,
+ * если он тот же. До старта тренера можно поменять или убрать, после — это
+ * история, по ней считаются медали.
  */
 function OwnCoach({
   registration,
@@ -218,8 +225,30 @@ function OwnCoach({
   readonly editable: boolean;
 }): ReactNode {
   const t = useT();
+  const texts = OWN_COACH_TEXTS[useLocale()];
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const coach = registration.coach;
+  const user = useSessionStore((state) => state.user);
+  const profile = useQuery({
+    ...playerQuery(user?.playerId ?? ''),
+    enabled: editable && coach === null && user?.playerId != null,
+  }).data;
+  const suggested =
+    profile?.coachName == null
+      ? null
+      : initialCoachOption(profile.coachPlayerId ?? undefined, profile.coachName);
+
+  const remove = useMutation({
+    mutationFn: () =>
+      setRegistrationCoach(registration.tournamentId, registration.id, {
+        coachPlayerId: null,
+        coachName: null,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+    },
+  });
 
   return (
     <Box data-own-coach sx={{ mt: 1.5 }}>
@@ -235,24 +264,44 @@ function OwnCoach({
         </Typography>
         {editable && (
           <Button
-            variant="text"
+            variant={coach === null ? 'outlined' : 'text'}
             size="small"
             onClick={() => {
               setEditing(true);
             }}
             sx={{ minHeight: 44 }}
           >
-            {t('registration.coach.edit')}
+            {coach === null ? texts.add : t('registration.coach.edit')}
+          </Button>
+        )}
+        {editable && coach !== null && (
+          <Button
+            variant="text"
+            size="small"
+            color="secondary"
+            disabled={remove.isPending}
+            onClick={() => {
+              remove.mutate();
+            }}
+            sx={{ minHeight: 44 }}
+          >
+            {texts.remove}
           </Button>
         )}
       </Box>
       {editable && (
         <Typography variant="body2" color="text.secondary">
-          {t('registration.coach.hint')}
+          {texts.hint}
         </Typography>
+      )}
+      {remove.error !== null && (
+        <Alert severity="error" sx={{ mt: 1 }}>
+          {t(errorMessageKey(remove.error))}
+        </Alert>
       )}
       <CoachDialog
         registration={registration}
+        suggested={suggested}
         open={editing}
         onClose={() => {
           setEditing(false);

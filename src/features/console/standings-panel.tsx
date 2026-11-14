@@ -27,6 +27,8 @@ interface StandingsPanelProps {
   readonly deltas?: ReadonlyMap<string, number>;
   /** Сколько выходит из группы дальше; `null` — схема без выхода. */
   readonly advance?: number | null;
+  /** Игроки вне зачёта: играют, но встречи не рейтинговые (ТЗ 4.4). */
+  readonly unrated?: ReadonlySet<string>;
 }
 
 /**
@@ -49,6 +51,7 @@ export default function StandingsPanel({
   ratings,
   deltas,
   advance = null,
+  unrated,
 }: StandingsPanelProps): ReactNode {
   const t = useT();
 
@@ -71,6 +74,7 @@ export default function StandingsPanel({
           ratings={ratings}
           deltas={deltas}
           advance={advance}
+          unrated={unrated}
         />
       ))}
     </section>
@@ -110,6 +114,7 @@ function GroupTable({
   ratings,
   deltas,
   advance,
+  unrated,
 }: {
   readonly group: GroupStandingsView;
   readonly matches: readonly MatchView[];
@@ -117,6 +122,7 @@ function GroupTable({
   readonly ratings: ReadonlyMap<string, string>;
   readonly deltas: ReadonlyMap<string, number> | undefined;
   readonly advance: number | null;
+  readonly unrated: ReadonlySet<string> | undefined;
 }): ReactNode {
   const t = useT();
   const order = group.rows.map((row) => row.participant);
@@ -222,6 +228,24 @@ function GroupTable({
                   <Box component="span" sx={{ fontWeight: 600, fontSize: 15 }}>
                     {names.get(row.participant) ?? row.participant}
                   </Box>{' '}
+                  {/* Вне зачёта — меткой у фамилии: судья видит, чьи встречи
+                      не идут в рейтинг, не открывая состав. */}
+                  {unrated?.has(row.participant) === true && (
+                    <Box
+                      component="span"
+                      sx={{
+                        mr: 0.5,
+                        px: 0.75,
+                        borderRadius: 1,
+                        typography: 'caption',
+                        fontWeight: 600,
+                        color: 'var(--warn-text)',
+                        bgcolor: 'var(--warn-50)',
+                      }}
+                    >
+                      {t('results.notRated')}
+                    </Box>
+                  )}
                   {/* Рейтинг рядом с фамилией — ТЗ 6.6. На телефоне его нет:
                       там каждая колонка на счету, а рейтинг виден в окне
                       встречи. */}

@@ -84,6 +84,8 @@ function TournamentPage(): ReactNode {
   );
 
   const data = results.data;
+  // Организатор клуба-хозяина: ему страница — рабочее место (ADR-089).
+  const staff = data !== undefined && isClubStaff(user, data.tournament.clubId);
   // Сводки для таблиц — один раз на ответ, а не в каждой вкладке.
   const model = useMemo(
     () => (data === undefined ? null : buildResultsModel(data, names)),
@@ -131,18 +133,15 @@ function TournamentPage(): ReactNode {
                 {data.tournament.finishedAt === null && (
                   <LifecyclePanel tournament={data.tournament} names={names} />
                 )}
-                {/* Запись и состав идут сразу за карточкой: пока турнир не
-                    сыгран, это единственное, ради чего его страницу
-                    открывают. Результаты ниже до старта пусты. */}
-                <RegistrationPanel
-                  tournament={data.tournament}
-                  registrations={registrations.data ?? []}
-                />
-                {/* «Повторить прошлый» — ТЗ 4.2. Стоит у турнира, а не в
-                    форме создания: копирует настройки сервер, и брать их
-                    неоткуда, кроме как у самого турнира. */}
-                {data.tournament.finishedAt === null && (
-                  <RepeatTournament tournament={data.tournament} />
+                {/* Игроку запись идёт сразу за карточкой: пока турнир не
+                    сыгран, это единственное, ради чего он открывает страницу.
+                    Организатору первым нужен состав — его запись как игрока
+                    уходит под рабочие блоки (ADR-089). */}
+                {!staff && (
+                  <RegistrationPanel
+                    tournament={data.tournament}
+                    registrations={registrations.data ?? []}
+                  />
                 )}
                 {/* Результаты — у начатого турнира. До старта места «не
                     определены», а изменения рейтинга нулевые у всех: такие
@@ -155,7 +154,7 @@ function TournamentPage(): ReactNode {
                     />
                     {/* Расстановка до старта видна организатору: после
                         старта менять её уже нечем. */}
-                    {isClubStaff(user, data.tournament.clubId) && (
+                    {staff && (
                       <>
                         <DrawPreview
                           tournamentId={tournamentId}
@@ -166,8 +165,7 @@ function TournamentPage(): ReactNode {
                       </>
                     )}
                   </>
-                ) : isClubStaff(user, data.tournament.clubId) &&
-                  data.tournament.finishedAt === null ? (
+                ) : staff && data.tournament.finishedAt === null ? (
                   // Организатору состав нужен под рукой посреди турнира —
                   // снять участника, принять заявку, — а не во вкладке.
                   // После завершения менять в нём нечего: он уходит во
@@ -193,11 +191,19 @@ function TournamentPage(): ReactNode {
                   />
                 )}
                 {data.tournament.finishedAt !== null && (
-                  <>
-                    <LifecyclePanel tournament={data.tournament} names={names} />
-                    <RepeatTournament tournament={data.tournament} />
-                  </>
+                  <LifecyclePanel tournament={data.tournament} names={names} />
                 )}
+                {staff && (
+                  <RegistrationPanel
+                    tournament={data.tournament}
+                    registrations={registrations.data ?? []}
+                  />
+                )}
+                {/* «Повторить прошлый» — ТЗ 4.2. Стоит у турнира, а не в
+                    форме создания: копирует настройки сервер, и брать их
+                    неоткуда, кроме как у самого турнира. Внизу и свёрнутым:
+                    нужен раз в неделю, а не на каждом заходе. */}
+                <RepeatTournament tournament={data.tournament} />
                 {/* Обсуждение турнира — тема форума (ADR-064, F2). У черновика
                     его нет: сервер отвечает «не найдено», и блок молчит. */}
                 <SubjectThread type="TOURNAMENT" id={tournamentId} />

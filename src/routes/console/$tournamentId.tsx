@@ -553,6 +553,13 @@ function ConsoleScreen(): ReactNode {
                         ratings={view.ratings}
                         {...(deltas === undefined ? {} : { deltas })}
                         advance={advanceOf(snapshot.tournament.formatConfig)}
+                        unrated={
+                          new Set(
+                            snapshot.registrations
+                              .filter((registration) => !registration.isRated)
+                              .map((registration) => registration.player.id),
+                          )
+                        }
                       />
                     </>
                   ) : shown === 'bracket' ? (

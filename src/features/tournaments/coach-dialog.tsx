@@ -20,6 +20,8 @@ import { coachInputOf, coachOptionOf } from './registration-coach';
 
 interface CoachDialogProps {
   readonly registration: RegistrationView;
+  /** Что подставить в поле, если у записи тренера нет: тренер из анкеты. */
+  readonly suggested?: CoachOption | null;
   readonly open: boolean;
   readonly onClose: () => void;
 }
@@ -32,12 +34,17 @@ interface CoachDialogProps {
  * Закрытый диалог снимает содержимое (MUI, `keepMounted` выключен): поле
  * при каждом открытии начинается с тренера записи, а не с брошенной правки.
  */
-export default function CoachDialog({ registration, open, onClose }: CoachDialogProps): ReactNode {
+export default function CoachDialog({
+  registration,
+  suggested = null,
+  open,
+  onClose,
+}: CoachDialogProps): ReactNode {
   const id = useId();
 
   return (
     <Dialog open={open} onClose={onClose} aria-labelledby={id} maxWidth="xs" fullWidth>
-      <CoachForm titleId={id} registration={registration} onClose={onClose} />
+      <CoachForm titleId={id} registration={registration} suggested={suggested} onClose={onClose} />
     </Dialog>
   );
 }
@@ -45,15 +52,19 @@ export default function CoachDialog({ registration, open, onClose }: CoachDialog
 function CoachForm({
   titleId,
   registration,
+  suggested,
   onClose,
 }: {
   readonly titleId: string;
   readonly registration: RegistrationView;
+  readonly suggested: CoachOption | null;
   readonly onClose: () => void;
 }): ReactNode {
   const t = useT();
   const queryClient = useQueryClient();
-  const [option, setOption] = useState<CoachOption | null>(() => coachOptionOf(registration.coach));
+  const [option, setOption] = useState<CoachOption | null>(
+    () => coachOptionOf(registration.coach) ?? suggested,
+  );
   const input = coachInputOf(option);
   // Вписанное имя длиннее предела сервер отверг бы проверкой схемы: та же
   // схема говорит об этом у поля, до нажатия.
