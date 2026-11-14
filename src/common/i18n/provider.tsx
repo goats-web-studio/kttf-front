@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { createI18nValue, I18nContext } from './context';
-import { DEFAULT_LOCALE, EAGER_DICTIONARIES, loadDictionary, type Locale } from './locale';
+import { EAGER_DICTIONARIES, loadDictionary, type Locale } from './locale';
 
 interface I18nProviderProps {
   readonly locale: Locale;
@@ -21,8 +21,10 @@ export default function I18nProvider({
   children,
 }: I18nProviderProps): ReactNode {
   const [loaded, setLoaded] = useState(EAGER_DICTIONARIES);
-  const [shown, setShown] = useState<Locale>(
-    EAGER_DICTIONARIES[locale] === undefined ? DEFAULT_LOCALE : locale,
+  // Первый показ — сразу нужным языком: пока его словарь не пришёл, не
+  // рисуется ничего (ADR-090). При смене языка остаётся прежний, а не пустота.
+  const [shown, setShown] = useState<Locale | null>(
+    EAGER_DICTIONARIES[locale] === undefined ? null : locale,
   );
 
   // Смена показанного языка прямо при отрисовке — без лишнего прохода эффекта.
@@ -49,9 +51,12 @@ export default function I18nProvider({
   }, [locale, loaded]);
 
   const active = loaded[locale] === undefined ? shown : locale;
-  const dictionary = loaded[active] ?? EAGER_DICTIONARIES[DEFAULT_LOCALE];
+  const dictionary = active === null ? undefined : loaded[active];
   const value = useMemo(
-    () => (dictionary === undefined ? null : createI18nValue(active, dictionary, onLocaleChange)),
+    () =>
+      active === null || dictionary === undefined
+        ? null
+        : createI18nValue(active, dictionary, onLocaleChange),
     [active, dictionary, onLocaleChange],
   );
 

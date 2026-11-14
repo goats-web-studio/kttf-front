@@ -1,4 +1,3 @@
-import { kk } from './kk';
 import { ru } from './ru';
 
 /**
@@ -20,14 +19,20 @@ export type MessageKey = keyof typeof ru;
 export type Dictionary = Readonly<Record<MessageKey, string>>;
 
 /**
- * Словари в основном бандле: русский — эталонный, казахский — основной.
- * Остальные грузятся отдельным чанком при выборе языка: шесть словарей
- * разом не помещались в бюджет офлайн-консоли (`precache.test.ts`).
+ * Словарь в основном бандле — только русский, эталонный (ADR-090).
+ *
+ * Остальные, включая казахский, грузятся отдельным чанком. Казахский раньше
+ * лежал в основном бандле, чтобы у основного языка не мигал русский; но оба
+ * словаря целиком (около 2 900 ключей каждый) уезжали и в набор офлайн-
+ * консоли, и её бюджет 420 КБ gzip (`precache.test.ts`) кончился: любая
+ * новая строка интерфейса в любой части сайта его превышала. Мигания нет и
+ * так — провайдер ничего не рисует, пока словарь первого показа не пришёл, а
+ * чанк лежит в precache и открывается без сети мгновенно.
  */
-export const EAGER_DICTIONARIES: Readonly<Partial<Record<Locale, Dictionary>>> = { ru, kk };
+export const EAGER_DICTIONARIES: Readonly<Partial<Record<Locale, Dictionary>>> = { ru };
 
 const LAZY: Readonly<Record<Locale, () => Promise<Dictionary>>> = {
-  kk: () => Promise.resolve(kk),
+  kk: () => import('./kk').then((module) => module.kk),
   ru: () => Promise.resolve(ru),
   en: () => import('./en').then((module) => module.en),
   zh: () => import('./zh').then((module) => module.zh),
