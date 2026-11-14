@@ -2165,6 +2165,7 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'profile.form.label': 'Recent matches, newest on the right: won {wins} of {count}',
   'profile.form.win': 'Win',
   'profile.form.loss': 'Loss',
+  'profile.form.duelLegend': 'duel',
   'profile.facts.achievements': 'Achievements',
   'profile.facts.about': 'About the player',
   'profile.facts.wins': 'Match wins',

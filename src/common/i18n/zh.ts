@@ -2071,6 +2071,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'profile.form.label': '近期对局，最新在右：{count}场胜{wins}场',
   'profile.form.win': '胜',
   'profile.form.loss': '负',
+  'profile.form.duelLegend': '约战',
   'profile.facts.achievements': '成就',
   'profile.facts.about': '球员简介',
   'profile.facts.wins': '对局胜场',

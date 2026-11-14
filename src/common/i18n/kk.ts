@@ -2229,6 +2229,7 @@ export const kk: Record<MessageKey, string> = {
   'profile.form.label': 'Соңғы кездесулер, жаңасы оң жақта: {count} ішінен {wins} жеңіс',
   'profile.form.win': 'Жеңіс',
   'profile.form.loss': 'Жеңіліс',
+  'profile.form.duelLegend': 'дуэль',
   'profile.facts.achievements': 'Жетістіктер',
   'profile.facts.about': 'Ойыншы туралы',
   'profile.facts.wins': 'Кездесулердегі жеңістер',

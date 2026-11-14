@@ -2141,6 +2141,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'profile.form.label': '최근 경기(오른쪽이 최신): {count}경기 중 {wins}승',
   'profile.form.win': '승리',
   'profile.form.loss': '패배',
+  'profile.form.duelLegend': '대결',
   'profile.facts.achievements': '주요 성적',
   'profile.facts.about': '선수 소개',
   'profile.facts.wins': '경기 승리',

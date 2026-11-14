@@ -2152,6 +2152,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'profile.form.label': '直近の試合（右が最新）：{count}試合中{wins}勝',
   'profile.form.win': '勝ち',
   'profile.form.loss': '負け',
+  'profile.form.duelLegend': '対戦',
   'profile.facts.achievements': '実績',
   'profile.facts.about': '選手について',
   'profile.facts.wins': '勝利数',

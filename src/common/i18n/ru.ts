@@ -2212,6 +2212,7 @@ export const ru = {
   'profile.form.label': 'Последние встречи, свежая справа: побед {wins} из {count}',
   'profile.form.win': 'Победа',
   'profile.form.loss': 'Поражение',
+  'profile.form.duelLegend': 'дуэль',
   'profile.facts.achievements': 'Достижения',
   'profile.facts.about': 'Об игроке',
   'profile.facts.wins': 'Победы во встречах',

@@ -587,7 +587,10 @@ describe('общая статистика', () => {
     fireEvent.click(await screen.findByRole('button', { name: ru['profile.awards.all'] }));
 
     expect(container.querySelectorAll('[data-award-list] tr')).toHaveLength(2);
-    expect(screen.getByRole('button', { name: ru['profile.awards.hide'] })).toBeDefined();
+    // Внутри блока наград: «Свернуть» есть и у раскрытой строки «Результатов».
+    const awards = container.querySelector<HTMLElement>('[data-awards]');
+    if (awards === null) throw new Error('нет блока наград');
+    expect(within(awards).getByRole('button', { name: ru['profile.awards.hide'] })).toBeDefined();
   });
 
   it('без призовых мест блока наград нет', async () => {
@@ -793,7 +796,10 @@ describe('шапка-визитка и карточки «кто он» (ADR-060
     // Свежая справа: в турнире последней сыграна проигранная встреча.
     const dots = [...container.querySelectorAll('[data-form-strip] [data-form]')];
     expect(dots.map((dot) => dot.getAttribute('data-form'))).toEqual(['win', 'loss']);
-    expect(dots[0]?.getAttribute('aria-label')).toContain(playerName(PLAYERS.second));
+    // Подпись — у ссылки внутри точки: она ведёт на турнир встречи.
+    const link = dots[0]?.querySelector('a');
+    expect(link?.getAttribute('aria-label')).toContain(playerName(PLAYERS.second));
+    expect(link?.getAttribute('href')).toContain('/tournaments/');
   });
 
   it('рука и хват — метками, своя страница тренера — красной меткой-ссылкой', async () => {
