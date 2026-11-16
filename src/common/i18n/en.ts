@@ -1051,6 +1051,8 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'console.hint.tap': 'Tap a table: in play — enter the score; free — call the next players.',
   'console.queue.busy': 'Waiting: player at table {number}',
   'console.queue.all': 'Show full queue',
+  'console.queue.assignAll': 'Call all ({count})',
+  'console.toast.assignedAll': 'Called {count} pairs',
   'console.played.title': 'Latest results',
   'console.played.all': 'Show all',
   'lifecycle.screen': 'Venue screen',

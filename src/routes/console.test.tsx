@@ -435,6 +435,15 @@ describe('действия в окнах', () => {
     });
   });
 
+  it('«Позвать всех» не появляется ради одной пары: её зовут своей кнопкой', async () => {
+    renderConsole();
+
+    expect(
+      await screen.findByRole('button', { name: `${ru['console.queue.assign']} 2` }),
+    ).toBeDefined();
+    expect(screen.queryByRole('button', { name: /^Позвать всех/ })).toBeNull();
+  });
+
   it('назначение отменяется из подтверждения', async () => {
     renderConsole();
 

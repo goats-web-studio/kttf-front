@@ -1034,6 +1034,8 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'console.hint.tap': '탁구대를 누르세요. 경기 중이면 스코어 입력, 비어 있으면 선수 호출.',
   'console.queue.busy': '대기: {number}번 탁구대에서 경기 중',
   'console.queue.all': '전체 대기열 보기',
+  'console.queue.assignAll': '모두 호출 ({count})',
+  'console.toast.assignedAll': '{count}쌍 호출됨',
   'console.played.title': '최근 결과',
   'console.played.all': '전체 보기',
   'lifecycle.screen': '경기장 스크린',

@@ -5,6 +5,7 @@ import { ru } from '@/common/i18n/ru';
 
 import {
   allPlayed,
+  autoAssignments,
   buildQueue,
   buildTables,
   currentStage,
@@ -460,5 +461,55 @@ describe('стол после игры и текущий этап — ADR-082', 
     });
     expect(currentStage([groups, idle], out)?.name).toBe('Плей-офф');
     expect(currentStage([groups, idle])?.name).toBe('Групповой этап');
+  });
+});
+
+describe('autoAssignments — «Позвать всех»', () => {
+  const E = 'player-e';
+  const F = 'player-f';
+
+  it('раздаёт свободные столы по порядку очереди, по одной паре на стол', () => {
+    const stages = [
+      stage([
+        match({ id: 'ab', playerAId: A, playerBId: B }),
+        match({ id: 'cd', playerAId: C, playerBId: D }),
+        match({ id: 'ef', playerAId: E, playerBId: F }),
+      ]),
+    ];
+    const plan = autoAssignments(buildQueue(stages), buildTables(2, stages));
+
+    expect(plan.map((item) => [item.match.id, item.tableNumber])).toEqual([
+      ['ab', 1],
+      ['cd', 2],
+    ]);
+  });
+
+  it('не ставит одного игрока на два стола и не зовёт того, кто играет', () => {
+    const stages = [
+      stage([
+        match({ id: 'playing', playerAId: E, playerBId: F, status: 'PLAYING', tableNumber: 1 }),
+        match({ id: 'ab', playerAId: A, playerBId: B }),
+        match({ id: 'ac', playerAId: A, playerBId: C }),
+        match({ id: 'ae', playerAId: A, playerBId: E }),
+        match({ id: 'cd', playerAId: C, playerBId: D }),
+      ]),
+    ];
+    const plan = autoAssignments(buildQueue(stages), buildTables(4, stages));
+
+    expect(plan.map((item) => [item.match.id, item.tableNumber])).toEqual([
+      ['ab', 2],
+      ['cd', 3],
+    ]);
+  });
+
+  it('без свободных столов звать некуда', () => {
+    const stages = [
+      stage([
+        match({ id: 'playing', playerAId: E, playerBId: F, status: 'PLAYING', tableNumber: 1 }),
+        match({ id: 'ab', playerAId: A, playerBId: B }),
+      ]),
+    ];
+
+    expect(autoAssignments(buildQueue(stages), buildTables(1, stages))).toEqual([]);
   });
 });

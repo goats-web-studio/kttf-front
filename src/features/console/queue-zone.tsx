@@ -3,6 +3,7 @@ import Button from '@mui/material/Button';
 import ButtonBase from '@mui/material/ButtonBase';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import { Megaphone } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
@@ -19,6 +20,13 @@ interface QueueZoneProps {
   readonly onAssign: (matchId: string, tableNumber: number) => void;
   /** Открыть встречу: выбрать другой стол или ввести счёт без стола. */
   readonly onOpen: (matchId: string) => void;
+  /**
+   * Сколько пар уйдёт на свободные столы по «Позвать всех» — см.
+   * `autoAssignments`. Кнопка видна, когда пар больше одной: одну пару
+   * зовут её собственной кнопкой.
+   */
+  readonly callable?: number;
+  readonly onAssignAll?: () => void;
 }
 
 /** Сколько пар видно без раскрытия: судье нужны ближайшие, а не весь вечер. */
@@ -41,6 +49,8 @@ export default function QueueZone({
   playing = [],
   onAssign,
   onOpen,
+  callable = 0,
+  onAssignAll,
 }: QueueZoneProps): ReactNode {
   const t = useT();
   const [all, setAll] = useState(false);
@@ -48,22 +58,44 @@ export default function QueueZone({
 
   return (
     <section>
-      <Typography component="h2" variant="h3">
-        {t('console.queue.title')}
-        {queue.length > 0 && (
-          <Box
-            component="span"
-            sx={{
-              ml: 1,
-              color: 'text.secondary',
-              fontWeight: 500,
-              fontVariantNumeric: 'tabular-nums',
-            }}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 1,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Typography component="h2" variant="h3">
+          {t('console.queue.title')}
+          {queue.length > 0 && (
+            <Box
+              component="span"
+              sx={{
+                ml: 1,
+                color: 'text.secondary',
+                fontWeight: 500,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {queue.length}
+            </Box>
+          )}
+        </Typography>
+        {/* В начале турнира и после круга столы освобождаются разом: звать
+            по одной паре на тридцать столов — тридцать нажатий. */}
+        {callable > 1 && onAssignAll !== undefined && (
+          <Button
+            variant="contained"
+            startIcon={<Megaphone size={18} aria-hidden />}
+            onClick={onAssignAll}
+            sx={{ minHeight: 44, whiteSpace: 'nowrap' }}
           >
-            {queue.length}
-          </Box>
+            {fill(t('console.queue.assignAll'), { count: String(callable) })}
+          </Button>
         )}
-      </Typography>
+      </Box>
 
       {queue.length === 0 ? (
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
@@ -77,6 +109,7 @@ export default function QueueZone({
           {shown.map((item, index) => {
             const free = item.busyTable === null;
             const first = index === 0 && free;
+            const primary = first && callable <= 1;
 
             return (
               <Box
@@ -117,7 +150,7 @@ export default function QueueZone({
                 {suggested !== null && free && (
                   <Button
                     size="large"
-                    variant={first ? 'contained' : 'text'}
+                    variant={primary ? 'contained' : 'text'}
                     onClick={() => {
                       onAssign(item.match.id, suggested);
                     }}
@@ -125,7 +158,7 @@ export default function QueueZone({
                       minHeight: 48,
                       flexShrink: 0,
                       whiteSpace: 'nowrap',
-                      ...(first ? {} : { color: 'text.primary' }),
+                      ...(primary ? {} : { color: 'text.primary' }),
                     }}
                   >
                     {t('console.queue.assign')} {suggested}

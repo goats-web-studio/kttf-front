@@ -335,6 +335,48 @@ export function suggestedTable(tables: readonly TableState[]): number | null {
   return (free ?? tables.find((table) => table.status === 'AWAITING'))?.number ?? null;
 }
 
+/** Пара и стол, за который её зовут. */
+export interface Assignment {
+  readonly match: MatchView;
+  readonly tableNumber: number;
+}
+
+/**
+ * «Позвать всех»: каждому свободному столу — следующая пара очереди.
+ *
+ * Столы берутся в том же порядке, что и `suggestedTable`: сначала пустые по
+ * номерам, потом те, где лежит только что сыгранная встреча. Пары — в
+ * порядке очереди, кроме тех, где кто-то ещё за столом, и тех, где игрок уже
+ * позван этим же нажатием: одного человека нельзя поставить на два стола.
+ */
+export function autoAssignments(
+  queue: readonly QueuedMatch[],
+  tables: readonly TableState[],
+): readonly Assignment[] {
+  const open = [
+    ...tables.filter((table) => table.status === 'FREE'),
+    ...tables.filter((table) => table.status === 'AWAITING'),
+  ];
+  const called = new Set<string>();
+  const result: Assignment[] = [];
+
+  for (const item of queue) {
+    const table = open[result.length];
+
+    if (table === undefined) break;
+    if (item.busyTable !== null) continue;
+
+    const players = [item.match.playerAId, item.match.playerBId].filter((id) => id !== null);
+
+    if (players.some((id) => called.has(id))) continue;
+
+    for (const id of players) called.add(id);
+    result.push({ match: item.match, tableNumber: table.number });
+  }
+
+  return result;
+}
+
 /**
  * Подпись встречи: этап и группа.
  *

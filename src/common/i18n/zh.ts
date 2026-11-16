@@ -1001,6 +1001,8 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'console.hint.tap': '点击球台：进行中的可录入比分，空闲的可叫号。',
   'console.queue.busy': '等待中：有球员在{number}号台',
   'console.queue.all': '显示全部队列',
+  'console.queue.assignAll': '全部叫号（{count}）',
+  'console.toast.assignedAll': '已叫 {count} 对',
   'console.played.title': '最近赛果',
   'console.played.all': '显示全部',
   'lifecycle.screen': '球馆大屏',

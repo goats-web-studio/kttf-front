@@ -1084,6 +1084,8 @@ export const kk: Record<MessageKey, string> = {
   'console.hint.tap': 'Үстелді басыңыз: жүріп жатқан — есепті енгізу, бос — жұпты шақыру.',
   'console.queue.busy': 'Күтеді: ойыншы {number}-үстелде',
   'console.queue.all': 'Бүкіл кезекті көрсету',
+  'console.queue.assignAll': 'Барлығын шақыру ({count})',
+  'console.toast.assignedAll': 'Шақырылған жұптар: {count}',
   'console.played.title': 'Соңғы нәтижелер',
   'console.played.all': 'Барлығын көрсету',
   'lifecycle.screen': 'Зал экраны',

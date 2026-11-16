@@ -1043,6 +1043,8 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'console.hint.tap': '台をタップ：試合中ならスコア入力、空いていれば次の組を呼び出し。',
   'console.queue.busy': '待機中：{number}番台で試合中',
   'console.queue.all': '待機列をすべて表示',
+  'console.queue.assignAll': '全員呼び出し（{count}）',
+  'console.toast.assignedAll': '{count}組を呼び出しました',
   'console.played.title': '最近の結果',
   'console.played.all': 'すべて表示',
   'lifecycle.screen': '会場スクリーン',

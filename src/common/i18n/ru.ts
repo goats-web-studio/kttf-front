@@ -1074,6 +1074,8 @@ export const ru = {
   'console.hint.tap': 'Коснитесь стола: идущий — ввести счёт, свободный — позвать пару.',
   'console.queue.busy': 'Ждёт: игрок на столе {number}',
   'console.queue.all': 'Показать всю очередь',
+  'console.queue.assignAll': 'Позвать всех ({count})',
+  'console.toast.assignedAll': 'Позвано пар: {count}',
   'console.played.title': 'Последние результаты',
   'console.played.all': 'Показать все',
   'lifecycle.screen': 'Экран для зала',

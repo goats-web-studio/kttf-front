@@ -23,6 +23,8 @@ import MatchDialog, { type WithdrawStatus } from '@/features/console/match-dialo
 import PlayedZone from '@/features/console/played-zone';
 import {
   allPlayed,
+  autoAssignments,
+  type Assignment,
   buildQueue,
   buildTables,
   matchLabel,
@@ -130,10 +132,14 @@ function ConsoleScreen(): ReactNode {
     // Сыгранная встреча держит стол минуту (ADR-082), потом стол свободен.
     const tables = buildTables(snapshot.tournament.tableCount, snapshot.stages, withdrawn, now);
 
+    const queue = buildQueue(snapshot.stages, t, withdrawn);
+
     return {
       tables,
       withdrawn,
-      queue: buildQueue(snapshot.stages, t, withdrawn),
+      queue,
+      // Что раздаст «Позвать всех»: по паре на каждый свободный стол.
+      plan: autoAssignments(queue, tables),
       played: playedMatches(snapshot.stages),
       suggested: suggestedTable(tables),
       names: namesOf(snapshot),
@@ -203,6 +209,17 @@ function ConsoleScreen(): ReactNode {
         },
       },
     );
+  }
+
+  /** «Позвать всех» — одной отменой снимаются все позванные разом. */
+  function doAssignAll(plan: readonly Assignment[]): void {
+    for (const item of plan) assign(item.match.id, item.tableNumber);
+    notify(fill(t('console.toast.assignedAll'), { count: String(plan.length) }), {
+      label: t('console.toast.undo'),
+      run: () => {
+        for (const item of plan) cancel(item.match.id);
+      },
+    });
   }
 
   function doResult(match: MatchView, input: MatchResultInput, correcting: boolean): void {
@@ -493,6 +510,10 @@ function ConsoleScreen(): ReactNode {
                       }}
                       onOpen={(matchId) => {
                         setOpened({ kind: 'match', matchId });
+                      }}
+                      callable={view.plan.length}
+                      onAssignAll={() => {
+                        doAssignAll(view.plan);
                       }}
                     />
                     <Suspense fallback={null}>
