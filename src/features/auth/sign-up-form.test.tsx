@@ -71,6 +71,7 @@ function fillRequired(): void {
   type(ru['signUp.login.label'], 'aslan');
   type(ru['signUp.password.label'], 'parol123');
   type(ru['signUp.passwordRepeat.label'], 'parol123');
+  fireEvent.click(screen.getByRole('checkbox'));
 }
 
 beforeEach(() => {
@@ -106,7 +107,12 @@ describe('регистрация', () => {
     });
     const request = sent.find((current) => current.url.endsWith('/auth/sign-up'));
     // Повтор пароля и маска остаются на клиенте: сервер получает номер в E.164.
-    expect(request?.body).toEqual({ phone: '+77011234567', login: 'aslan', password: 'parol123' });
+    expect(request?.body).toEqual({
+      phone: '+77011234567',
+      login: 'aslan',
+      password: 'parol123',
+      consent: true,
+    });
   });
 
   it('ищет только игроков без кабинета', async () => {
@@ -133,7 +139,7 @@ describe('регистрация', () => {
     fireEvent.click(within(list).getByRole('button', { name: ru['claim.action'] }));
 
     // Выбранный профиль остаётся карточкой с пояснением, список уходит.
-    expect(screen.getByText(playerName(PLAYERS.third))).toBeDefined();
+    expect(screen.getByText(playerName(PLAYERS.third, String))).toBeDefined();
     expect(screen.getByText(ru['signUp.player.chosen'])).toBeDefined();
 
     fireEvent.click(screen.getByRole('button', { name: ru['signUp.submit'] }));
@@ -183,5 +189,33 @@ describe('регистрация', () => {
 
     expect(await screen.findByText(ru['error.form.password'])).toBeDefined();
     expect(sent.some((request) => request.url.endsWith('/auth/sign-up'))).toBe(false);
+  });
+
+  it('без согласия регистрация не уходит на сервер — ADR-091', async () => {
+    await renderPage();
+    type(ru['signUp.phone.label'], '+77011234567');
+    type(ru['signUp.login.label'], 'aslan');
+    type(ru['signUp.password.label'], 'parol123');
+    type(ru['signUp.passwordRepeat.label'], 'parol123');
+
+    fireEvent.click(screen.getByRole('button', { name: ru['signUp.submit'] }));
+
+    expect(await screen.findByText(ru['error.form.consent'])).toBeTruthy();
+    expect(sent.some((request) => request.url.includes('/auth/sign-up'))).toBe(false);
+  });
+
+  it('ссылки на документы открываются в новой вкладке', async () => {
+    await renderPage();
+
+    // Ссылки самой галочки, а не подвала с теми же названиями.
+    const label = screen.getByRole('checkbox').closest('label');
+    if (label === null) throw new Error('Галочка без подписи');
+    const terms = within(label).getByRole('link', { name: ru['auth.consent.terms'] });
+    const privacy = within(label).getByRole('link', { name: ru['auth.consent.privacy'] });
+
+    expect(terms.getAttribute('href')).toBe('/terms');
+    expect(terms.getAttribute('target')).toBe('_blank');
+    expect(privacy.getAttribute('href')).toBe('/privacy');
+    expect(privacy.getAttribute('target')).toBe('_blank');
   });
 });

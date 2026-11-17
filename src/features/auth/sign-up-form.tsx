@@ -1,15 +1,23 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isAppError } from '@kttf/shared/errors';
-import { LOGIN_PATTERN, PASSWORD_MIN_LENGTH, type PlayerListItemView } from '@kttf/shared/types';
+import {
+  LEGAL_PATHS,
+  LOGIN_PATTERN,
+  PASSWORD_MIN_LENGTH,
+  type PlayerListItemView,
+} from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -41,6 +49,8 @@ const formSchema = z
     login: z.string().trim().regex(LOGIN_PATTERN, 'error.form.login'),
     password: z.string().min(PASSWORD_MIN_LENGTH, 'error.form.password').max(200),
     repeat: z.string(),
+    // Согласие — ADR-091: без галочки регистрации нет.
+    consent: z.boolean().refine((value) => value, 'error.form.consent'),
   })
   .refine((values) => values.repeat === values.password, {
     path: ['repeat'],
@@ -73,6 +83,7 @@ export default function SignUpForm({
   signInHref = '/login',
 }: SignUpFormProps): ReactNode {
   const t = useT();
+  const consentErrorId = useId();
   const signedIn = useSessionStore((state) => state.signedIn);
 
   const [search, setSearch] = useState('');
@@ -81,7 +92,7 @@ export default function SignUpForm({
   const form = useForm({
     resolver: zodResolver(formSchema),
     mode: 'onTouched',
-    defaultValues: { phone: '', login: '', password: '', repeat: '' },
+    defaultValues: { phone: '', login: '', password: '', repeat: '', consent: false },
   });
 
   // Поиск — по мере набора, от двух букв (`usePlayerSearch`).
@@ -130,6 +141,7 @@ export default function SignUpForm({
             phone,
             login: values.login.trim(),
             password: values.password,
+            consent: true,
             ...(chosen === null ? {} : { playerId: chosen.id }),
           });
         })(event);
@@ -271,6 +283,43 @@ export default function SignUpForm({
         )}
       </Box>
 
+      <Controller
+        control={form.control}
+        name="consent"
+        render={({ field }) => (
+          <Box>
+            <FormControlLabel
+              sx={{ alignItems: 'flex-start', mr: 0 }}
+              control={
+                <Checkbox
+                  checked={field.value}
+                  onChange={(event) => {
+                    field.onChange(event.target.checked);
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  sx={{ mt: -0.75 }}
+                  slotProps={{
+                    input: {
+                      ref: field.ref,
+                      ...(errors.consent === undefined
+                        ? {}
+                        : { 'aria-describedby': consentErrorId }),
+                    },
+                  }}
+                />
+              }
+              label={<ConsentLabel />}
+            />
+            {errors.consent !== undefined && (
+              <FormHelperText id={consentErrorId} error role="alert">
+                {message(errors.consent.message)}
+              </FormHelperText>
+            )}
+          </Box>
+        )}
+      />
+
       {register.error !== null && !fieldTaken && (
         <Alert severity="error">{t(errorMessageKey(register.error))}</Alert>
       )}
@@ -291,5 +340,29 @@ export default function SignUpForm({
         {t('signUp.haveAccount')} <Link href={signInHref}>{t('signUp.signIn')}</Link>
       </Typography>
     </Stack>
+  );
+}
+
+/**
+ * Текст согласия со ссылками на документы — ADR-091. Ссылки открываются в
+ * новой вкладке: заполненная форма не теряется.
+ */
+function ConsentLabel(): ReactNode {
+  const t = useT();
+  const parts = t('auth.consent.label').split(/\{(terms|privacy)\}/);
+
+  return (
+    <Typography variant="body2" component="span">
+      {parts.map((part, index) =>
+        part === 'terms' || part === 'privacy' ? (
+          <Link key={part} href={LEGAL_PATHS[part]} target="_blank" rel="noopener">
+            {t(part === 'terms' ? 'auth.consent.terms' : 'auth.consent.privacy')}
+          </Link>
+        ) : (
+          // Порядок частей постоянен: индекс — устойчивый ключ.
+          <span key={`text-${String(index)}`}>{part}</span>
+        ),
+      )}
+    </Typography>
   );
 }
