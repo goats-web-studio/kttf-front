@@ -4,6 +4,7 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import type { ReactNode } from 'react';
 
+import { useT } from '@/common/i18n';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import { playerName } from '@/features/players/player-name';
 
@@ -46,6 +47,7 @@ export default function Podium({
 }: {
   readonly participants: readonly ResultParticipantView[];
 }): ReactNode {
+  const t = useT();
   const places = podiumPlaces(participants);
 
   if (!places.has(1)) {
@@ -101,7 +103,7 @@ export default function Podium({
                     overflowWrap: 'anywhere',
                   }}
                 >
-                  {playerName(participant.player)}
+                  {playerName(participant.player, t)}
                 </Link>
               </Box>
             ))}

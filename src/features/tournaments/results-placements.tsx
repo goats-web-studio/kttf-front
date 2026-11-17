@@ -156,7 +156,7 @@ function Row({
             size="sm"
           />
           <Box sx={{ minWidth: 0 }}>
-            <PlayerLink id={id}>{playerName(participant.player)}</PlayerLink>
+            <PlayerLink id={id}>{playerName(participant.player, t)}</PlayerLink>
             <CoachNote coach={participant.coach} />
             {/* На телефоне колонки «где закончил», счёта и рейтинга нет —
                 они подписью под именем. */}

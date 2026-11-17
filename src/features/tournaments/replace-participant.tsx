@@ -59,7 +59,7 @@ export default function ReplaceParticipant({
   return (
     <Box sx={{ mt: 1, width: '100%' }}>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-        {fill(t('participants.replace.lead'), { name: playerName(registration.player) })}
+        {fill(t('participants.replace.lead'), { name: playerName(registration.player, t) })}
       </Typography>
       <Stack
         component="form"
@@ -105,7 +105,7 @@ export default function ReplaceParticipant({
             sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
           >
             <Typography sx={{ flex: '1 1 160px' }}>
-              {playerName(player)}{' '}
+              {playerName(player, t)}{' '}
               <Box
                 component="span"
                 sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}

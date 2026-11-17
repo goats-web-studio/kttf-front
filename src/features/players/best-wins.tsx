@@ -129,7 +129,7 @@ function WinsTable({ items }: { readonly items: readonly PlayerBestWinView[] }):
             </TableCell>
             <TableCell>
               <Link href={`/players/${win.opponent.id}`} color="inherit" sx={{ fontWeight: 600 }}>
-                {playerName(win.opponent)}
+                {playerName(win.opponent, t)}
               </Link>
             </TableCell>
             <TableCell align="right">
@@ -176,7 +176,7 @@ function WinsCards({ items }: { readonly items: readonly PlayerBestWinView[] }):
         >
           <Box sx={{ minWidth: 0 }}>
             <Link href={`/players/${win.opponent.id}`} color="inherit" sx={{ fontWeight: 600 }}>
-              {playerName(win.opponent)}
+              {playerName(win.opponent, t)}
             </Link>{' '}
             <RatingValue
               value={win.opponentRating}

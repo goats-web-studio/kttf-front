@@ -95,6 +95,8 @@ const ME: AuthUserView = {
   clubRoles: [],
   isAdmin: false,
   coach: null,
+  privacyConsentAt: null,
+  privacyConsentVersion: null,
 };
 
 /** Игрок списка «Кто играет». */

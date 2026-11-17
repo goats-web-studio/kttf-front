@@ -129,7 +129,7 @@ function DuelsAdminPage(): ReactNode {
       key: 'player',
       label: fill(t('filter.chip'), {
         label: t('duel.admin.player'),
-        value: chosen.data === undefined ? t('common.loading') : playerName(chosen.data),
+        value: chosen.data === undefined ? t('common.loading') : playerName(chosen.data, t),
       }),
       onRemove: () => {
         filter({ player: undefined });
@@ -260,10 +260,10 @@ function PlayerFilter({
       }}
       // Ищет сервер.
       filterOptions={(list) => list}
-      getOptionLabel={(player) => playerName(player)}
+      getOptionLabel={(player) => playerName(player, t)}
       renderOption={(props, player) => (
         <li {...props} key={player.id}>
-          {`${playerName(player)} · ${placeName(player.city)}`}
+          {`${playerName(player, t)} · ${placeName(player.city)}`}
         </li>
       )}
       noOptionsText={t(search.length < 2 ? 'duel.admin.playerHint' : 'ratings.empty')}

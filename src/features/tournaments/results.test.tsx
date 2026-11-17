@@ -22,7 +22,7 @@ import ResultsStandings from './results-standings';
 const NAMES = new Map(
   RESULTS.participants.map((participant) => [
     participant.player.id,
-    playerName(participant.player),
+    playerName(participant.player, String),
   ]),
 );
 
@@ -61,7 +61,7 @@ describe('итоговые места', () => {
   it('показывает место рядом с игроком', () => {
     renderPlacements();
 
-    expect(row(playerName(PLAYERS.first)).textContent).toContain('1');
+    expect(row(playerName(PLAYERS.first, String)).textContent).toContain('1');
   });
 
   it('различает выбывшего из группы и неопределённое место', () => {
@@ -69,14 +69,18 @@ describe('итоговые места', () => {
 
     // Оба дают пустое место и означают разное. Одна пустая клетка на два
     // случая ничего человеку не объясняет — ради этого в контракте `reason`.
-    expect(row(playerName(PLAYERS.third)).textContent).toContain(ru['results.reason.GROUP_EXIT']);
-    expect(row(playerName(PLAYERS.fourth)).textContent).toContain(ru['results.reason.UNDECIDED']);
+    expect(row(playerName(PLAYERS.third, String)).textContent).toContain(
+      ru['results.reason.GROUP_EXIT'],
+    );
+    expect(row(playerName(PLAYERS.fourth, String)).textContent).toContain(
+      ru['results.reason.UNDECIDED'],
+    );
   });
 
   it('отмечает снявшегося и игравшего вне зачёта', () => {
     renderPlacements();
 
-    const fourth = row(playerName(PLAYERS.fourth)).textContent;
+    const fourth = row(playerName(PLAYERS.fourth, String)).textContent;
 
     expect(fourth).toContain(ru['registration.status.WITHDRAWN']);
     expect(fourth).toContain(ru['results.notRated']);
@@ -96,18 +100,20 @@ describe('итоговые места', () => {
       ),
     );
 
-    const first = row(playerName(PLAYERS.first));
+    const first = row(playerName(PLAYERS.first, String));
     expect(first.textContent).toContain(`${ru['participants.coach']} Ким Ольга`);
     expect(within(first).getByRole('link', { name: 'Ким Ольга' }).getAttribute('href')).toBe(
       '/coaches/kim',
     );
 
-    const second = row(playerName(PLAYERS.second));
+    const second = row(playerName(PLAYERS.second, String));
     expect(second.textContent).toContain(`${ru['participants.coach']} Сериков Тимур`);
     expect(within(second).queryByRole('link', { name: 'Сериков Тимур' })).toBeNull();
 
     // Без тренера — без подписи.
-    expect(row(playerName(PLAYERS.third)).textContent).not.toContain(ru['participants.coach']);
+    expect(row(playerName(PLAYERS.third, String)).textContent).not.toContain(
+      ru['participants.coach'],
+    );
   });
 
   it('показывает делёжку мест диапазоном', () => {
@@ -140,7 +146,7 @@ describe('групповые таблицы', () => {
   it('называет игрока по идентификатору из строки таблицы', () => {
     renderStandings();
 
-    expect(screen.getByText(playerName(PLAYERS.first))).toBeDefined();
+    expect(screen.getByText(playerName(PLAYERS.first, String))).toBeDefined();
   });
 
   it('показывает разницу сетов со знаком', () => {
@@ -233,7 +239,7 @@ describe('имя игрока ведёт в профиль', () => {
   // Раньше на странице турнира имена были текстом: перейти к игроку из
   // таблицы, встречи или итогов было нельзя.
   const href = `/players/${PLAYERS.first.id}`;
-  const name = playerName(PLAYERS.first);
+  const name = playerName(PLAYERS.first, String);
   const links = (): string[] =>
     screen.getAllByRole('link', { name }).map((link) => link.getAttribute('href') ?? '');
 

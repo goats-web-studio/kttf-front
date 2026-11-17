@@ -533,7 +533,7 @@ describe('панель организатора', () => {
 
     renderTournament(null);
 
-    const link = await screen.findByRole('link', { name: playerName(PLAYERS.first) });
+    const link = await screen.findByRole('link', { name: playerName(PLAYERS.first, String) });
 
     expect(link.getAttribute('href')).toBe(`/players/${PLAYERS.first.id}`);
   });

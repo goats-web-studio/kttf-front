@@ -9,6 +9,7 @@ import { useMotionGroup } from '@/common/ui/motion-hooks';
 import RouterLink from '@/common/ui/router-link';
 import { duelQuery } from '@/features/duels/queries';
 
+import { personName } from './player-name';
 import { playerRatingHistoryQuery, playerTournamentsQuery } from './queries';
 import { FORM_SIZE, recentForm, type DuelFormInput, type FormEntry } from './recent-form';
 
@@ -123,7 +124,8 @@ function placeOf(entry: FormEntry, t: ReturnType<typeof useT>): string {
 function Dot({ entry, order }: { readonly entry: FormEntry; readonly order: number }): ReactNode {
   const t = useT();
   const locale = useLocale();
-  const opponent = entry.opponent ?? t('player.matches.noOpponent');
+  const opponent =
+    entry.opponent === null ? t('player.matches.noOpponent') : personName(entry.opponent, false, t);
   const result = t(entry.won ? 'profile.form.win' : 'profile.form.loss');
   const score = entry.score === null ? '' : ` ${String(entry.score[0])}:${String(entry.score[1])}`;
   const delta = entry.delta === null ? '' : ` · ${formatDelta(entry.delta)}`;

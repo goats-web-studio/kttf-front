@@ -123,7 +123,7 @@ export default function WhoPlays({ product }: { readonly product: ProductView })
                   color="text.primary"
                   sx={{ fontWeight: 600, display: 'block', overflowWrap: 'anywhere' }}
                 >
-                  {playerName(player)}
+                  {playerName(player, t)}
                 </Link>
               </Box>
               <RatingValue

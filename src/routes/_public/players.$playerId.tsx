@@ -199,7 +199,7 @@ function PlayerPage(): ReactNode {
 
           <PlayerResults
             playerId={playerId}
-            playerLabel={isOwn ? t('profile.results.me') : playerName(player.data)}
+            playerLabel={isOwn ? t('profile.results.me') : playerName(player.data, t)}
             onSelectOpponent={setOpponentId}
           />
         </Stack>

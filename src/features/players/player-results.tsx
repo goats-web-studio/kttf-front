@@ -506,7 +506,7 @@ function Opponent({
 
   return (
     <OpponentButton
-      name={playerName(opponent)}
+      name={playerName(opponent, t)}
       onClick={() => {
         onSelectOpponent(opponent.id);
       }}

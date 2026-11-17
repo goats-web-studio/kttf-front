@@ -171,7 +171,7 @@ function Opponent({
     );
   }
 
-  const name = playerName(match.opponent);
+  const name = playerName(match.opponent, t);
 
   if (onSelectOpponent === undefined) {
     return name;

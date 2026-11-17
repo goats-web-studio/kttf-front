@@ -237,7 +237,7 @@ function Row({
           color="text.primary"
           sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}
         >
-          {playerName(registration.player)}
+          {playerName(registration.player, t)}
         </Link>
         {!registration.isRated && (
           // Вне зачёта: играет, но результаты не рейтинговые — ТЗ 4.4.
@@ -487,7 +487,7 @@ function Application({
           color="text.primary"
           sx={{ fontWeight: 500 }}
         >
-          {playerName(application.player)}
+          {playerName(application.player, t)}
         </Link>
         <Typography component="span" color="text.secondary" sx={{ ml: 1, ...NUM }}>
           <RatingValue value={application.player.rating} />

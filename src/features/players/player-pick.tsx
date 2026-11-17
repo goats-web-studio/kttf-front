@@ -99,7 +99,7 @@ export function PlayerCandidate({
       />
       <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
-          {playerName(player)}
+          {playerName(player, t)}
         </Typography>
         <Typography
           variant="body2"

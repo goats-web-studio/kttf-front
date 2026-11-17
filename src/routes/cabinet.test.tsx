@@ -265,7 +265,7 @@ describe('профиль при регистрации', () => {
     expect(
       await screen.findByRole(
         'heading',
-        { name: playerName(PLAYERS.first), level: 1 },
+        { name: playerName(PLAYERS.first, String), level: 1 },
         { timeout: 5000 },
       ),
     ).toBeDefined();
@@ -328,7 +328,7 @@ describe('свой профиль в настройках', () => {
     // После сохранения — на свой публичный профиль: результат так, как его
     // увидят другие.
     expect(
-      await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 }),
+      await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 }),
     ).toBeDefined();
   });
 

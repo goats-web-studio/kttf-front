@@ -111,7 +111,7 @@ export default function ProfileHeader({
               variant="h1"
               sx={{ fontSize: { xs: 28, sm: 36 }, lineHeight: { xs: '32px', sm: '42px' } }}
             >
-              {playerName(player)}
+              {playerName(player, t)}
             </Typography>
             {player.online && <Online />}
           </Stack>

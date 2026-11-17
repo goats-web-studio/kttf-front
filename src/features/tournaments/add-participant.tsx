@@ -159,7 +159,7 @@ export default function AddParticipant({
                   }
                 >
                   <ListItemText
-                    primary={playerName(player)}
+                    primary={playerName(player, t)}
                     secondary={
                       <>
                         {placeName(player.city)}{' '}

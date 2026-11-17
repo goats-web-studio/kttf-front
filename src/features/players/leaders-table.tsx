@@ -75,7 +75,7 @@ export default function LeadersTable({ query, empty }: LeadersTableProps): React
                           color="text.primary"
                           sx={{ fontWeight: 600 }}
                         >
-                          {playerName(player)}
+                          {playerName(player, t)}
                         </Link>
                       </Stack>
                     </TableCell>

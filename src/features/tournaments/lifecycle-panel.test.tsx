@@ -169,7 +169,7 @@ describe('панель проведения', () => {
     // Организатор обязан увидеть их здесь, а не обнаружить в зале (ADR-011).
     const list = await screen.findByRole('list', { name: ru['draw.collisions'] });
 
-    expect(within(list).getByText(new RegExp(playerName(PLAYERS.first)))).toBeDefined();
+    expect(within(list).getByText(new RegExp(playerName(PLAYERS.first, String)))).toBeDefined();
   });
 
   it('отменяет турнир только после подтверждения', async () => {
@@ -216,14 +216,14 @@ describe('расстановка до старта', () => {
     renderTournament(USER_WITH_PROFILE);
 
     const group = within(await screen.findByRole('list', { name: 'Группа A' }));
-    const first = group.getByRole('button', { name: playerName(PLAYERS.first) });
+    const first = group.getByRole('button', { name: playerName(PLAYERS.first, String) });
     fireEvent.click(first);
 
     // Первое нажатие только выбирает: обмена ещё нет.
     expect(first.getAttribute('aria-pressed')).toBe('true');
     expect(sent).toEqual([]);
 
-    fireEvent.click(group.getByRole('button', { name: playerName(PLAYERS.third) }));
+    fireEvent.click(group.getByRole('button', { name: playerName(PLAYERS.third, String) }));
 
     await waitFor(() => {
       expect(sent.some((request) => request.url.endsWith('/draw/swap'))).toBe(true);
@@ -240,7 +240,7 @@ describe('расстановка до старта', () => {
     renderTournament(USER_WITH_PROFILE);
 
     const group = within(await screen.findByRole('list', { name: 'Группа A' }));
-    const player = group.getByRole('button', { name: playerName(PLAYERS.first) });
+    const player = group.getByRole('button', { name: playerName(PLAYERS.first, String) });
     fireEvent.click(player);
     fireEvent.click(player);
 

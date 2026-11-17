@@ -9,6 +9,7 @@ import PlayerAvatar from '@/common/ui/player-avatar';
 import RatingValue from '@/common/ui/rating-value';
 import Surface from '@/common/ui/surface';
 import { playersQuery } from '@/features/players/queries';
+import { personName } from '@/features/players/player-name';
 
 /** Лидеров в колонке: полный рейтинг — по ссылке. */
 const TOP = 5;
@@ -71,7 +72,7 @@ export default function RatingLeaders(): ReactNode {
               noWrap
               sx={{ typography: 'body2', fontWeight: 600 }}
             >
-              {player.lastName} {player.firstName}
+              {personName(`${player.lastName} ${player.firstName}`, false, t)}
             </Link>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, typography: 'body2' }}>
               <RatingValue value={player.rating} animate={false} />

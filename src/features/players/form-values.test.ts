@@ -28,6 +28,7 @@ const profile: PlayerProfileView = {
   isProvisional: true,
   confirmed: true,
   createdAt: '2026-08-30T00:00:00.000Z',
+  deleted: false,
   birthDate: '2001-04-12',
   playingHand: 'RIGHT',
   grip: 'SHAKEHAND',

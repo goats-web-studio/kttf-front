@@ -77,10 +77,10 @@ function TournamentPage(): ReactNode {
     () =>
       new Map(
         (results.data?.participants ?? []).map(
-          (participant) => [participant.player.id, playerName(participant.player)] as const,
+          (participant) => [participant.player.id, playerName(participant.player, t)] as const,
         ),
       ),
-    [results.data],
+    [results.data, t],
   );
 
   const data = results.data;

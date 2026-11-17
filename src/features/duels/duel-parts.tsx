@@ -12,6 +12,7 @@ import RatingValue from '@/common/ui/rating-value';
 import { Badge } from '@/features/coaches/coach-cards';
 import { splitName } from '@/features/forum/labels';
 import { usePlaceName } from '@/features/places/place-name';
+import { personName } from '@/features/players/player-name';
 
 import {
   BEST_OF_KEYS,
@@ -35,6 +36,7 @@ export function DuelPlayerLine({
   readonly meta?: ReactNode;
   readonly size?: 'sm' | 'md';
 }): ReactNode {
+  const t = useT();
   const placeName = usePlaceName();
   const { lastName, firstName } = splitName(player.name);
 
@@ -62,7 +64,7 @@ export function DuelPlayerLine({
             color="text.primary"
             sx={{ fontWeight: 600, overflowWrap: 'anywhere' }}
           >
-            {player.name}
+            {personName(player.name, false, t)}
           </Link>
           <RatingValue
             value={player.rating}
@@ -176,6 +178,7 @@ export function ScoreLine({
   readonly duel: DuelItemView;
   readonly deltas?: boolean;
 }): ReactNode {
+  const t = useT();
   const { result, opponent } = duel;
   if (result === null || opponent === null) return null;
 
@@ -200,12 +203,12 @@ export function ScoreLine({
       data-duel-score
       sx={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', overflowWrap: 'anywhere' }}
     >
-      {winner.name}
+      {personName(winner.name, false, t)}
       {delta(winner.id)}{' '}
       <Box component="span" sx={{ px: 0.5, color: 'var(--red-600)' }}>
         {result.winnerSets}:{result.loserSets}
       </Box>{' '}
-      {loser.name}
+      {personName(loser.name, false, t)}
       {delta(loser.id)}
     </Typography>
   );

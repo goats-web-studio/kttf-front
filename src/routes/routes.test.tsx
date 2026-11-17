@@ -22,6 +22,8 @@ const SIGNED_IN: AuthUserView = {
   clubRoles: [],
   isAdmin: false,
   coach: null,
+  privacyConsentAt: null,
+  privacyConsentVersion: null,
 };
 
 /**

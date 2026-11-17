@@ -83,7 +83,7 @@ export default function ConfirmParticipant({
       }
     >
       <ListItemText
-        primary={playerName(player)}
+        primary={playerName(player, t)}
         secondary={`${city} · ${t('participants.sheet')}`}
       />
 

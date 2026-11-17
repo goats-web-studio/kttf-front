@@ -121,6 +121,7 @@ function player(id: string, lastName: string, rating: string): PlayerView {
     isProvisional: false,
     confirmed: true,
     createdAt: '2026-08-01T00:00:00.000Z',
+    deleted: false,
   };
 }
 
@@ -659,6 +660,8 @@ export const USER_WITHOUT_PROFILE: AuthUserView = {
   clubRoles: [],
   isAdmin: false,
   coach: null,
+  privacyConsentAt: null,
+  privacyConsentVersion: null,
 };
 
 /** Тот же человек после заведения профиля и с ролью в клубе. */

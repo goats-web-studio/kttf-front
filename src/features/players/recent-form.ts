@@ -5,8 +5,6 @@ import type {
   RatingPointView,
 } from '@kttf/shared/types';
 
-import { playerName } from './player-name';
-
 /** Сколько последних встреч показывает «Форма» в шапке профиля. */
 export const FORM_SIZE = 10;
 
@@ -94,7 +92,13 @@ function tournamentEntry(
     source: 'TOURNAMENT',
     won: match.won,
     score: [match.setsFor, match.setsAgainst],
-    opponent: match.opponent === null ? null : playerName(match.opponent),
+    // Подпись удалённого (ADR-092) ставит `form-strip`: здесь нет языка.
+    opponent:
+      match.opponent === null
+        ? null
+        : match.opponent.deleted
+          ? ''
+          : `${match.opponent.lastName} ${match.opponent.firstName}`,
     at: match.playedAt ?? match.startedAt ?? tournament.startsAt,
     delta: match.delta,
     href: `/tournaments/${tournament.id}`,

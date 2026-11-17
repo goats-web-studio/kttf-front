@@ -31,6 +31,8 @@ const SIGNED_IN: AuthUserView = {
   clubRoles: [],
   isAdmin: false,
   coach: null,
+  privacyConsentAt: null,
+  privacyConsentVersion: null,
 };
 
 /** Запросы, ушедшие на сервер: по ним видно, что действие правда отправлено. */

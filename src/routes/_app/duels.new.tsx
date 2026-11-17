@@ -24,7 +24,7 @@ import { Plus } from 'lucide-react';
 import { useId, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
-import { fill, useT } from '@/common/i18n';
+import { fill, useT, type MessageKey } from '@/common/i18n';
 import { searchId } from '@/common/search';
 import PageHeader from '@/common/ui/page-header';
 import Surface from '@/common/ui/surface';
@@ -204,7 +204,7 @@ function DuelForm({
             </Typography>
           ) : (
             <Box data-duel-opponent={opponent.data.id}>
-              <DuelPlayerLine player={asDuelPlayer(opponent.data)} />
+              <DuelPlayerLine player={asDuelPlayer(opponent.data, t)} />
               {opponentInvalid && (
                 <Alert severity="warning" sx={{ mt: 2 }}>
                   {t(
@@ -461,10 +461,10 @@ function DuelForm({
 }
 
 /** Игрок из профиля — в вид игрока дуэли для строки с фото и рейтингом. */
-function asDuelPlayer(player: PlayerView): DuelPlayer {
+function asDuelPlayer(player: PlayerView, t: (key: MessageKey) => string): DuelPlayer {
   return {
     id: player.id,
-    name: playerName(player),
+    name: playerName(player, t),
     photoUrl: player.photoUrl,
     rating: player.rating,
     isProvisional: player.isProvisional,

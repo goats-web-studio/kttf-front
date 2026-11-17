@@ -294,7 +294,7 @@ describe('карточка игрока', () => {
     renderProfile();
 
     expect(
-      await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 }),
+      await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 }),
     ).toBeDefined();
     // Сотые остаются в журнале, на экране рейтинг целый (ADR-053).
     expect(screen.getAllByText(formatRating(PLAYERS.first.rating)).length).toBeGreaterThan(0);
@@ -308,7 +308,7 @@ describe('карточка игрока', () => {
     await screen.findAllByText(formatRating(SUMMARY.maxRating));
     // Шапка профиля, а не сайта: у обеих тег header.
     const header = screen
-      .getByRole('heading', { name: playerName(PLAYERS.first), level: 1 })
+      .getByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 })
       .closest('header');
 
     expect(header?.querySelector('[data-rating-value]')?.textContent).toBe(
@@ -337,7 +337,7 @@ describe('карточка игрока', () => {
   it('чужой — без них', async () => {
     renderProfile(PLAYER_ID, null);
 
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(screen.queryByRole('link', { name: ru['profile.edit'] })).toBeNull();
   });
 });
@@ -375,7 +375,7 @@ describe('в сети и последнее посещение', () => {
   it('у игрока без аккаунта статуса нет вовсе', async () => {
     renderProfile();
 
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(screen.queryByText(ru['profile.online'])).toBeNull();
     expect(screen.queryByText(/последнее посещение/)).toBeNull();
   });
@@ -387,7 +387,7 @@ describe('фото в шапке профиля', () => {
 
     renderProfile();
 
-    const name = playerName(PLAYERS.first);
+    const name = playerName(PLAYERS.first, String);
     fireEvent.click(await screen.findByRole('button', { name: `Открыть фото: ${name}` }));
 
     const dialog = await screen.findByRole('dialog', { name });
@@ -404,7 +404,7 @@ describe('фото в шапке профиля', () => {
   it('без фото открывать нечего — кнопки нет, только инициалы', async () => {
     renderProfile();
 
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(screen.queryByRole('button', { name: /Открыть фото/ })).toBeNull();
   });
 });
@@ -640,7 +640,7 @@ describe('лучшие победы', () => {
     // Соперник — ссылкой на его профиль.
     expect(
       within(row)
-        .getByRole('link', { name: playerName(PLAYERS.second) })
+        .getByRole('link', { name: playerName(PLAYERS.second, String) })
         .getAttribute('href'),
     ).toBe(`/players/${PLAYER_IDS.second}`);
   });
@@ -682,7 +682,7 @@ describe('результаты по турнирам', () => {
     await screen.findByText('5–8');
 
     expect(container.querySelector('[data-result-me]')?.textContent).toContain(
-      playerName(PLAYERS.first),
+      playerName(PLAYERS.first, String),
     );
   });
 
@@ -759,7 +759,7 @@ describe('личный счёт', () => {
     renderProfile();
 
     const [opponent] = await screen.findAllByRole('button', {
-      name: playerName(PLAYERS.second),
+      name: playerName(PLAYERS.second, String),
     });
     if (opponent === undefined) throw new Error('нет соперника');
 
@@ -798,7 +798,7 @@ describe('шапка-визитка и карточки «кто он» (ADR-060
     expect(dots.map((dot) => dot.getAttribute('data-form'))).toEqual(['win', 'loss']);
     // Подпись — у ссылки внутри точки: она ведёт на турнир встречи.
     const link = dots[0]?.querySelector('a');
-    expect(link?.getAttribute('aria-label')).toContain(playerName(PLAYERS.second));
+    expect(link?.getAttribute('aria-label')).toContain(playerName(PLAYERS.second, String));
     expect(link?.getAttribute('href')).toContain('/tournaments/');
   });
 
@@ -821,7 +821,7 @@ describe('шапка-визитка и карточки «кто он» (ADR-060
   it('без своей опубликованной страницы метки «Тренер KTTF» нет', async () => {
     renderProfile();
 
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(screen.queryByText(ru['profile.chip.coach'])).toBeNull();
   });
 
@@ -842,7 +842,7 @@ describe('шапка-визитка и карточки «кто он» (ADR-060
 
   it('без входа сравнивать не с кем — кнопки нет', async () => {
     renderProfile();
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(screen.queryByRole('button', { name: ru['profile.compare'] })).toBeNull();
   });
 
@@ -856,21 +856,21 @@ describe('шапка-визитка и карточки «кто он» (ADR-060
 
   it('игроку без аккаунта вызова нет: его некому принять', async () => {
     renderProfile(PLAYER_ID, { ...USER_WITH_PROFILE, playerId: PLAYER_IDS.second });
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(screen.queryByRole('link', { name: ru['profile.challenge'] })).toBeNull();
   });
 
   it('на своём профиле вызова нет', async () => {
     profile = { ...PLAYER_PROFILE, userId: '00000000-0000-4000-8000-000000000062' };
     renderProfile(PLAYER_ID, USER_WITH_PROFILE);
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(screen.queryByRole('link', { name: ru['profile.challenge'] })).toBeNull();
   });
 
   it('гостю вызова нет', async () => {
     profile = { ...PLAYER_PROFILE, userId: '00000000-0000-4000-8000-000000000062' };
     renderProfile();
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(screen.queryByRole('link', { name: ru['profile.challenge'] })).toBeNull();
   });
 
@@ -946,7 +946,7 @@ describe('анкета без рейтинга — ADR-072', () => {
     profile = SHEET;
     const { container } = renderProfile();
 
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(container.querySelector('[data-unrated-plate]')).not.toBeNull();
     expect(container.querySelector('[data-rating-plate]')).toBeNull();
     expect(screen.queryByRole('heading', { name: ru['profile.history.title'] })).toBeNull();
@@ -996,7 +996,7 @@ describe('стена игрока — ADR-075', () => {
     source: {
       kind: 'PLAYER',
       id: PLAYER_ID,
-      name: playerName(PLAYERS.first),
+      name: playerName(PLAYERS.first, String),
       imageUrl: null,
       slug: null,
     },
@@ -1018,7 +1018,7 @@ describe('стена игрока — ADR-075', () => {
   it('чужая пустая стена не показывается', async () => {
     const { container } = renderProfile();
 
-    await screen.findByRole('heading', { name: playerName(PLAYERS.first), level: 1 });
+    await screen.findByRole('heading', { name: playerName(PLAYERS.first, String), level: 1 });
     expect(container.querySelector('[data-player-wall]')).toBeNull();
   });
 

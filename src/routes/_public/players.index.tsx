@@ -349,6 +349,8 @@ function PlayerRow({
   readonly matches: string;
   readonly provisional: string;
 }): ReactNode {
+  const t = useT();
+
   return (
     <TableRow hover sx={{ height: { xs: 68, sm: 60 } }}>
       <TableCell align="center" sx={NUM}>
@@ -367,7 +369,7 @@ function PlayerRow({
               color="text.primary"
               sx={{ fontWeight: 600, display: 'inline-block', py: 0.5 }}
             >
-              {playerName(player)}
+              {playerName(player, t)}
             </Link>
             {player.isProvisional && (
               // Новичок — первые пять рейтинговых турниров (ТЗ 7.4).

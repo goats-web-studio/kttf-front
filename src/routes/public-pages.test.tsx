@@ -129,8 +129,18 @@ const HOME_PODIUMS = {
       club: { id: CLUB.id, name: CLUB.name },
       participants: 12,
       places: [
-        { place: 1, placeTo: null, playerId: PLAYERS.first.id, name: playerName(PLAYERS.first) },
-        { place: 3, placeTo: 4, playerId: PLAYERS.third.id, name: playerName(PLAYERS.third) },
+        {
+          place: 1,
+          placeTo: null,
+          playerId: PLAYERS.first.id,
+          name: playerName(PLAYERS.first, String),
+        },
+        {
+          place: 3,
+          placeTo: 4,
+          playerId: PLAYERS.third.id,
+          name: playerName(PLAYERS.third, String),
+        },
       ],
     },
   ],
@@ -145,10 +155,10 @@ const HOME_UPSETS = {
       tournament: { id: TOURNAMENT_ID, name: TOURNAMENT.name, startsAt: TOURNAMENT.startsAt },
       club: { id: CLUB.id, name: CLUB.name },
       playedAt: TOURNAMENT.startsAt,
-      winner: { id: PLAYERS.fourth.id, name: playerName(PLAYERS.fourth) },
+      winner: { id: PLAYERS.fourth.id, name: playerName(PLAYERS.fourth, String) },
       winnerRating: '300.00',
       winnerDelta: '14.5',
-      loser: { id: PLAYERS.first.id, name: playerName(PLAYERS.first) },
+      loser: { id: PLAYERS.first.id, name: playerName(PLAYERS.first, String) },
       loserRating: '520.00',
       loserDelta: '-14.5',
       setsWinner: 3,
@@ -165,7 +175,7 @@ const OWNER = {
   userId: '00000000-0000-4000-8000-0000000000aa',
   role: 'OWNER',
   playerId: PLAYERS.first.id,
-  name: playerName(PLAYERS.first),
+  name: playerName(PLAYERS.first, String),
 };
 
 function renderAt(path: string): void {
@@ -308,7 +318,9 @@ describe('страница турнира', () => {
     expect(await screen.findByRole('heading', { name: TOURNAMENT.name })).toBeDefined();
     // Разделы — вкладками, а не лентой: сначала места, остальное по вкладке.
     expect(await screen.findByRole('heading', { name: ru['results.places.title'] })).toBeDefined();
-    expect((await screen.findAllByText(playerName(PLAYERS.first))).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(playerName(PLAYERS.first, String))).length).toBeGreaterThan(
+      0,
+    );
 
     fireEvent.click(screen.getByRole('tab', { name: ru['results.tabs.ratings'] }));
 
@@ -614,7 +626,9 @@ describe('главная', () => {
     const section = podiums.closest('section');
     if (section === null) throw new Error('раздел результатов не найден');
 
-    const winner = await within(section).findByRole('link', { name: playerName(PLAYERS.first) });
+    const winner = await within(section).findByRole('link', {
+      name: playerName(PLAYERS.first, String),
+    });
     expect(winner.getAttribute('href')).toBe(`/players/${PLAYERS.first.id}`);
     expect(within(section).getByRole('link', { name: TOURNAMENT.name }).getAttribute('href')).toBe(
       `/tournaments/${TOURNAMENT_ID}`,

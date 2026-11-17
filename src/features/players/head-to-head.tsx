@@ -55,7 +55,7 @@ export default function HeadToHead({ playerId, opponentId, onClose }: HeadToHead
         {headToHead.data === undefined ? null : (
           <>
             <Typography sx={{ mt: 1.5 }}>
-              {playerName(headToHead.data.opponent)}
+              {playerName(headToHead.data.opponent, t)}
               {' · '}
               <Box component="span" sx={NUM}>
                 {headToHead.data.wins} : {headToHead.data.losses}

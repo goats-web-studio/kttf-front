@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 import { useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
 import AccountForm from '@/features/auth/account-form';
+import DeleteAccountSection from '@/features/auth/delete-account';
 import PasswordForm from '@/features/auth/password-form';
 import { useSessionStore } from '@/features/auth/session-store';
 import SettingsLayout from '@/features/settings/settings-layout';
@@ -59,6 +60,10 @@ function AccountSettingsPage(): ReactNode {
 
           <Surface title={t('account.password.title')}>
             <PasswordForm />
+          </Surface>
+
+          <Surface title={t('account.delete.title')}>
+            <DeleteAccountSection />
           </Surface>
         </>
       )}
