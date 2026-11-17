@@ -85,6 +85,8 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   // Игровой профиль — ADR-072.
   PLAYER_NOT_CONFIRMED: 'error.api.PLAYER_NOT_CONFIRMED',
   PLAYER_CLAIM_INVALID: 'error.api.PLAYER_CLAIM_INVALID',
+  WRONG_PASSWORD: 'error.api.WRONG_PASSWORD',
+  ACCOUNT_DELETE_BLOCKED: 'error.api.ACCOUNT_DELETE_BLOCKED',
 };
 
 /**

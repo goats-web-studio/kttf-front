@@ -3095,4 +3095,41 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'rich.mention.club': '클럽',
   'rich.mention.coach': '코치',
   'rich.mention.product': '상품',
+
+  // Юридические документы, согласие и удаление аккаунта — ADR-091, ADR-092.
+  'footer.privacy': '개인정보 처리방침',
+  'footer.terms': '이용약관',
+  'auth.consent.label':
+    '{terms}에 동의하며 {privacy}에 따라 개인정보 처리에 동의합니다. 만 18세 미만인 경우 법정대리인이 동의했습니다.',
+  'auth.consent.terms': '이용약관',
+  'auth.consent.privacy': '개인정보 처리방침',
+  'error.form.consent': '가입하려면 동의란에 체크하세요',
+  'error.api.WRONG_PASSWORD': '비밀번호가 올바르지 않습니다',
+  'error.api.ACCOUNT_DELETE_BLOCKED': '지금은 계정을 삭제할 수 없습니다',
+  'legal.languages': '문서 언어',
+  'legal.version': '{date} 버전',
+  'legal.note.translation': '번역본입니다. 내용이 다를 경우 러시아어 원문이 우선합니다.',
+  'legal.note.fallback':
+    '이 문서는 아직 한국어로 번역되지 않아 영어 버전을 표시합니다. 내용이 다를 경우 러시아어 원문이 우선합니다.',
+  'player.deleted': '삭제된 선수',
+  'account.delete.title': '계정 삭제',
+  'account.delete.lead': '계정은 즉시 영구 삭제되며 복구할 수 없습니다.',
+  'account.delete.what.data':
+    '전화번호, 로그인, 이메일, 비밀번호, 선수 프로필, 사진, 코치 페이지, 훈련 신청, 팔로우와 알림이 삭제됩니다.',
+  'account.delete.what.results':
+    "대회·대결 결과와 레이팅 기록은 스포츠 통계로 남으며 '삭제된 선수'로 표시됩니다.",
+  'account.delete.what.forum': "포럼 게시물은 삭제되고 그 자리에 '삭제됨' 표시가 남습니다.",
+  'account.delete.what.phone':
+    '전화번호는 해제되어 다시 가입할 수 있지만, 이전 기록은 새 계정으로 돌아오지 않습니다.',
+  'account.delete.open': '계정 삭제',
+  'account.delete.dialogTitle': '계정을 영구 삭제할까요?',
+  'account.delete.password': '확인용 비밀번호',
+  'account.delete.confirm': '영구 삭제',
+  'account.delete.cancel': '취소',
+  'account.delete.blocked.LAST_CLUB_OWNER':
+    '클럽의 유일한 소유자입니다. 먼저 클럽에 다른 소유자를 추가하세요.',
+  'account.delete.blocked.LAST_ADMIN': 'KTTF의 마지막 관리자입니다. 먼저 다른 관리자를 지정하세요.',
+  'account.delete.done.title': '계정이 삭제되었습니다',
+  'account.delete.done.text': '개인정보가 삭제되었고 모든 세션이 종료되었습니다.',
+  'account.delete.done.home': '홈으로',
 };

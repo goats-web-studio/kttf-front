@@ -3118,4 +3118,43 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'rich.mention.club': 'クラブ',
   'rich.mention.coach': 'コーチ',
   'rich.mention.product': '商品',
+
+  // Юридические документы, согласие и удаление аккаунта — ADR-091, ADR-092.
+  'footer.privacy': 'プライバシーポリシー',
+  'footer.terms': '利用規約',
+  'auth.consent.label':
+    '{terms}に同意し、{privacy}に基づく個人データの処理に同意します。18歳未満の場合は、法定代理人が同意しています。',
+  'auth.consent.terms': '利用規約',
+  'auth.consent.privacy': 'プライバシーポリシー',
+  'error.form.consent': '登録するには同意にチェックしてください',
+  'error.api.WRONG_PASSWORD': 'パスワードが正しくありません',
+  'error.api.ACCOUNT_DELETE_BLOCKED': '現在アカウントを削除できません',
+  'legal.languages': '文書の言語',
+  'legal.version': '{date} 版',
+  'legal.note.translation': 'これは翻訳です。内容に相違がある場合はロシア語版が優先します。',
+  'legal.note.fallback':
+    'この文書はまだ日本語に翻訳されていないため、英語版を表示しています。内容に相違がある場合はロシア語版が優先します。',
+  'player.deleted': '削除された選手',
+  'account.delete.title': 'アカウントの削除',
+  'account.delete.lead': 'アカウントはすぐに完全に削除され、元に戻せません。',
+  'account.delete.what.data':
+    '電話番号、ログイン、メール、パスワード、選手プロフィール、写真、コーチページ、練習の申し込み、フォローと通知が消去されます。',
+  'account.delete.what.results':
+    '大会と対戦の結果、レーティング履歴はスポーツ統計として残り、「削除された選手」と表示されます。',
+  'account.delete.what.forum':
+    'フォーラムの投稿は消去され、その場所には「削除済み」と表示されます。',
+  'account.delete.what.phone':
+    '電話番号は解放され、再登録に使えますが、以前の履歴は新しいアカウントに戻りません。',
+  'account.delete.open': 'アカウントを削除',
+  'account.delete.dialogTitle': 'アカウントを完全に削除しますか？',
+  'account.delete.password': '確認用パスワード',
+  'account.delete.confirm': '完全に削除',
+  'account.delete.cancel': 'キャンセル',
+  'account.delete.blocked.LAST_CLUB_OWNER':
+    'あなたはクラブの唯一のオーナーです。先にクラブに別のオーナーを追加してください。',
+  'account.delete.blocked.LAST_ADMIN':
+    'あなたは KTTF の最後の管理者です。先に別の管理者を指定してください。',
+  'account.delete.done.title': 'アカウントを削除しました',
+  'account.delete.done.text': '個人データは消去され、すべてのセッションが終了しました。',
+  'account.delete.done.home': 'ホームへ',
 };

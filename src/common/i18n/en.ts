@@ -3126,4 +3126,45 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'rich.mention.club': 'Club',
   'rich.mention.coach': 'Coach',
   'rich.mention.product': 'Product',
+
+  // Юридические документы, согласие и удаление аккаунта — ADR-091, ADR-092.
+  'footer.privacy': 'Privacy Policy',
+  'footer.terms': 'Terms of Use',
+  'auth.consent.label':
+    'I accept the {terms} and consent to the processing of my personal data under the {privacy}. If I am under 18, my legal representative has given consent.',
+  'auth.consent.terms': 'Terms of Use',
+  'auth.consent.privacy': 'Privacy Policy',
+  'error.form.consent': 'Tick the box to sign up',
+  'error.api.WRONG_PASSWORD': 'Wrong password',
+  'error.api.ACCOUNT_DELETE_BLOCKED': "The account can't be deleted yet",
+  'legal.languages': 'Document language',
+  'legal.version': 'Version of {date}',
+  'legal.note.translation':
+    'This is a translation. If the versions differ, the Russian text prevails.',
+  'legal.note.fallback':
+    'This document is not yet available in this language, so the English text is shown. If the versions differ, the Russian text prevails.',
+  'player.deleted': 'Deleted player',
+  'account.delete.title': 'Delete account',
+  'account.delete.lead':
+    'The account is deleted immediately and permanently. It cannot be restored.',
+  'account.delete.what.data':
+    'Your phone number, login, email, password, player profile, photo, coach page, training requests, follows and notifications are erased.',
+  'account.delete.what.results':
+    'Tournament and duel results and rating history stay as sports statistics, shown as "Deleted player".',
+  'account.delete.what.forum':
+    'Your forum posts are erased; a "deleted" mark stays in their place.',
+  'account.delete.what.phone':
+    'Your phone number is released: it can be used to sign up again, but the old history will not return to the new account.',
+  'account.delete.open': 'Delete account',
+  'account.delete.dialogTitle': 'Delete your account permanently?',
+  'account.delete.password': 'Password to confirm',
+  'account.delete.confirm': 'Delete permanently',
+  'account.delete.cancel': 'Cancel',
+  'account.delete.blocked.LAST_CLUB_OWNER':
+    'You are the only owner of a club. Add another owner to the club first.',
+  'account.delete.blocked.LAST_ADMIN':
+    'You are the last KTTF administrator. Appoint another administrator first.',
+  'account.delete.done.title': 'Account deleted',
+  'account.delete.done.text': 'Your personal data has been erased and all sessions have ended.',
+  'account.delete.done.home': 'Go to home page',
 };

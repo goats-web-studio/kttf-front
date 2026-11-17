@@ -2971,4 +2971,39 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'rich.mention.club': '俱乐部',
   'rich.mention.coach': '教练',
   'rich.mention.product': '商品',
+
+  // Юридические документы, согласие и удаление аккаунта — ADR-091, ADR-092.
+  'footer.privacy': '隐私政策',
+  'footer.terms': '用户协议',
+  'auth.consent.label':
+    '我接受{terms}，并同意按照{privacy}处理我的个人数据。如果我未满 18 岁，已获得法定代理人的同意。',
+  'auth.consent.terms': '用户协议',
+  'auth.consent.privacy': '隐私政策',
+  'error.form.consent': '请勾选同意后再注册',
+  'error.api.WRONG_PASSWORD': '密码错误',
+  'error.api.ACCOUNT_DELETE_BLOCKED': '暂时无法删除账户',
+  'legal.languages': '文件语言',
+  'legal.version': '版本日期：{date}',
+  'legal.note.translation': '本文为译文。如有不一致，以俄文版本为准。',
+  'legal.note.fallback': '本文件暂无中文版本，以下为英文版本。如有不一致，以俄文版本为准。',
+  'player.deleted': '已删除的球员',
+  'account.delete.title': '删除账户',
+  'account.delete.lead': '账户将立即永久删除，无法恢复。',
+  'account.delete.what.data':
+    '您的手机号、登录名、邮箱、密码、球员资料、照片、教练页面、训练申请、关注和通知将被清除。',
+  'account.delete.what.results':
+    '比赛和对决成绩以及积分历史将作为体育统计保留，显示为"已删除的球员"。',
+  'account.delete.what.forum': '您在论坛的帖子将被清除，原位置显示"已删除"。',
+  'account.delete.what.phone': '手机号将被释放，可以重新注册，但原有记录不会恢复到新账户。',
+  'account.delete.open': '删除账户',
+  'account.delete.dialogTitle': '确定永久删除账户吗？',
+  'account.delete.password': '输入密码以确认',
+  'account.delete.confirm': '永久删除',
+  'account.delete.cancel': '取消',
+  'account.delete.blocked.LAST_CLUB_OWNER':
+    '您是俱乐部的唯一所有者。请先为俱乐部添加另一位所有者。',
+  'account.delete.blocked.LAST_ADMIN': '您是 KTTF 的最后一位管理员。请先指定另一位管理员。',
+  'account.delete.done.title': '账户已删除',
+  'account.delete.done.text': '您的个人数据已清除，所有会话已结束。',
+  'account.delete.done.home': '返回首页',
 };

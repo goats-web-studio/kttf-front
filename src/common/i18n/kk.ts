@@ -3212,4 +3212,44 @@ export const kk: Record<MessageKey, string> = {
   'rich.mention.club': 'Клуб',
   'rich.mention.coach': 'Жаттықтырушы',
   'rich.mention.product': 'Тауар',
+
+  // Юридические документы, согласие и удаление аккаунта — ADR-091, ADR-092.
+  'footer.privacy': 'Құпиялылық саясаты',
+  'footer.terms': 'Пайдаланушы келісімі',
+  'auth.consent.label':
+    '{terms} қабылдаймын және {privacy} бойынша дербес деректерімді өңдеуге келісім беремін. Егер маған 18 жас толмаса, келісімді заңды өкілім берді.',
+  'auth.consent.terms': 'Пайдаланушы келісімін',
+  'auth.consent.privacy': 'Құпиялылық саясаты',
+  'error.form.consent': 'Тіркелу үшін келісімді белгілеңіз',
+  'error.api.WRONG_PASSWORD': 'Құпиясөз қате',
+  'error.api.ACCOUNT_DELETE_BLOCKED': 'Аккаунтты әзірге жою мүмкін емес',
+  'legal.languages': 'Құжат тілі',
+  'legal.version': '{date} редакциясы',
+  'legal.note.translation':
+    'Бұл — аударма. Мәтіндер сәйкес келмесе, орыс тіліндегі мәтін қолданылады.',
+  'legal.note.fallback':
+    'Құжат бұл тілге әлі аударылмаған — ағылшынша мәтін көрсетілді. Сәйкес келмесе, орысша мәтін қолданылады.',
+  'player.deleted': 'Жойылған ойыншы',
+  'account.delete.title': 'Аккаунтты жою',
+  'account.delete.lead': 'Аккаунт бірден және біржола жойылады. Оны қалпына келтіру мүмкін емес.',
+  'account.delete.what.data':
+    'Телефон, логин, пошта, құпиясөз, ойыншы анкетасы, фото, жаттықтырушы беті, жаттығуға өтінімдер, жазылымдар мен хабарламалар өшіріледі.',
+  'account.delete.what.results':
+    'Турнир мен жекпе-жек нәтижелері және рейтинг тарихы спорттық статистика ретінде «Жойылған ойыншы» атымен сақталады.',
+  'account.delete.what.forum':
+    'Форумдағы хабарламаларыңыз өшіріледі, орнында «жойылды» белгісі қалады.',
+  'account.delete.what.phone':
+    'Телефон нөмірі босатылады: онымен қайта тіркелуге болады, бірақ бұрынғы тарих жаңа аккаунтқа оралмайды.',
+  'account.delete.open': 'Аккаунтты жою',
+  'account.delete.dialogTitle': 'Аккаунтты біржола жою керек пе?',
+  'account.delete.password': 'Растау үшін құпиясөз',
+  'account.delete.confirm': 'Біржола жою',
+  'account.delete.cancel': 'Болдырмау',
+  'account.delete.blocked.LAST_CLUB_OWNER':
+    'Сіз клубтың жалғыз иесісіз. Алдымен клубқа басқа ие қосыңыз.',
+  'account.delete.blocked.LAST_ADMIN':
+    'Сіз KTTF-тің соңғы әкімшісісіз. Алдымен басқа әкімшіні тағайындаңыз.',
+  'account.delete.done.title': 'Аккаунт жойылды',
+  'account.delete.done.text': 'Дербес деректер өшірілді, барлық сессиялар аяқталды.',
+  'account.delete.done.home': 'Басты бетке',
 };

@@ -1,3 +1,4 @@
+import { LEGAL_PATHS } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Link from '@mui/material/Link';
@@ -113,17 +114,27 @@ export default function SiteFooter(): ReactNode {
           </Box>
         </Stack>
 
-        <Typography
-          variant="body2"
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={{ xs: 1, sm: 3 }}
           sx={{
             mt: { xs: 4, sm: 6 },
             pt: 3,
             borderTop: '1px solid var(--night-line)',
-            color: 'var(--night-ink-500)',
+            alignItems: { sm: 'center' },
           }}
         >
-          {t('footer.copy')}
-        </Typography>
+          <Typography variant="body2" sx={{ color: 'var(--night-ink-500)', flexGrow: 1 }}>
+            {t('footer.copy')}
+          </Typography>
+          {/* Документы — ADR-091: на каждой странице, где есть подвал. */}
+          <Link href={LEGAL_PATHS.privacy} underline="hover" variant="body2" sx={footerLink}>
+            {t('footer.privacy')}
+          </Link>
+          <Link href={LEGAL_PATHS.terms} underline="hover" variant="body2" sx={footerLink}>
+            {t('footer.terms')}
+          </Link>
+        </Stack>
       </Container>
     </Atmosphere>
   );
