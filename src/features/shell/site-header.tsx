@@ -91,7 +91,8 @@ export default function SiteHeader(): ReactNode {
               variant="outlined"
               size="small"
               href="/tournaments/new"
-              sx={{ display: { xs: 'none', lg: 'inline-flex' }, minHeight: 40, flexShrink: 0 }}
+              // С городом в шапке кнопке хватает места только с 1536px (ADR-093).
+              sx={{ display: { xs: 'none', xl: 'inline-flex' }, minHeight: 40, flexShrink: 0 }}
             >
               {t('nav.runTournament')}
             </Button>

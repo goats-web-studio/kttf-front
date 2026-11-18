@@ -179,6 +179,7 @@ export default function CitySwitch(): ReactNode {
       <ButtonBase
         ref={setAnchor}
         aria-label={fill(t('city.button'), { city: label })}
+        title={label}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
@@ -201,7 +202,10 @@ export default function CitySwitch(): ReactNode {
         <Box
           component="span"
           sx={{
-            maxWidth: { xs: 96, md: 160 },
+            // Пока рядом стоят разделы (600–1199px), город — значком, имя в
+            // подсказке; на телефоне разделы внизу, и имя помещается.
+            display: { xs: 'block', sm: 'none', lg: 'block' },
+            maxWidth: { xs: 96, lg: 180 },
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
