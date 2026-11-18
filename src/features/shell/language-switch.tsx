@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -38,7 +39,7 @@ export default function LanguageSwitch(): ReactNode {
           gap: 0.5,
           minHeight: 44,
           px: 1,
-          mr: 1,
+          mr: { xs: 0, sm: 1 },
           borderRadius: 1,
           fontSize: 13,
           fontWeight: 600,
@@ -47,8 +48,13 @@ export default function LanguageSwitch(): ReactNode {
         }}
       >
         <Globe size={16} aria-hidden />
-        <span lang={locale}>{SHORT[locale]}</span>
-        <ChevronDown size={14} aria-hidden />
+        {/* На телефоне — только глобус: рядом город шапки (ADR-093). */}
+        <Box component="span" lang={locale} sx={{ display: { xs: 'none', sm: 'inline' } }}>
+          {SHORT[locale]}
+        </Box>
+        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
+          <ChevronDown size={14} aria-hidden />
+        </Box>
       </ButtonBase>
       <Menu
         id={menuId}
