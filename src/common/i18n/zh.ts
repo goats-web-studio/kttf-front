@@ -3007,7 +3007,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'account.delete.done.text': '您的个人数据已清除，所有会话已结束。',
   'account.delete.done.home': '返回首页',
   'city.all': '所有城市',
-  'city.button': '城市：{city}。更改',
+  'city.button': '更改城市，当前：{city}',
   'city.detect': '按当前位置确定',
   'city.detectShort': '确定',
   'city.detecting': '正在确定…',
@@ -3025,4 +3025,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'places.field.lat': '纬度',
   'places.field.lng': '经度',
   'error.form.coordinate': '小数，例如 43.2389',
+  'tournaments.col.age': '平均年龄',
+  'tournaments.col.ageFull': '参赛者平均年龄',
+  'tournaments.ageShort': '年龄 ≈ {age}',
 };

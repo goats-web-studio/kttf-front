@@ -74,6 +74,11 @@ beforeEach(() => {
       return Promise.resolve(reply(answer.status, answer.body));
     }
 
+    // Справочник для «Моего города» на той же странице (ADR-093).
+    if (url.includes('/countries') || url.includes('/cities')) {
+      return Promise.resolve(reply(200, []));
+    }
+
     return Promise.resolve(reply(200, USER));
   });
 });

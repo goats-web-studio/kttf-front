@@ -3133,7 +3133,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'account.delete.done.text': '개인정보가 삭제되었고 모든 세션이 종료되었습니다.',
   'account.delete.done.home': '홈으로',
   'city.all': '모든 도시',
-  'city.button': '도시: {city}. 변경',
+  'city.button': '도시 변경, 현재: {city}',
   'city.detect': '현재 위치로 찾기',
   'city.detectShort': '찾기',
   'city.detecting': '찾는 중…',
@@ -3152,4 +3152,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'places.field.lat': '위도',
   'places.field.lng': '경도',
   'error.form.coordinate': '소수로 입력 (예: 43.2389)',
+  'tournaments.col.age': '평균 나이',
+  'tournaments.col.ageFull': '참가자 평균 나이',
+  'tournaments.ageShort': '나이 ≈ {age}',
 };

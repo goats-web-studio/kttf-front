@@ -3158,7 +3158,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'account.delete.done.text': '個人データは消去され、すべてのセッションが終了しました。',
   'account.delete.done.home': 'ホームへ',
   'city.all': 'すべての都市',
-  'city.button': '都市: {city}。変更',
+  'city.button': '都市を変更（現在: {city}）',
   'city.detect': '現在地から判定',
   'city.detectShort': '判定する',
   'city.detecting': '判定中…',
@@ -3177,4 +3177,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'places.field.lat': '緯度',
   'places.field.lng': '経度',
   'error.form.coordinate': '小数で入力（例: 43.2389）',
+  'tournaments.col.age': '平均年齢',
+  'tournaments.col.ageFull': '参加者の平均年齢',
+  'tournaments.ageShort': '年齢 ≈ {age}',
 };

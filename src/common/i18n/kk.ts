@@ -3253,7 +3253,7 @@ export const kk: Record<MessageKey, string> = {
   'account.delete.done.text': 'Дербес деректер өшірілді, барлық сессиялар аяқталды.',
   'account.delete.done.home': 'Басты бетке',
   'city.all': 'Барлық қалалар',
-  'city.button': 'Қала: {city}. Ауыстыру',
+  'city.button': 'Қаланы ауыстыру, қазір: {city}',
   'city.detect': 'Орналасқан жер бойынша анықтау',
   'city.detectShort': 'Анықтау',
   'city.detecting': 'Анықталуда…',
@@ -3272,4 +3272,7 @@ export const kk: Record<MessageKey, string> = {
   'places.field.lat': 'Ендік',
   'places.field.lng': 'Бойлық',
   'error.form.coordinate': 'Нүктесі бар сан, мысалы 43.2389',
+  'tournaments.col.age': 'орт. жас',
+  'tournaments.col.ageFull': 'Қатысушылардың орташа жасы',
+  'tournaments.ageShort': 'жасы ≈ {age}',
 };

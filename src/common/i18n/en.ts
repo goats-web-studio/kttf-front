@@ -3168,7 +3168,7 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'account.delete.done.text': 'Your personal data has been erased and all sessions have ended.',
   'account.delete.done.home': 'Go to home page',
   'city.all': 'All cities',
-  'city.button': 'City: {city}. Change',
+  'city.button': 'Change city, now: {city}',
   'city.detect': 'Use my location',
   'city.detectShort': 'Detect',
   'city.detecting': 'Detecting…',
@@ -3187,4 +3187,7 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'places.field.lat': 'Latitude',
   'places.field.lng': 'Longitude',
   'error.form.coordinate': 'A decimal number, e.g. 43.2389',
+  'tournaments.col.age': 'avg age',
+  'tournaments.col.ageFull': 'Average age of participants',
+  'tournaments.ageShort': 'age ≈ {age}',
 };

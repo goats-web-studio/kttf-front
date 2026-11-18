@@ -3223,7 +3223,7 @@ export const ru = {
   'account.delete.done.text': 'Персональные данные стёрты, все сессии завершены.',
   'account.delete.done.home': 'На главную',
   'city.all': 'Все города',
-  'city.button': 'Город: {city}. Сменить',
+  'city.button': 'Сменить город, сейчас: {city}',
   'city.detect': 'Определить по местоположению',
   'city.detectShort': 'Определить',
   'city.detecting': 'Определяем…',
@@ -3242,4 +3242,7 @@ export const ru = {
   'places.field.lat': 'Широта',
   'places.field.lng': 'Долгота',
   'error.form.coordinate': 'Число с точкой, например 43.2389',
+  'tournaments.col.age': 'ср. возраст',
+  'tournaments.col.ageFull': 'Средний возраст участников',
+  'tournaments.ageShort': 'возраст ≈ {age}',
 } as const satisfies Record<string, string>;

@@ -9,7 +9,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Popper from '@mui/material/Popper';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, ChevronDown, LocateFixed, MapPin, X } from 'lucide-react';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 
@@ -57,8 +57,11 @@ export default function CitySwitch(): ReactNode {
   const asked = useGuestCity((state) => state.asked);
   const markAsked = useGuestCity((state) => state.markAsked);
 
-  const countries = useQuery(countriesQuery);
-  const cities = useQuery(citiesQuery);
+  // Справочник — только когда меню открыто: шапка на каждой странице не
+  // должна тянуть города, которые нужны раз в жизни.
+  const queryClient = useQueryClient();
+  const countries = useQuery({ ...countriesQuery, enabled: open });
+  const cities = useQuery({ ...citiesQuery, enabled: open });
   const list = cities.data ?? [];
 
   const choose = (city: CityView | null): void => {
@@ -74,7 +77,14 @@ export default function CitySwitch(): ReactNode {
 
   const detect = async (silent: boolean): Promise<void> => {
     setStatus('detecting');
-    const result = await detectCity(list);
+    let all: readonly CityView[];
+    try {
+      all = await queryClient.query(citiesQuery);
+    } catch {
+      setStatus(silent ? 'idle' : 'unavailable');
+      return;
+    }
+    const result = await detectCity(all);
     if (result.kind === 'found') {
       choose(result.city);
       return;
@@ -93,7 +103,7 @@ export default function CitySwitch(): ReactNode {
   // Разрешение уже дано — определяем молча, один раз.
   const needsCity = !isRestoring && myCity === null && !asked;
   useEffect(() => {
-    if (!needsCity || list.length === 0) return;
+    if (!needsCity) return;
     let cancelled = false;
     void geolocationGranted().then((granted) => {
       if (granted && !cancelled) void detect(true);
@@ -101,9 +111,9 @@ export default function CitySwitch(): ReactNode {
     return () => {
       cancelled = true;
     };
-    // detect меняется на каждый рендер, а запускать надо раз — по готовности списка.
+    // detect меняется на каждый рендер, а запускать надо раз.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [needsCity, list.length]);
+  }, [needsCity]);
 
   const groups = citiesByCountry(countries.data ?? [], list);
   const label = myCity === null ? t('city.all') : placeName(myCity);
@@ -111,7 +121,7 @@ export default function CitySwitch(): ReactNode {
   const items: ReactNode[] = [
     <MenuItem
       key="detect"
-      disabled={status === 'detecting' || list.length === 0}
+      disabled={status === 'detecting'}
       onClick={() => {
         void detect(false);
       }}
@@ -234,8 +244,9 @@ export default function CitySwitch(): ReactNode {
         placement="bottom-start"
         sx={{ zIndex: 'appBar', pt: 1 }}
       >
+        {/* Подсказка, а не окно: страницу не перекрывает и фокус не забирает. */}
         <Paper
-          role="dialog"
+          component="aside"
           aria-label={t('city.askTitle')}
           elevation={6}
           sx={{ p: 2, width: 300, maxWidth: 'calc(100vw - 16px)' }}
@@ -260,7 +271,6 @@ export default function CitySwitch(): ReactNode {
               variant="contained"
               size="small"
               startIcon={<LocateFixed size={16} aria-hidden />}
-              disabled={list.length === 0}
               onClick={() => {
                 markAsked();
                 setOpen(true);

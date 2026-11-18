@@ -1,4 +1,4 @@
-import type { TournamentListItemView } from '@kttf/shared/types';
+import type { ClubView, TournamentListItemView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { useTheme } from '@mui/material/styles';
@@ -11,9 +11,10 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import type { UseInfiniteQueryResult, InfiniteData } from '@tanstack/react-query';
 import type { Page } from '@kttf/shared/types';
+import { MapPin } from 'lucide-react';
 import { Fragment, type ReactNode } from 'react';
 
-import { formatDate, formatWeekday, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { fill, formatDate, formatWeekday, useLocale, useT, type MessageKey } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import RatingValue from '@/common/ui/rating-value';
 import { RowsSkeleton } from '@/common/ui/skeleton';
@@ -21,6 +22,7 @@ import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 
 import { dateOfDay, groupByDate, type DayKey } from './calendar-model';
 import RatingCapBadge from './rating-cap-badge';
+import { useVenue } from './tournament-calendar';
 import { Participants, StartTime, TournamentName } from './tournament-line';
 
 type Feed = UseInfiniteQueryResult<InfiniteData<Page<TournamentListItemView>>>;
@@ -28,8 +30,8 @@ type Feed = UseInfiniteQueryResult<InfiniteData<Page<TournamentListItemView>>>;
 interface TournamentListProps {
   readonly upcoming: Feed;
   readonly past: Feed;
-  /** Название клуба по идентификатору: в ответе турнира клуба нет. */
-  readonly clubName: (clubId: string) => string | undefined;
+  /** Клуб по идентификатору: в ответе турнира клуба нет. */
+  readonly clubOf: (clubId: string) => ClubView | undefined;
 }
 
 /**
@@ -40,25 +42,16 @@ interface TournamentListProps {
  *
  * На телефоне строка — в две линии, без горизонтального скролла (07, 4).
  */
-export default function TournamentList({
-  upcoming,
-  past,
-  clubName,
-}: TournamentListProps): ReactNode {
+export default function TournamentList({ upcoming, past, clubOf }: TournamentListProps): ReactNode {
   return (
     <Box sx={{ display: 'grid', gap: 4 }}>
       <Block
         feed={upcoming}
         title="tournaments.upcoming"
         empty="tournaments.upcoming.empty"
-        clubName={clubName}
+        clubOf={clubOf}
       />
-      <Block
-        feed={past}
-        title="tournaments.past"
-        empty="tournaments.past.empty"
-        clubName={clubName}
-      />
+      <Block feed={past} title="tournaments.past" empty="tournaments.past.empty" clubOf={clubOf} />
     </Box>
   );
 }
@@ -67,12 +60,12 @@ function Block({
   feed,
   title,
   empty,
-  clubName,
+  clubOf,
 }: {
   readonly feed: Feed;
   readonly title: MessageKey;
   readonly empty: MessageKey;
-  readonly clubName: (clubId: string) => string | undefined;
+  readonly clubOf: (clubId: string) => ClubView | undefined;
 }): ReactNode {
   const t = useT();
   const theme = useTheme();
@@ -105,9 +98,9 @@ function Block({
             }}
           >
             {wide ? (
-              <ListTable title={t(title)} groups={groups} clubName={clubName} />
+              <ListTable title={t(title)} groups={groups} clubOf={clubOf} />
             ) : (
-              <ListRows groups={groups} clubName={clubName} />
+              <ListRows groups={groups} clubOf={clubOf} />
             )}
           </Box>
         )}
@@ -127,14 +120,10 @@ function Block({
 
 interface GroupsProps {
   readonly groups: readonly (readonly [DayKey, readonly TournamentListItemView[]])[];
-  readonly clubName: (clubId: string) => string | undefined;
+  readonly clubOf: (clubId: string) => ClubView | undefined;
 }
 
-function ListTable({
-  title,
-  groups,
-  clubName,
-}: GroupsProps & { readonly title: string }): ReactNode {
+function ListTable({ title, groups, clubOf }: GroupsProps & { readonly title: string }): ReactNode {
   const t = useT();
 
   return (
@@ -156,6 +145,9 @@ function ListTable({
           <TableCell align="right" sx={{ width: 120 }}>
             <abbr title={t('tournaments.col.avgFull')}>{t('tournaments.col.avg')}</abbr>
           </TableCell>
+          <TableCell align="right" sx={{ width: 96 }}>
+            <abbr title={t('tournaments.col.ageFull')}>{t('tournaments.col.age')}</abbr>
+          </TableCell>
           <TableCell align="right" sx={{ width: 120 }}>
             {t('tournaments.col.players')}
           </TableCell>
@@ -171,7 +163,7 @@ function ListTable({
               <TableCell
                 component="th"
                 scope="rowgroup"
-                colSpan={6}
+                colSpan={7}
                 sx={{
                   pl: 3,
                   bgcolor: 'var(--paper-sunken)',
@@ -192,9 +184,7 @@ function ListTable({
                 </TableCell>
                 <TableCell>
                   <TournamentName tournament={tournament} />
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    {clubName(tournament.clubId)}
-                  </Typography>
+                  <ClubLine club={clubOf(tournament.clubId)} />
                 </TableCell>
                 <TableCell align="right">
                   {tournament.averageRating === null ? (
@@ -205,6 +195,12 @@ function ListTable({
                       sx={{ fontWeight: 600 }}
                     />
                   )}
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ fontVariantNumeric: 'tabular-nums', color: 'text.secondary' }}
+                >
+                  {tournament.averageAge ?? '—'}
                 </TableCell>
                 <TableCell align="right">
                   <Participants tournament={tournament} />
@@ -225,7 +221,7 @@ function ListTable({
 }
 
 /** Телефон: дата заголовком, турнир — в две линии. */
-function ListRows({ groups, clubName }: GroupsProps): ReactNode {
+function ListRows({ groups, clubOf }: GroupsProps): ReactNode {
   const t = useT();
 
   return (
@@ -279,10 +275,17 @@ function ListRows({ groups, clubName }: GroupsProps): ReactNode {
                     typography: 'caption',
                   }}
                 >
-                  <span>{clubName(tournament.clubId)}</span>
+                  <Box sx={{ flexBasis: '100%' }}>
+                    <ClubLine club={clubOf(tournament.clubId)} />
+                  </Box>
                   {tournament.averageRating !== null && (
                     <span title={t('tournaments.col.avgFull')}>
                       <RatingValue value={String(tournament.averageRating)} />
+                    </span>
+                  )}
+                  {tournament.averageAge !== null && (
+                    <span title={t('tournaments.col.ageFull')}>
+                      {fill(t('tournaments.ageShort'), { age: String(tournament.averageAge) })}
                     </span>
                   )}
                   <Participants tournament={tournament} />
@@ -298,6 +301,31 @@ function ListRows({ groups, clubName }: GroupsProps): ReactNode {
         </Box>
       ))}
     </Box>
+  );
+}
+
+/**
+ * Клуб и где он: «KTTF Тест · ул. Абая, 1, Алматы» — как в подсказке
+ * календаря (ADR-094). Пока справочник клубов не пришёл — пусто.
+ */
+function ClubLine({ club }: { readonly club: ClubView | undefined }): ReactNode {
+  const venue = useVenue();
+  if (club === undefined) return null;
+
+  return (
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 0.75 }}
+    >
+      <Box component="span" sx={{ fontWeight: 600 }}>
+        {club.name}
+      </Box>
+      <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+        <MapPin size={12} aria-hidden style={{ flexShrink: 0 }} />
+        {venue(club)}
+      </Box>
+    </Typography>
   );
 }
 

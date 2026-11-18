@@ -459,11 +459,7 @@ function TournamentsPage(): ReactNode {
             </Box>
           </QueryState>
         ) : (
-          <TournamentList
-            upcoming={upcoming}
-            past={past}
-            clubName={(id) => clubs.data?.get(id)?.name}
-          />
+          <TournamentList upcoming={upcoming} past={past} clubOf={(id) => clubs.data?.get(id)} />
         )}
       </Box>
     </Container>
