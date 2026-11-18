@@ -1,5 +1,5 @@
 // Текст документа — ADR-091. Перевод: при расхождении действует русский текст.
-const text = `<!-- version: 2026-11-17 -->
+const text = `<!-- version: 2026-11-18 -->
 # Terms of Use
 
 These terms are the rules for using KTTF: the kttf.kz website and the KTTF mobile app. By signing up, you accept these terms and the [Privacy Policy](/privacy).
@@ -46,7 +46,7 @@ We try to keep KTTF running smoothly, but the platform is provided "as is". We a
 
 ## 8. Blocking and deletion {#termination}
 
-For breaching these terms we may hide a post, restrict access to the forum or block an account. You can delete your account at any time in the settings — see [How to delete your account](/privacy#account-deletion).
+For breaching these terms we may hide a post, restrict access to the forum or block an account. You can request deletion of your account at any time in the settings. The account is closed once a KTTF administrator approves the request. The sports history remains under the name "Deleted player", and you can restore it by signing up again with the same phone number — see [How to delete your account](/privacy#account-deletion).
 
 ## 9. Changes to the terms {#changes}
 

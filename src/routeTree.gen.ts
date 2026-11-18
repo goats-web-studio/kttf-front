@@ -17,7 +17,6 @@ import { Route as AppCabinetRouteImport } from './routes/_app/cabinet'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
-import { Route as PublicAccountDeletedRouteImport } from './routes/_public/account-deleted'
 import { Route as PublicFeedbackRouteImport } from './routes/_public/feedback'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicPrivacyRouteImport } from './routes/_public/privacy'
@@ -28,6 +27,7 @@ import { Route as ConsoleIndexRouteImport } from './routes/console/index'
 import { Route as ConsoleTournamentIdRouteImport } from './routes/console/$tournamentId'
 import { Route as ScreenPublicTokenRouteImport } from './routes/screen.$publicToken'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin.index'
+import { Route as AppAdminAccountsRouteImport } from './routes/_app/admin.accounts'
 import { Route as AppAdminApplicationsRouteImport } from './routes/_app/admin.applications'
 import { Route as AppAdminCatalogRouteImport } from './routes/_app/admin.catalog'
 import { Route as AppAdminContentRouteImport } from './routes/_app/admin.content'
@@ -112,11 +112,6 @@ const PublicIndexRoute = PublicIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PublicRoute,
 } as any)
-const PublicAccountDeletedRoute = PublicAccountDeletedRouteImport.update({
-  id: '/account-deleted',
-  path: '/account-deleted',
-  getParentRoute: () => PublicRoute,
-} as any)
 const PublicFeedbackRoute = PublicFeedbackRouteImport.update({
   id: '/feedback',
   path: '/feedback',
@@ -165,6 +160,11 @@ const ScreenPublicTokenRoute = ScreenPublicTokenRouteImport.update({
 const AppAdminIndexRoute = AppAdminIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppAdminRoute,
+} as any)
+const AppAdminAccountsRoute = AppAdminAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
   getParentRoute: () => AppAdminRoute,
 } as any)
 const AppAdminApplicationsRoute = AppAdminApplicationsRouteImport.update({
@@ -404,7 +404,6 @@ export interface FileRoutesByFullPath {
   '/cabinet': typeof AppCabinetRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/settings': typeof AppSettingsRouteWithChildren
-  '/account-deleted': typeof PublicAccountDeletedRoute
   '/feedback': typeof PublicFeedbackRoute
   '/login': typeof PublicLoginRoute
   '/privacy': typeof PublicPrivacyRoute
@@ -414,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console/': typeof ConsoleIndexRoute
+  '/admin/accounts': typeof AppAdminAccountsRoute
   '/admin/applications': typeof AppAdminApplicationsRoute
   '/admin/catalog': typeof AppAdminCatalogRoute
   '/admin/content': typeof AppAdminContentRoute
@@ -464,7 +464,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/notifications': typeof AppNotificationsRoute
-  '/account-deleted': typeof PublicAccountDeletedRoute
   '/feedback': typeof PublicFeedbackRoute
   '/login': typeof PublicLoginRoute
   '/privacy': typeof PublicPrivacyRoute
@@ -474,6 +473,7 @@ export interface FileRoutesByTo {
   '/console/$tournamentId': typeof ConsoleTournamentIdRoute
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/console': typeof ConsoleIndexRoute
+  '/admin/accounts': typeof AppAdminAccountsRoute
   '/admin/applications': typeof AppAdminApplicationsRoute
   '/admin/catalog': typeof AppAdminCatalogRoute
   '/admin/content': typeof AppAdminContentRoute
@@ -530,7 +530,6 @@ export interface FileRoutesById {
   '/_app/cabinet': typeof AppCabinetRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
-  '/_public/account-deleted': typeof PublicAccountDeletedRoute
   '/_public/feedback': typeof PublicFeedbackRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/privacy': typeof PublicPrivacyRoute
@@ -541,6 +540,7 @@ export interface FileRoutesById {
   '/screen/$publicToken': typeof ScreenPublicTokenRoute
   '/_public/': typeof PublicIndexRoute
   '/console/': typeof ConsoleIndexRoute
+  '/_app/admin/accounts': typeof AppAdminAccountsRoute
   '/_app/admin/applications': typeof AppAdminApplicationsRoute
   '/_app/admin/catalog': typeof AppAdminCatalogRoute
   '/_app/admin/content': typeof AppAdminContentRoute
@@ -597,7 +597,6 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/notifications'
     | '/settings'
-    | '/account-deleted'
     | '/feedback'
     | '/login'
     | '/privacy'
@@ -607,6 +606,7 @@ export interface FileRouteTypes {
     | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/console/'
+    | '/admin/accounts'
     | '/admin/applications'
     | '/admin/catalog'
     | '/admin/content'
@@ -657,7 +657,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/notifications'
-    | '/account-deleted'
     | '/feedback'
     | '/login'
     | '/privacy'
@@ -667,6 +666,7 @@ export interface FileRouteTypes {
     | '/console/$tournamentId'
     | '/screen/$publicToken'
     | '/console'
+    | '/admin/accounts'
     | '/admin/applications'
     | '/admin/catalog'
     | '/admin/content'
@@ -722,7 +722,6 @@ export interface FileRouteTypes {
     | '/_app/cabinet'
     | '/_app/notifications'
     | '/_app/settings'
-    | '/_public/account-deleted'
     | '/_public/feedback'
     | '/_public/login'
     | '/_public/privacy'
@@ -733,6 +732,7 @@ export interface FileRouteTypes {
     | '/screen/$publicToken'
     | '/_public/'
     | '/console/'
+    | '/_app/admin/accounts'
     | '/_app/admin/applications'
     | '/_app/admin/catalog'
     | '/_app/admin/content'
@@ -846,13 +846,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof PublicRoute
     }
-    '/_public/account-deleted': {
-      id: '/_public/account-deleted'
-      path: '/account-deleted'
-      fullPath: '/account-deleted'
-      preLoaderRoute: typeof PublicAccountDeletedRouteImport
-      parentRoute: typeof PublicRoute
-    }
     '/_public/feedback': {
       id: '/_public/feedback'
       path: '/feedback'
@@ -921,6 +914,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AppAdminIndexRouteImport
+      parentRoute: typeof AppAdminRoute
+    }
+    '/_app/admin/accounts': {
+      id: '/_app/admin/accounts'
+      path: '/accounts'
+      fullPath: '/admin/accounts'
+      preLoaderRoute: typeof AppAdminAccountsRouteImport
       parentRoute: typeof AppAdminRoute
     }
     '/_app/admin/applications': {
@@ -1242,6 +1242,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppAdminRouteChildren {
+  AppAdminAccountsRoute: typeof AppAdminAccountsRoute
   AppAdminApplicationsRoute: typeof AppAdminApplicationsRoute
   AppAdminCatalogRoute: typeof AppAdminCatalogRoute
   AppAdminContentRoute: typeof AppAdminContentRoute
@@ -1253,6 +1254,7 @@ interface AppAdminRouteChildren {
 }
 
 const AppAdminRouteChildren: AppAdminRouteChildren = {
+  AppAdminAccountsRoute: AppAdminAccountsRoute,
   AppAdminApplicationsRoute: AppAdminApplicationsRoute,
   AppAdminCatalogRoute: AppAdminCatalogRoute,
   AppAdminContentRoute: AppAdminContentRoute,
@@ -1338,7 +1340,6 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface PublicRouteChildren {
-  PublicAccountDeletedRoute: typeof PublicAccountDeletedRoute
   PublicFeedbackRoute: typeof PublicFeedbackRoute
   PublicLoginRoute: typeof PublicLoginRoute
   PublicPrivacyRoute: typeof PublicPrivacyRoute
@@ -1370,7 +1371,6 @@ interface PublicRouteChildren {
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
-  PublicAccountDeletedRoute: PublicAccountDeletedRoute,
   PublicFeedbackRoute: PublicFeedbackRoute,
   PublicLoginRoute: PublicLoginRoute,
   PublicPrivacyRoute: PublicPrivacyRoute,

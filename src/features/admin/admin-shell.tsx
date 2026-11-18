@@ -9,6 +9,7 @@ import {
   Newspaper,
   ShieldCheck,
   Swords,
+  UserX,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -49,6 +50,12 @@ export default function AdminShell({ children }: { readonly children: ReactNode 
           label: t('cabinet.admin.coaches'),
           icon: ShieldCheck,
           count: queues.coaches,
+        },
+        {
+          href: '/admin/accounts',
+          label: t('admin.nav.accounts'),
+          icon: UserX,
+          count: queues.accounts,
         },
       ],
     },

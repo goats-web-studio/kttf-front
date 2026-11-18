@@ -2,7 +2,6 @@ import type {
   AuthSession,
   AuthUserView,
   ChangePasswordInput,
-  DeleteAccountInput,
   LoginInput,
   SignUpInput,
   TokenPair,
@@ -72,12 +71,4 @@ export function updateAccount(input: UpdateAccountInput): Promise<AuthUserView> 
  */
 export function changePassword(input: ChangePasswordInput): Promise<TokenPair> {
   return apiRequest<TokenPair>('/auth/change-password', { method: 'POST', body: input });
-}
-
-/**
- * Удаление аккаунта — ADR-092. 204 без тела. Сессии сервер обрывает сам,
- * поэтому после ответа клиенту остаётся только забыть их у себя.
- */
-export async function deleteAccount(input: DeleteAccountInput): Promise<void> {
-  await apiRequest<undefined>('/auth/delete-account', { method: 'POST', body: input });
 }

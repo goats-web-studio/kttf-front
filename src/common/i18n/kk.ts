@@ -3223,6 +3223,8 @@ export const kk: Record<MessageKey, string> = {
   'error.form.consent': 'Тіркелу үшін келісімді белгілеңіз',
   'error.api.WRONG_PASSWORD': 'Құпиясөз қате',
   'error.api.ACCOUNT_DELETE_BLOCKED': 'Аккаунтты әзірге жою мүмкін емес',
+  'error.api.ACCOUNT_REQUEST_PENDING': 'Мұндай өтінім шешім күтуде',
+  'error.api.ACCOUNT_RESTORE_INVALID': 'Профильді қалпына келтіру мүмкін емес',
   'legal.languages': 'Құжат тілі',
   'legal.version': '{date} редакциясы',
   'legal.note.translation':
@@ -3231,25 +3233,90 @@ export const kk: Record<MessageKey, string> = {
     'Құжат бұл тілге әлі аударылмаған — ағылшынша мәтін көрсетілді. Сәйкес келмесе, орысша мәтін қолданылады.',
   'player.deleted': 'Жойылған ойыншы',
   'account.delete.title': 'Аккаунтты жою',
-  'account.delete.lead': 'Аккаунт бірден және біржола жойылады. Оны қалпына келтіру мүмкін емес.',
-  'account.delete.what.data':
-    'Телефон, логин, пошта, құпиясөз, ойыншы анкетасы, фото, жаттықтырушы беті, жаттығуға өтінімдер, жазылымдар мен хабарламалар өшіріледі.',
+  'account.delete.lead':
+    'Аккаунтты өзіңіз жоя алмайсыз: сіз өтінім жібересіз, шешімді KTTF әкімшісі қабылдайды. Шешім шыққанша аккаунт әдеттегідей жұмыс істейді.',
+  'account.delete.what.closed':
+    'Мақұлданғаннан кейін аккаунт жабылады: телефон, логин, пошта, құпиясөз, жазылымдар мен хабарламалар өшіріледі, барлық сессиялар аяқталады.',
   'account.delete.what.results':
-    'Турнир мен жекпе-жек нәтижелері және рейтинг тарихы спорттық статистика ретінде «Жойылған ойыншы» атымен сақталады.',
+    'Турнирлер мен жекпе-жектердің нәтижелері және рейтинг тарихы спорттық статистика ретінде қалады — «Жойылған ойыншы» атымен.',
   'account.delete.what.forum':
-    'Форумдағы хабарламаларыңыз өшіріледі, орнында «жойылды» белгісі қалады.',
-  'account.delete.what.phone':
-    'Телефон нөмірі босатылады: онымен қайта тіркелуге болады, бірақ бұрынғы тарих жаңа аккаунтқа оралмайды.',
-  'account.delete.open': 'Аккаунтты жою',
-  'account.delete.dialogTitle': 'Аккаунтты біржола жою керек пе?',
-  'account.delete.password': 'Растау үшін құпиясөз',
-  'account.delete.confirm': 'Біржола жою',
+    'Жаттықтырушы беті мен жаттығуға өтінімдер жойылады, форумдағы хабарламалар өшіріледі — орнында «жойылды» белгісі қалады.',
+  'account.delete.what.archive':
+    'Профильдің жеке деректері — аты, туған күні, фото, клуб, инвентарь — жабық архивте {days} күн сақталады, содан соң өшіріледі.',
+  'account.delete.what.restore':
+    'Өз тарихыңызды кейін де қайтаруға болады: сол телефон нөмірімен тіркеліп, қалпына келтіруге өтінім жіберіңіз.',
+  'account.delete.open': 'Жоюды сұрау',
+  'account.delete.dialogTitle': 'Аккаунтты жоюды сұрайсыз ба?',
+  'account.delete.dialogText':
+    'Өтінім KTTF әкімшісіне жіберіледі. Ол шешім қабылдағанша аккаунт әдеттегідей жұмыс істейді, ал өтінімді кері қайтарып алуға болады.',
+  'account.delete.password': 'Растауға арналған құпиясөз',
+  'account.delete.reason': 'Себебі (міндетті емес)',
+  'account.delete.confirm': 'Өтінім жіберу',
   'account.delete.cancel': 'Болдырмау',
   'account.delete.blocked.LAST_CLUB_OWNER':
     'Сіз клубтың жалғыз иесісіз. Алдымен клубқа басқа ие қосыңыз.',
   'account.delete.blocked.LAST_ADMIN':
     'Сіз KTTF-тің соңғы әкімшісісіз. Алдымен басқа әкімшіні тағайындаңыз.',
-  'account.delete.done.title': 'Аккаунт жойылды',
-  'account.delete.done.text': 'Дербес деректер өшірілді, барлық сессиялар аяқталды.',
-  'account.delete.done.home': 'Басты бетке',
+  'account.delete.pending.title': 'Жою өтінімі жіберілді',
+  'account.delete.pending.text':
+    '{date} жіберілді. Әкімші оны қарайды; шешім шыққанша аккаунт әдеттегідей жұмыс істейді.',
+  'account.delete.withdraw': 'Өтінімді кері қайтару',
+  'account.delete.rejected': 'Әкімші {date} күнгі жою өтінімін қабылдамады.',
+  'account.request.answer': 'Әкімшінің жауабы',
+  'account.restore.title': 'Нөміріңіз бойынша архивтен профиль табылды',
+  'account.restore.lead':
+    'Бұрын осы телефон нөмірімен архивке кеткен ойыншы профилі байланысты болған. Егер бұл сіз болсаңыз, өтінім жіберіңіз — әкімші оны тексеріп, тарихты аккаунтыңызға қайтарады.',
+  'account.restore.withData':
+    'Архивтің жеке деректері әлі сақтаулы: нәтижелер, рейтинг және кездесулер тарихымен бірге профильдің аты мен фотосы да қайтады.',
+  'account.restore.historyOnly':
+    'Архивтің жеке деректері өшірілген: нәтижелер, рейтинг және кездесулер тарихы сіз көрсеткен атпен қайтады.',
+  'account.restore.lastName': 'Тегі',
+  'account.restore.firstName': 'Аты',
+  'account.restore.comment': 'Әкімшіге түсініктеме (міндетті емес)',
+  'account.restore.submit': 'Өтінім жіберу',
+  'account.restore.pending':
+    'Қалпына келтіру өтінімі {date} жіберілді. Әкімші оны тексеріп, тарихты аккаунтыңызға байланыстырады.',
+  'account.restore.rejected': 'Әкімші {date} күнгі қалпына келтіру өтінімін қабылдамады.',
+  'account.restore.invalid.NOTHING_ARCHIVED': 'Нөміріңіз бойынша архивте енді профиль жоқ.',
+  'account.restore.invalid.HAS_PROFILE':
+    'Аккаунтыңызда расталған ойыншы профилі бар — оған архивтегі профильді қалпына келтіру мүмкін емес.',
+  'account.restore.invalid.PROFILE_TAKEN': 'Бұл профиль басқа аккаунтқа қайтарылып қойған.',
+  'admin.nav.accounts': 'Аккаунт өтінімдері',
+  'admin.tile.accounts': 'Аккаунттарды жою және профильдерді архивтен қалпына келтіру',
+  'admin.accounts.lead':
+    'Мақұлданған жою аккаунтты бірден жабады: тарих «Жойылған ойыншы» болып қалады, жеке деректер архивте {days} күн сақталады. Қалпына келтіру архивтегі профильді сол нөмірлі жаңа аккаунтқа қайтарады — атын профильмен салыстырыңыз.',
+  'admin.accounts.filter': 'Қандай өтінімдерді көрсету',
+  'admin.accounts.view.pending': 'Шешім күтуде',
+  'admin.accounts.view.all': 'Барлығы',
+  'admin.accounts.empty': 'Өтінімдер жоқ',
+  'admin.accounts.kind.DELETE': 'Аккаунтты жою',
+  'admin.accounts.kind.RESTORE': 'Профильді қалпына келтіру',
+  'admin.accounts.status.PENDING': 'Шешім күтуде',
+  'admin.accounts.status.APPROVED': 'Мақұлданды',
+  'admin.accounts.status.REJECTED': 'Қабылданбады',
+  'admin.accounts.status.CANCELLED': 'Кері қайтарылды',
+  'admin.accounts.field.account': 'Аккаунт',
+  'admin.accounts.field.player': 'Ойыншы профилі',
+  'admin.accounts.field.claimed': 'Өзін атады',
+  'admin.accounts.field.reason': 'Себебі',
+  'admin.accounts.field.comment': 'Түсініктеме',
+  'admin.accounts.noAccount': 'Аккаунт жабылған',
+  'admin.accounts.noPlayer': 'Ойыншы профилі жоқ',
+  'admin.accounts.playerLine': '{birthYear} ж. т. · рейтинг {rating} · турнирлер: {count}',
+  'admin.accounts.decided': 'Шешім {date} қабылданды',
+  'admin.accounts.approve': 'Мақұлдау',
+  'admin.accounts.reject': 'Қабылдамау',
+  'admin.accounts.approve.DELETE.title': 'Аккаунтты жабу керек пе?',
+  'admin.accounts.approve.DELETE.text':
+    'Аккаунт бірден жабылады: телефон мен логин босайды, барлық сессиялар үзіледі. Тарих «Жойылған ойыншы» болып қалады, жеке деректер архивте {days} күн сақталады. Шешімді болдырмау мүмкін емес: адам тарихты тек қалпына келтіру өтінімі арқылы қайтара алады.',
+  'admin.accounts.approve.RESTORE.title': 'Профильді қайтару керек пе?',
+  'admin.accounts.approve.RESTORE.text':
+    'Архивтегі профиль бүкіл тарихымен осы аккаунтқа байланыстырылады. Өтінімдегі аттың профильмен сәйкес келетініне көз жеткізіңіз: телефон нөмірі SMS арқылы расталмаған.',
+  'admin.accounts.reject.title': 'Өтінімді қабылдамау',
+  'admin.accounts.reject.hint': 'Адам жауапты аккаунт баптауларынан немесе кабинеттен көреді.',
+  'admin.accounts.reject.answer': 'Жауап',
+  'admin.accounts.blocked.LAST_CLUB_OWNER':
+    'Бұл адам — клубтың жалғыз иесі. Алдымен клубтың басқа иесі болуы керек.',
+  'admin.accounts.blocked.LAST_ADMIN':
+    'Бұл — KTTF-тің соңғы әкімшісі. Алдымен басқа әкімшіні тағайындаңыз.',
 };

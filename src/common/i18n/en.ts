@@ -3137,6 +3137,8 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'error.form.consent': 'Tick the box to sign up',
   'error.api.WRONG_PASSWORD': 'Wrong password',
   'error.api.ACCOUNT_DELETE_BLOCKED': "The account can't be deleted yet",
+  'error.api.ACCOUNT_REQUEST_PENDING': 'Such a request is already pending',
+  'error.api.ACCOUNT_RESTORE_INVALID': 'The profile cannot be restored',
   'legal.languages': 'Document language',
   'legal.version': 'Version of {date}',
   'legal.note.translation':
@@ -3146,25 +3148,92 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'player.deleted': 'Deleted player',
   'account.delete.title': 'Delete account',
   'account.delete.lead':
-    'The account is deleted immediately and permanently. It cannot be restored.',
-  'account.delete.what.data':
-    'Your phone number, login, email, password, player profile, photo, coach page, training requests, follows and notifications are erased.',
+    'You cannot delete the account yourself: you send a request, and a KTTF administrator makes the decision. Until then the account works as usual.',
+  'account.delete.what.closed':
+    'Once approved, the account is closed: your phone number, login, email, password, follows and notifications are erased and all sessions end.',
   'account.delete.what.results':
     'Tournament and duel results and rating history stay as sports statistics, shown as "Deleted player".',
   'account.delete.what.forum':
-    'Your forum posts are erased; a "deleted" mark stays in their place.',
-  'account.delete.what.phone':
-    'Your phone number is released: it can be used to sign up again, but the old history will not return to the new account.',
-  'account.delete.open': 'Delete account',
-  'account.delete.dialogTitle': 'Delete your account permanently?',
+    'Your coach page and training requests are deleted, and your forum posts are erased; a "deleted" mark stays in their place.',
+  'account.delete.what.archive':
+    "The profile's personal data — name, date of birth, photo, club, equipment — is kept in a closed archive for {days} days and then erased.",
+  'account.delete.what.restore':
+    'You can get your history back later: sign up with the same phone number and send a restore request.',
+  'account.delete.open': 'Request deletion',
+  'account.delete.dialogTitle': 'Request deletion of your account?',
+  'account.delete.dialogText':
+    'The request goes to a KTTF administrator. Until they decide, the account works as usual and you can withdraw the request.',
   'account.delete.password': 'Password to confirm',
-  'account.delete.confirm': 'Delete permanently',
+  'account.delete.reason': 'Reason (optional)',
+  'account.delete.confirm': 'Send request',
   'account.delete.cancel': 'Cancel',
   'account.delete.blocked.LAST_CLUB_OWNER':
     'You are the only owner of a club. Add another owner to the club first.',
   'account.delete.blocked.LAST_ADMIN':
     'You are the last KTTF administrator. Appoint another administrator first.',
-  'account.delete.done.title': 'Account deleted',
-  'account.delete.done.text': 'Your personal data has been erased and all sessions have ended.',
-  'account.delete.done.home': 'Go to home page',
+  'account.delete.pending.title': 'Deletion request sent',
+  'account.delete.pending.text':
+    'Sent on {date}. An administrator will review it; until then the account works as usual.',
+  'account.delete.withdraw': 'Withdraw request',
+  'account.delete.rejected': 'An administrator rejected the deletion request of {date}.',
+  'account.request.answer': "Administrator's answer",
+  'account.restore.title': 'An archived profile was found for your number',
+  'account.restore.lead':
+    'This phone number used to belong to a player profile that is now archived. If it was you, send a request: an administrator will check it and return the history to your account.',
+  'account.restore.withData':
+    "The archive's personal data is still kept: the profile name and photo will return together with results, rating and match history.",
+  'account.restore.historyOnly':
+    "The archive's personal data has already been erased: results, rating and match history will return under the name you enter.",
+  'account.restore.lastName': 'Last name',
+  'account.restore.firstName': 'First name',
+  'account.restore.comment': 'Comment for the administrator (optional)',
+  'account.restore.submit': 'Send request',
+  'account.restore.pending':
+    'Restore request sent on {date}. An administrator will check it and link the history to your account.',
+  'account.restore.rejected': 'An administrator rejected the restore request of {date}.',
+  'account.restore.invalid.NOTHING_ARCHIVED':
+    'There is no longer an archived profile for your number.',
+  'account.restore.invalid.HAS_PROFILE':
+    'Your account already has a confirmed player profile, so the archived one cannot be restored to it.',
+  'account.restore.invalid.PROFILE_TAKEN':
+    'This profile has already been returned to another account.',
+  'admin.nav.accounts': 'Account requests',
+  'admin.tile.accounts': 'Account deletion and restoring archived profiles',
+  'admin.accounts.lead':
+    'An approved deletion closes the account at once: the history stays as "Deleted player", personal data is kept in the archive for {days} days. A restore returns the archived profile to a new account with the same number — check the name against the profile.',
+  'admin.accounts.filter': 'Which requests to show',
+  'admin.accounts.view.pending': 'Pending',
+  'admin.accounts.view.all': 'All',
+  'admin.accounts.empty': 'No requests',
+  'admin.accounts.kind.DELETE': 'Account deletion',
+  'admin.accounts.kind.RESTORE': 'Profile restore',
+  'admin.accounts.status.PENDING': 'Pending',
+  'admin.accounts.status.APPROVED': 'Approved',
+  'admin.accounts.status.REJECTED': 'Rejected',
+  'admin.accounts.status.CANCELLED': 'Withdrawn',
+  'admin.accounts.field.account': 'Account',
+  'admin.accounts.field.player': 'Player profile',
+  'admin.accounts.field.claimed': 'Name given',
+  'admin.accounts.field.reason': 'Reason',
+  'admin.accounts.field.comment': 'Comment',
+  'admin.accounts.noAccount': 'The account is already closed',
+  'admin.accounts.noPlayer': 'No player profile',
+  'admin.accounts.playerLine': 'born {birthYear} · rating {rating} · tournaments: {count}',
+  'admin.accounts.decided': 'Decided on {date}',
+  'admin.accounts.approve': 'Approve',
+  'admin.accounts.reject': 'Reject',
+  'admin.accounts.approve.DELETE.title': 'Close the account?',
+  'admin.accounts.approve.DELETE.text':
+    'The account will be closed at once: the phone number and login are released and all sessions end. The history stays as "Deleted player", personal data is kept in the archive for {days} days. The decision cannot be undone: the person can only get the history back with a restore request.',
+  'admin.accounts.approve.RESTORE.title': 'Return the profile?',
+  'admin.accounts.approve.RESTORE.text':
+    'The archived profile with its whole history will be linked to this account. Make sure the name in the request matches the profile: the phone number is not verified by SMS.',
+  'admin.accounts.reject.title': 'Reject the request',
+  'admin.accounts.reject.hint':
+    'The person will see the answer in their account settings or dashboard.',
+  'admin.accounts.reject.answer': 'Answer',
+  'admin.accounts.blocked.LAST_CLUB_OWNER':
+    'The person is the only owner of a club. The club needs another owner first.',
+  'admin.accounts.blocked.LAST_ADMIN':
+    'This is the last KTTF administrator. Appoint another administrator first.',
 };

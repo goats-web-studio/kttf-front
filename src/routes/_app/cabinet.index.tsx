@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 import Surface from '@/common/ui/surface';
+import RestoreRequestBlock from '@/features/account/restore-request';
 import { useSessionStore } from '@/features/auth/session-store';
 import MyDuels from '@/features/duels/my-duels';
 import MyTrialRequests from '@/features/trial-requests/my-requests';
@@ -44,6 +45,11 @@ function CabinetPage(): ReactNode {
       {/* Охрана оболочки `_app` без сессии сюда не пускает: ветка нужна типу. */}
       {user !== null && (
         <Stack spacing={3} sx={{ mt: 4 }}>
+          {/* По номеру нашёлся профиль из архива (ADR-095) — раньше, чем
+              предложение завести анкету: иначе человек начнёт с нуля и
+              потеряет свою историю. Нет архива — блока нет. */}
+          <RestoreRequestBlock />
+
           {user.playerId === null && (
             // Без профиля игрока нельзя записаться на турнир и получить
             // рейтинг — это первое, что стоит сделать.

@@ -1,5 +1,5 @@
 // Текст документа — ADR-091. Перевод: при расхождении действует русский текст.
-const text = `<!-- version: 2026-11-17 -->
+const text = `<!-- version: 2026-11-18 -->
 # Privacy Policy
 
 This policy explains what personal data KTTF (the kttf.kz website and the KTTF mobile app) collects, why, who can see it, where it is stored and how to delete it. It follows the Law of the Republic of Kazakhstan No. 94-V of 21 May 2013 "On Personal Data and Their Protection" (the "Law").
@@ -14,7 +14,7 @@ KTTF is the table tennis platform of Kazakhstan: tournaments, rating, profiles o
 
 When you sign up, you tick a box and thereby consent to the processing of your personal data under this policy. We store the date of your consent and the version of the policy you agreed to.
 
-You can withdraw consent at any time: delete your account in the settings (section 9) or write to {{EMAIL}}.
+You can withdraw consent at any time: request deletion of your account in the settings (section 9) or write to {{EMAIL}}.
 
 ## 3. What data we collect {#data}
 
@@ -93,23 +93,31 @@ Your browser or phone stores the sign-in token and the referee console data for 
 
 ## 8. How long we keep data {#retention}
 
-- Account and profile — until you delete the account.
+- Account and profile — until the account is closed at your request (section 9).
 - Sign-in session — up to 90 days without signing in.
 - Notifications — 90 days.
-- After the account is deleted, tournament results, rating and match history remain as anonymized sports statistics: under the name "Deleted player", with no photo or personal details. Without them the rating could not be recalculated and opponents' results would not stay fair.
+- After the account is closed, tournament results, rating and match history remain as anonymized sports statistics: under the name "Deleted player", with no photo or personal details. Without them the rating could not be recalculated and opponents' results would not stay fair.
+- Personal data of the profile of a closed account (last name, first name, patronymic, date of birth, photo, club, equipment, "about me", coach) is kept in an archive for 30 days after the deletion request is approved and then erased. The archive is not shown to anyone; during these 30 days the personal data can be restored together with the history (section 9).
+- The phone number of a closed account is stored only as an irreversible hash: the number itself cannot be recovered from the hash. The hash lets you restore your sports history if you come back and sign up with the same number. It is kept without a time limit while the "Deleted player" profile remains in the archive.
+- Account deletion and restore requests and the answers to them are kept as a history of requests.
 - Club connection requests are kept as business correspondence and deleted on request.
 
 ## 9. How to delete your account {#account-deletion}
 
-In the account settings, open "Delete account" and confirm with your password. You can do the same in the mobile app. Deletion is immediate and irreversible.
+You cannot delete your account yourself — deletion goes through a request. In the account settings, open "Delete account", press "Request deletion", confirm the request with your password and, if you like, give a reason. If you cannot sign in, write to {{EMAIL}} from the phone number or email linked to the account.
 
-**Deleted:** phone number, login, password, email, Telegram ID, player profile, photo, coach page with scans, training requests, follows, notifications and sessions. Your forum posts are erased, and a "deleted" mark stays in their place.
+The request is reviewed by a KTTF administrator. Until a decision is made, the account works as usual and you can withdraw the request. If the request is rejected, you will see the reason in the settings. The request will not be approved while you are the only owner of a club: first add another owner to the club.
 
-**What remains** is only the sports statistics under the name "Deleted player" (section 8).
+**After the request is approved:**
 
-After deletion the phone number is free for a new sign-up, but the old history will not return to the new account.
+- the account is closed: the phone number, login, password, email, Telegram ID, follows, notifications and sessions are deleted; the phone number is free for a new sign-up;
+- the coach page with scans and training requests are deleted; your forum posts are erased, and a "deleted" mark stays in their place;
+- the sports history remains under the name "Deleted player" (section 8);
+- the personal data of the profile is kept in an archive for 30 days and then erased; the phone number is stored only as an irreversible hash (section 8).
 
-If you cannot sign in, write to {{EMAIL}} from the phone number or email linked to the account.
+A profile with no sports history is deleted entirely and has no archive.
+
+**Restoring your history.** If you come back and sign up with the same phone number, KTTF will offer to restore the profile from the archive: enter your last and first name and send a request. Phone numbers on KTTF are not verified by SMS, so the history is linked to the account by an administrator after a check. Within the first 30 days after the account was closed the personal data of the profile is restored as well; later only the sports history is restored, under the name given in the request. The coach page, forum posts and requests are not restored.
 
 ## 10. Players added by an organizer {#organizer-profiles}
 
@@ -129,7 +137,7 @@ Under the Law, you have the right to:
 - receive a copy of it;
 - correct and complete it — most of it you can change yourself in the settings;
 - demand blocking and deletion of data processed in breach of the law;
-- withdraw consent — delete your account;
+- withdraw consent — request deletion of your account (section 9);
 - appeal our actions to the authorized body for personal data protection or to a court.
 
 Write to {{EMAIL}}. We will reply within the time limits set by the laws of the Republic of Kazakhstan.

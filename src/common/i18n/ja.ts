@@ -3129,6 +3129,8 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'error.form.consent': '登録するには同意にチェックしてください',
   'error.api.WRONG_PASSWORD': 'パスワードが正しくありません',
   'error.api.ACCOUNT_DELETE_BLOCKED': '現在アカウントを削除できません',
+  'error.api.ACCOUNT_REQUEST_PENDING': '同じ申請がすでに処理待ちです',
+  'error.api.ACCOUNT_RESTORE_INVALID': 'プロフィールを復元できません',
   'legal.languages': '文書の言語',
   'legal.version': '{date} 版',
   'legal.note.translation': 'これは翻訳です。内容に相違がある場合はロシア語版が優先します。',
@@ -3136,25 +3138,92 @@ export const ja: Readonly<Record<MessageKey, string>> = {
     'この文書はまだ日本語に翻訳されていないため、英語版を表示しています。内容に相違がある場合はロシア語版が優先します。',
   'player.deleted': '削除された選手',
   'account.delete.title': 'アカウントの削除',
-  'account.delete.lead': 'アカウントはすぐに完全に削除され、元に戻せません。',
-  'account.delete.what.data':
-    '電話番号、ログイン、メール、パスワード、選手プロフィール、写真、コーチページ、練習の申し込み、フォローと通知が消去されます。',
+  'account.delete.lead':
+    'アカウントを自分で削除することはできません。申請を送ると、KTTFの管理者が判断します。判断が出るまでアカウントは通常どおり使えます。',
+  'account.delete.what.closed':
+    '承認されるとアカウントは閉鎖されます。電話番号、ログイン名、メール、パスワード、フォロー、通知が消去され、すべてのセッションが終了します。',
   'account.delete.what.results':
-    '大会と対戦の結果、レーティング履歴はスポーツ統計として残り、「削除された選手」と表示されます。',
+    '大会とデュエルの結果、レーティング履歴はスポーツ統計として「削除された選手」の名前で残ります。',
   'account.delete.what.forum':
-    'フォーラムの投稿は消去され、その場所には「削除済み」と表示されます。',
-  'account.delete.what.phone':
-    '電話番号は解放され、再登録に使えますが、以前の履歴は新しいアカウントに戻りません。',
-  'account.delete.open': 'アカウントを削除',
-  'account.delete.dialogTitle': 'アカウントを完全に削除しますか？',
+    'コーチページとトレーニングの申し込みは削除され、フォーラムの投稿は消去されて「削除済み」の表示が残ります。',
+  'account.delete.what.archive':
+    'プロフィールの個人データ（氏名、生年月日、写真、クラブ、用具）は非公開のアーカイブに{days}日間保管され、その後消去されます。',
+  'account.delete.what.restore':
+    '後から履歴を取り戻すこともできます。同じ電話番号で登録し、復元を申請してください。',
+  'account.delete.open': '削除を申請',
+  'account.delete.dialogTitle': 'アカウントの削除を申請しますか？',
+  'account.delete.dialogText':
+    '申請はKTTFの管理者に送られます。判断が出るまでアカウントは通常どおり使え、申請は取り下げられます。',
   'account.delete.password': '確認用パスワード',
-  'account.delete.confirm': '完全に削除',
+  'account.delete.reason': '理由（任意）',
+  'account.delete.confirm': '申請を送信',
   'account.delete.cancel': 'キャンセル',
   'account.delete.blocked.LAST_CLUB_OWNER':
     'あなたはクラブの唯一のオーナーです。先にクラブに別のオーナーを追加してください。',
   'account.delete.blocked.LAST_ADMIN':
     'あなたは KTTF の最後の管理者です。先に別の管理者を指定してください。',
-  'account.delete.done.title': 'アカウントを削除しました',
-  'account.delete.done.text': '個人データは消去され、すべてのセッションが終了しました。',
-  'account.delete.done.home': 'ホームへ',
+  'account.delete.pending.title': '削除申請を送信しました',
+  'account.delete.pending.text':
+    '{date}に送信。管理者が確認します。判断が出るまでアカウントは通常どおり使えます。',
+  'account.delete.withdraw': '申請を取り下げる',
+  'account.delete.rejected': '{date}の削除申請は管理者により却下されました。',
+  'account.request.answer': '管理者からの回答',
+  'account.restore.title': 'あなたの番号でアーカイブのプロフィールが見つかりました',
+  'account.restore.lead':
+    'この電話番号には、以前アーカイブされた選手プロフィールが紐づいていました。ご本人であれば申請してください。管理者が確認し、履歴をあなたのアカウントに戻します。',
+  'account.restore.withData':
+    'アーカイブの個人データはまだ保管されています。結果、レーティング、対戦履歴とともに、プロフィールの名前と写真も戻ります。',
+  'account.restore.historyOnly':
+    'アーカイブの個人データはすでに消去されています。結果、レーティング、対戦履歴は、入力した名前で戻ります。',
+  'account.restore.lastName': '姓',
+  'account.restore.firstName': '名',
+  'account.restore.comment': '管理者へのコメント（任意）',
+  'account.restore.submit': '申請を送信',
+  'account.restore.pending':
+    '復元申請を{date}に送信しました。管理者が確認し、履歴をあなたのアカウントに紐づけます。',
+  'account.restore.rejected': '{date}の復元申請は管理者により却下されました。',
+  'account.restore.invalid.NOTHING_ARCHIVED':
+    'あなたの番号に対応するアーカイブのプロフィールはもうありません。',
+  'account.restore.invalid.HAS_PROFILE':
+    'あなたのアカウントにはすでに確認済みの選手プロフィールがあるため、アーカイブのプロフィールを復元できません。',
+  'account.restore.invalid.PROFILE_TAKEN':
+    'このプロフィールはすでに別のアカウントに戻されています。',
+  'admin.nav.accounts': 'アカウント申請',
+  'admin.tile.accounts': 'アカウントの削除とアーカイブからのプロフィール復元',
+  'admin.accounts.lead':
+    '削除を承認するとアカウントはすぐに閉鎖されます。履歴は「削除された選手」として残り、個人データはアーカイブに{days}日間保管されます。復元は、同じ番号の新しいアカウントにアーカイブのプロフィールを戻します。名前をプロフィールと照合してください。',
+  'admin.accounts.filter': '表示する申請',
+  'admin.accounts.view.pending': '未処理',
+  'admin.accounts.view.all': 'すべて',
+  'admin.accounts.empty': '申請はありません',
+  'admin.accounts.kind.DELETE': 'アカウントの削除',
+  'admin.accounts.kind.RESTORE': 'プロフィールの復元',
+  'admin.accounts.status.PENDING': '未処理',
+  'admin.accounts.status.APPROVED': '承認済み',
+  'admin.accounts.status.REJECTED': '却下',
+  'admin.accounts.status.CANCELLED': '取り下げ',
+  'admin.accounts.field.account': 'アカウント',
+  'admin.accounts.field.player': '選手プロフィール',
+  'admin.accounts.field.claimed': '申告された名前',
+  'admin.accounts.field.reason': '理由',
+  'admin.accounts.field.comment': 'コメント',
+  'admin.accounts.noAccount': 'アカウントはすでに閉鎖されています',
+  'admin.accounts.noPlayer': '選手プロフィールなし',
+  'admin.accounts.playerLine': '{birthYear}年生まれ · レーティング {rating} · 大会: {count}',
+  'admin.accounts.decided': '{date}に処理済み',
+  'admin.accounts.approve': '承認',
+  'admin.accounts.reject': '却下',
+  'admin.accounts.approve.DELETE.title': 'アカウントを閉鎖しますか？',
+  'admin.accounts.approve.DELETE.text':
+    'アカウントはすぐに閉鎖されます。電話番号とログイン名は解放され、すべてのセッションが終了します。履歴は「削除された選手」として残り、個人データはアーカイブに{days}日間保管されます。この判断は取り消せません。本人が履歴を取り戻すには復元申請が必要です。',
+  'admin.accounts.approve.RESTORE.title': 'プロフィールを戻しますか？',
+  'admin.accounts.approve.RESTORE.text':
+    'アーカイブのプロフィールが全履歴とともにこのアカウントに紐づけられます。電話番号はSMSで確認されていないため、申請の名前がプロフィールと一致するか確認してください。',
+  'admin.accounts.reject.title': '申請を却下',
+  'admin.accounts.reject.hint': '回答は本人のアカウント設定またはマイページに表示されます。',
+  'admin.accounts.reject.answer': '回答',
+  'admin.accounts.blocked.LAST_CLUB_OWNER':
+    'この人はクラブの唯一のオーナーです。先にクラブに別のオーナーが必要です。',
+  'admin.accounts.blocked.LAST_ADMIN':
+    'これはKTTFの最後の管理者です。先に別の管理者を任命してください。',
 };

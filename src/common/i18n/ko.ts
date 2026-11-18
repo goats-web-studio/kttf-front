@@ -3106,6 +3106,8 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'error.form.consent': '가입하려면 동의란에 체크하세요',
   'error.api.WRONG_PASSWORD': '비밀번호가 올바르지 않습니다',
   'error.api.ACCOUNT_DELETE_BLOCKED': '지금은 계정을 삭제할 수 없습니다',
+  'error.api.ACCOUNT_REQUEST_PENDING': '같은 요청이 이미 대기 중입니다',
+  'error.api.ACCOUNT_RESTORE_INVALID': '프로필을 복구할 수 없습니다',
   'legal.languages': '문서 언어',
   'legal.version': '{date} 버전',
   'legal.note.translation': '번역본입니다. 내용이 다를 경우 러시아어 원문이 우선합니다.',
@@ -3113,23 +3115,88 @@ export const ko: Readonly<Record<MessageKey, string>> = {
     '이 문서는 아직 한국어로 번역되지 않아 영어 버전을 표시합니다. 내용이 다를 경우 러시아어 원문이 우선합니다.',
   'player.deleted': '삭제된 선수',
   'account.delete.title': '계정 삭제',
-  'account.delete.lead': '계정은 즉시 영구 삭제되며 복구할 수 없습니다.',
-  'account.delete.what.data':
-    '전화번호, 로그인, 이메일, 비밀번호, 선수 프로필, 사진, 코치 페이지, 훈련 신청, 팔로우와 알림이 삭제됩니다.',
+  'account.delete.lead':
+    '계정을 직접 삭제할 수는 없습니다. 요청을 보내면 KTTF 관리자가 결정합니다. 결정 전까지 계정은 평소처럼 작동합니다.',
+  'account.delete.what.closed':
+    '승인되면 계정이 닫힙니다. 전화번호, 로그인, 이메일, 비밀번호, 팔로우, 알림이 삭제되고 모든 세션이 종료됩니다.',
   'account.delete.what.results':
-    "대회·대결 결과와 레이팅 기록은 스포츠 통계로 남으며 '삭제된 선수'로 표시됩니다.",
-  'account.delete.what.forum': "포럼 게시물은 삭제되고 그 자리에 '삭제됨' 표시가 남습니다.",
-  'account.delete.what.phone':
-    '전화번호는 해제되어 다시 가입할 수 있지만, 이전 기록은 새 계정으로 돌아오지 않습니다.',
-  'account.delete.open': '계정 삭제',
-  'account.delete.dialogTitle': '계정을 영구 삭제할까요?',
+    "대회와 듀얼 결과, 레이팅 기록은 스포츠 통계로 '삭제된 선수'라는 이름으로 남습니다.",
+  'account.delete.what.forum':
+    "코치 페이지와 훈련 신청은 삭제되고, 포럼 글은 지워져 그 자리에 '삭제됨' 표시가 남습니다.",
+  'account.delete.what.archive':
+    '프로필의 개인정보(이름, 생년월일, 사진, 클럽, 장비)는 비공개 보관소에 {days}일 동안 보관된 후 삭제됩니다.',
+  'account.delete.what.restore':
+    '나중에 기록을 되찾을 수도 있습니다. 같은 전화번호로 가입하고 복구 요청을 보내세요.',
+  'account.delete.open': '삭제 요청',
+  'account.delete.dialogTitle': '계정 삭제를 요청할까요?',
+  'account.delete.dialogText':
+    '요청은 KTTF 관리자에게 전달됩니다. 결정 전까지 계정은 평소처럼 작동하며 요청을 철회할 수 있습니다.',
   'account.delete.password': '확인용 비밀번호',
-  'account.delete.confirm': '영구 삭제',
+  'account.delete.reason': '사유(선택)',
+  'account.delete.confirm': '요청 보내기',
   'account.delete.cancel': '취소',
   'account.delete.blocked.LAST_CLUB_OWNER':
     '클럽의 유일한 소유자입니다. 먼저 클럽에 다른 소유자를 추가하세요.',
   'account.delete.blocked.LAST_ADMIN': 'KTTF의 마지막 관리자입니다. 먼저 다른 관리자를 지정하세요.',
-  'account.delete.done.title': '계정이 삭제되었습니다',
-  'account.delete.done.text': '개인정보가 삭제되었고 모든 세션이 종료되었습니다.',
-  'account.delete.done.home': '홈으로',
+  'account.delete.pending.title': '삭제 요청을 보냈습니다',
+  'account.delete.pending.text':
+    '{date}에 보냄. 관리자가 검토합니다. 결정 전까지 계정은 평소처럼 작동합니다.',
+  'account.delete.withdraw': '요청 철회',
+  'account.delete.rejected': '{date} 삭제 요청이 관리자에 의해 거절되었습니다.',
+  'account.request.answer': '관리자 답변',
+  'account.restore.title': '회원님의 번호로 보관된 프로필을 찾았습니다',
+  'account.restore.lead':
+    '이 전화번호에는 이전에 보관 처리된 선수 프로필이 연결되어 있었습니다. 본인이라면 요청을 보내세요. 관리자가 확인한 뒤 기록을 계정에 되돌려 드립니다.',
+  'account.restore.withData':
+    '보관된 개인정보가 아직 남아 있습니다. 결과, 레이팅, 경기 기록과 함께 프로필 이름과 사진도 돌아옵니다.',
+  'account.restore.historyOnly':
+    '보관된 개인정보는 이미 삭제되었습니다. 결과, 레이팅, 경기 기록은 입력한 이름으로 돌아옵니다.',
+  'account.restore.lastName': '성',
+  'account.restore.firstName': '이름',
+  'account.restore.comment': '관리자에게 남길 메모(선택)',
+  'account.restore.submit': '요청 보내기',
+  'account.restore.pending':
+    '복구 요청을 {date}에 보냈습니다. 관리자가 확인한 뒤 기록을 계정에 연결합니다.',
+  'account.restore.rejected': '{date} 복구 요청이 관리자에 의해 거절되었습니다.',
+  'account.restore.invalid.NOTHING_ARCHIVED': '회원님의 번호로 보관된 프로필이 더 이상 없습니다.',
+  'account.restore.invalid.HAS_PROFILE':
+    '계정에 이미 확인된 선수 프로필이 있어 보관된 프로필을 복구할 수 없습니다.',
+  'account.restore.invalid.PROFILE_TAKEN': '이 프로필은 이미 다른 계정에 복구되었습니다.',
+  'admin.nav.accounts': '계정 요청',
+  'admin.tile.accounts': '계정 삭제와 보관된 프로필 복구',
+  'admin.accounts.lead':
+    "삭제를 승인하면 계정이 즉시 닫힙니다. 기록은 '삭제된 선수'로 남고 개인정보는 보관소에 {days}일 동안 보관됩니다. 복구는 같은 번호의 새 계정에 보관된 프로필을 되돌립니다. 이름을 프로필과 대조하세요.",
+  'admin.accounts.filter': '표시할 요청',
+  'admin.accounts.view.pending': '대기 중',
+  'admin.accounts.view.all': '전체',
+  'admin.accounts.empty': '요청이 없습니다',
+  'admin.accounts.kind.DELETE': '계정 삭제',
+  'admin.accounts.kind.RESTORE': '프로필 복구',
+  'admin.accounts.status.PENDING': '대기 중',
+  'admin.accounts.status.APPROVED': '승인됨',
+  'admin.accounts.status.REJECTED': '거절됨',
+  'admin.accounts.status.CANCELLED': '철회됨',
+  'admin.accounts.field.account': '계정',
+  'admin.accounts.field.player': '선수 프로필',
+  'admin.accounts.field.claimed': '밝힌 이름',
+  'admin.accounts.field.reason': '사유',
+  'admin.accounts.field.comment': '메모',
+  'admin.accounts.noAccount': '계정이 이미 닫혔습니다',
+  'admin.accounts.noPlayer': '선수 프로필 없음',
+  'admin.accounts.playerLine': '{birthYear}년생 · 레이팅 {rating} · 대회: {count}',
+  'admin.accounts.decided': '{date}에 처리됨',
+  'admin.accounts.approve': '승인',
+  'admin.accounts.reject': '거절',
+  'admin.accounts.approve.DELETE.title': '계정을 닫을까요?',
+  'admin.accounts.approve.DELETE.text':
+    "계정이 즉시 닫힙니다. 전화번호와 로그인은 해제되고 모든 세션이 종료됩니다. 기록은 '삭제된 선수'로 남고 개인정보는 보관소에 {days}일 동안 보관됩니다. 이 결정은 되돌릴 수 없으며, 본인은 복구 요청으로만 기록을 되찾을 수 있습니다.",
+  'admin.accounts.approve.RESTORE.title': '프로필을 되돌릴까요?',
+  'admin.accounts.approve.RESTORE.text':
+    '보관된 프로필이 모든 기록과 함께 이 계정에 연결됩니다. 전화번호는 SMS로 인증되지 않았으니 요청의 이름이 프로필과 일치하는지 확인하세요.',
+  'admin.accounts.reject.title': '요청 거절',
+  'admin.accounts.reject.hint': '답변은 본인의 계정 설정이나 마이페이지에 표시됩니다.',
+  'admin.accounts.reject.answer': '답변',
+  'admin.accounts.blocked.LAST_CLUB_OWNER':
+    '이 사람은 클럽의 유일한 소유자입니다. 먼저 클럽에 다른 소유자가 있어야 합니다.',
+  'admin.accounts.blocked.LAST_ADMIN': 'KTTF의 마지막 관리자입니다. 먼저 다른 관리자를 지정하세요.',
 };

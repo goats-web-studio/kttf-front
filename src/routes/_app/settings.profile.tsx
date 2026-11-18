@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { useT } from '@/common/i18n';
 import QueryState from '@/common/ui/query-state';
 import Surface from '@/common/ui/surface';
+import RestoreRequestBlock from '@/features/account/restore-request';
 import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 import { createPlayer, updatePlayer } from '@/features/players/api';
@@ -35,6 +36,8 @@ function ProfileSettingsPage(): ReactNode {
 
   return (
     <SettingsLayout section="profile" lead={t('settings.profile.lead')}>
+      {/* Профиль из архива по номеру — ADR-095. Нет архива — блока нет. */}
+      {user !== null && <RestoreRequestBlock />}
       {user === null ? null : user.playerId === null ? (
         <NewProfile />
       ) : (

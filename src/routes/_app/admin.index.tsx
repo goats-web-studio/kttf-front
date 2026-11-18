@@ -12,6 +12,7 @@ import {
   Newspaper,
   ShieldCheck,
   Swords,
+  UserX,
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -66,6 +67,13 @@ function AdminOverview(): ReactNode {
       text: 'admin.tile.coaches',
       icon: ShieldCheck,
       count: queues.coaches,
+    },
+    {
+      href: '/admin/accounts',
+      title: 'admin.nav.accounts',
+      text: 'admin.tile.accounts',
+      icon: UserX,
+      count: queues.accounts,
     },
     {
       href: '/admin/forum',

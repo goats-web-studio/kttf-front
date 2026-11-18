@@ -87,6 +87,10 @@ export const ERROR_MESSAGE_KEYS: Readonly<Record<ErrorCode, MessageKey>> = {
   PLAYER_CLAIM_INVALID: 'error.api.PLAYER_CLAIM_INVALID',
   WRONG_PASSWORD: 'error.api.WRONG_PASSWORD',
   ACCOUNT_DELETE_BLOCKED: 'error.api.ACCOUNT_DELETE_BLOCKED',
+
+  // Заявки по аккаунту — ADR-095.
+  ACCOUNT_REQUEST_PENDING: 'error.api.ACCOUNT_REQUEST_PENDING',
+  ACCOUNT_RESTORE_INVALID: 'error.api.ACCOUNT_RESTORE_INVALID',
 };
 
 /**

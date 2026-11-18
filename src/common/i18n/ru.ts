@@ -3194,6 +3194,8 @@ export const ru = {
   'error.form.consent': 'Отметьте согласие, чтобы зарегистрироваться',
   'error.api.WRONG_PASSWORD': 'Неверный пароль',
   'error.api.ACCOUNT_DELETE_BLOCKED': 'Аккаунт пока нельзя удалить',
+  'error.api.ACCOUNT_REQUEST_PENDING': 'Такая заявка уже ждёт решения',
+  'error.api.ACCOUNT_RESTORE_INVALID': 'Восстановить профиль нельзя',
   'legal.languages': 'Язык документа',
   'legal.version': 'Редакция от {date}',
   'legal.note.translation': 'Это перевод. При расхождении действует текст на русском языке.',
@@ -3201,25 +3203,90 @@ export const ru = {
     'Документ на этом языке пока не переведён — показан английский текст. При расхождении действует текст на русском языке.',
   'player.deleted': 'Удалённый игрок',
   'account.delete.title': 'Удаление аккаунта',
-  'account.delete.lead': 'Аккаунт удаляется сразу и насовсем. Восстановить его нельзя.',
-  'account.delete.what.data':
-    'Стираются телефон, логин, почта, пароль, анкета игрока, фото, страница тренера, заявки на тренировки, подписки и уведомления.',
+  'account.delete.lead':
+    'Удалить аккаунт самостоятельно нельзя: вы отправляете заявку, решение принимает администратор KTTF. До решения аккаунт работает как обычно.',
+  'account.delete.what.closed':
+    'После одобрения аккаунт закрывается: стираются телефон, логин, почта, пароль, подписки и уведомления, все сессии завершаются.',
   'account.delete.what.results':
     'Результаты турниров, дуэлей и история рейтинга остаются как спортивная статистика — под именем «Удалённый игрок».',
   'account.delete.what.forum':
-    'Ваши сообщения на форуме стираются, на их месте остаётся отметка «удалено».',
-  'account.delete.what.phone':
-    'Номер телефона освобождается: на него можно зарегистрироваться заново, но прежняя история к новому аккаунту не вернётся.',
-  'account.delete.open': 'Удалить аккаунт',
-  'account.delete.dialogTitle': 'Удалить аккаунт навсегда?',
+    'Страница тренера и заявки на тренировки удаляются, сообщения на форуме стираются — на их месте остаётся отметка «удалено».',
+  'account.delete.what.archive':
+    'Личные данные профиля — имя, дата рождения, фото, клуб, инвентарь — хранятся в закрытом архиве {days} дней, затем стираются.',
+  'account.delete.what.restore':
+    'Вернуть свою историю можно и позже: зарегистрируйтесь с тем же номером телефона и отправьте заявку на восстановление.',
+  'account.delete.open': 'Запросить удаление',
+  'account.delete.dialogTitle': 'Запросить удаление аккаунта?',
+  'account.delete.dialogText':
+    'Заявка уйдёт администратору KTTF. Пока он не решил, аккаунт работает как обычно, а заявку можно отозвать.',
   'account.delete.password': 'Пароль для подтверждения',
-  'account.delete.confirm': 'Удалить навсегда',
+  'account.delete.reason': 'Причина (необязательно)',
+  'account.delete.confirm': 'Отправить заявку',
   'account.delete.cancel': 'Отмена',
   'account.delete.blocked.LAST_CLUB_OWNER':
     'Вы единственный владелец клуба. Сначала добавьте клубу другого владельца.',
   'account.delete.blocked.LAST_ADMIN':
     'Вы последний администратор KTTF. Сначала назначьте другого администратора.',
-  'account.delete.done.title': 'Аккаунт удалён',
-  'account.delete.done.text': 'Персональные данные стёрты, все сессии завершены.',
-  'account.delete.done.home': 'На главную',
+  'account.delete.pending.title': 'Заявка на удаление отправлена',
+  'account.delete.pending.text':
+    'Отправлена {date}. Администратор рассмотрит её; до решения аккаунт работает как обычно.',
+  'account.delete.withdraw': 'Отозвать заявку',
+  'account.delete.rejected': 'Администратор отклонил заявку на удаление от {date}.',
+  'account.request.answer': 'Ответ администратора',
+  'account.restore.title': 'По вашему номеру найден профиль из архива',
+  'account.restore.lead':
+    'Раньше с этим номером телефона был связан профиль игрока, который ушёл в архив. Если это вы, отправьте заявку — администратор проверит её и вернёт историю вашему аккаунту.',
+  'account.restore.withData':
+    'Личные данные архива ещё хранятся: вернутся имя и фото профиля вместе с результатами, рейтингом и историей встреч.',
+  'account.restore.historyOnly':
+    'Личные данные архива уже стёрты: вернутся результаты, рейтинг и история встреч под именем, которое вы укажете.',
+  'account.restore.lastName': 'Фамилия',
+  'account.restore.firstName': 'Имя',
+  'account.restore.comment': 'Комментарий для администратора (необязательно)',
+  'account.restore.submit': 'Отправить заявку',
+  'account.restore.pending':
+    'Заявка на восстановление отправлена {date}. Администратор проверит её и привяжет историю к вашему аккаунту.',
+  'account.restore.rejected': 'Администратор отклонил заявку на восстановление от {date}.',
+  'account.restore.invalid.NOTHING_ARCHIVED': 'По вашему номеру в архиве больше нет профиля.',
+  'account.restore.invalid.HAS_PROFILE':
+    'У вашего аккаунта уже есть подтверждённый профиль игрока — восстановить архивный к нему нельзя.',
+  'account.restore.invalid.PROFILE_TAKEN': 'Этот профиль уже вернули другому аккаунту.',
+  'admin.nav.accounts': 'Заявки по аккаунтам',
+  'admin.tile.accounts': 'Удаление аккаунтов и восстановление профилей из архива',
+  'admin.accounts.lead':
+    'Одобренное удаление сразу закрывает аккаунт: история остаётся «Удалённым игроком», личные данные хранятся в архиве {days} дней. Восстановление возвращает архивный профиль новому аккаунту с тем же номером — сверьте имя с профилем.',
+  'admin.accounts.filter': 'Какие заявки показать',
+  'admin.accounts.view.pending': 'Ждут решения',
+  'admin.accounts.view.all': 'Все',
+  'admin.accounts.empty': 'Заявок нет',
+  'admin.accounts.kind.DELETE': 'Удаление аккаунта',
+  'admin.accounts.kind.RESTORE': 'Восстановление профиля',
+  'admin.accounts.status.PENDING': 'Ждёт решения',
+  'admin.accounts.status.APPROVED': 'Одобрена',
+  'admin.accounts.status.REJECTED': 'Отклонена',
+  'admin.accounts.status.CANCELLED': 'Отозвана',
+  'admin.accounts.field.account': 'Аккаунт',
+  'admin.accounts.field.player': 'Профиль игрока',
+  'admin.accounts.field.claimed': 'Назвался',
+  'admin.accounts.field.reason': 'Причина',
+  'admin.accounts.field.comment': 'Комментарий',
+  'admin.accounts.noAccount': 'Аккаунт уже закрыт',
+  'admin.accounts.noPlayer': 'Профиля игрока нет',
+  'admin.accounts.playerLine': '{birthYear} г. р. · рейтинг {rating} · турниров: {count}',
+  'admin.accounts.decided': 'Решение принято {date}',
+  'admin.accounts.approve': 'Одобрить',
+  'admin.accounts.reject': 'Отклонить',
+  'admin.accounts.approve.DELETE.title': 'Закрыть аккаунт?',
+  'admin.accounts.approve.DELETE.text':
+    'Аккаунт закроется сразу: телефон и логин освободятся, все сессии оборвутся. История останется «Удалённым игроком», личные данные — в архиве {days} дней. Отменить решение нельзя: вернуть историю человек сможет только заявкой на восстановление.',
+  'admin.accounts.approve.RESTORE.title': 'Вернуть профиль?',
+  'admin.accounts.approve.RESTORE.text':
+    'Архивный профиль со всей историей привяжется к этому аккаунту. Убедитесь, что имя в заявке совпадает с профилем: номер телефона по SMS не подтверждён.',
+  'admin.accounts.reject.title': 'Отклонить заявку',
+  'admin.accounts.reject.hint': 'Человек увидит ответ в настройках аккаунта или в кабинете.',
+  'admin.accounts.reject.answer': 'Ответ',
+  'admin.accounts.blocked.LAST_CLUB_OWNER':
+    'Человек — единственный владелец клуба. Сначала у клуба должен появиться другой владелец.',
+  'admin.accounts.blocked.LAST_ADMIN':
+    'Это последний администратор KTTF. Сначала назначьте другого администратора.',
 } as const satisfies Record<string, string>;
