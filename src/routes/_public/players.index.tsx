@@ -32,6 +32,7 @@ import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { DUELS_HREF } from '@/features/duels/labels';
 import type { PickedProduct } from '@/features/market/picked-product';
 import { useCityLabel } from '@/features/places/city-label';
+import { useCityScope } from '@/features/places/my-city';
 import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { equipmentFilterLabel } from '@/features/players/equipment-labels';
@@ -80,8 +81,12 @@ const WIDEST = { display: { xs: 'none', md: 'table-cell' } } as const;
 function PlayersPage(): ReactNode {
   const t = useT();
   const locale = useLocale();
-  const search = Route.useSearch();
+  const address = Route.useSearch();
   const navigate = Route.useNavigate();
+  // Без города в адресе — город шапки (ADR-093). Дальше страница видит
+  // действующий город, а в адрес пишет `cityFilter.toParam`.
+  const cityFilter = useCityScope(address.city);
+  const search = { ...address, city: cityFilter.joined };
 
   const page = search.page ?? 1;
   const players = useQuery(playersQuery(toPlayersQuery(search)));
@@ -90,11 +95,15 @@ function PlayersPage(): ReactNode {
   const cityLabel = useCityLabel();
 
   // Смена фильтра возвращает на первую страницу.
+  const toCityParam = cityFilter.toParam;
   const filter = useCallback(
     (patch: Partial<PlayersSearch>) => {
-      void navigate({ search: (previous) => ({ ...previous, ...patch, page: undefined }) });
+      // Снятый город — «все города», а не возврат к городу шапки.
+      const next =
+        'city' in patch ? { ...patch, city: toCityParam(patch.city?.split(',') ?? []) } : patch;
+      void navigate({ search: (previous) => ({ ...previous, ...next, page: undefined }) });
     },
-    [navigate],
+    [navigate, toCityParam],
   );
 
   const items = players.data?.items ?? [];

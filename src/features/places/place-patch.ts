@@ -42,5 +42,9 @@ export function cityPatch(city: CityView, values: CityFormValues): UpdateCityInp
     patch.sortOrder = values.sortOrder;
   }
 
+  // Координаты — ADR-093: пустое поле стирает, город уходит из автоопределения.
+  if ((values.lat ?? null) !== city.lat) patch.lat = values.lat ?? null;
+  if ((values.lng ?? null) !== city.lng) patch.lng = values.lng ?? null;
+
   return Object.keys(patch).length === 0 ? null : patch;
 }

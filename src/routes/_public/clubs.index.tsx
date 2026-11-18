@@ -31,6 +31,7 @@ import ClubCard from '@/features/clubs/club-card';
 import { clubsQuery } from '@/features/clubs/queries';
 import CitiesFilter from '@/features/places/cities-filter';
 import { useCityLabel } from '@/features/places/city-label';
+import { ALL_CITIES, useCityScope } from '@/features/places/my-city';
 import { ClubPartnerCallout } from '@/features/home/partners';
 
 /**
@@ -60,7 +61,8 @@ const isAmenity = (part: string): part is ClubAmenity =>
 
 const searchSchema = z.object({
   /** Города справочника — по идентификаторам (ADR-046), через запятую. */
-  city: commaList((part) => z.uuid().safeParse(part).success),
+  /** `all` — явно все города, без поля — город шапки (ADR-093). */
+  city: commaList((part) => part === ALL_CITIES || z.uuid().safeParse(part).success),
   /** Удобства — все сразу, а не любое из них. */
   amenities: commaList(isAmenity),
   /**
@@ -119,8 +121,10 @@ function ClubsPage(): ReactNode {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const page = search.page ?? 1;
-  const clubs = useQuery(clubsQuery(toQuery(search, page)));
-  const cities = listOf(search.city);
+  // Без города в адресе — город шапки (ADR-093).
+  const cityFilter = useCityScope(search.city);
+  const cities = cityFilter.ids;
+  const clubs = useQuery(clubsQuery(toQuery({ ...search, city: cityFilter.joined }, page)));
   const amenities = amenitiesOf(search);
 
   // Смена фильтра возвращает на первую страницу, а текст правится на месте,
@@ -169,7 +173,7 @@ function ClubsPage(): ReactNode {
       label: fill(t('filter.chip'), { label: t('filter.city'), value: cityLabel(city) }),
       onRemove: () => {
         const rest = cities.filter((item) => item !== city);
-        filter({ city: rest.length === 0 ? undefined : rest.join(',') });
+        filter({ city: cityFilter.toParam(rest) });
       },
     });
   }
@@ -277,7 +281,7 @@ function ClubsPage(): ReactNode {
               label={t('clubs.filter.cities')}
               value={cities}
               onChange={(next) => {
-                filter({ city: next.length === 0 ? undefined : next.join(',') });
+                filter({ city: cityFilter.toParam(next) });
               }}
             />
           </Box>

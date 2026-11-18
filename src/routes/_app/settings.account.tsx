@@ -9,6 +9,7 @@ import AccountForm from '@/features/auth/account-form';
 import DeleteAccountSection from '@/features/auth/delete-account';
 import PasswordForm from '@/features/auth/password-form';
 import { useSessionStore } from '@/features/auth/session-store';
+import MyCitySetting from '@/features/places/my-city-setting';
 import SettingsLayout from '@/features/settings/settings-layout';
 
 export const Route = createFileRoute('/_app/settings/account')({
@@ -56,6 +57,10 @@ function AccountSettingsPage(): ReactNode {
               </Typography>
             </Box>
             <AccountForm user={user} />
+          </Surface>
+
+          <Surface title={t('account.form.city')}>
+            <MyCitySetting />
           </Surface>
 
           <Surface title={t('account.password.title')}>

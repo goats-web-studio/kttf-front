@@ -25,6 +25,7 @@ const USER: AuthUserView = {
   coach: null,
   privacyConsentAt: '2026-11-17T00:00:00.000Z',
   privacyConsentVersion: '2026-11-17',
+  city: null,
 };
 
 let answer: { status: number; body: unknown } = { status: 204, body: null };

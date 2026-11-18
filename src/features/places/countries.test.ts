@@ -8,7 +8,16 @@ function country(id: string, code: string): CountryView {
 }
 
 function city(id: string, countryId: string): CityView {
-  return { id, countryId, name: id, nameKk: null, sortOrder: 0, isActive: true };
+  return {
+    id,
+    countryId,
+    name: id,
+    nameKk: null,
+    sortOrder: 0,
+    isActive: true,
+    lat: null,
+    lng: null,
+  };
 }
 
 describe('страны справочника', () => {

@@ -49,6 +49,8 @@ export default function CityDialog({ countryId, city, onClose }: CityDialogProps
       name: city?.name ?? '',
       ...(typeof city?.nameKk === 'string' ? { nameKk: city.nameKk } : {}),
       ...(city === undefined ? {} : { sortOrder: city.sortOrder }),
+      ...(typeof city?.lat === 'number' ? { lat: city.lat } : {}),
+      ...(typeof city?.lng === 'number' ? { lng: city.lng } : {}),
     },
   });
   const { errors } = form.formState;
@@ -111,6 +113,27 @@ export default function CityDialog({ countryId, city, onClose }: CityDialogProps
               true,
             )}
           />
+          {/* Центр города — для автоопределения в шапке (ADR-093). */}
+          <Stack direction="row" spacing={2}>
+            <TextField
+              label={t('places.field.lat')}
+              {...register('lat', optionalNumber)}
+              {...fieldHint(
+                t,
+                errors.lat === undefined ? undefined : 'error.form.coordinate',
+                true,
+              )}
+            />
+            <TextField
+              label={t('places.field.lng')}
+              {...register('lng', optionalNumber)}
+              {...fieldHint(
+                t,
+                errors.lng === undefined ? undefined : 'error.form.coordinate',
+                true,
+              )}
+            />
+          </Stack>
           {save.error !== null && <Alert severity="error">{t(errorMessageKey(save.error))}</Alert>}
         </Stack>
       </DialogContent>

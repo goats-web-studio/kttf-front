@@ -24,6 +24,7 @@ const SIGNED_IN: AuthUserView = {
   coach: null,
   privacyConsentAt: null,
   privacyConsentVersion: null,
+  city: null,
 };
 
 /**

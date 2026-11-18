@@ -43,6 +43,8 @@ const HIDDEN: CityView = {
   nameKk: 'Байқоңыр',
   sortOrder: 9,
   isActive: false,
+  lat: null,
+  lng: null,
 };
 
 function reply(body: unknown, status = 200): Response {

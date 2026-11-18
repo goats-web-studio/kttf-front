@@ -97,6 +97,7 @@ const ME: AuthUserView = {
   coach: null,
   privacyConsentAt: null,
   privacyConsentVersion: null,
+  city: null,
 };
 
 /** Игрок списка «Кто играет». */

@@ -46,6 +46,7 @@ import { EMPTY_SLOT, slotProblem, toSlotInput, type SlotDraft } from '@/features
 import CityPicker from '@/features/places/city-picker';
 import { playerName } from '@/features/players/player-name';
 import { playerQuery } from '@/features/players/queries';
+import { useMyCity } from '@/features/places/my-city';
 
 const searchSchema = z.object({
   /** Вызов этому игроку; без него — публикация для всех. */
@@ -127,6 +128,7 @@ function DuelForm({
   const [venueName, setVenueName] = useState('');
   const [venueAddress, setVenueAddress] = useState('');
   const [cityId, setCityId] = useState<string | null>(null);
+  const myCity = useMyCity();
   const [slots, setSlots] = useState<readonly SlotDraft[]>([EMPTY_SLOT]);
   const [note, setNote] = useState('');
   // Как связаться — по умолчанию телефон аккаунта (ADR-068 §3).
@@ -138,7 +140,8 @@ function DuelForm({
   // заполнял форму, сервер всё равно отвергнет.
   const [now, setNow] = useState(() => new Date());
 
-  const city = cityId ?? self.data?.city.id ?? '';
+  // Город анкеты, а без неё — мой город (ADR-093).
+  const city = cityId ?? self.data?.city.id ?? myCity?.id ?? '';
   const rated = kind === 'DUEL' || sparringRated;
   const slotInputs = slots.map(toSlotInput);
   const input = {
