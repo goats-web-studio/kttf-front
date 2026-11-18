@@ -145,7 +145,7 @@ function ListTable({ title, groups, clubOf }: GroupsProps & { readonly title: st
           <TableCell align="right" sx={{ width: 120 }}>
             <abbr title={t('tournaments.col.avgFull')}>{t('tournaments.col.avg')}</abbr>
           </TableCell>
-          <TableCell align="right" sx={{ width: 96 }}>
+          <TableCell align="right" sx={{ width: 112, whiteSpace: 'nowrap' }}>
             <abbr title={t('tournaments.col.ageFull')}>{t('tournaments.col.age')}</abbr>
           </TableCell>
           <TableCell align="right" sx={{ width: 120 }}>
