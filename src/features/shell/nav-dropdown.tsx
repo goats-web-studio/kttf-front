@@ -147,6 +147,7 @@ export default function NavDropdown({
         }
         sx={{
           minHeight: 44,
+          whiteSpace: 'nowrap',
           fontWeight: active ? 600 : 500,
           '& .MuiButton-endIcon': { ml: 0.25 },
         }}

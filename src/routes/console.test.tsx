@@ -33,6 +33,7 @@ const SIGNED_IN: AuthUserView = {
   coach: null,
   privacyConsentAt: null,
   privacyConsentVersion: null,
+  city: null,
 };
 
 /** Запросы, ушедшие на сервер: по ним видно, что действие правда отправлено. */

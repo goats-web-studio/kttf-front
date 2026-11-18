@@ -66,6 +66,8 @@ export const CITIES = {
     nameKk: 'Алматы',
     sortOrder: 0,
     isActive: true,
+    lat: 43.2389,
+    lng: 76.8897,
   },
   astana: {
     id: '00000000-0000-4000-8000-0000000000c2',
@@ -74,6 +76,8 @@ export const CITIES = {
     nameKk: 'Астана',
     sortOrder: 1,
     isActive: true,
+    lat: 51.1694,
+    lng: 71.4491,
   },
   oskemen: {
     id: '00000000-0000-4000-8000-0000000000c3',
@@ -82,6 +86,8 @@ export const CITIES = {
     nameKk: 'Өскемен',
     sortOrder: 2,
     isActive: true,
+    lat: 49.9483,
+    lng: 82.6279,
   },
 } as const satisfies Record<string, CityView>;
 
@@ -662,6 +668,7 @@ export const USER_WITHOUT_PROFILE: AuthUserView = {
   coach: null,
   privacyConsentAt: null,
   privacyConsentVersion: null,
+  city: null,
 };
 
 /** Тот же человек после заведения профиля и с ролью в клубе. */

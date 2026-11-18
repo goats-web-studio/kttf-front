@@ -18,6 +18,7 @@ import { useT, type MessageKey } from '@/common/i18n';
 import { toE164 } from '@/common/phone';
 import PhoneField from '@/common/ui/phone-field';
 import CityPicker from '@/features/places/city-picker';
+import { useMyCity } from '@/features/places/my-city';
 
 import { telegramHandle } from './contacts';
 
@@ -68,6 +69,8 @@ export default function ClubForm({
   onSubmit,
 }: ClubFormProps): ReactNode {
   const t = useT();
+  // Новый клуб — в моём городе (ADR-093).
+  const myCity = useMyCity();
 
   const form = useForm({
     // Телефон и WhatsApp — полным номером: обрывок маски не сохраняется.
@@ -84,7 +87,7 @@ export default function ClubForm({
     ),
     defaultValues: {
       name: club?.name ?? initial?.name ?? '',
-      cityId: club?.city.id ?? '',
+      cityId: club?.city.id ?? myCity?.id ?? '',
       tableCount: club?.tableCount ?? initial?.tableCount ?? 4,
       ...defined({
         shortName: club?.shortName,

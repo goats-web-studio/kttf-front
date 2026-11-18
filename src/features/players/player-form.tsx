@@ -37,6 +37,7 @@ import EquipmentField from '@/features/players/equipment-field';
 import CoachField from './coach-field';
 import { coachFields, initialCoachOption } from './coach-options';
 import PhotoField from '@/features/players/photo-field';
+import { useMyCity } from '@/features/places/my-city';
 
 interface PlayerFormProps {
   /** Заполненные поля при правке. Пусто — профиль заводится впервые. */
@@ -91,6 +92,8 @@ export default function PlayerForm({
 }: PlayerFormProps): ReactNode {
   const t = useT();
   const clubs = useQuery(clubDirectoryQuery);
+  // Новая анкета — в моём городе (ADR-093); у правки город свой.
+  const myCity = useMyCity();
 
   const form = useForm({
     resolver: zodResolver(createPlayerSchema),
@@ -100,7 +103,7 @@ export default function PlayerForm({
     defaultValues: {
       lastName: '',
       firstName: '',
-      cityId: '',
+      cityId: myCity?.id ?? '',
       // Умолчание совпадает со схемой: до появления даты профиль показывал
       // только год, и галочка ничего не меняет в том, что о человеке видно.
       birthYearOnly: true,

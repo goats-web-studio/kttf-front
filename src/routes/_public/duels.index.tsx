@@ -11,7 +11,7 @@ import { useCallback, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { fill, useT, type MessageKey } from '@/common/i18n';
-import { orUndefined, searchId, searchPage } from '@/common/search';
+import { orUndefined, searchCity, searchId, searchPage } from '@/common/search';
 import EmptyState from '@/common/ui/empty-state';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import PageHeader from '@/common/ui/page-header';
@@ -26,13 +26,14 @@ import { KIND_KEYS, MY_DUELS_HREF, newDuelHref } from '@/features/duels/labels';
 import { duelsBoardQuery } from '@/features/duels/queries';
 import CityFilter from '@/features/places/city-filter';
 import { useCityLabel } from '@/features/places/city-label';
+import { useCityScope } from '@/features/places/my-city';
 
 const PAGE_SIZE = 20;
 
 const searchSchema = z.object({
   /** Вкладка: открытые по умолчанию, `recent` — сыгранные. */
   scope: z.enum(['recent']).optional().catch(undefined),
-  city: searchId,
+  city: searchCity,
   club: searchId,
   kind: duelKindSchema.optional().catch(undefined),
   /** Только на рейтинг (`true`) или только без (`false`); нет — любые. */
@@ -69,6 +70,9 @@ function DuelsBoardPage(): ReactNode {
   const user = useSessionStore((state) => state.user);
   const clubs = useQuery(clubDirectoryQuery);
   const cityLabel = useCityLabel();
+  // Без города в адресе — город шапки (ADR-093).
+  const cityFilter = useCityScope(search.city);
+  const city = cityFilter.joined;
   const recent = search.scope === 'recent';
   const page = search.page ?? 1;
 
@@ -76,7 +80,7 @@ function DuelsBoardPage(): ReactNode {
     scope: recent ? 'recent' : 'open',
     page,
     limit: PAGE_SIZE,
-    ...(search.city === undefined ? {} : { cityId: search.city }),
+    ...(city === undefined ? {} : { cityId: city }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
     ...(search.kind === undefined ? {} : { kind: search.kind }),
     // Сыгранные на доске — только рейтинговые: фильтр там ничего не меняет.
@@ -94,12 +98,12 @@ function DuelsBoardPage(): ReactNode {
   );
 
   const active: ActiveFilter[] = [];
-  if (search.city !== undefined) {
+  if (city !== undefined) {
     active.push({
       key: 'city',
-      label: fill(t('filter.chip'), { label: t('filter.city'), value: cityLabel(search.city) }),
+      label: fill(t('filter.chip'), { label: t('filter.city'), value: cityLabel(city) }),
       onRemove: () => {
-        filter({ city: undefined });
+        filter({ city: cityFilter.toParam([]) });
       },
     });
   }
@@ -192,9 +196,9 @@ function DuelsBoardPage(): ReactNode {
         }}
       >
         <CityFilter
-          value={search.city}
-          onChange={(city) => {
-            filter({ city });
+          value={city}
+          onChange={(next) => {
+            filter({ city: cityFilter.toParam(next === undefined ? [] : [next]) });
           }}
         />
         <TextField

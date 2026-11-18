@@ -17,7 +17,8 @@ const searchIds = z
         ? value
             .split(',')
             .map((part) => part.trim())
-            .filter((part) => z.uuid().safeParse(part).success)
+            // `all` — явно все города, без поля — город шапки (ADR-093).
+            .filter((part) => part === 'all' || z.uuid().safeParse(part).success)
             .join(',')
         : value,
     z.string().min(1),

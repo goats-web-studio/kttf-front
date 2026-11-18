@@ -42,5 +42,14 @@ export function cityPatch(city: CityView, values: CityFormValues): UpdateCityInp
     patch.sortOrder = values.sortOrder;
   }
 
+  // Координаты — ADR-093: пустое поле стирает, город уходит из автоопределения.
+  // Только если поле было в форме: старые вызовы без координат их не стирают.
+  if ('lat' in values && (values.lat ?? null) !== (city.lat ?? null)) {
+    patch.lat = values.lat ?? null;
+  }
+  if ('lng' in values && (values.lng ?? null) !== (city.lng ?? null)) {
+    patch.lng = values.lng ?? null;
+  }
+
   return Object.keys(patch).length === 0 ? null : patch;
 }

@@ -22,6 +22,7 @@ import NotificationsBell from '@/features/notifications/bell';
 import { playerQuery } from '@/features/players/queries';
 
 import { useActiveSection } from './active-section';
+import CitySwitch from './city-switch';
 import LanguageSwitch from './language-switch';
 import NavDropdown from './nav-dropdown';
 import { SECTIONS } from './sections';
@@ -90,11 +91,14 @@ export default function SiteHeader(): ReactNode {
               variant="outlined"
               size="small"
               href="/tournaments/new"
-              sx={{ display: { xs: 'none', lg: 'inline-flex' }, minHeight: 40, flexShrink: 0 }}
+              // С городом в шапке кнопке хватает места только с 1536px (ADR-093).
+              sx={{ display: { xs: 'none', xl: 'inline-flex' }, minHeight: 40, flexShrink: 0 }}
             >
               {t('nav.runTournament')}
             </Button>
           )}
+          {/* Мой город — ADR-093: умолчание фильтров по всему сайту. */}
+          <CitySwitch />
           <LanguageSwitch />
           {user === null ? (
             <NavButton to="/login">{t('page.login.title')}</NavButton>

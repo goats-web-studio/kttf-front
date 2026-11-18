@@ -10,7 +10,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
 import { useLocale, useT } from '@/common/i18n';
-import { searchId } from '@/common/search';
+import { searchCity, searchId } from '@/common/search';
 import AdSlot from '@/common/ui/ad-slot';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
@@ -28,12 +28,13 @@ import RatingLeaders from '@/features/home/rating-leaders';
 import SiteLife from '@/features/home/site-life';
 import { homePodiumsQuery } from '@/features/home/stats-queries';
 import TournamentRail from '@/features/home/tournament-rail';
+import { useCityScope } from '@/features/places/my-city';
 
 /**
  * Город лидеров и город ближайших турниров — по идентификатору справочника
  * (ADR-046). Раздельно: выбор зала рядом не должен менять рейтинг страны.
  */
-const searchSchema = z.object({ city: searchId, tcity: searchId });
+const searchSchema = z.object({ city: searchId, tcity: searchCity });
 
 export const Route = createFileRoute('/_public/')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
@@ -65,6 +66,8 @@ function HomePage(): ReactNode {
   const t = useT();
   const locale = useLocale();
   const search = Route.useSearch();
+  // Турниры рядом — в городе шапки, пока на главной не выбран другой (ADR-093).
+  const railCity = useCityScope(search.tcity);
   const navigate = Route.useNavigate();
   const user = useSessionStore((state) => state.user);
   const [period, setPeriod] = useState<HomeStatsPeriod>('MONTH');
@@ -144,10 +147,10 @@ function HomePage(): ReactNode {
               {t('home.rail.title')}
             </Typography>
             <TournamentRail
-              city={search.tcity}
+              city={railCity.joined}
               cities={cities}
               onCity={(tcity) => {
-                setSearch({ tcity });
+                setSearch({ tcity: railCity.toParam(tcity === undefined ? [] : [tcity]) });
               }}
               clubs={clubs.data}
             />

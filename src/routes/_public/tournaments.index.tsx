@@ -22,7 +22,7 @@ import {
   useT,
   type MessageKey,
 } from '@/common/i18n';
-import { orUndefined, searchDay, searchId } from '@/common/search';
+import { orUndefined, searchCity, searchDay, searchId } from '@/common/search';
 import FilterSummary, { type ActiveFilter } from '@/common/ui/filter-summary';
 import PillTabs from '@/common/ui/pill-tabs';
 import QueryState from '@/common/ui/query-state';
@@ -32,6 +32,7 @@ import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { managedClubIds } from '@/features/clubs/roles';
 import CityFilter from '@/features/places/city-filter';
 import { useCityLabel } from '@/features/places/city-label';
+import { useCityScope } from '@/features/places/my-city';
 import { TOURNAMENT_STATUS_KEYS } from '@/features/tournaments/labels';
 import {
   dayKeyOf,
@@ -76,7 +77,7 @@ const STATUSES_OF: Partial<Record<TournamentStatus, readonly TournamentStatus[]>
 
 const searchSchema = z.object({
   /** Город клуба-организатора, по идентификатору справочника (ADR-046). */
-  city: searchId,
+  city: searchCity,
   club: searchId,
   status: tournamentStatusSchema
     // Старые ссылки с «Рейтинг начислен» открываются как «Завершён».
@@ -127,6 +128,9 @@ function TournamentsPage(): ReactNode {
   const locale = useLocale();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  // Без города в адресе — город шапки (ADR-093).
+  const cityFilter = useCityScope(search.city);
+  const city = cityFilter.joined;
 
   const view: View = search.view ?? 'calendar';
   // «Сегодня» фиксируется на время жизни страницы: иначе граница блоков
@@ -134,7 +138,7 @@ function TournamentsPage(): ReactNode {
   const [now] = useState(() => new Date());
   const today = startOfToday(now);
   const month: MonthKey = search.month ?? monthOf(now);
-  const filters = toFilters(search);
+  const filters = toFilters(search, city);
   const range = monthRange(month);
 
   const calendar = useQuery({
@@ -176,12 +180,12 @@ function TournamentsPage(): ReactNode {
   );
 
   const active: ActiveFilter[] = [];
-  if (search.city !== undefined) {
+  if (city !== undefined) {
     active.push({
       key: 'city',
-      label: fill(t('filter.chip'), { label: t('filter.city'), value: cityLabel(search.city) }),
+      label: fill(t('filter.chip'), { label: t('filter.city'), value: cityLabel(city) }),
       onRemove: () => {
-        filter({ city: undefined });
+        filter({ city: cityFilter.toParam([]) });
       },
     });
   }
@@ -297,9 +301,9 @@ function TournamentsPage(): ReactNode {
       >
         <Box sx={{ gridColumn: { xs: 'span 2', sm: 'span 3' } }}>
           <CityFilter
-            value={search.city}
-            onChange={(city) => {
-              filter({ city });
+            value={city}
+            onChange={(next) => {
+              filter({ city: cityFilter.toParam(next === undefined ? [] : [next]) });
             }}
           />
         </Box>
@@ -455,11 +459,7 @@ function TournamentsPage(): ReactNode {
             </Box>
           </QueryState>
         ) : (
-          <TournamentList
-            upcoming={upcoming}
-            past={past}
-            clubName={(id) => clubs.data?.get(id)?.name}
-          />
+          <TournamentList upcoming={upcoming} past={past} clubOf={(id) => clubs.data?.get(id)} />
         )}
       </Box>
     </Container>
@@ -476,9 +476,9 @@ function toDay(value: Dayjs | null): string | undefined {
  * «с / по» и месяц сюда не входят: у календаря границы — месяц, у списка —
  * свои блоки (ADR-052).
  */
-function toFilters(search: Search): TournamentFilters {
+function toFilters(search: Search, city: string | undefined): TournamentFilters {
   return {
-    ...(search.city === undefined ? {} : { cityId: search.city }),
+    ...(city === undefined ? {} : { cityId: city }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
     ...(search.status === undefined ? {} : { status: STATUSES_OF[search.status] ?? search.status }),
   };

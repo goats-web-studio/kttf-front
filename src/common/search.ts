@@ -32,6 +32,15 @@ export const searchText = z
 
 export const searchId = z.uuid().optional().catch(undefined);
 
+/**
+ * Город фильтра — ADR-093: идентификатор или `all`. Без поля список
+ * показывает город шапки, `all` — явно все города.
+ */
+export const searchCity = z
+  .union([z.literal('all'), z.uuid()])
+  .optional()
+  .catch(undefined);
+
 /** День без времени, как его отдаёт `<input type="date">`. */
 export const searchDay = z.iso.date().optional().catch(undefined);
 

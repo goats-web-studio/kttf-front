@@ -62,6 +62,7 @@ import {
 } from '@/features/coaches/trainings-search';
 import CitiesFilter from '@/features/places/cities-filter';
 import { useCityLabel } from '@/features/places/city-label';
+import { useCityScope } from '@/features/places/my-city';
 import { CoachPartnerCallout } from '@/features/home/partners';
 
 export const Route = createFileRoute('/_public/trainings/')({
@@ -106,10 +107,14 @@ function TrainingsPage(): ReactNode {
   const t = useT();
   const locale = useLocale();
   const id = useId();
-  const search = Route.useSearch();
+  const address = Route.useSearch();
   const navigate = Route.useNavigate();
   const cityLabel = useCityLabel();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  // Без города в адресе — город шапки (ADR-093). Дальше страница видит
+  // действующий город, а в адрес пишет `cityFilter.toParam`.
+  const cityScope = useCityScope(address.city);
+  const search = { ...address, city: cityScope.joined };
 
   const view: TrainingsView = search.view ?? 'trainings';
   const page = search.page ?? 1;
@@ -121,14 +126,17 @@ function TrainingsPage(): ReactNode {
   const times = timesOf(search);
 
   // Смена фильтра возвращает на первую страницу.
+  const toCityParam = cityScope.toParam;
   const filter = useCallback(
     (patch: Partial<TrainingsSearch>, replace = false) => {
+      // Снятый город — «все города», а не возврат к городу шапки.
+      const next = 'city' in patch ? { ...patch, city: toCityParam(listOf(patch.city)) } : patch;
       void navigate({
-        search: (previous) => ({ ...previous, ...patch, page: undefined }),
+        search: (previous) => ({ ...previous, ...next, page: undefined }),
         replace,
       });
     },
-    [navigate],
+    [navigate, toCityParam],
   );
   const commitQ = useCallback(
     (value: string) => {
@@ -150,7 +158,7 @@ function TrainingsPage(): ReactNode {
     void navigate({
       search: {
         ...(next === 'coaches' ? { view: 'coaches' as const } : {}),
-        ...(search.city === undefined ? {} : { city: search.city }),
+        ...(address.city === undefined ? {} : { city: address.city }),
         ...(search.language === undefined ? {} : { language: search.language }),
       },
     });

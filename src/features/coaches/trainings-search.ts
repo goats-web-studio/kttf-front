@@ -76,7 +76,8 @@ export const trainingsSearchSchema = z.object({
   /** Конкретный клуб KTTF — «где» сужено до одного зала. */
   clubId: z.coerce.string().pipe(z.uuid()).optional().catch(undefined),
   /** Города справочника — идентификаторами, через запятую (ADR-046). */
-  city: commaList(isUuid),
+  /** `all` — явно все города, без поля — город шапки (ADR-093). */
+  city: commaList((part) => part === 'all' || isUuid(part)),
   priceTo: z.coerce.number().int().min(0).max(PRICE_KZT_MAX).optional().catch(undefined),
   language: z.coerce.string().pipe(z.enum(COACH_LANGUAGES)).optional().catch(undefined),
   /** Дни недели занятий (T3): `day=1,3` — понедельник и среда. */
