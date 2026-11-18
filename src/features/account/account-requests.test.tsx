@@ -24,6 +24,7 @@ const USER: AuthUserView = {
   coach: null,
   privacyConsentAt: '2026-11-18T00:00:00.000Z',
   privacyConsentVersion: '2026-11-18',
+  city: null,
 };
 
 const ADMIN: AuthUserView = { ...USER, id: '00000000-0000-4000-8000-0000000000aa', isAdmin: true };

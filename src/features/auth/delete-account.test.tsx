@@ -25,6 +25,7 @@ const USER: AuthUserView = {
   coach: null,
   privacyConsentAt: '2026-11-18T00:00:00.000Z',
   privacyConsentVersion: '2026-11-18',
+  city: null,
 };
 
 const PENDING: AccountRequestView = {
