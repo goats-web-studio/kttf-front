@@ -42,6 +42,11 @@ function answer(url: string): Response {
     return reply(places);
   }
 
+  // Лента главной — ADR-073; тема форума в ней — ADR-097.
+  if (url.includes('/feed?')) {
+    return reply(HOME_FEED);
+  }
+
   // Живые блоки главной — ADR-071.
   if (url.includes('/stats/podiums')) {
     return reply(HOME_PODIUMS);
@@ -166,6 +171,32 @@ const HOME_UPSETS = {
       setsLoser: 1,
     },
   ],
+};
+
+/** Лента главной: одна тема форума — карточка ADR-097 и в блоке главной. */
+const HOME_FEED_TOPIC = '00000000-0000-4000-8000-00000000f201';
+const HOME_FEED_TITLE = 'Кто едет на кубок в Алматы?';
+const HOME_FEED = {
+  tab: 'ALL',
+  filter: null,
+  items: [
+    {
+      id: `forum:${HOME_FEED_TOPIC}`,
+      type: 'FORUM',
+      at: TOURNAMENT.startsAt,
+      source: { kind: 'KTTF', id: null, name: 'Ерлан', imageUrl: null, slug: null },
+      discussion: { topicId: HOME_FEED_TOPIC, postId: null, comments: 3, likes: 0, views: 12 },
+      pinned: false,
+      hidden: false,
+      section: { slug: 'tournaments', title: 'Турниры' },
+      title: HOME_FEED_TITLE,
+      excerpt: 'Собираем машину из Шымкента.',
+      isNew: false,
+    },
+  ],
+  total: 1,
+  page: 1,
+  limit: 8,
 };
 
 /** Последнее изменение рейтинга первого игрока — колонка «Обновлён». */
@@ -775,6 +806,20 @@ describe('главная', () => {
     expect(
       within(block).getByRole('link', { name: ru['home.upcoming.all'] }).getAttribute('href'),
     ).toBe('/tournaments');
+  });
+
+  it('лента главной — тема форума карточкой и ссылка «Вся лента» на страницу ленты', async () => {
+    renderAt('/');
+
+    const title = await screen.findByRole('link', { name: HOME_FEED_TITLE });
+    const block = title.closest('[data-home-feed]')?.closest('section');
+    if (!(block instanceof HTMLElement)) throw new Error('блок ленты не найден');
+
+    expect(title.closest('article')?.getAttribute('data-feed-item')).toBe('FORUM');
+    expect(within(block).getByText(ru['feed.forum.active'])).toBeDefined();
+    expect(within(block).getByRole('link', { name: ru['feed.all'] }).getAttribute('href')).toBe(
+      '/feed',
+    );
   });
 
   it('поиск на первом экране ведёт в рейтинг с запросом', async () => {

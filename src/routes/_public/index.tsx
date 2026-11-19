@@ -184,7 +184,7 @@ function HomePage(): ReactNode {
 
             <AdSlot placement="home-feed" />
 
-            <Section title={t('feed.title')} more={{ href: '/forum', label: t('feed.forum') }}>
+            <Section title={t('feed.title')} more={{ href: '/feed', label: t('feed.all') }}>
               <FeedSection />
             </Section>
           </Stack>

@@ -11,6 +11,8 @@ import { useMemo, type ReactNode } from 'react';
 import { formatWeekday, useLocale, useT, type Locale } from '@/common/i18n';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
+import { clubDirectoryQuery } from '@/features/clubs/queries';
+import { useCityScope } from '@/features/places/my-city';
 import { usePlaceName } from '@/features/places/place-name';
 import { citiesQuery, regionsQuery } from '@/features/places/queries';
 import { scopeOptions } from '@/features/places/regions';
@@ -203,28 +205,93 @@ function Upcoming({
         </Typography>
       ) : (
         <Box data-home-upcoming>
-          {days.map((day) => (
-            <Box key={day.key} component="section">
-              <Typography
-                variant="body2"
-                component="h3"
-                sx={{
-                  px: 2,
-                  py: 0.75,
-                  fontWeight: 700,
-                  bgcolor: 'var(--paper-sunken)',
-                  borderTop: '1px solid var(--line)',
-                }}
-              >
-                {day.label}
-              </Typography>
-              <Rows items={day.items} clubs={clubs} />
-            </Box>
-          ))}
+          <Days days={days} clubs={clubs} />
         </Box>
       )}
     </Surface>
   );
+}
+
+/** Ближайших в короткой колонке страницы «Лента». */
+const UPCOMING_SHORT = 5;
+
+/**
+ * Ближайшие турниры коротко — колонка страницы «Лента» (ADR-097). Те же
+ * строки по дням, что на главной, в городе шапки (ADR-093), без выбора
+ * города: выбирают его в календаре. Пусто — блока нет.
+ */
+export function UpcomingShort(): ReactNode {
+  const t = useT();
+  const locale = useLocale();
+  const scope = useCityScope(undefined);
+  const clubs = useQuery(clubDirectoryQuery);
+  const today = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date.toISOString();
+  }, []);
+
+  const upcoming = useQuery({
+    ...tournamentsQuery({
+      status: NOT_STARTED,
+      from: today,
+      order: 'asc',
+      page: 1,
+      limit: UPCOMING_SHORT,
+      ...(scope.cityIds.length === 0 ? {} : { cityId: [...scope.cityIds] }),
+    }),
+    enabled: scope.ready,
+  });
+  const days = useMemo(
+    () => groupByDay(upcoming.data?.items ?? [], locale),
+    [upcoming.data, locale],
+  );
+
+  if (days.length === 0) return null;
+
+  return (
+    <Surface
+      flush
+      title={t('home.upcoming.title')}
+      action={
+        <Link href="/tournaments" variant="body2" underline="hover" sx={{ whiteSpace: 'nowrap' }}>
+          {t('home.upcoming.all')}
+        </Link>
+      }
+    >
+      <Box data-upcoming-short>
+        <Days days={days} clubs={clubs.data} />
+      </Box>
+    </Surface>
+  );
+}
+
+/** Турниры по дням: шапка дня «сб 25.10», под ней строки. */
+function Days({
+  days,
+  clubs,
+}: {
+  readonly days: ReturnType<typeof groupByDay>;
+  readonly clubs: ReadonlyMap<string, ClubView> | undefined;
+}): ReactNode {
+  return days.map((day) => (
+    <Box key={day.key} component="section">
+      <Typography
+        variant="body2"
+        component="h3"
+        sx={{
+          px: 2,
+          py: 0.75,
+          fontWeight: 700,
+          bgcolor: 'var(--paper-sunken)',
+          borderTop: '1px solid var(--line)',
+        }}
+      >
+        {day.label}
+      </Typography>
+      <Rows items={day.items} clubs={clubs} />
+    </Box>
+  ));
 }
 
 /** «сб 25.10» — день недели и число, как в шапке дня у RTTF. */

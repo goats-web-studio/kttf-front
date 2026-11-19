@@ -26,6 +26,6 @@ export const SECTIONS: readonly Section[] = [
   { to: '/tournaments', label: 'nav.tournaments', match: ['/tournaments'] },
   { to: '/players', label: 'nav.ratings', match: ['/players'] },
   { to: '/clubs', label: 'nav.places', match: ['/clubs', '/trainings', '/coaches'] },
-  { to: '/forum', label: 'nav.community', match: ['/forum', '/duels'] },
+  { to: '/forum', label: 'nav.community', match: ['/feed', '/forum', '/duels'] },
   { to: '/market', label: 'nav.market', match: ['/market'] },
 ];

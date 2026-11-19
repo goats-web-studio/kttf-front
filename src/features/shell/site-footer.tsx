@@ -30,6 +30,7 @@ const footerLink = {
  * до конца, следующий шаг под рукой.
  */
 const FOOTER_PAGES: readonly { readonly href: string; readonly label: MessageKey }[] = [
+  { href: '/feed', label: 'nav.menu.forum.feed.title' },
   { href: '/trainings', label: 'nav.trainings' },
   { href: '/trainings?view=coaches', label: 'nav.menu.trainings.coaches.title' },
   { href: '/duels', label: 'nav.menu.players.duels.title' },

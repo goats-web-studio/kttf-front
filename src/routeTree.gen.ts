@@ -17,6 +17,7 @@ import { Route as AppCabinetRouteImport } from './routes/_app/cabinet'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as PublicFeedRouteImport } from './routes/_public/feed'
 import { Route as PublicFeedbackRouteImport } from './routes/_public/feedback'
 import { Route as PublicLoginRouteImport } from './routes/_public/login'
 import { Route as PublicPrivacyRouteImport } from './routes/_public/privacy'
@@ -110,6 +111,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicFeedRoute = PublicFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicFeedbackRoute = PublicFeedbackRouteImport.update({
@@ -404,6 +410,7 @@ export interface FileRoutesByFullPath {
   '/cabinet': typeof AppCabinetRouteWithChildren
   '/notifications': typeof AppNotificationsRoute
   '/settings': typeof AppSettingsRouteWithChildren
+  '/feed': typeof PublicFeedRoute
   '/feedback': typeof PublicFeedbackRoute
   '/login': typeof PublicLoginRoute
   '/privacy': typeof PublicPrivacyRoute
@@ -464,6 +471,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/notifications': typeof AppNotificationsRoute
+  '/feed': typeof PublicFeedRoute
   '/feedback': typeof PublicFeedbackRoute
   '/login': typeof PublicLoginRoute
   '/privacy': typeof PublicPrivacyRoute
@@ -530,6 +538,7 @@ export interface FileRoutesById {
   '/_app/cabinet': typeof AppCabinetRouteWithChildren
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
+  '/_public/feed': typeof PublicFeedRoute
   '/_public/feedback': typeof PublicFeedbackRoute
   '/_public/login': typeof PublicLoginRoute
   '/_public/privacy': typeof PublicPrivacyRoute
@@ -597,6 +606,7 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/notifications'
     | '/settings'
+    | '/feed'
     | '/feedback'
     | '/login'
     | '/privacy'
@@ -657,6 +667,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/notifications'
+    | '/feed'
     | '/feedback'
     | '/login'
     | '/privacy'
@@ -722,6 +733,7 @@ export interface FileRouteTypes {
     | '/_app/cabinet'
     | '/_app/notifications'
     | '/_app/settings'
+    | '/_public/feed'
     | '/_public/feedback'
     | '/_public/login'
     | '/_public/privacy'
@@ -844,6 +856,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/feed': {
+      id: '/_public/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof PublicFeedRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/feedback': {
@@ -1340,6 +1359,7 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface PublicRouteChildren {
+  PublicFeedRoute: typeof PublicFeedRoute
   PublicFeedbackRoute: typeof PublicFeedbackRoute
   PublicLoginRoute: typeof PublicLoginRoute
   PublicPrivacyRoute: typeof PublicPrivacyRoute
@@ -1371,6 +1391,7 @@ interface PublicRouteChildren {
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicFeedRoute: PublicFeedRoute,
   PublicFeedbackRoute: PublicFeedbackRoute,
   PublicLoginRoute: PublicLoginRoute,
   PublicPrivacyRoute: PublicPrivacyRoute,

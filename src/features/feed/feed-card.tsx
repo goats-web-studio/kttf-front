@@ -2,6 +2,7 @@ import {
   clubImageVariant,
   coachImageVariant,
   type FeedAchievementItem,
+  type FeedForumItem,
   type FeedItem,
   type FeedPostItem,
   type FeedResultItem,
@@ -29,7 +30,7 @@ import {
 } from '@/common/i18n';
 import { LEVEL_NAME } from '@/common/ui/level-name';
 import PlayerAvatar from '@/common/ui/player-avatar';
-import { forumImageVariant, splitName, topicHref } from '@/features/forum/labels';
+import { forumImageVariant, sectionHref, splitName, topicHref } from '@/features/forum/labels';
 
 import { sourceHref } from './labels';
 import { SourceMark } from './source-mark';
@@ -72,6 +73,7 @@ export default function FeedCard({
       <Box sx={{ mt: 1.5 }}>
         {item.type === 'POST' && <PostBody item={item} />}
         {(item.type === 'PORTAL' || item.type === 'PLAYER_POST') && <TopicBody item={item} />}
+        {item.type === 'FORUM' && <ForumBody item={item} />}
         {item.type === 'TOURNAMENT' && <TournamentBody item={item} />}
         {item.type === 'RESULT' && <ResultBody item={item} />}
         {item.type === 'ACHIEVEMENT' && (
@@ -91,6 +93,7 @@ const TAG_KEYS: Readonly<Record<FeedItem['type'], MessageKey>> = {
   POST: 'feed.tag.news',
   PORTAL: 'feed.tag.portal',
   PLAYER_POST: 'feed.tag.playerPost',
+  FORUM: 'feed.tag.forum',
   TOURNAMENT: 'feed.tag.tournament',
   RESULT: 'feed.tag.result',
   ACHIEVEMENT: 'feed.tag.achievement',
@@ -258,6 +261,55 @@ function TopicBody({ item }: { readonly item: FeedTopicItem }): ReactNode {
           ))}
         </Box>
       )}
+    </>
+  );
+}
+
+/**
+ * Тема форума — ADR-097. Над заголовком раздел ссылкой и метка: новая тема
+ * или живое обсуждение старой. Метка на чернилах: цвет в ленте — только у
+ * акции и медали.
+ */
+function ForumBody({ item }: { readonly item: FeedForumItem }): ReactNode {
+  const t = useT();
+  const href = item.discussion === null ? undefined : topicHref(item.discussion.topicId);
+
+  return (
+    <>
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{ mb: 1, alignItems: 'center', flexWrap: 'wrap', minWidth: 0 }}
+      >
+        <Link
+          href={sectionHref(item.section.slug)}
+          color="text.secondary"
+          underline="hover"
+          variant="caption"
+          data-feed-section
+          sx={{ fontWeight: 700, minWidth: 0 }}
+        >
+          {item.section.title}
+        </Link>
+        <Box
+          component="span"
+          data-feed-marker={item.isNew ? 'new' : 'active'}
+          sx={{
+            px: 1,
+            py: 0.25,
+            borderRadius: 1,
+            bgcolor: 'var(--ink-100)',
+            color: 'text.primary',
+            typography: 'caption',
+            fontWeight: 700,
+          }}
+        >
+          {t(item.isNew ? 'feed.forum.new' : 'feed.forum.active')}
+        </Box>
+      </Stack>
+      <Title href={href}>{item.title}</Title>
+      {item.excerpt !== '' && <Excerpt text={item.excerpt} />}
     </>
   );
 }

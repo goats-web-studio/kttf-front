@@ -11,6 +11,7 @@ import {
   ListOrdered,
   Medal,
   MessagesSquare,
+  Newspaper,
   PenLine,
   Radio,
   Send,
@@ -74,8 +75,10 @@ export const NAV_MENUS: Readonly<Record<string, readonly NavMenuItem[]>> = {
     { href: '/feedback', icon: Send, key: 'clubs.apply' },
     { href: '/cabinet/coach', icon: UserPlus, key: 'trainings.become' },
   ],
-  // Сообщество: форум и дуэли — всё, где игроки находят друг друга.
+  // Сообщество: лента, форум и дуэли — всё, где игроки находят друг друга.
+  // Лента первой — ADR-097: туда приходят читать, что нового.
   '/forum': [
+    { href: '/feed', icon: Newspaper, key: 'forum.feed' },
     { href: '/forum', icon: MessagesSquare, key: 'forum.all' },
     // Дуэли и спарринги — ADR-065, `docs/13` 5.1.
     { href: '/duels', icon: Swords, key: 'players.duels' },
