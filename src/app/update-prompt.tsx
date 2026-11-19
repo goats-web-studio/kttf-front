@@ -6,6 +6,8 @@ import { useRegisterSW } from 'virtual:pwa-register/react';
 
 import { useT } from '@/common/i18n';
 
+import { watchForUpdates } from './update-check';
+
 /**
  * Кнопка подсказки. `ButtonBase`, а не `Button`: подсказка живёт над
  * маршрутами, вне оболочки раздела и её темы. Ставить сюда вторую тему нельзя:
@@ -29,13 +31,23 @@ const ACTION = {
  * Обновление не применяется само. Автоматическая перезагрузка вкладки в момент
  * выкатки может застать судью посреди турнира, а приоритет №2 брифа ставит
  * надёжность консоли выше свежести версии. Момент выбирает человек.
+ *
+ * Новую версию открытая вкладка ищет сама — раз в пять минут и при
+ * возвращении на вкладку (`watchForUpdates`), — иначе подсказка ждала бы
+ * перезагрузки страницы.
  */
 export default function UpdatePrompt(): ReactNode {
   const t = useT();
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
-  } = useRegisterSW();
+  } = useRegisterSW({
+    onRegisteredSW: (_url, registration) => {
+      if (registration !== undefined) {
+        watchForUpdates(registration);
+      }
+    },
+  });
 
   if (!needRefresh) {
     return null;
