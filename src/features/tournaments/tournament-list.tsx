@@ -22,7 +22,7 @@ import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 
 import { dateOfDay, groupByDate, type DayKey } from './calendar-model';
 import RatingCapBadge from './rating-cap-badge';
-import { useVenue } from './tournament-calendar';
+import { useVenue } from './venue';
 import { Participants, StartTime, TournamentName } from './tournament-line';
 
 type Feed = UseInfiniteQueryResult<InfiniteData<Page<TournamentListItemView>>>;

@@ -19,7 +19,6 @@ import {
   useT,
 } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
-import { usePlaceName } from '@/features/places/place-name';
 
 import {
   byDay,
@@ -33,6 +32,7 @@ import {
 import { TOURNAMENT_STATUS_KEYS } from './labels';
 import RatingCapBadge from './rating-cap-badge';
 import { Participants, StartTime, TournamentName } from './tournament-line';
+import { useVenue } from './venue';
 
 /** Клуб турнира из справочника, который страница уже загрузила. */
 type ClubOf = (clubId: string) => ClubView | undefined;
@@ -362,13 +362,6 @@ function CellEntry({
       </Box>
     </Tooltip>
   );
-}
-
-/** Адрес клуба с городом: «Абая 10, Алматы». Общий со списком (ADR-094). */
-export function useVenue(): (club: ClubView) => string {
-  const placeName = usePlaceName();
-
-  return (club) => [club.address, placeName(club.city)].filter(Boolean).join(', ');
 }
 
 /** Содержимое подсказки: всё, что в клетку не поместилось. */
