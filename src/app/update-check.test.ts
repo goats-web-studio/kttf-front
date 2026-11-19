@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { UPDATE_CHECK_MS, watchForUpdates } from './update-check';
+import { applyUpdate, UPDATE_CHECK_MS, watchForUpdates } from './update-check';
 
 function setVisibility(state: DocumentVisibilityState): void {
   Object.defineProperty(document, 'visibilityState', { configurable: true, value: state });
@@ -76,5 +76,47 @@ describe('watchForUpdates', () => {
     vi.advanceTimersByTime(UPDATE_CHECK_MS * 3);
     setVisibility('visible');
     expect(registration.update).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('applyUpdate', () => {
+  /** Ждущий работник: состояние меняется руками, как это делает браузер. */
+  function waitingWorker(): { worker: ServiceWorker; become: (state: ServiceWorkerState) => void } {
+    const target = new EventTarget();
+    const worker = Object.assign(target, { state: 'installed' });
+    return {
+      worker: worker as unknown as ServiceWorker,
+      become: (state) => {
+        worker.state = state;
+        target.dispatchEvent(new Event('statechange'));
+      },
+    };
+  }
+
+  it('включает ждущую версию и перезагружает вкладку, когда она включилась', () => {
+    const { worker, become } = waitingWorker();
+    const skipWaiting = vi.fn();
+    const reload = vi.fn();
+
+    applyUpdate({ waiting: worker }, skipWaiting, reload);
+    expect(skipWaiting).toHaveBeenCalledTimes(1);
+    expect(reload).not.toHaveBeenCalled();
+
+    // Вкладкой без работника смены управляющего не будет — перезагрузка
+    // всё равно приходит, по включению новой версии.
+    become('activating');
+    expect(reload).not.toHaveBeenCalled();
+    become('activated');
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('ждущего уже нет — версию включила другая вкладка: сразу перезагрузка', () => {
+    const skipWaiting = vi.fn();
+    const reload = vi.fn();
+
+    applyUpdate({ waiting: null }, skipWaiting, reload);
+
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(skipWaiting).not.toHaveBeenCalled();
   });
 });

@@ -1,12 +1,12 @@
 import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
 import Snackbar from '@mui/material/Snackbar';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 import { useT } from '@/common/i18n';
 
-import { watchForUpdates } from './update-check';
+import { applyUpdate, watchForUpdates } from './update-check';
 
 /**
  * Кнопка подсказки. `ButtonBase`, а не `Button`: подсказка живёт над
@@ -38,11 +38,13 @@ const ACTION = {
  */
 export default function UpdatePrompt(): ReactNode {
   const t = useT();
+  const registrationRef = useRef<ServiceWorkerRegistration | undefined>(undefined);
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW: (_url, registration) => {
+      registrationRef.current = registration;
       if (registration !== undefined) {
         watchForUpdates(registration);
       }
@@ -84,7 +86,9 @@ export default function UpdatePrompt(): ReactNode {
             color: 'var(--ink-900)',
             '&:hover': { bgcolor: 'var(--paper-hover)' },
           }}
-          onClick={() => void updateServiceWorker(true)}
+          onClick={() => {
+            applyUpdate(registrationRef.current, () => void updateServiceWorker(true));
+          }}
         >
           {t('pwa.update.apply')}
         </ButtonBase>

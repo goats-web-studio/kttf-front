@@ -35,3 +35,36 @@ export function watchForUpdates(
     document.removeEventListener('visibilitychange', onVisibility);
   };
 }
+
+/**
+ * Кнопка «Обновить»: новая версия включается, и вкладка перезагружается.
+ *
+ * Плагин перезагружает вкладку только по смене управляющего работника, а
+ * она бывает лишь у вкладки, которой уже управлял прежний работник. После
+ * жёсткого обновления (Cmd+Shift+R) или при первом заходе вкладкой никто не
+ * управляет, а `clientsClaim` нет намеренно: новая версия включалась, смены
+ * не было — и кнопка «не срабатывала». Поэтому перезагружаем сами, как только
+ * ждущий работник включился. Если ждущего уже нет — новую версию включила
+ * другая вкладка — просто перезагружаем.
+ */
+export function applyUpdate(
+  registration: Pick<ServiceWorkerRegistration, 'waiting'> | undefined,
+  skipWaiting: () => void,
+  reload: () => void = () => {
+    window.location.reload();
+  },
+): void {
+  const waiting = registration?.waiting ?? null;
+  if (waiting === null) {
+    reload();
+    return;
+  }
+  waiting.addEventListener('statechange', () => {
+    // `redundant` — ждущего сменила ещё более новая версия: перезагрузка
+    // покажет её подсказку, а не оставит кнопку без ответа.
+    if (waiting.state === 'activated' || waiting.state === 'redundant') {
+      reload();
+    }
+  });
+  skipWaiting();
+}
