@@ -277,7 +277,7 @@ describe('клуб из заявки с городом справочника �
     ).toBeDefined();
     await waitFor(() => {
       expect(
-        screen.getByRole('combobox', {
+        screen.getByRole<HTMLInputElement>('combobox', {
           name: new RegExp(ru['club.field.city']),
         }).value,
       ).toBe(CITIES.oskemen.name);
