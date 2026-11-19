@@ -11,6 +11,7 @@ import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
 
 import ApplicationCityField from './city-field';
+import { TRAP } from './trap';
 
 interface ApplicationFormProps {
   readonly isPending: boolean;
@@ -27,19 +28,6 @@ const GRID = {
 
 /** Числовое поле: цифровая клавиатура на телефоне. */
 const NUMERIC = { inputMode: 'numeric' } as const;
-
-/**
- * Скрытое поле-ловушка: человек его не видит и не заполняет, бот
- * заполняет всё подряд. Не `display: none` — такие поля боты пропускают;
- * поле уводится за край и выключается из обхода клавиатурой и чтецом.
- */
-const TRAP = {
-  position: 'absolute',
-  left: '-10000px',
-  width: 1,
-  height: 1,
-  overflow: 'hidden',
-} as const;
 
 /**
  * Заявка клуба — ADR-047. Поля как у заявки на добавление клуба в RTTF.

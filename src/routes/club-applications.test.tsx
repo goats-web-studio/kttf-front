@@ -8,6 +8,7 @@ import { createAppRouter } from '@/app/router';
 import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
+import { TRAP } from '@/features/club-applications/trap';
 import { ADMIN_USER, CITIES, placesReply, REGIONS, USER_WITH_PROFILE } from '@/test/fixtures';
 
 /**
@@ -193,6 +194,13 @@ describe('форма «Напишите нам»', () => {
       clubName: 'Спин',
       city: 'Алматы, Наурызбай',
     });
+  });
+
+  it('ловушка для ботов — точка в 1px, а не блок во всю страницу', () => {
+    // Числом `width: 1` в `sx` MUI — это 100 %: ловушка тянулась на высоту
+    // страницы и оставляла пустую полосу под подвалом.
+    expect(TRAP.width).toBe('1px');
+    expect(TRAP.height).toBe('1px');
   });
 
   it('без обязательных полей ничего не отправляет', async () => {
