@@ -13,6 +13,8 @@ import { useLocale, type Locale } from '@/common/i18n';
 
 import RouterLink from './router-link';
 
+import { SELECT_MENU_PROPS } from './select-menu';
+
 /**
  * Тема MUI из токенов дизайн-системы — ADR-041.
  *
@@ -415,6 +417,7 @@ function build(tokens: Tokens, locale: Locale, muiLocale: readonly object[]): Th
         MuiTooltip: { defaultProps: { arrow: true } },
         MuiDialog: { styleOverrides: { paper: { borderRadius: 20 } } },
         MuiMenu: { styleOverrides: { paper: { borderRadius: 12 } } },
+        MuiSelect: { defaultProps: { MenuProps: SELECT_MENU_PROPS } },
         MuiPopover: { styleOverrides: { paper: { borderRadius: 12 } } },
         MuiSkeleton: { defaultProps: { animation: 'pulse' } },
       },

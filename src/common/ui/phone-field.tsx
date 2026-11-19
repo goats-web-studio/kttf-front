@@ -18,6 +18,7 @@ import {
   PHONE_COUNTRIES,
   type PhoneCountry,
 } from '@/common/phone';
+import { SELECT_MENU_PROPS } from '@/common/ui/select-menu';
 
 type PhoneFieldProps = Omit<TextFieldProps, 'value' | 'onChange' | 'type'> & {
   /** Полная запись с кодом страны: `+7 (701) 123-45-67`. Пустая — номера нет. */
@@ -130,7 +131,11 @@ export default function PhoneField({
                   fontVariantNumeric: 'tabular-nums',
                   '& .MuiSelect-select': { py: 0, minHeight: 0 },
                 }}
-                MenuProps={{ slotProps: { paper: { sx: { maxHeight: 360 } } } }}
+                // Свой MenuProps заменяет тему целиком: якорь под полем — тот же.
+                MenuProps={{
+                  ...SELECT_MENU_PROPS,
+                  slotProps: { paper: { sx: { maxHeight: 360 } } },
+                }}
               >
                 {PHONE_COUNTRIES.map((item) => (
                   <MenuItem key={item.iso} value={item.iso} sx={{ minHeight: 40, gap: 2 }}>
