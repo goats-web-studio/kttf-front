@@ -1,7 +1,6 @@
 import type { ClubListItemView, CoachListItemView, PlayerListItemView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import ButtonBase from '@mui/material/ButtonBase';
 import InputBase from '@mui/material/InputBase';
 import Popper from '@mui/material/Popper';
 import Skeleton from '@mui/material/Skeleton';
@@ -28,30 +27,8 @@ import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
 
-/** Где искать: один раздел или все три сразу. */
-export type SearchScope = 'players' | 'clubs' | 'coaches' | 'all';
-
-const SCOPES: readonly (readonly [SearchScope, MessageKey])[] = [
-  ['players', 'home.search.scope.players'],
-  ['clubs', 'home.search.scope.clubs'],
-  ['coaches', 'home.search.scope.coaches'],
-  ['all', 'home.search.scope.all'],
-];
-
-const PLACEHOLDERS: Record<SearchScope, MessageKey> = {
-  players: 'home.search.placeholder.players',
-  clubs: 'home.search.placeholder.clubs',
-  coaches: 'home.search.placeholder.coaches',
-  all: 'home.search.placeholder.all',
-};
-
-/** Последняя строка подсказки — полный список раздела; из «Везде» — рейтинг. */
-const MORE: Record<SearchScope, MessageKey> = {
-  players: 'home.search.more.players',
-  clubs: 'home.search.more.clubs',
-  coaches: 'home.search.more.coaches',
-  all: 'home.search.more.players',
-};
+/** Раздел подсказки: ищем сразу во всех трёх. */
+type Section = 'players' | 'clubs' | 'coaches';
 
 /** Пауза после набора: запрос уходит, когда человек перестал печатать. */
 export const SEARCH_DEBOUNCE_MS = 250;
@@ -68,30 +45,25 @@ type Found =
 type Option = Found | { readonly kind: 'more' };
 
 interface Group {
-  readonly key: Exclude<SearchScope, 'all'>;
+  readonly key: Section;
   readonly title: MessageKey;
   readonly options: readonly Found[];
-}
-
-interface LiveSearchProps {
-  /** Выключка переключателя разделов: по центру постера или по левому краю колонки. */
-  readonly align?: 'center' | 'start';
 }
 
 /**
  * Живой поиск первого экрана — игроки, клубы, тренеры.
  *
- * Подсказка появляется со второй буквы, через четверть секунды после
- * набора: пять строк раздела, а в режиме «Везде» — три раздела с
- * заголовками. Стрелки двигают выделение, Enter открывает выделенное,
- * а без выделения ведёт в полный список раздела с тем же запросом. Escape
+ * Ищет сразу везде, без переключателя разделов. Подсказка появляется со
+ * второй буквы, через четверть секунды после набора: до пяти строк в
+ * каждом из трёх разделов с заголовками. Стрелки двигают выделение, Enter открывает выделенное,
+ * а без выделения ведёт в рейтинг игроков с тем же запросом. Escape
  * закрывает подсказку.
  *
  * Разметка — комбобокс по WAI-ARIA: фокус остаётся в поле, выделенная
  * строка объявляется через `aria-activedescendant`. Список — в слое поверх
  * страницы: постер обрезает всё, что выходит за его край.
  */
-export default function LiveSearch({ align = 'center' }: LiveSearchProps): ReactNode {
+export default function LiveSearch(): ReactNode {
   const t = useT();
   const navigate = useNavigate();
   const placeName = usePlaceName();
@@ -100,8 +72,6 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
   const listboxId = `${id}-listbox`;
 
   const [anchor, setAnchor] = useState<HTMLFormElement | null>(null);
-  const [input, setInput] = useState<HTMLInputElement | null>(null);
-  const [scope, setScope] = useState<SearchScope>('players');
   const [text, setText] = useState('');
   const [focused, setFocused] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -110,68 +80,58 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
   const typed = text.trim();
   const term = useDebounced(typed, SEARCH_DEBOUNCE_MS);
   const ready = term.length >= MIN_LENGTH;
-  const wants = (part: Exclude<SearchScope, 'all'>): boolean =>
-    ready && (scope === part || scope === 'all');
-
   // Прежний ответ держится, пока идёт новый: список не мигает на каждой букве.
   const players = useQuery({
     ...playersQuery({ search: term, page: 1, limit: LIMIT }),
-    enabled: wants('players'),
+    enabled: ready,
     placeholderData: keepPreviousData,
   });
   const clubs = useQuery({
     ...clubsQuery({ search: term, page: 1, limit: LIMIT }),
-    enabled: wants('clubs'),
+    enabled: ready,
     placeholderData: keepPreviousData,
   });
   const coaches = useQuery({
     ...coachesQuery({ search: term, page: 1, limit: LIMIT }),
-    enabled: wants('coaches'),
+    enabled: ready,
     placeholderData: keepPreviousData,
   });
 
-  const queries = [
-    { key: 'players' as const, query: players },
-    { key: 'clubs' as const, query: clubs },
-    { key: 'coaches' as const, query: coaches },
-  ].filter(({ key }) => wants(key));
+  const queries = ready ? [players, clubs, coaches] : [];
 
-  const groups: Group[] = [];
-  if (wants('players')) {
-    groups.push({
-      key: 'players',
-      title: 'home.search.scope.players',
-      options: (players.data?.items ?? []).map((item) => ({ kind: 'player', item })),
-    });
-  }
-  if (wants('clubs')) {
-    groups.push({
-      key: 'clubs',
-      title: 'home.search.scope.clubs',
-      options: (clubs.data?.items ?? []).map((item) => ({ kind: 'club', item })),
-    });
-  }
-  if (wants('coaches')) {
-    groups.push({
-      key: 'coaches',
-      title: 'home.search.scope.coaches',
-      options: (coaches.data?.items ?? []).map((item) => ({ kind: 'coach', item })),
-    });
-  }
+  const groups: Group[] = ready
+    ? [
+        {
+          key: 'players',
+          title: 'home.search.scope.players',
+          options: (players.data?.items ?? []).map((item) => ({ kind: 'player', item })),
+        },
+        {
+          key: 'clubs',
+          title: 'home.search.scope.clubs',
+          options: (clubs.data?.items ?? []).map((item) => ({ kind: 'club', item })),
+        },
+        {
+          key: 'coaches',
+          title: 'home.search.scope.coaches',
+          options: (coaches.data?.items ?? []).map((item) => ({ kind: 'coach', item })),
+        },
+      ]
+    : [];
   const shown = groups.filter((group) => group.options.length > 0);
   const found = shown.flatMap((group) => group.options);
   // Последняя строка — полный список раздела: до неё доходят и стрелками.
   const options: readonly Option[] = found.length > 0 ? [...found, { kind: 'more' }] : [];
 
-  const settled = typed === term && queries.every(({ query }) => !query.isFetching);
-  const failed = queries.some(({ query }) => query.isError);
+  const settled = typed === term && queries.every((query) => !query.isFetching);
+  const failed = queries.some((query) => query.isError);
   const state: 'loading' | 'error' | 'empty' | 'results' =
     found.length > 0 ? 'results' : failed ? 'error' : settled ? 'empty' : 'loading';
 
   const open = focused && !dismissed && typed.length >= MIN_LENGTH;
 
-  // Новый запрос или раздел — выделение с начала: старый номер указал бы не туда.
-  const resultKey = `${scope}:${term}`;
+  // Новый запрос — выделение с начала: старый номер указал бы не туда.
+  const resultKey = term;
   const active = highlight.key === resultKey ? highlight.index : -1;
   const setActive = (next: number | ((current: number) => number)): void => {
     setHighlight((previous) => {
@@ -185,19 +145,13 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
     document.getElementById(`${id}-option-${String(active)}`)?.scrollIntoView({ block: 'nearest' });
   }, [active, open, id]);
 
-  /** Полный список раздела с тем же запросом — по всем городам, как и подсказка. */
+  /** Полный список — рейтинг игроков с тем же запросом, по всем городам, как и подсказка. */
   const openList = (): void => {
     const search = typed === '' ? undefined : typed;
     // Без поля город списка — город шапки, а подсказка искала везде.
     const city = myCity === null ? undefined : ALL_CITIES;
 
-    if (scope === 'clubs') {
-      void navigate({ to: '/clubs', search: { q: search, city } });
-    } else if (scope === 'coaches') {
-      void navigate({ to: '/trainings', search: { view: 'coaches', q: search, city } });
-    } else {
-      void navigate({ to: '/players', search: { search, city } });
-    }
+    void navigate({ to: '/players', search: { search, city } });
   };
 
   const choose = (option: Option): void => {
@@ -244,76 +198,11 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
     openList();
   };
 
-  const changeScope = (next: SearchScope): void => {
-    setScope(next);
-    setDismissed(false);
-    input?.focus();
-  };
-
   const optionId = (index: number): string => `${id}-option-${String(index)}`;
   let index = -1;
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box
-        role="radiogroup"
-        aria-label={t('home.search.scope')}
-        sx={{
-          // На телефоне — во всю ширину, кнопки по длине слова: казахское
-          // «Жаттықтырушы» в равную четверть не помещается.
-          display: { xs: 'flex', sm: 'inline-flex' },
-          width: { xs: '100%', sm: 'auto' },
-          maxWidth: '100%',
-          // Запас на узкий экран и длинный язык: лента листается, а не режется.
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          gap: 0.5,
-          p: 0.5,
-          mb: 1.5,
-          borderRadius: 999,
-          bgcolor: 'color-mix(in srgb, var(--night) 55%, transparent)',
-          ...(align === 'center' ? { mx: 'auto' } : {}),
-        }}
-      >
-        {SCOPES.map(([value, label]) => {
-          const selected = value === scope;
-
-          return (
-            <ButtonBase
-              key={value}
-              role="radio"
-              aria-checked={selected}
-              // Поле не теряет фокус: подсказка остаётся открытой и
-              // пересчитывается под новый раздел.
-              onMouseDown={(event) => {
-                event.preventDefault();
-              }}
-              onClick={() => {
-                changeScope(value);
-              }}
-              sx={{
-                flex: { xs: '1 0 auto', sm: 'none' },
-                minHeight: { xs: 44, sm: 36 },
-                px: { xs: 1, sm: 2 },
-                borderRadius: 999,
-                fontSize: { xs: 13, sm: 14 },
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                color: selected ? 'var(--ink-900)' : 'var(--night-ink-700)',
-                bgcolor: selected ? 'var(--paper)' : 'transparent',
-                transition:
-                  'background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease)',
-                '@media (hover: hover)': {
-                  '&:hover': { color: selected ? 'var(--ink-900)' : 'var(--night-ink-900)' },
-                },
-              }}
-            >
-              {t(label)}
-            </ButtonBase>
-          );
-        })}
-      </Box>
-
       <Box
         ref={setAnchor}
         component="form"
@@ -334,7 +223,6 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
           <Search size={18} aria-hidden />
         </Box>
         <InputBase
-          inputRef={setInput}
           type="text"
           value={text}
           onChange={(event) => {
@@ -348,7 +236,7 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
             setFocused(false);
           }}
           onKeyDown={onKeyDown}
-          placeholder={t(PLACEHOLDERS[scope])}
+          placeholder={t('home.search.placeholder.all')}
           autoComplete="off"
           inputProps={{
             role: 'combobox',
@@ -406,28 +294,21 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
                 const headerId = `${id}-group-${group.key}`;
 
                 return (
-                  <Box
-                    key={group.key}
-                    role="group"
-                    aria-labelledby={scope === 'all' ? headerId : undefined}
-                    aria-label={scope === 'all' ? undefined : t(group.title)}
-                  >
-                    {scope === 'all' && (
-                      <Box
-                        id={headerId}
-                        role="presentation"
-                        sx={{
-                          px: 2,
-                          pt: 1,
-                          pb: 0.5,
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: 'var(--ink-500)',
-                        }}
-                      >
-                        {t(group.title)}
-                      </Box>
-                    )}
+                  <Box key={group.key} role="group" aria-labelledby={headerId}>
+                    <Box
+                      id={headerId}
+                      role="presentation"
+                      sx={{
+                        px: 2,
+                        pt: 1,
+                        pb: 0.5,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: 'var(--ink-500)',
+                      }}
+                    >
+                      {t(group.title)}
+                    </Box>
                     {group.options.map((option) => {
                       index += 1;
                       const current = index;
@@ -479,7 +360,7 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
                     component="span"
                     sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
-                    {fill(t(MORE[scope]), { query: typed })}
+                    {fill(t('home.search.more.players'), { query: typed })}
                   </Box>
                   <ArrowRight size={16} aria-hidden />
                 </Box>
@@ -506,7 +387,7 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
 
           {state === 'empty' && (
             <Box role="status" sx={{ px: 2, py: 1.5, fontSize: 14, color: 'var(--ink-700)' }}>
-              {t(scope === 'clubs' ? 'home.search.emptyClubs' : 'home.search.empty')}
+              {t('home.search.empty')}
             </Box>
           )}
 
@@ -528,7 +409,7 @@ export default function LiveSearch({ align = 'center' }: LiveSearchProps): React
               <Button
                 size="small"
                 onClick={() => {
-                  for (const { query } of queries) void query.refetch();
+                  for (const query of queries) void query.refetch();
                 }}
                 sx={{ minHeight: 44, flexShrink: 0 }}
               >

@@ -17,7 +17,7 @@ import LiveSearch, { SEARCH_DEBOUNCE_MS } from './live-search';
 
 /**
  * Живой поиск первого экрана: пауза после набора, запрос по контракту,
- * разделы «Везде», клавиатура комбобокса и переходы.
+ * поиск сразу по трём разделам, клавиатура комбобокса и переходы.
  */
 
 const PLAYER_ROWS = [
@@ -105,7 +105,7 @@ function type(field: HTMLInputElement, value: string): void {
 const searches = (path: string): string[] => requests.filter((url) => url.includes(`${path}?`));
 
 describe('живой поиск', () => {
-  it('ждёт паузы в наборе и ищет игроков по последнему тексту — пять строк', async () => {
+  it('ждёт паузы в наборе и ищет по последнему тексту — пять строк', async () => {
     renderSearch();
     const field = await input();
 
@@ -115,14 +115,16 @@ describe('живой поиск', () => {
     // Запрос не уходит на каждую букву — только после паузы.
     expect(searches('/players')).toEqual([]);
 
-    expect(await screen.findByRole('option', { name: /Ержанов Асан/ })).toBeDefined();
+    const players = await screen.findByRole('group', { name: ru['home.search.scope.players'] });
+    expect(within(players).getByRole('option', { name: /Ержанов Асан/ })).toBeDefined();
     expect(searches('/players')).toHaveLength(1);
     expect(searches('/players')[0]).toContain('search=Ерж');
     expect(searches('/players')[0]).toContain('limit=5');
     expect(searches('/players')[0]).toContain('page=1');
-    // Раздел по умолчанию — игроки: клубы и тренеры не спрашиваются.
-    expect(searches('/clubs')).toEqual([]);
-    expect(searches('/coaches')).toEqual([]);
+    // Переключателя разделов нет: клубы и тренеры ищутся тем же запросом.
+    expect(searches('/clubs')[0]).toContain('search=Ерж');
+    expect(searches('/coaches')[0]).toContain('search=Ерж');
+    expect(screen.queryByRole('radiogroup')).toBeNull();
     expect(field.getAttribute('aria-expanded')).toBe('true');
   });
 
@@ -138,9 +140,8 @@ describe('живой поиск', () => {
     expect(field.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('«Везде» — три раздела с заголовками, каждый по пять строк', async () => {
+  it('три раздела с заголовками, каждый по пять строк', async () => {
     renderSearch();
-    fireEvent.click(await screen.findByRole('radio', { name: ru['home.search.scope.all'] }));
     type(await input(), 'Ал');
 
     const listbox = await screen.findByRole('listbox');
@@ -165,8 +166,8 @@ describe('живой поиск', () => {
     const field = await input();
     type(field, 'Ерж');
     const options = await screen.findAllByRole('option');
-    // Два игрока и строка «все результаты».
-    expect(options).toHaveLength(3);
+    // Два игрока, клуб, тренер и строка «все результаты».
+    expect(options).toHaveLength(5);
 
     fireEvent.keyDown(field, { key: 'ArrowDown' });
     expect(field.getAttribute('aria-activedescendant')).toBe(options[0]?.id);
@@ -178,7 +179,7 @@ describe('живой поиск', () => {
     fireEvent.keyDown(field, { key: 'ArrowUp' });
     fireEvent.keyDown(field, { key: 'ArrowUp' });
     // Вверх с первой строки — на последнюю.
-    expect(field.getAttribute('aria-activedescendant')).toBe(options[2]?.id);
+    expect(field.getAttribute('aria-activedescendant')).toBe(options[4]?.id);
 
     fireEvent.keyDown(field, { key: 'Escape' });
     expect(field.getAttribute('aria-expanded')).toBe('false');
@@ -199,7 +200,7 @@ describe('живой поиск', () => {
     });
   });
 
-  it('Enter без выделения ведёт в полный список раздела с запросом', async () => {
+  it('Enter без выделения ведёт в рейтинг игроков с запросом', async () => {
     const router = renderSearch();
     const field = await input();
     type(field, 'Ерж');
@@ -212,33 +213,25 @@ describe('живой поиск', () => {
     expect(router.state.location.search).toMatchObject({ search: 'Ерж' });
   });
 
-  it('клубы: Enter без выделения — каталог клубов, клик по строке — страница клуба', async () => {
+  it('клик по клубу открывает страницу клуба', async () => {
     const router = renderSearch();
-    fireEvent.click(await screen.findByRole('radio', { name: ru['home.search.scope.clubs'] }));
-    const field = await input();
-    type(field, 'Ала');
+    type(await input(), 'Ала');
 
     fireEvent.click(await screen.findByRole('option', { name: new RegExp(CLUB.name) }));
     await waitFor(() => {
       expect(router.state.location.pathname).toBe(`/clubs/${CLUB.id}`);
     });
-
-    type(field, 'Алат');
-    fireEvent.keyDown(field, { key: 'Enter' });
-    await waitFor(() => {
-      expect(router.state.location.pathname).toBe('/clubs');
-    });
-    expect(router.state.location.search).toMatchObject({ q: 'Алат' });
   });
 
   it('тренер открывается по адресу своей страницы', async () => {
     const router = renderSearch();
-    fireEvent.click(await screen.findByRole('radio', { name: ru['home.search.scope.coaches'] }));
     const field = await input();
     type(field, 'Ива');
 
+    // Тренер в фикстуре — тот же человек, что и игрок: берём строку из раздела тренеров.
+    const coaches = await screen.findByRole('group', { name: ru['home.search.scope.coaches'] });
     fireEvent.click(
-      await screen.findByRole('option', { name: new RegExp(COACH_LIST_ITEM.player.lastName) }),
+      within(coaches).getByRole('option', { name: new RegExp(COACH_LIST_ITEM.player.lastName) }),
     );
 
     await waitFor(() => {

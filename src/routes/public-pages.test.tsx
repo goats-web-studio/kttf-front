@@ -842,14 +842,11 @@ describe('главная', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: ru['home.hero.title'] }),
     ).toBeDefined();
+    expect(screen.getByText(ru['home.hero.subtitle'])).toBeDefined();
     expect(document.querySelector('[data-hero-card]')).toBeNull();
-    // Быстрые ссылки под поиском — в разделы; без города шапки — без города в подписи.
-    const quick = screen.getByRole('navigation', { name: ru['home.hero.quick'] });
-    expect(
-      within(quick)
-        .getByRole('link', { name: ru['home.hero.quick.ratingAll'] })
-        .getAttribute('href'),
-    ).toBe('/players');
+    // Только заголовок и поле: ни переключателя разделов, ни ссылок под поиском.
+    expect(screen.queryByRole('radiogroup', { name: 'Где искать' })).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Быстрые ссылки' })).toBeNull();
   });
 });
 

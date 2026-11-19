@@ -36,51 +36,6 @@ export function HeroFrame({
 }
 
 /**
- * Строка бренда маленькой надписью над заголовком: «KTTF · турниры ·
- * рейтинг · клубы · игроки». KTTF — светлым красным, остальное тише.
- *
- * Точки — только на широком экране: на телефоне строка переносится, и
- * перенос оставлял точку в начале строки; там слова стоят с равными
- * промежутками.
- */
-export function HeroEyebrow({ align }: { readonly align: 'center' | 'start' }): ReactNode {
-  const t = useT();
-  const words = t('home.hero.line').split(' · ');
-
-  return (
-    <Typography
-      {...rise(0)}
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: align === 'center' ? 'center' : 'flex-start',
-        columnGap: { xs: 1.5, sm: 1 },
-        rowGap: 0.5,
-        fontSize: 12,
-        fontWeight: 700,
-        lineHeight: 1.5,
-        letterSpacing: '0.14em',
-        textTransform: 'uppercase',
-        color: 'var(--night-ink-700)',
-      }}
-    >
-      {words.map((word, index) => (
-        <Box component="span" key={word} sx={{ display: 'inline-flex', gap: 1 }}>
-          {index > 0 && (
-            <Box component="span" aria-hidden sx={{ display: { xs: 'none', sm: 'inline' } }}>
-              ·
-            </Box>
-          )}
-          <Box component="span" sx={index === 0 ? { color: 'var(--night-red)' } : undefined}>
-            {word}
-          </Box>
-        </Box>
-      ))}
-    </Typography>
-  );
-}
-
-/**
  * Заголовок экрана — обычным регистром и коротко: что здесь можно сделать.
  * Тень отделяет белые буквы от красного свечения.
  */
@@ -92,17 +47,43 @@ export function HeroTitle({ align }: { readonly align: 'center' | 'start' }): Re
       {...rise(80)}
       component="h1"
       sx={{
-        mt: 1.5,
         fontWeight: 800,
-        fontSize: { xs: 26, sm: 32, md: 36 },
-        lineHeight: 1.15,
-        letterSpacing: '-0.01em',
+        fontSize: { xs: 30, sm: 40, md: 48 },
+        lineHeight: 1.1,
+        letterSpacing: '-0.02em',
         textAlign: align === 'center' ? 'center' : 'left',
         textWrap: 'balance',
         textShadow: '0 2px 6px rgb(0 0 0 / 0.45), 0 8px 32px rgb(0 0 0 / 0.4)',
       }}
     >
       {t('home.hero.title')}
+    </Typography>
+  );
+}
+
+/**
+ * Описание под заголовком — зачем игроку сайт: турниры, спарринги,
+ * рейтинг, а заодно клубы, тренеры и инвентарь. Тише заголовка.
+ */
+export function HeroSubtitle({ align }: { readonly align: 'center' | 'start' }): ReactNode {
+  const t = useT();
+
+  return (
+    <Typography
+      {...rise(120)}
+      sx={{
+        mt: 2,
+        mx: align === 'center' ? 'auto' : 0,
+        maxWidth: 620,
+        fontSize: { xs: 15, md: 18 },
+        lineHeight: 1.55,
+        color: 'var(--night-ink-700)',
+        textAlign: align === 'center' ? 'center' : 'left',
+        textWrap: 'pretty',
+        textShadow: '0 1px 4px rgb(0 0 0 / 0.4)',
+      }}
+    >
+      {t('home.hero.subtitle')}
     </Typography>
   );
 }
