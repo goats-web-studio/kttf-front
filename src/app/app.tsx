@@ -11,7 +11,6 @@ import { installLeadingZeroGuard } from '@/common/ui/leading-zero';
 import { connectSessionToApi, restoreSession } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 
-import { notifyNavigated } from './navigation-events';
 import { createQueryClient } from './query-client';
 import { createAppRouter } from './router';
 import UpdatePrompt from './update-prompt';
@@ -79,18 +78,6 @@ function Routes({ queryClient }: { readonly queryClient: QueryClient }): ReactNo
     // совпадений они не отразятся на текущей странице до перезагрузки.
     void router.invalidate();
   }, [router, user]);
-
-  // Переход на другую страницу — сигнал подсказке об обновлении: на обычной
-  // странице новая версия ставится в этот момент.
-  useEffect(
-    () =>
-      router.subscribe('onResolved', (event) => {
-        if (event.pathChanged) {
-          notifyNavigated(event.toLocation.pathname);
-        }
-      }),
-    [router],
-  );
 
   return <RouterProvider router={router} context={{ queryClient, session: user }} />;
 }
