@@ -57,7 +57,10 @@ export default function SiteHeader(): ReactNode {
         bgcolor: 'background.paper',
       }}
     >
-      <Container maxWidth="lg">
+      {/* Шапка шире содержимого — до 1440px: разделы, «Провести турнир»,
+          город, язык, колокольчик и имя с рейтингом в 1280px не помещались —
+          город обрезался, имя переносилось. */}
+      <Container maxWidth="xl">
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minHeight: 56 }}>
           {/* Знак, а не набранное слово: у логотипа свои пропорции и
               наклон 9°, повторить их шрифтом нельзя. */}
@@ -212,7 +215,17 @@ function AccountMenu({ user }: { readonly user: AuthUserView }): ReactNode {
                 textAlign: 'left',
               }}
             >
-              <Box component="span" sx={{ typography: 'body2', fontWeight: 600 }}>
+              <Box
+                component="span"
+                sx={{
+                  typography: 'body2',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  maxWidth: 200,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
                 {player.lastName} {player.firstName}
               </Box>
               <Box
