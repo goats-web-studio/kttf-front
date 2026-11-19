@@ -105,7 +105,7 @@ beforeEach(() => {
       return Promise.resolve(reply(answer.status, answer.body));
     }
     if (url.includes('/account/requests')) return Promise.resolve(reply(200, status));
-    if (url.includes('/countries') || url.includes('/cities')) {
+    if (url.includes('/countries') || url.includes('/regions') || url.includes('/cities')) {
       return Promise.resolve(reply(200, []));
     }
 

@@ -89,7 +89,11 @@ function PlayersPage(): ReactNode {
   const search = { ...address, city: cityFilter.joined };
 
   const page = search.page ?? 1;
-  const players = useQuery(playersQuery(toPlayersQuery(search)));
+  // В запрос — города: выбранная область раскрыта в свои (ADR-096).
+  const players = useQuery({
+    ...playersQuery(toPlayersQuery({ ...search, city: cityFilter.cityIdsJoined })),
+    enabled: cityFilter.ready,
+  });
   const clubs = useQuery(clubDirectoryQuery);
   const placeName = usePlaceName();
   const cityLabel = useCityLabel();

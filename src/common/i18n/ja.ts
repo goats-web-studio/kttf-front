@@ -3248,6 +3248,17 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'account.form.citySaved': '都市を保存しました',
   'places.field.lat': '緯度',
   'places.field.lng': '経度',
+  // Области — ADR-096.
+  'places.region.whole': 'すべての都市',
+  'places.regions.title': '州',
+  'places.regions.empty': 'この国にはまだ州がありません。',
+  'places.region.add': '州を追加',
+  'places.region.new': '新しい州',
+  'places.region.edit': '州を編集',
+  'places.field.region': '州',
+  'places.region.none': '州なし',
+  'clubs.new.fromApplicationWithCity':
+    'フォームは申請「{club}」の内容で入力されています。都市も申請のとおりです。',
   'error.form.coordinate': '小数で入力（例: 43.2389）',
   'tournaments.col.age': '平均年齢',
   'tournaments.col.ageFull': '参加者の平均年齢',

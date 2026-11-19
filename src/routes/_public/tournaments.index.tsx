@@ -138,12 +138,13 @@ function TournamentsPage(): ReactNode {
   const [now] = useState(() => new Date());
   const today = startOfToday(now);
   const month: MonthKey = search.month ?? monthOf(now);
-  const filters = toFilters(search, city);
+  // В запрос — города: выбранная область раскрыта в свои (ADR-096).
+  const filters = toFilters(search, cityFilter.cityIds);
   const range = monthRange(month);
 
   const calendar = useQuery({
     ...monthTournamentsQuery(filters, range.from, range.to),
-    enabled: view === 'calendar',
+    enabled: view === 'calendar' && cityFilter.ready,
     // Пока грузится соседний месяц, видна прежняя сетка, а не скелетон.
     placeholderData: keepPreviousData,
   });
@@ -153,11 +154,11 @@ function TournamentsPage(): ReactNode {
   };
   const upcoming = useInfiniteQuery({
     ...tournamentsFeedQuery(filters, 'upcoming', today, dates),
-    enabled: view === 'list',
+    enabled: view === 'list' && cityFilter.ready,
   });
   const past = useInfiniteQuery({
     ...tournamentsFeedQuery(filters, 'past', today, dates),
-    enabled: view === 'list',
+    enabled: view === 'list' && cityFilter.ready,
   });
   const clubs = useQuery(clubDirectoryQuery);
   const cityLabel = useCityLabel();
@@ -476,9 +477,9 @@ function toDay(value: Dayjs | null): string | undefined {
  * «с / по» и месяц сюда не входят: у календаря границы — месяц, у списка —
  * свои блоки (ADR-052).
  */
-function toFilters(search: Search, city: string | undefined): TournamentFilters {
+function toFilters(search: Search, cityIds: readonly string[]): TournamentFilters {
   return {
-    ...(city === undefined ? {} : { cityId: city }),
+    ...(cityIds.length === 0 ? {} : { cityId: [...cityIds] }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
     ...(search.status === undefined ? {} : { status: STATUSES_OF[search.status] ?? search.status }),
   };

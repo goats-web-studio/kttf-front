@@ -13,6 +13,7 @@ import {
   pageOf,
   placesReply,
   PLAYERS,
+  REGIONS,
   RESULTS,
   TOURNAMENT,
   TOURNAMENT_ID,
@@ -615,6 +616,104 @@ describe('фильтры в адресе', () => {
       expect(window.location.search).toBe('');
     });
     expect(await screen.findByText(ru['ratings.emptyState.title'])).toBeDefined();
+  });
+});
+
+describe('области — ADR-096', () => {
+  const VKO = REGIONS.vko.id;
+  /** Города Восточно-Казахстанской области в порядке справочника. */
+  const VKO_CITIES = `${CITIES.oskemen.id},${CITIES.ridder.id}`;
+
+  it('игроки: область и город из ссылки — в запросе города области и сам город', async () => {
+    renderAt(`/players?city=${VKO},${CITIES.astana.id}`);
+
+    await screen.findAllByRole('row');
+
+    const players = requests.filter((url) => url.includes('/players?'));
+    expect(players.some((url) => url.includes(`cityId=${VKO_CITIES},${CITIES.astana.id}`))).toBe(
+      true,
+    );
+    // Сервер фильтрует по городам: идентификатор области туда не уходит.
+    expect(players.some((url) => url.includes(VKO))).toBe(false);
+    // Чип области — её название.
+    expect(await screen.findByText(`${ru['filter.city']}: ${REGIONS.vko.name}`)).toBeDefined();
+    expect(await screen.findByText(`${ru['filter.city']}: ${CITIES.astana.name}`)).toBeDefined();
+  });
+
+  it('клубы: область — всеми своими городами', async () => {
+    renderAt(`/clubs?city=${VKO}`);
+
+    expect(await screen.findByText(`${ru['filter.city']}: ${REGIONS.vko.name}`)).toBeDefined();
+    await waitFor(() => {
+      expect(
+        requests.some((url) => url.includes('/clubs?') && url.includes(`cityId=${VKO_CITIES}`)),
+      ).toBe(true);
+    });
+  });
+
+  it('календарь: область выбирается в фильтре — в адресе она, в запросе её города', async () => {
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
+
+    await screen.findByRole('link', { name: TOURNAMENT.name });
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['filter.city'] }));
+    const listbox = await screen.findByRole('listbox');
+    // Область — пунктом с подсказкой, её города — следом за ней.
+    const options = within(listbox)
+      .getAllByRole('option')
+      .map((option) => option.textContent);
+    expect(options.slice(-3)).toEqual([
+      `${REGIONS.vko.name} ${ru['places.region.whole']}`,
+      CITIES.oskemen.name,
+      CITIES.ridder.name,
+    ]);
+    fireEvent.click(
+      within(listbox).getByRole('option', {
+        name: `${REGIONS.vko.name} ${ru['places.region.whole']}`,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(window.location.search).toContain(`city=${VKO}`);
+    });
+    await waitFor(() => {
+      expect(
+        requests.some(
+          (url) => url.includes('/tournaments?') && url.includes(`cityId=${VKO_CITIES}`),
+        ),
+      ).toBe(true);
+    });
+    expect(requests.some((url) => url.includes('/tournaments?') && url.includes(VKO))).toBe(false);
+  });
+
+  it('главная: ближайшие турниры области — по её городам', async () => {
+    renderAt(`/?tcity=${VKO}`);
+
+    await screen.findByText(ru['home.upcoming.title']);
+    await waitFor(() => {
+      expect(
+        requests.some(
+          (url) =>
+            url.includes('/tournaments?') &&
+            url.includes('from=') &&
+            url.includes(`cityId=${VKO_CITIES}`),
+        ),
+      ).toBe(true);
+    });
+    expect(requests.some((url) => url.includes('/tournaments?') && url.includes(VKO))).toBe(false);
+  });
+
+  it('список турниров: область из ссылки — одним запросом по нескольким городам', async () => {
+    renderAt(`/tournaments?view=list&city=${VKO}`);
+
+    expect(await screen.findByRole('heading', { name: ru['tournaments.upcoming'] })).toBeDefined();
+    await waitFor(() => {
+      const lists = requests.filter((url) => url.includes('/tournaments?'));
+      // «Ближайшие» и «Прошедшие» — оба по городам области.
+      expect(lists.filter((url) => url.includes(`cityId=${VKO_CITIES}`))).toHaveLength(2);
+    });
+    expect(
+      requests.filter((url) => url.includes('/tournaments?')).some((url) => url.includes(VKO)),
+    ).toBe(false);
   });
 });
 

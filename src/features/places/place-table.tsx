@@ -12,7 +12,7 @@ import type { ReactNode } from 'react';
 
 import { fill, formatCount, useLocale, useT } from '@/common/i18n';
 
-/** Строка справочника: страна или город. Код есть только у страны. */
+/** Строка справочника: страна, область или город. Код есть только у страны. */
 export interface PlaceRow {
   readonly id: string;
   readonly name: string;
@@ -27,6 +27,11 @@ interface PlaceTableProps<T extends PlaceRow> {
   /** Подпись таблицы для чтеца экрана. */
   readonly label: string;
   readonly withCode?: boolean;
+  /** Дополнительная колонка: область у города (ADR-096). */
+  readonly extra?: {
+    readonly label: string;
+    readonly value: (row: T) => string | null;
+  };
   /** Строка, переключатель которой ждёт ответа сервера. */
   readonly pendingId?: string | undefined;
   readonly onEdit: (row: T) => void;
@@ -53,6 +58,7 @@ export default function PlaceTable<T extends PlaceRow>({
   rows,
   label,
   withCode = false,
+  extra,
   pendingId,
   onEdit,
   onToggle,
@@ -67,6 +73,7 @@ export default function PlaceTable<T extends PlaceRow>({
           <TableCell>{t('places.field.name')}</TableCell>
           {withCode && <TableCell sx={WIDE}>{t('places.field.code')}</TableCell>}
           <TableCell sx={WIDE}>{t('places.field.nameKk')}</TableCell>
+          {extra !== undefined && <TableCell sx={WIDE}>{extra.label}</TableCell>}
           <TableCell align="right" sx={WIDE}>
             {t('places.field.sortOrder')}
           </TableCell>
@@ -85,13 +92,16 @@ export default function PlaceTable<T extends PlaceRow>({
                 {row.name}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ display: { sm: 'none' } }}>
-                {[row.code, row.nameKk, formatCount(row.sortOrder, locale)]
+                {[row.code, row.nameKk, extra?.value(row), formatCount(row.sortOrder, locale)]
                   .filter((part) => part !== undefined && part !== null)
                   .join(' · ')}
               </Typography>
             </TableCell>
             {withCode && <TableCell sx={{ ...WIDE, ...NUM }}>{row.code}</TableCell>}
             <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>{row.nameKk}</TableCell>
+            {extra !== undefined && (
+              <TableCell sx={{ ...WIDE, color: 'text.secondary' }}>{extra.value(row)}</TableCell>
+            )}
             <TableCell align="right" sx={{ ...WIDE, ...NUM, color: 'text.secondary' }}>
               {formatCount(row.sortOrder, locale)}
             </TableCell>

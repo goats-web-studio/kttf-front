@@ -28,6 +28,8 @@ interface ClubFormProps {
   /** Заполнение нового клуба — из заявки «Напишите нам» (ADR-049). */
   readonly initial?: {
     readonly name?: string;
+    /** Город справочника из заявки (ADR-096). */
+    readonly cityId?: string;
     readonly address?: string;
     readonly tableCount?: number;
     readonly description?: string;
@@ -87,7 +89,7 @@ export default function ClubForm({
     ),
     defaultValues: {
       name: club?.name ?? initial?.name ?? '',
-      cityId: club?.city.id ?? myCity?.id ?? '',
+      cityId: club?.city.id ?? initial?.cityId ?? myCity?.id ?? '',
       tableCount: club?.tableCount ?? initial?.tableCount ?? 4,
       ...defined({
         shortName: club?.shortName,

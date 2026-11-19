@@ -191,9 +191,9 @@ function TrainingsPage(): ReactNode {
     ...clubsQuery({
       page: 1,
       limit: MAX_PAGE_SIZE,
-      ...(cities.length === 0 ? {} : { cityId: cities }),
+      ...(cityScope.cityIds.length === 0 ? {} : { cityId: cityScope.cityIds }),
     }),
-    enabled: view === 'trainings',
+    enabled: view === 'trainings' && cityScope.ready,
   });
   const clubName = (clubId: string): string =>
     clubs.data?.items.find((club) => club.id === clubId)?.name ?? t('trainings.filter.club');
@@ -464,6 +464,8 @@ function TrainingsPage(): ReactNode {
         {view === 'trainings' ? (
           <TrainingsList
             search={search}
+            cityIds={cityScope.cityIdsJoined}
+            ready={cityScope.ready}
             page={page}
             filtered={filtered}
             active={active}
@@ -473,6 +475,8 @@ function TrainingsPage(): ReactNode {
           <>
             <CoachesList
               search={search}
+              cityIds={cityScope.cityIdsJoined}
+              ready={cityScope.ready}
               page={page}
               filtered={filtered}
               active={active}
@@ -498,6 +502,10 @@ function groupKey(group: TrainingGroupView): string {
 
 interface ListProps {
   readonly search: TrainingsSearch;
+  /** Города запроса через запятую: область раскрыта в свои (ADR-096). */
+  readonly cityIds: string | undefined;
+  /** Область из адреса ещё не во что раскрыть — запрос ждёт справочник. */
+  readonly ready: boolean;
   readonly page: number;
   readonly filtered: boolean;
   readonly active: readonly ActiveFilter[];
@@ -514,10 +522,21 @@ const GRID = {
   gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, minmax(0, 1fr))' },
 } as const;
 
-function TrainingsList({ search, page, filtered, active, onReset }: ListProps): ReactNode {
+function TrainingsList({
+  search,
+  cityIds,
+  ready,
+  page,
+  filtered,
+  active,
+  onReset,
+}: ListProps): ReactNode {
   const t = useT();
   const navigate = Route.useNavigate();
-  const trainings = useQuery(trainingsQuery(toTrainingsQuery(search, page)));
+  const trainings = useQuery({
+    ...trainingsQuery(toTrainingsQuery({ ...search, city: cityIds }, page)),
+    enabled: ready,
+  });
   const data = trainings.data;
   const pages = data === undefined ? 1 : Math.max(1, Math.ceil(data.total / data.limit));
 
@@ -574,10 +593,21 @@ function TrainingsList({ search, page, filtered, active, onReset }: ListProps): 
   );
 }
 
-function CoachesList({ search, page, filtered, active, onReset }: ListProps): ReactNode {
+function CoachesList({
+  search,
+  cityIds,
+  ready,
+  page,
+  filtered,
+  active,
+  onReset,
+}: ListProps): ReactNode {
   const t = useT();
   const navigate = Route.useNavigate();
-  const coaches = useQuery(coachesQuery(toCoachesQuery(search, page)));
+  const coaches = useQuery({
+    ...coachesQuery(toCoachesQuery({ ...search, city: cityIds }, page)),
+    enabled: ready,
+  });
   const data = coaches.data;
   const pages = data === undefined ? 1 : Math.max(1, Math.ceil(data.total / data.limit));
 

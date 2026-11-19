@@ -123,7 +123,7 @@ beforeEach(() => {
       }
       return Promise.resolve(reply(200, requests));
     }
-    if (url.includes('/countries') || url.includes('/cities')) {
+    if (url.includes('/countries') || url.includes('/regions') || url.includes('/cities')) {
       return Promise.resolve(reply(200, []));
     }
 

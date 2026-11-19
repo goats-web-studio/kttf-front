@@ -1,4 +1,4 @@
-import type { CityView, CountryView } from '@kttf/shared/types';
+import type { CityView, CountryView, RegionView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -7,7 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 
@@ -18,13 +18,19 @@ import EmptyState from '@/common/ui/empty-state';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
-import { updateCity, updateCountry } from '@/features/places/api';
+import { updateCity, updateCountry, updateRegion } from '@/features/places/api';
 import CityDialog from '@/features/places/city-dialog';
 import CountryDialog from '@/features/places/country-dialog';
 import { defaultCountry } from '@/features/places/countries';
 import { usePlaceName } from '@/features/places/place-name';
 import PlaceTable from '@/features/places/place-table';
-import { adminCitiesQuery, adminCountriesQuery, placeKeys } from '@/features/places/queries';
+import {
+  adminCitiesQuery,
+  adminCountriesQuery,
+  adminRegionsQuery,
+  placeKeys,
+} from '@/features/places/queries';
+import RegionDialog from '@/features/places/region-dialog';
 
 export const Route = createFileRoute('/_app/admin/places')({
   component: PlacesPage,
@@ -34,7 +40,7 @@ export const Route = createFileRoute('/_app/admin/places')({
 type Editing<T> = { readonly entry: T | undefined } | null;
 
 /**
- * Справочник стран и городов — ADR-046.
+ * Справочник стран, областей и городов — ADR-046, ADR-096.
  *
  * Ведёт администратор платформы. Страница проверяет признак сама, чтобы не
  * показывать формы, которые сервер всё равно отвергнет; права на запись
@@ -133,7 +139,7 @@ function Places(): ReactNode {
       </Box>
 
       {country !== undefined && (
-        <Cities
+        <CountryPlaces
           country={country}
           countries={list}
           onCountry={(id) => {
@@ -154,8 +160,8 @@ function Places(): ReactNode {
   );
 }
 
-/** Города выбранной страны — со скрытыми. */
-function Cities({
+/** Области и города выбранной страны — со скрытыми. */
+function CountryPlaces({
   country,
   countries,
   onCountry,
@@ -163,6 +169,120 @@ function Cities({
   readonly country: CountryView;
   readonly countries: readonly CountryView[];
   readonly onCountry: (id: string) => void;
+}): ReactNode {
+  const t = useT();
+  const placeName = usePlaceName();
+  const regions = useQuery(adminRegionsQuery(country.id));
+
+  return (
+    <>
+      <Box sx={{ mt: 6 }}>
+        {/* Страна одна — выбирать нечего, она названа под заголовком. */}
+        {countries.length > 1 ? (
+          <TextField
+            select
+            label={t('places.country')}
+            value={country.id}
+            onChange={(event) => {
+              onCountry(event.target.value);
+            }}
+            sx={{ maxWidth: { sm: 320 } }}
+          >
+            {countries.map((item) => (
+              <MenuItem key={item.id} value={item.id}>
+                {placeName(item)}
+              </MenuItem>
+            ))}
+          </TextField>
+        ) : (
+          <Typography color="text.secondary">{placeName(country)}</Typography>
+        )}
+      </Box>
+
+      <Regions country={country} regions={regions} />
+      <Cities country={country} regions={regions.data ?? []} />
+    </>
+  );
+}
+
+/** Области страны — ADR-096. */
+function Regions({
+  country,
+  regions,
+}: {
+  readonly country: CountryView;
+  readonly regions: UseQueryResult<readonly RegionView[]>;
+}): ReactNode {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState<Editing<RegionView>>(null);
+
+  const toggle = useMutation({
+    mutationFn: ({ id, isActive }: { readonly id: string; readonly isActive: boolean }) =>
+      updateRegion(id, { isActive }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: placeKeys.all }),
+  });
+
+  return (
+    <Box component="section" sx={{ mt: 4 }}>
+      <SectionHead
+        title={t('places.regions.title')}
+        action={t('places.region.add')}
+        onAction={() => {
+          setEditing({ entry: undefined });
+        }}
+      />
+
+      <Box sx={{ mt: 2 }}>
+        <QueryState
+          isPending={regions.isPending}
+          error={regions.error}
+          onRetry={() => void regions.refetch()}
+          loading={<RowsSkeleton rows={3} />}
+        >
+          {(regions.data ?? []).length === 0 ? (
+            <EmptyState title={t('places.regions.empty')} />
+          ) : (
+            <PlaceTable
+              rows={regions.data ?? []}
+              label={t('places.regions.title')}
+              pendingId={toggle.isPending ? toggle.variables.id : undefined}
+              onEdit={(entry) => {
+                setEditing({ entry });
+              }}
+              onToggle={(row, isActive) => {
+                toggle.mutate({ id: row.id, isActive });
+              }}
+            />
+          )}
+        </QueryState>
+        {toggle.error !== null && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {t(errorMessageKey(toggle.error))}
+          </Alert>
+        )}
+      </Box>
+
+      {editing !== null && (
+        <RegionDialog
+          countryId={country.id}
+          region={editing.entry}
+          onClose={() => {
+            setEditing(null);
+          }}
+        />
+      )}
+    </Box>
+  );
+}
+
+/** Города страны — со скрытыми и с областью. */
+function Cities({
+  country,
+  regions,
+}: {
+  readonly country: CountryView;
+  readonly regions: readonly RegionView[];
 }): ReactNode {
   const t = useT();
   const placeName = usePlaceName();
@@ -176,6 +296,11 @@ function Cities({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: placeKeys.all }),
   });
 
+  const regionName = (city: CityView): string | null => {
+    const region = regions.find((item) => item.id === city.regionId);
+    return region === undefined ? null : placeName(region);
+  };
+
   return (
     <Box component="section" sx={{ mt: 6 }}>
       <SectionHead
@@ -185,29 +310,6 @@ function Cities({
           setEditing({ entry: undefined });
         }}
       />
-
-      {/* Страна одна — выбирать нечего, она названа в заголовке списка. */}
-      {countries.length > 1 ? (
-        <TextField
-          select
-          label={t('places.country')}
-          value={country.id}
-          onChange={(event) => {
-            onCountry(event.target.value);
-          }}
-          sx={{ mt: 2, maxWidth: { sm: 320 } }}
-        >
-          {countries.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
-              {placeName(item)}
-            </MenuItem>
-          ))}
-        </TextField>
-      ) : (
-        <Typography color="text.secondary" sx={{ mt: 1 }}>
-          {placeName(country)}
-        </Typography>
-      )}
 
       <Box sx={{ mt: 2 }}>
         <QueryState
@@ -222,6 +324,7 @@ function Cities({
             <PlaceTable
               rows={cities.data ?? []}
               label={t('places.cities.title')}
+              extra={{ label: t('places.field.region'), value: regionName }}
               pendingId={toggle.isPending ? toggle.variables.id : undefined}
               onEdit={(entry) => {
                 setEditing({ entry });
@@ -243,6 +346,7 @@ function Cities({
         <CityDialog
           countryId={country.id}
           city={editing.entry}
+          regions={regions}
           onClose={() => {
             setEditing(null);
           }}

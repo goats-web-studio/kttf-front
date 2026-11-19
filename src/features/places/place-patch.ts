@@ -3,12 +3,18 @@ import type {
   CountryView,
   CreateCityInput,
   CreateCountryInput,
+  CreateRegionInput,
+  RegionView,
   UpdateCityInput,
   UpdateCountryInput,
+  UpdateRegionInput,
 } from '@kttf/shared/types';
 
 /** Поля города в форме: страна у города не меняется (ADR-046). */
 export type CityFormValues = Omit<CreateCityInput, 'countryId'>;
+
+/** Поля области в форме: страна у области не меняется (ADR-096). */
+export type RegionFormValues = Omit<CreateRegionInput, 'countryId'>;
 
 /**
  * Правка записи справочника — только изменённые поля.
@@ -33,6 +39,21 @@ export function countryPatch(
   return Object.keys(patch).length === 0 ? null : patch;
 }
 
+export function regionPatch(
+  region: RegionView,
+  values: RegionFormValues,
+): UpdateRegionInput | null {
+  const patch: UpdateRegionInput = {};
+
+  if (values.name !== region.name) patch.name = values.name;
+  if ((values.nameKk ?? null) !== region.nameKk) patch.nameKk = values.nameKk ?? null;
+  if (values.sortOrder !== undefined && values.sortOrder !== region.sortOrder) {
+    patch.sortOrder = values.sortOrder;
+  }
+
+  return Object.keys(patch).length === 0 ? null : patch;
+}
+
 export function cityPatch(city: CityView, values: CityFormValues): UpdateCityInput | null {
   const patch: UpdateCityInput = {};
 
@@ -49,6 +70,11 @@ export function cityPatch(city: CityView, values: CityFormValues): UpdateCityInp
   }
   if ('lng' in values && (values.lng ?? null) !== (city.lng ?? null)) {
     patch.lng = values.lng ?? null;
+  }
+
+  // Область — ADR-096: пустой выбор выводит город из области.
+  if ('regionId' in values && (values.regionId ?? null) !== city.regionId) {
+    patch.regionId = values.regionId ?? null;
   }
 
   return Object.keys(patch).length === 0 ? null : patch;

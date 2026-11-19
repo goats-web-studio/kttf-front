@@ -25,7 +25,8 @@ import {
   type DetectResult,
 } from '@/features/places/my-city';
 import { usePlaceName } from '@/features/places/place-name';
-import { citiesQuery, countriesQuery } from '@/features/places/queries';
+import { citiesQuery, countriesQuery, regionsQuery } from '@/features/places/queries';
+import { citiesByRegion } from '@/features/places/regions';
 
 type Status = 'idle' | 'detecting' | Exclude<DetectResult['kind'], 'found'> | 'failed';
 
@@ -61,6 +62,7 @@ export default function CitySwitch(): ReactNode {
   // должна тянуть города, которые нужны раз в жизни.
   const queryClient = useQueryClient();
   const countries = useQuery({ ...countriesQuery, enabled: open });
+  const regions = useQuery({ ...regionsQuery, enabled: open });
   const cities = useQuery({ ...citiesQuery, enabled: open });
   const list = cities.data ?? [];
 
@@ -152,21 +154,32 @@ export default function CitySwitch(): ReactNode {
         </ListSubheader>,
       );
     }
-    for (const city of group.cities) {
-      const selected = city.id === myCity?.id;
-      items.push(
-        <MenuItem
-          key={city.id}
-          selected={selected}
-          onClick={() => {
-            choose(city);
-          }}
-          sx={{ minHeight: 44, justifyContent: 'space-between', gap: 2 }}
-        >
-          {placeName(city)}
-          {selected && <Check size={16} aria-hidden />}
-        </MenuItem>,
-      );
+    // Мой город — город, не область (ADR-096): область здесь только
+    // подзаголовок над своими городами.
+    for (const inRegion of citiesByRegion(regions.data ?? [], group.cities)) {
+      if (inRegion.region !== undefined) {
+        items.push(
+          <ListSubheader key={`region-${inRegion.region.id}`}>
+            {placeName(inRegion.region)}
+          </ListSubheader>,
+        );
+      }
+      for (const city of inRegion.cities) {
+        const selected = city.id === myCity?.id;
+        items.push(
+          <MenuItem
+            key={city.id}
+            selected={selected}
+            onClick={() => {
+              choose(city);
+            }}
+            sx={{ minHeight: 44, justifyContent: 'space-between', gap: 2 }}
+          >
+            {placeName(city)}
+            {selected && <Check size={16} aria-hidden />}
+          </MenuItem>,
+        );
+      }
     }
   }
   items.push(<Divider key="divider-bottom" />);

@@ -28,6 +28,8 @@ import { clubKeys } from '@/features/clubs/queries';
 const searchSchema = z.object({
   application: z.string().optional().catch(undefined),
   name: z.coerce.string().optional().catch(undefined),
+  /** Город из справочника, выбранный в заявке (ADR-096). */
+  city: z.uuid().optional().catch(undefined),
   address: z.coerce.string().optional().catch(undefined),
   tables: z.coerce.number().int().positive().optional().catch(undefined),
   about: z.coerce.string().optional().catch(undefined),
@@ -130,12 +132,20 @@ function AdminForm(): ReactNode {
       </Typography>
       {search.application !== undefined && search.name !== undefined && (
         <Alert severity="info" sx={{ mt: 2 }}>
-          {fill(t('clubs.new.fromApplication'), { club: search.name })}
+          {fill(
+            t(
+              search.city === undefined
+                ? 'clubs.new.fromApplication'
+                : 'clubs.new.fromApplicationWithCity',
+            ),
+            { club: search.name },
+          )}
         </Alert>
       )}
       <ClubForm
         initial={{
           ...(search.name === undefined ? {} : { name: search.name }),
+          ...(search.city === undefined ? {} : { cityId: search.city }),
           ...(search.address === undefined ? {} : { address: search.address }),
           ...(search.tables === undefined ? {} : { tableCount: search.tables }),
           ...(search.about === undefined ? {} : { description: search.about }),

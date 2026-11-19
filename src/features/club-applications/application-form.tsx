@@ -5,10 +5,12 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import type { ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT, type MessageKey } from '@/common/i18n';
+
+import ApplicationCityField from './city-field';
 
 interface ApplicationFormProps {
   readonly isPending: boolean;
@@ -43,8 +45,9 @@ const TRAP = {
  * Заявка клуба — ADR-047. Поля как у заявки на добавление клуба в RTTF.
  *
  * Обязательны имя, контакт, клуб и город: без них с залом не связаться.
- * Город — свободной строкой: заявки приходят и из городов, которых ещё нет
- * в справочнике.
+ * Город выбирается из справочника, а если его там нет — вписывается
+ * руками: заявки приходят и из городов, которых ещё нет в справочнике
+ * (ADR-096).
  */
 export default function ApplicationForm({
   isPending,
@@ -59,6 +62,7 @@ export default function ApplicationForm({
   });
 
   const { errors } = form.formState;
+  const cityId = useWatch({ control: form.control, name: 'cityId' });
 
   /**
    * Регистрация родного поля внутри `TextField`: ссылка обязана указывать на
@@ -101,12 +105,23 @@ export default function ApplicationForm({
           {...register('clubName')}
           {...hint(t, errors.clubName === undefined ? undefined : 'error.form.name')}
         />
-        <TextField
-          label={t('apply.field.city')}
-          required
-          autoComplete="address-level2"
-          {...register('city')}
-          {...hint(t, errors.city === undefined ? undefined : 'error.form.name')}
+        <Controller
+          control={form.control}
+          name="city"
+          render={({ field }) => (
+            <ApplicationCityField
+              value={field.value}
+              cityId={typeof cityId === 'string' ? cityId : undefined}
+              onChange={(city, id) => {
+                field.onChange(city);
+                form.setValue('cityId', id);
+              }}
+              onBlur={field.onBlur}
+              inputRef={field.ref}
+              label={t('apply.field.city')}
+              error={errors.city === undefined ? undefined : 'error.form.name'}
+            />
+          )}
         />
         <TextField
           label={t('apply.field.address')}

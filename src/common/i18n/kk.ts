@@ -3341,6 +3341,17 @@ export const kk: Record<MessageKey, string> = {
   'account.form.citySaved': 'Қала сақталды',
   'places.field.lat': 'Ендік',
   'places.field.lng': 'Бойлық',
+  // Области — ADR-096.
+  'places.region.whole': 'барлық қалалары',
+  'places.regions.title': 'Облыстар',
+  'places.regions.empty': 'Бұл елде әзірге облыс жоқ.',
+  'places.region.add': 'Облыс қосу',
+  'places.region.new': 'Жаңа облыс',
+  'places.region.edit': 'Облысты өзгерту',
+  'places.field.region': 'Облыс',
+  'places.region.none': 'Облыссыз',
+  'clubs.new.fromApplicationWithCity':
+    'Пішін «{club}» өтінімі бойынша толтырылды, қаласы да өтінімнен алынды.',
   'error.form.coordinate': 'Нүктесі бар сан, мысалы 43.2389',
   'tournaments.col.age': 'орт. жас',
   'tournaments.col.ageFull': 'Қатысушылардың орташа жасы',

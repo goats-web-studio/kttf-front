@@ -14,6 +14,7 @@ import {
   CITY_LIST,
   COUNTRY,
   placesReply,
+  REGIONS,
   USER_WITH_PROFILE,
 } from '@/test/fixtures';
 
@@ -39,6 +40,7 @@ let refusal: string | null = null;
 const HIDDEN: CityView = {
   id: '00000000-0000-4000-8000-0000000000c9',
   countryId: COUNTRY.id,
+  regionId: null,
   name: 'Байконур',
   nameKk: 'Байқоңыр',
   sortOrder: 9,
@@ -64,6 +66,11 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
   if (url.includes('/admin/countries')) {
     return reply([COUNTRY]);
+  }
+
+  if (url.includes('/admin/regions')) {
+    if (method === 'GET') return reply([REGIONS.vko]);
+    return reply({ ...REGIONS.vko, ...(body as object) });
   }
 
   if (url.includes('/admin/cities')) {
@@ -211,5 +218,102 @@ describe('ведение справочника', () => {
     expect(request?.url).toContain(`/admin/cities/${CITIES.almaty.id}`);
     expect(request?.body).toEqual({ isActive: false });
     expect(requests('DELETE')).toHaveLength(0);
+  });
+});
+
+describe('области — ADR-096', () => {
+  it('новая область уходит в выбранную страну', async () => {
+    renderPlaces(ADMIN_USER);
+
+    const regions = await screen.findByRole('table', { name: ru['places.regions.title'] });
+    expect(within(regions).getByText(REGIONS.vko.name)).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: ru['places.region.add'] }));
+
+    const dialog = await screen.findByRole('dialog', { name: ru['places.region.new'] });
+    fireEvent.change(within(dialog).getByLabelText(ru['places.field.name']), {
+      target: { value: 'Карагандинская область' },
+    });
+    fireEvent.change(within(dialog).getByLabelText(ru['places.field.nameKk']), {
+      target: { value: 'Қарағанды облысы' },
+    });
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['places.save'] }));
+
+    await waitFor(() => {
+      expect(requests('POST')).toHaveLength(1);
+    });
+    const [request] = requests('POST');
+    expect(request?.url).toContain('/admin/regions');
+    expect(request?.body).toEqual({
+      countryId: COUNTRY.id,
+      name: 'Карагандинская область',
+      nameKk: 'Қарағанды облысы',
+    });
+  });
+
+  it('область скрывается правкой, а не удалением', async () => {
+    renderPlaces(ADMIN_USER);
+
+    const regions = await screen.findByRole('table', { name: ru['places.regions.title'] });
+    fireEvent.click(
+      within(regions).getByRole('switch', {
+        name: fill(ru['places.toggle'], { name: REGIONS.vko.name }),
+      }),
+    );
+
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+    const [request] = requests('PATCH');
+    expect(request?.url).toContain(`/admin/regions/${REGIONS.vko.id}`);
+    expect(request?.body).toEqual({ isActive: false });
+  });
+
+  it('город показывает область; выбор «Без области» выводит его из области', async () => {
+    renderPlaces(ADMIN_USER);
+
+    const cities = await screen.findByRole('table', { name: ru['places.cities.title'] });
+    const row = within(cities).getByText(CITIES.oskemen.name).closest('tr');
+    expect(row?.textContent).toContain(REGIONS.vko.name);
+
+    fireEvent.click(
+      within(cities).getByRole('button', {
+        name: fill(ru['places.editNamed'], { name: CITIES.oskemen.name }),
+      }),
+    );
+    const dialog = await screen.findByRole('dialog', { name: ru['places.city.edit'] });
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: ru['places.field.region'] }));
+    fireEvent.click(await screen.findByRole('option', { name: ru['places.region.none'] }));
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['places.save'] }));
+
+    await waitFor(() => {
+      expect(requests('PATCH')).toHaveLength(1);
+    });
+    const [request] = requests('PATCH');
+    expect(request?.url).toContain(`/admin/cities/${CITIES.oskemen.id}`);
+    expect(request?.body).toEqual({ regionId: null });
+  });
+
+  it('новый город — в выбранную область', async () => {
+    renderPlaces(ADMIN_USER);
+
+    await screen.findByRole('table', { name: ru['places.cities.title'] });
+    fireEvent.click(screen.getByRole('button', { name: ru['places.city.add'] }));
+
+    const dialog = await screen.findByRole('dialog', { name: ru['places.city.new'] });
+    fireEvent.change(within(dialog).getByLabelText(ru['places.field.name']), {
+      target: { value: 'Зыряновск' },
+    });
+    fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: ru['places.field.region'] }));
+    fireEvent.click(await screen.findByRole('option', { name: REGIONS.vko.name }));
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['places.save'] }));
+
+    await waitFor(() => {
+      expect(requests('POST')).toHaveLength(1);
+    });
+    expect(requests('POST')[0]?.body).toEqual({
+      countryId: COUNTRY.id,
+      regionId: REGIONS.vko.id,
+      name: 'Зыряновск',
+    });
   });
 });

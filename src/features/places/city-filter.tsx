@@ -10,18 +10,21 @@ import { orUndefined } from '@/common/search';
 import { useCityLabel } from './city-label';
 import { citiesByCountry } from './countries';
 import { usePlaceName } from './place-name';
-import { citiesQuery, countriesQuery } from './queries';
+import { citiesQuery, countriesQuery, regionsQuery } from './queries';
+import { scopeOptions } from './regions';
+import ScopeOptionLabel from './scope-option';
 
 interface CityFilterProps {
-  /** Город из адреса; `undefined` — фильтра нет. */
+  /** Город или область из адреса; `undefined` — фильтра нет. */
   readonly value: string | undefined;
   readonly onChange: (cityId: string | undefined) => void;
 }
 
 /**
- * Фильтр списка по городу справочника — ADR-046.
+ * Фильтр списка по городу справочника — ADR-046, ADR-096.
  *
- * Выбирается, а не набирается: сервер фильтрует по `cityId`. Применяется
+ * Выбирается, а не набирается. Выбрать можно и область целиком: она
+ * раскрывается в свои города в запросе (`useCityScope`). Применяется
  * сразу при выборе (ADR-040). Стран больше одной — города идут группами
  * под названием страны.
  *
@@ -33,10 +36,13 @@ export default function CityFilter({ value, onChange }: CityFilterProps): ReactN
   const placeName = usePlaceName();
   const cityLabel = useCityLabel();
   const countries = useQuery(countriesQuery);
+  const regions = useQuery(regionsQuery);
   const cities = useQuery(citiesQuery);
 
   const groups = citiesByCountry(countries.data ?? [], cities.data ?? []);
-  const known = cities.data?.some((city) => city.id === value) === true;
+  const known =
+    cities.data?.some((city) => city.id === value) === true ||
+    regions.data?.some((region) => region.id === value) === true;
 
   // Пункты и подзаголовки — плоским списком: меню MUI ждёт их прямыми
   // детьми, пункт внутри фрагмента не выбирается.
@@ -62,10 +68,10 @@ export default function CityFilter({ value, onChange }: CityFilterProps): ReactN
         </ListSubheader>,
       );
     }
-    for (const city of group.cities) {
+    for (const option of scopeOptions(regions.data ?? [], group.cities)) {
       items.push(
-        <MenuItem key={city.id} value={city.id}>
-          {placeName(city)}
+        <MenuItem key={option.id} value={option.id} sx={option.nested ? { pl: 4 } : undefined}>
+          <ScopeOptionLabel option={option} />
         </MenuItem>,
       );
     }
@@ -79,6 +85,8 @@ export default function CityFilter({ value, onChange }: CityFilterProps): ReactN
       onChange={(event) => {
         onChange(orUndefined(event.target.value));
       }}
+      // В поле — только название: подсказка «все города» нужна в списке.
+      slotProps={{ select: { renderValue: (selected) => cityLabel(String(selected)) } }}
     >
       {items}
     </TextField>

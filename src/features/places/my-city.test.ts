@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CITIES } from '@/test/fixtures';
+import { CITIES, CITY_LIST, REGIONS } from '@/test/fixtures';
 
 import { ALL_CITIES, cityScope, detectCity } from './my-city';
 
@@ -24,6 +24,20 @@ describe('фильтр «Город» с городом шапки — ADR-093',
 
   it('выбранное на странице сильнее шапки', () => {
     expect(cityScope(`${ASTANA},${ALMATY}`, ALMATY).ids).toEqual([ASTANA, ALMATY]);
+  });
+
+  it('область из адреса уходит в запрос своими городами, вперемешку с городом — ADR-096', () => {
+    const scope = cityScope(`${REGIONS.vko.id},${ASTANA}`, ALMATY, CITY_LIST);
+
+    // Поле и чипы видят выбор как есть — область одним пунктом.
+    expect(scope.ids).toEqual([REGIONS.vko.id, ASTANA]);
+    expect(scope.cityIds).toEqual([CITIES.oskemen.id, CITIES.ridder.id, ASTANA]);
+    expect(scope.cityIdsJoined).toBe(`${CITIES.oskemen.id},${CITIES.ridder.id},${ASTANA}`);
+  });
+
+  it('все города — пустой список запроса', () => {
+    expect(cityScope(ALL_CITIES, ALMATY, CITY_LIST).cityIds).toEqual([]);
+    expect(cityScope(ALL_CITIES, ALMATY, CITY_LIST).cityIdsJoined).toBeUndefined();
   });
 
   it('снятый на странице фильтр пишется как `all`, иначе вернулся бы город шапки', () => {

@@ -148,6 +148,8 @@ function HomePage(): ReactNode {
             </Typography>
             <TournamentRail
               city={railCity.joined}
+              cityIds={railCity.cityIds}
+              ready={railCity.ready}
               cities={cities}
               onCity={(tcity) => {
                 setSearch({ tcity: railCity.toParam(tcity === undefined ? [] : [tcity]) });

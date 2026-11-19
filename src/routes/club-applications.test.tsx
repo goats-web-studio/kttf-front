@@ -1,13 +1,14 @@
 import type { AuthUserView, ClubApplicationView } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
-import { ADMIN_USER, placesReply, USER_WITH_PROFILE } from '@/test/fixtures';
+import { ADMIN_USER, CITIES, placesReply, REGIONS, USER_WITH_PROFILE } from '@/test/fixtures';
 
 /**
  * Заявка клуба — ADR-047.
@@ -27,6 +28,8 @@ interface Sent {
 let sent: Sent[] = [];
 /** Отказ на отправку: `null` — принято. */
 let refusal: { readonly code: string; readonly status: number } | null = null;
+/** Заявка в списке администратора — по умолчанию с городом вне справочника. */
+let listed: ClubApplicationView;
 
 const APPLICATION: ClubApplicationView = {
   id: '00000000-0000-4000-8000-0000000000a1',
@@ -34,6 +37,7 @@ const APPLICATION: ClubApplicationView = {
   contact: '+7 701 123 45 67',
   clubName: 'Спин',
   city: 'Караганда',
+  cityId: null,
   address: null,
   tableCount: 6,
   tournaments: 'Раз в месяц, человек 20',
@@ -69,7 +73,7 @@ function answer(url: string, init: RequestInit | undefined): Response {
     if (method === 'PATCH') {
       return reply({ ...APPLICATION, ...(body as object), handledAt: '2026-10-18T11:00:00.000Z' });
     }
-    return reply({ items: [APPLICATION], total: 1, page: 1, limit: 20 });
+    return reply({ items: [listed], total: 1, page: 1, limit: 20 });
   }
 
   const places = placesReply(url);
@@ -118,6 +122,7 @@ async function fillRequired(): Promise<void> {
 beforeEach(() => {
   sent = [];
   refusal = null;
+  listed = APPLICATION;
   vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) =>
     Promise.resolve(answer(String(input), init)),
   );
@@ -146,6 +151,47 @@ describe('форма «Напишите нам»', () => {
       clubName: 'Спин',
       city: 'Караганда',
       tableCount: 6,
+    });
+  });
+
+  it('город из справочника уходит и названием, и ссылкой (ADR-096)', async () => {
+    renderAt('/feedback', null);
+
+    await fillRequired();
+    const city = screen.getByRole('combobox', { name: new RegExp(`^${ru['apply.field.city']}`) });
+    fireEvent.change(city, { target: { value: 'Усть' } });
+    // Города области — под её названием.
+    const listbox = await screen.findByRole('listbox');
+    expect(within(listbox).getByText(REGIONS.vko.name)).toBeDefined();
+    fireEvent.click(within(listbox).getByRole('option', { name: CITIES.oskemen.name }));
+    fireEvent.click(screen.getByRole('button', { name: ru['apply.submit'] }));
+
+    expect(await screen.findByText(ru['apply.sent.title'])).toBeDefined();
+    expect(posts()[0]?.body).toEqual({
+      name: 'Арман',
+      contact: '+7 701 123 45 67',
+      clubName: 'Спин',
+      city: CITIES.oskemen.name,
+      cityId: CITIES.oskemen.id,
+    });
+  });
+
+  it('правка выбранного города — уже вписанный город, без ссылки', async () => {
+    renderAt('/feedback', null);
+
+    await fillRequired();
+    const city = screen.getByRole('combobox', { name: new RegExp(`^${ru['apply.field.city']}`) });
+    fireEvent.change(city, { target: { value: 'Алма' } });
+    fireEvent.click(await screen.findByRole('option', { name: CITIES.almaty.name }));
+    fireEvent.change(city, { target: { value: 'Алматы, Наурызбай' } });
+    fireEvent.click(screen.getByRole('button', { name: ru['apply.submit'] }));
+
+    expect(await screen.findByText(ru['apply.sent.title'])).toBeDefined();
+    expect(posts()[0]?.body).toEqual({
+      name: 'Арман',
+      contact: '+7 701 123 45 67',
+      clubName: 'Спин',
+      city: 'Алматы, Наурызбай',
     });
   });
 
@@ -198,6 +244,43 @@ describe('заявки у администратора', () => {
         url: expect.stringContaining(`/admin/club-applications/${APPLICATION.id}`) as string,
         body: { status: 'DONE' },
       });
+    });
+  });
+});
+
+describe('клуб из заявки с городом справочника — ADR-096', () => {
+  const WITH_CITY: ClubApplicationView = {
+    ...APPLICATION,
+    city: CITIES.oskemen.name,
+    cityId: CITIES.oskemen.id,
+  };
+
+  it('«Создать клуб» несёт город заявки', async () => {
+    listed = WITH_CITY;
+    renderAt('/admin/applications', ADMIN_USER);
+
+    const create = await screen.findByRole('link', { name: ru['applications.createClub'] });
+    const href = new URL(create.getAttribute('href') ?? '', 'http://x');
+    expect(href.searchParams.get('city')).toBe(CITIES.oskemen.id);
+  });
+
+  it('форма клуба подставляет город заявки', async () => {
+    renderAt(
+      `/cabinet/clubs/new?application=${APPLICATION.id}&name=${APPLICATION.clubName}&city=${CITIES.oskemen.id}`,
+      ADMIN_USER,
+    );
+
+    expect(
+      await screen.findByText(
+        fill(ru['clubs.new.fromApplicationWithCity'], { club: APPLICATION.clubName }),
+      ),
+    ).toBeDefined();
+    await waitFor(() => {
+      expect(
+        screen.getByRole('combobox', {
+          name: new RegExp(ru['club.field.city']),
+        }).value,
+      ).toBe(CITIES.oskemen.name);
     });
   });
 });

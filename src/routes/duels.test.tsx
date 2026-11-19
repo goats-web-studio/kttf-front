@@ -23,6 +23,7 @@ import {
   PLAYERS,
   PLAYER_IDS,
   PLAYER_PROFILE,
+  REGIONS,
   USER_WITH_PROFILE,
   cityRef,
   pageOf,
@@ -267,6 +268,20 @@ describe('доска «Дуэли и спарринги»', () => {
     await waitFor(() => {
       expect(requests('GET', 'scope=recent').length).toBeGreaterThan(0);
     });
+  });
+});
+
+describe('доска: область — ADR-096', () => {
+  it('область из ссылки уходит в запрос всеми своими городами', async () => {
+    renderAt(`/duels?city=${REGIONS.vko.id}`, null);
+
+    await waitFor(() => {
+      expect(requests('GET', '/duels?')).toHaveLength(1);
+    });
+    const url = decodeURIComponent(requests('GET', '/duels?')[0]?.url ?? '');
+    expect(url).toContain(`cityId=${CITIES.oskemen.id},${CITIES.ridder.id}`);
+    expect(url).not.toContain(REGIONS.vko.id);
+    expect(await screen.findByText(`${ru['filter.city']}: ${REGIONS.vko.name}`)).toBeDefined();
   });
 });
 

@@ -12,6 +12,9 @@ import { formatWeekday, useLocale, useT, type Locale } from '@/common/i18n';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
 import { usePlaceName } from '@/features/places/place-name';
+import { citiesQuery, regionsQuery } from '@/features/places/queries';
+import { scopeOptions } from '@/features/places/regions';
+import ScopeOptionLabel from '@/features/places/scope-option';
 import { tournamentsQuery } from '@/features/tournaments/queries';
 import RatingCapBadge from '@/features/tournaments/rating-cap-badge';
 import { Participants, StartTime, TournamentName } from '@/features/tournaments/tournament-line';
@@ -27,8 +30,16 @@ const UPCOMING_MOBILE = 6;
 const NOT_STARTED = ['PUBLISHED', 'REG_OPEN', 'REG_CLOSED'] as const;
 
 interface TournamentRailProps {
-  /** Город ближайших по `id`; `undefined` — все города. Живёт в адресе главной. */
+  /**
+   * Город или область ближайших по `id`; `undefined` — все города. Живёт
+   * в адресе главной.
+   */
   readonly city: string | undefined;
+  /** Города запроса: область раскрыта в свои города (ADR-096); пусто — все. */
+  readonly cityIds: readonly string[];
+  /** Область из адреса ещё не во что раскрыть — запрос ждёт справочник. */
+  readonly ready: boolean;
+  /** Города, где есть клубы: только в них бывают турниры. */
   readonly cities: readonly CityRef[];
   readonly onCity: (city: string | undefined) => void;
   readonly clubs: ReadonlyMap<string, ClubView> | undefined;
@@ -42,6 +53,8 @@ interface TournamentRailProps {
  */
 export default function TournamentRail({
   city,
+  cityIds,
+  ready,
   cities,
   onCity,
   clubs,
@@ -49,7 +62,14 @@ export default function TournamentRail({
   return (
     <Box sx={{ display: 'grid', gap: 3, alignContent: 'start' }}>
       <Live clubs={clubs} />
-      <Upcoming city={city} cities={cities} onCity={onCity} clubs={clubs} />
+      <Upcoming
+        city={city}
+        cityIds={cityIds}
+        ready={ready}
+        cities={cities}
+        onCity={onCity}
+        clubs={clubs}
+      />
     </Box>
   );
 }
@@ -85,6 +105,8 @@ function Live({ clubs }: { readonly clubs: ReadonlyMap<string, ClubView> | undef
 
 function Upcoming({
   city,
+  cityIds,
+  ready,
   cities,
   onCity,
   clubs,
@@ -95,6 +117,18 @@ function Upcoming({
   const locale = useLocale();
   const placeName = usePlaceName();
   const mobile = useMediaQuery((theme) => theme.breakpoints.down('md'));
+  const directory = useQuery(citiesQuery);
+  const regions = useQuery(regionsQuery);
+
+  // Область — только та, где в каком-то городе есть клуб (ADR-096): иначе
+  // выбор заведомо пуст.
+  const options = useMemo(() => {
+    const regionOf = new Map((directory.data ?? []).map((item) => [item.id, item.regionId]));
+    return scopeOptions(
+      regions.data ?? [],
+      cities.map((item) => ({ ...item, regionId: regionOf.get(item.id) ?? null })),
+    );
+  }, [cities, directory.data, regions.data]);
 
   // Начало суток, а не «сейчас»: момент в ключе запроса менялся бы на каждом
   // рендере. Турнир, начавшийся сегодня утром и не запущенный, тоже ближайший.
@@ -104,16 +138,17 @@ function Upcoming({
     return date.toISOString();
   }, []);
 
-  const upcoming = useQuery(
-    tournamentsQuery({
+  const upcoming = useQuery({
+    ...tournamentsQuery({
       status: NOT_STARTED,
       from: today,
       order: 'asc',
       page: 1,
       limit: UPCOMING,
-      ...(city === undefined ? {} : { cityId: city }),
+      ...(cityIds.length === 0 ? {} : { cityId: [...cityIds] }),
     }),
-  );
+    enabled: ready,
+  });
   const items = (upcoming.data?.items ?? []).slice(0, mobile ? UPCOMING_MOBILE : UPCOMING);
   const days = useMemo(() => groupByDay(items, locale), [items, locale]);
 
@@ -138,11 +173,20 @@ function Upcoming({
             onChange={(event) => {
               onCity(event.target.value === '' ? undefined : event.target.value);
             }}
+            // В поле — только название: подсказка «все города» нужна в списке.
+            slotProps={{
+              select: {
+                renderValue: (selected) => {
+                  const option = options.find((item) => item.id === selected);
+                  return option === undefined ? '' : placeName(option);
+                },
+              },
+            }}
           >
             <MenuItem value="">{t('home.upcoming.allCities')}</MenuItem>
-            {cities.map((item) => (
-              <MenuItem key={item.id} value={item.id}>
-                {placeName(item)}
+            {options.map((item) => (
+              <MenuItem key={item.id} value={item.id} sx={item.nested ? { pl: 4 } : undefined}>
+                <ScopeOptionLabel option={item} />
               </MenuItem>
             ))}
           </TextField>

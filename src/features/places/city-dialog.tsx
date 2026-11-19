@@ -1,22 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createCitySchema, type CityView } from '@kttf/shared/types';
+import { createCitySchema, type CityView, type RegionView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useId, type ReactNode } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
 
 import { createCity, updateCity } from './api';
 import { fieldHint, optionalNumber, optionalText } from './field-hint';
+import { usePlaceName } from './place-name';
 import { cityPatch, type CityFormValues } from './place-patch';
 import { placeKeys } from './queries';
 
@@ -28,6 +30,8 @@ interface CityDialogProps {
   readonly countryId: string;
   /** Город для правки. Без него диалог заводит новый. */
   readonly city?: CityView | undefined;
+  /** Области страны — со скрытыми: город может остаться в скрытой. */
+  readonly regions: readonly RegionView[];
   readonly onClose: () => void;
 }
 
@@ -36,9 +40,18 @@ interface CityDialogProps {
  *
  * Страны в форме нет: город, оказавшийся не в той стране, — опечатка при
  * заведении, и правится она новой записью (контракт `updateCitySchema`).
+ *
+ * Область — ADR-096: пустой выбор — город вне областей, как Астана, Алматы
+ * и Шымкент.
  */
-export default function CityDialog({ countryId, city, onClose }: CityDialogProps): ReactNode {
+export default function CityDialog({
+  countryId,
+  city,
+  regions,
+  onClose,
+}: CityDialogProps): ReactNode {
   const t = useT();
+  const placeName = usePlaceName();
   const formId = useId();
   const titleId = useId();
   const queryClient = useQueryClient();
@@ -47,6 +60,7 @@ export default function CityDialog({ countryId, city, onClose }: CityDialogProps
     resolver: zodResolver(cityFormSchema),
     defaultValues: {
       name: city?.name ?? '',
+      ...(typeof city?.regionId === 'string' ? { regionId: city.regionId } : {}),
       ...(typeof city?.nameKk === 'string' ? { nameKk: city.nameKk } : {}),
       ...(city === undefined ? {} : { sortOrder: city.sortOrder }),
       ...(typeof city?.lat === 'number' ? { lat: city.lat } : {}),
@@ -97,6 +111,32 @@ export default function CityDialog({ countryId, city, onClose }: CityDialogProps
             autoComplete="off"
             {...register('name')}
             {...fieldHint(t, errors.name === undefined ? undefined : 'error.form.placeName')}
+          />
+          <Controller
+            control={form.control}
+            name="regionId"
+            render={({ field }) => (
+              <TextField
+                select
+                label={t('places.field.region')}
+                name={field.name}
+                inputRef={field.ref}
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  field.onChange(event.target.value === '' ? undefined : event.target.value);
+                }}
+                onBlur={field.onBlur}
+              >
+                <MenuItem value="">{t('places.region.none')}</MenuItem>
+                {regions.map((region) => (
+                  <MenuItem key={region.id} value={region.id}>
+                    {region.isActive
+                      ? placeName(region)
+                      : `${placeName(region)} · ${t('places.hidden')}`}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
           />
           <TextField
             label={t('places.field.nameKk')}

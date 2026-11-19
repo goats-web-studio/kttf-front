@@ -1,9 +1,13 @@
 import { nearestCity, type CityRef, type CityView } from '@kttf/shared/types';
+import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { create } from 'zustand';
 
 import { updateAccount } from '@/features/auth/api';
 import { useSessionStore } from '@/features/auth/session-store';
+
+import { citiesQuery } from './queries';
+import { scopeCityIds } from './regions';
 
 /**
  * Мой город — ADR-093.
@@ -162,22 +166,39 @@ export const ALL_CITIES = 'all';
 
 /** Города фильтра страницы с учётом города шапки. */
 export interface CityScope {
-  /** Что фильтрует список: выбранное на странице или город шапки. */
+  /**
+   * Что выбрано: на странице или город шапки. Области и города вперемешку
+   * (ADR-096) — для поля фильтра, чипов и адреса.
+   */
   readonly ids: readonly string[];
-  /** Через запятую для запроса и старого кода; `undefined` — все города. */
+  /** Выбор через запятую для поля фильтра; `undefined` — все города. */
   readonly joined: string | undefined;
+  /**
+   * Города запроса: области раскрыты в свои города (ADR-096). Пустой
+   * список — все города.
+   */
+  readonly cityIds: string[];
+  /** То же через запятую — для старого кода, который держит город строкой. */
+  readonly cityIdsJoined: string | undefined;
   /** Значение `?city=` для выбора на странице: пустой выбор — «все». */
   readonly toParam: (ids: readonly string[]) => string | undefined;
 }
 
 /**
- * Фильтр «Город» страницы — ADR-093.
+ * Фильтр «Город» страницы — ADR-093, ADR-096.
  *
  * Без `?city=` список показывает город шапки; `?city=all` — все города;
- * иначе — выбранные на странице. Снятый на странице фильтр пишется как
- * `all`, иначе он тут же вернулся бы городом шапки.
+ * иначе — выбранные на странице города и области. Снятый на странице фильтр
+ * пишется как `all`, иначе он тут же вернулся бы городом шапки.
+ *
+ * Область уходит в запрос своими городами из `cities` — справочника,
+ * который и так загружен для поля выбора.
  */
-export function cityScope(param: string | undefined, myCityId: string | undefined): CityScope {
+export function cityScope(
+  param: string | undefined,
+  myCityId: string | undefined,
+  cities?: readonly Pick<CityView, 'id' | 'regionId'>[],
+): CityScope {
   const ids =
     param === ALL_CITIES
       ? []
@@ -186,17 +207,34 @@ export function cityScope(param: string | undefined, myCityId: string | undefine
           ? []
           : [myCityId]
         : param.split(',').filter((part) => part !== '' && part !== ALL_CITIES);
+  const cityIds = scopeCityIds(ids, cities);
 
   return {
     ids,
     joined: ids.length === 0 ? undefined : ids.join(','),
+    cityIds,
+    cityIdsJoined: cityIds.length === 0 ? undefined : cityIds.join(','),
     toParam: (next) =>
       next.length > 0 ? next.join(',') : myCityId === undefined ? undefined : ALL_CITIES,
   };
 }
 
-export function useCityScope(param: string | undefined): CityScope {
+/**
+ * Фильтр страницы с раскрытыми областями.
+ *
+ * `ready` — запрос списка можно слать: область из ссылки без справочника
+ * не раскрыть, и список на миг показал бы пустоту. Город шапки — всегда
+ * город, его ждать незачем.
+ */
+export function useCityScope(param: string | undefined): CityScope & { readonly ready: boolean } {
   const myCityId = useMyCity()?.id;
+  const cities = useQuery(citiesQuery);
 
-  return useMemo(() => cityScope(param, myCityId), [param, myCityId]);
+  return useMemo(
+    () => ({
+      ...cityScope(param, myCityId, cities.data),
+      ready: param === undefined || param === ALL_CITIES || !cities.isPending,
+    }),
+    [param, myCityId, cities.data, cities.isPending],
+  );
 }

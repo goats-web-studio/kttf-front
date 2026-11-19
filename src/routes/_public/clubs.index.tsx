@@ -124,7 +124,11 @@ function ClubsPage(): ReactNode {
   // Без города в адресе — город шапки (ADR-093).
   const cityFilter = useCityScope(search.city);
   const cities = cityFilter.ids;
-  const clubs = useQuery(clubsQuery(toQuery({ ...search, city: cityFilter.joined }, page)));
+  // В запрос — города: выбранная область раскрыта в свои (ADR-096).
+  const clubs = useQuery({
+    ...clubsQuery(toQuery({ ...search, city: cityFilter.cityIdsJoined }, page)),
+    enabled: cityFilter.ready,
+  });
   const amenities = amenitiesOf(search);
 
   // Смена фильтра возвращает на первую страницу, а текст правится на месте,

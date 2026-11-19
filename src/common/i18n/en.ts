@@ -3258,6 +3258,17 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'account.form.citySaved': 'City saved',
   'places.field.lat': 'Latitude',
   'places.field.lng': 'Longitude',
+  // Области — ADR-096.
+  'places.region.whole': 'all cities',
+  'places.regions.title': 'Regions',
+  'places.regions.empty': 'No regions in this country yet.',
+  'places.region.add': 'Add region',
+  'places.region.new': 'New region',
+  'places.region.edit': 'Edit region',
+  'places.field.region': 'Region',
+  'places.region.none': 'No region',
+  'clubs.new.fromApplicationWithCity':
+    'Form pre-filled from the "{club}" application, city included.',
   'error.form.coordinate': 'A decimal number, e.g. 43.2389',
   'tournaments.col.age': 'avg age',
   'tournaments.col.ageFull': 'Average age of participants',

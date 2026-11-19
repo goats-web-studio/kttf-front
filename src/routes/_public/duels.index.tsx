@@ -80,13 +80,18 @@ function DuelsBoardPage(): ReactNode {
     scope: recent ? 'recent' : 'open',
     page,
     limit: PAGE_SIZE,
-    ...(city === undefined ? {} : { cityId: city }),
+    // Область — своими городами (ADR-096).
+    ...(cityFilter.cityIds.length === 0 ? {} : { cityId: cityFilter.cityIds }),
     ...(search.club === undefined ? {} : { clubId: search.club }),
     ...(search.kind === undefined ? {} : { kind: search.kind }),
     // Сыгранные на доске — только рейтинговые: фильтр там ничего не меняет.
     ...(recent || search.rated === undefined ? {} : { rated: search.rated }),
   };
-  const duels = useQuery({ ...duelsBoardQuery(query), placeholderData: keepPreviousData });
+  const duels = useQuery({
+    ...duelsBoardQuery(query),
+    enabled: cityFilter.ready,
+    placeholderData: keepPreviousData,
+  });
 
   // Новое условие — с первой страницы: на пятой по другому фильтру может
   // ничего не оказаться.

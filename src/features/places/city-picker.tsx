@@ -9,7 +9,9 @@ import { useT, type MessageKey } from '@/common/i18n';
 
 import { defaultCountry } from './countries';
 import { usePlaceName } from './place-name';
-import { citiesQuery, countriesQuery } from './queries';
+import { citiesQuery, countriesQuery, regionsQuery } from './queries';
+import { renderRegionGroup } from './region-group';
+import { groupedByRegion } from './regions';
 
 interface CityPickerProps {
   /** Выбранный город; пустая строка — не выбран. */
@@ -45,6 +47,10 @@ const filter = createFilterOptions<CityRef>({
  * и «алматы » по фильтрам как два разных города. Поиск внутри списка
  * нужен, потому что городов десятки.
  *
+ * Города — группами по областям (ADR-096): сначала Астана, Алматы и Шымкент
+ * без подзаголовка, затем каждая область своими городами. Саму область
+ * здесь не выбрать: человек живёт и клуб стоит в городе.
+ *
  * Страна выбирается, только когда их больше одной; по умолчанию —
  * Казахстан. Пока страна одна, лишнего поля в форме нет.
  *
@@ -63,6 +69,7 @@ export default function CityPicker({
   const t = useT();
   const placeName = usePlaceName();
   const countries = useQuery(countriesQuery);
+  const regions = useQuery(regionsQuery);
   const cities = useQuery(citiesQuery);
   const [chosenCountry, setChosenCountry] = useState<string | undefined>(undefined);
 
@@ -74,9 +81,9 @@ export default function CityPicker({
     all.find((city) => city.id === value)?.countryId ??
     defaultCountry(countryList)?.id;
 
-  const offered: readonly CityRef[] = pickCountry
-    ? all.filter((city) => city.countryId === countryId)
-    : all;
+  const inCountry = pickCountry ? all.filter((city) => city.countryId === countryId) : all;
+  const grouped = groupedByRegion(regions.data ?? [], inCountry, placeName);
+  const offered: readonly CityRef[] = grouped.cities;
   // Указанный город, которого нет среди предложенных, — скрытый либо ещё не
   // пришедший справочник. Без него в списке поле показалось бы пустым.
   const kept = current?.id === value && !offered.some((city) => city.id === value);
@@ -121,6 +128,8 @@ export default function CityPicker({
         getOptionLabel={placeName}
         isOptionEqualToValue={(option, chosen) => option.id === chosen.id}
         filterOptions={filter}
+        groupBy={grouped.groupOf}
+        renderGroup={renderRegionGroup}
         loading={cities.isPending}
         loadingText={t('common.loading')}
         noOptionsText={t('places.city.none')}

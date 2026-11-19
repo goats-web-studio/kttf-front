@@ -353,6 +353,8 @@ function Contact({ value }: { readonly value: string }): ReactNode {
 function newClubHref(item: ClubApplicationView): string {
   const search = new URLSearchParams({ application: item.id, name: item.clubName });
 
+  // Город из справочника — форма клуба подставит его сама (ADR-096).
+  if (item.cityId !== null) search.set('city', item.cityId);
   if (item.address !== null) search.set('address', item.address);
   if (item.tableCount !== null) search.set('tables', String(item.tableCount));
   if (item.message !== null) search.set('about', item.message);

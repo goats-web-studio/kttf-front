@@ -9,6 +9,7 @@ import type {
   PlayerProfileView,
   PlayerView,
   RatingHistoryView,
+  RegionView,
   RegistrationView,
   ResultParticipantView,
   ScreenView,
@@ -44,7 +45,8 @@ export const PLAYING_MATCH_ID = '00000000-0000-4000-8000-000000000031';
 export const QUEUED_MATCH_ID = '00000000-0000-4000-8000-000000000032';
 
 /**
- * Справочник мест — ответы `GET /countries` и `GET /cities` (ADR-046).
+ * Справочник мест — ответы `GET /countries`, `GET /regions` и `GET /cities`
+ * (ADR-046, ADR-096).
  *
  * У Усть-Каменогорска казахское название другое: по нему видно, что
  * подпись берётся по языку, а не переписывается из русского.
@@ -58,10 +60,33 @@ export const COUNTRY: CountryView = {
   isActive: true,
 };
 
+/**
+ * Области — ADR-096. В Восточно-Казахстанской два города: по ним видно,
+ * что область в фильтре уходит в запрос всеми своими городами.
+ */
+export const REGIONS = {
+  vko: {
+    id: '00000000-0000-4000-8000-0000000000d1',
+    countryId: COUNTRY.id,
+    name: 'Восточно-Казахстанская область',
+    nameKk: 'Шығыс Қазақстан облысы',
+    sortOrder: 0,
+    isActive: true,
+  },
+} as const satisfies Record<string, RegionView>;
+
+/** Открытый список областей. */
+export const REGION_LIST: RegionView[] = [REGIONS.vko];
+
+/**
+ * Алматы и Астана — города республиканского значения, вне областей;
+ * Усть-Каменогорск и Риддер — в Восточно-Казахстанской.
+ */
 export const CITIES = {
   almaty: {
     id: '00000000-0000-4000-8000-0000000000c1',
     countryId: COUNTRY.id,
+    regionId: null,
     name: 'Алматы',
     nameKk: 'Алматы',
     sortOrder: 0,
@@ -72,6 +97,7 @@ export const CITIES = {
   astana: {
     id: '00000000-0000-4000-8000-0000000000c2',
     countryId: COUNTRY.id,
+    regionId: null,
     name: 'Астана',
     nameKk: 'Астана',
     sortOrder: 1,
@@ -82,6 +108,7 @@ export const CITIES = {
   oskemen: {
     id: '00000000-0000-4000-8000-0000000000c3',
     countryId: COUNTRY.id,
+    regionId: REGIONS.vko.id,
     name: 'Усть-Каменогорск',
     nameKk: 'Өскемен',
     sortOrder: 2,
@@ -89,10 +116,21 @@ export const CITIES = {
     lat: 49.9483,
     lng: 82.6279,
   },
+  ridder: {
+    id: '00000000-0000-4000-8000-0000000000c4',
+    countryId: COUNTRY.id,
+    regionId: REGIONS.vko.id,
+    name: 'Риддер',
+    nameKk: 'Риддер',
+    sortOrder: 3,
+    isActive: true,
+    lat: 50.3443,
+    lng: 83.5126,
+  },
 } as const satisfies Record<string, CityView>;
 
 /** Открытый список городов — в порядке справочника. */
-export const CITY_LIST: CityView[] = [CITIES.almaty, CITIES.astana, CITIES.oskemen];
+export const CITY_LIST: CityView[] = [CITIES.almaty, CITIES.astana, CITIES.oskemen, CITIES.ridder];
 
 /** Город, встроенный в клуб и игрока: только подпись. */
 export function cityRef(city: CityView): CityRef {
@@ -105,6 +143,7 @@ export function cityRef(city: CityView): CityRef {
  */
 export function placesReply(url: string): unknown {
   if (/\/countries(\?|$)/.test(url)) return [COUNTRY];
+  if (/\/regions(\?|$)/.test(url)) return REGION_LIST;
   if (/\/cities(\?|$)/.test(url)) return CITY_LIST;
 
   return undefined;

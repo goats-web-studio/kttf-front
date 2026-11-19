@@ -11,6 +11,7 @@ function city(id: string, countryId: string): CityView {
   return {
     id,
     countryId,
+    regionId: null,
     name: id,
     nameKk: null,
     sortOrder: 0,
