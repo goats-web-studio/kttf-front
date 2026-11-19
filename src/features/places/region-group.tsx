@@ -4,6 +4,18 @@ import ListSubheader from '@mui/material/ListSubheader';
 import type { ReactNode } from 'react';
 
 /**
+ * Подзаголовок области над её городами. Его не выбрать, поэтому он тише
+ * пунктов: мелкий и серый, иначе область читается как ещё один город.
+ */
+export const REGION_SUBHEADER_SX = {
+  typography: 'caption',
+  fontWeight: 600,
+  lineHeight: 2.5,
+  color: 'var(--ink-500)',
+  bgcolor: 'var(--paper)',
+} as const;
+
+/**
  * Группа выпадающего списка городов — ADR-096: подзаголовок с названием
  * области над её городами. Города вне областей (группа `''`) идут первыми
  * и без подзаголовка.
@@ -15,7 +27,11 @@ export function renderRegionGroup({
 }: AutocompleteRenderGroupParams): ReactNode {
   return (
     <li key={key}>
-      {group !== '' && <ListSubheader component="div">{group}</ListSubheader>}
+      {group !== '' && (
+        <ListSubheader component="div" sx={REGION_SUBHEADER_SX}>
+          {group}
+        </ListSubheader>
+      )}
       <Box component="ul" sx={{ p: 0 }}>
         {children}
       </Box>

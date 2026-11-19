@@ -27,6 +27,7 @@ import {
 import { usePlaceName } from '@/features/places/place-name';
 import { citiesQuery, countriesQuery, regionsQuery } from '@/features/places/queries';
 import { citiesByRegion } from '@/features/places/regions';
+import { REGION_SUBHEADER_SX } from '@/features/places/region-group';
 
 type Status = 'idle' | 'detecting' | Exclude<DetectResult['kind'], 'found'> | 'failed';
 
@@ -159,7 +160,7 @@ export default function CitySwitch(): ReactNode {
     for (const inRegion of citiesByRegion(regions.data ?? [], group.cities)) {
       if (inRegion.region !== undefined) {
         items.push(
-          <ListSubheader key={`region-${inRegion.region.id}`}>
+          <ListSubheader key={`region-${inRegion.region.id}`} sx={REGION_SUBHEADER_SX}>
             {placeName(inRegion.region)}
           </ListSubheader>,
         );
