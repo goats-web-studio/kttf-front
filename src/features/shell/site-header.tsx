@@ -55,6 +55,20 @@ export default function SiteHeader(): ReactNode {
         borderBottom: 1,
         borderColor: 'divider',
         bgcolor: 'background.paper',
+        // Фон шапки продолжается вверх за её край. Safari на iOS 26 рисует
+        // страницу и под своей полупрозрачной верхней панелью: шапка липла
+        // под панелью, а над ней просвечивала прокрученная страница. Выше
+        // шапки своего содержимого нет, так что заливка закрывает только
+        // то, что уехало вверх.
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          insetInline: 0,
+          bottom: '100%',
+          height: '100vh',
+          bgcolor: 'background.paper',
+          pointerEvents: 'none',
+        },
       }}
     >
       {/* Шапка шире содержимого — до 1440px: разделы, «Провести турнир»,
