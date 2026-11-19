@@ -9,6 +9,7 @@ import type { ReactNode } from 'react';
 import { useT, type MessageKey } from '@/common/i18n';
 import Atmosphere from '@/common/ui/atmosphere';
 
+import { InstagramIcon, ThreadsIcon, YoutubeIcon, type BrandIcon } from './brand-icons';
 import { SECTIONS } from './sections';
 
 /** Ссылка подвала: светлая на тёмном, подчёркивание по наведению. */
@@ -34,6 +35,20 @@ const FOOTER_PAGES: readonly { readonly href: string; readonly label: MessageKey
   { href: '/trainings', label: 'nav.trainings' },
   { href: '/trainings?view=coaches', label: 'nav.menu.trainings.coaches.title' },
   { href: '/duels', label: 'nav.menu.players.duels.title' },
+];
+
+/**
+ * Каналы федерации. Инстаграм первым: турниры объявляются там, и игрок ищет
+ * их сначала в нём. Ютуб — видео, Threads — короткие новости.
+ */
+const SOCIAL_LINKS: readonly {
+  readonly href: string;
+  readonly label: MessageKey;
+  readonly icon: BrandIcon;
+}[] = [
+  { href: 'https://www.instagram.com/kttf.kz', label: 'footer.instagram', icon: InstagramIcon },
+  { href: 'https://www.youtube.com/@kttfkz', label: 'footer.youtube', icon: YoutubeIcon },
+  { href: 'https://www.threads.com/@kttf.kz', label: 'footer.threads', icon: ThreadsIcon },
 ];
 
 export default function SiteFooter(): ReactNode {
@@ -101,17 +116,40 @@ export default function SiteFooter(): ReactNode {
             <Link href="/feedback" underline="hover" sx={footerLink}>
               {t('footer.contact')}
             </Link>
-            {/* Инстаграм — главный внешний канал: турниры объявляются там,
-                и игрок ищет их сначала в нём. */}
-            <Link
-              href="https://www.instagram.com/kttf.kz"
-              target="_blank"
-              rel="noreferrer"
-              underline="hover"
-              sx={footerLink}
+          </Box>
+
+          <Box component="nav" aria-labelledby="footer-social">
+            <Typography
+              id="footer-social"
+              sx={{
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--night-ink-500)',
+                mb: 0.5,
+              }}
             >
-              {t('footer.instagram')}
-            </Link>
+              {t('footer.social')}
+            </Typography>
+            <Stack sx={{ rowGap: 0.5 }}>
+              {SOCIAL_LINKS.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <Link
+                    key={social.href}
+                    href={social.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    underline="hover"
+                    sx={{ ...footerLink, gap: 1 }}
+                  >
+                    <Icon size={18} />
+                    {t(social.label)}
+                  </Link>
+                );
+              })}
+            </Stack>
           </Box>
         </Stack>
 
