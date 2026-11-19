@@ -28,7 +28,7 @@
     "@fontsource-variable/oswald": "5.3.0",
     "@fontsource-variable/roboto-flex": "^5.3.0",
     "@hookform/resolvers": "^5.9.1",
-    "@kttf/shared": "github:goats-web-studio/kttf-shared#576d2ac6d9f2cf83e0a0d6df6398ff6ebc2db2e6",
+    "@kttf/shared": "github:goats-web-studio/kttf-shared#6a53bc821951ad97fcd514cbef8729fb6c8a4ea7",
     "@mui/material": "^9.4.0",
     "@mui/x-date-pickers": "^9.14.0",
     "@tanstack/react-query": "^5.102.8",
