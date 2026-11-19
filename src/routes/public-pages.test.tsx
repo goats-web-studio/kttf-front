@@ -718,6 +718,18 @@ describe('области — ADR-096', () => {
 });
 
 describe('главная', () => {
+  it('плитки разделов — среди крупных входов «Найти спарринг» ведёт на дуэли', async () => {
+    renderAt('/');
+
+    const tiles = await screen.findByRole('list', { name: ru['home.interests.title'] });
+    expect(
+      within(tiles)
+        .getByRole('link', { name: new RegExp(ru['home.interests.sparring.title']) })
+        .getAttribute('href'),
+    ).toBe('/duels');
+    expect(within(tiles).getAllByRole('link')).toHaveLength(7);
+  });
+
   it('результаты турниров — турнир ссылкой и призёры ссылками на профили', async () => {
     renderAt('/');
 
@@ -793,44 +805,6 @@ describe('главная', () => {
         .getByRole('link', { name: ru['home.hero.quick.ratingAll'] })
         .getAttribute('href'),
     ).toBe('/players');
-  });
-
-  it('?hero=b — рядом с поиском ближайшие турниры со ссылкой на турнир', async () => {
-    renderAt('/?hero=b');
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-hero-card="tournaments"]')).not.toBeNull();
-    });
-    const card = document.querySelector<HTMLElement>('[data-hero-card="tournaments"]');
-    if (card === null) throw new Error('карточка турниров не найдена');
-
-    expect(
-      (await within(card).findByRole('link', { name: TOURNAMENT.name })).getAttribute('href'),
-    ).toBe(`/tournaments/${TOURNAMENT_ID}`);
-    expect(
-      within(card).getByRole('link', { name: ru['home.hero.calendar'] }).getAttribute('href'),
-    ).toBe('/tournaments');
-    expect(screen.getByRole('combobox', { name: ru['home.search.label'] })).toBeDefined();
-  });
-
-  it('?hero=c — рядом с поиском пятёрка рейтинга страны', async () => {
-    renderAt('/?hero=c');
-
-    await waitFor(() => {
-      expect(document.querySelector('[data-hero-card="rating"]')).not.toBeNull();
-    });
-    const card = document.querySelector<HTMLElement>('[data-hero-card="rating"]');
-    if (card === null) throw new Error('карточка рейтинга не найдена');
-
-    const name = playerName(PLAYERS.first, String);
-    expect((await within(card).findByRole('link', { name })).getAttribute('href')).toBe(
-      `/players/${PLAYERS.first.id}`,
-    );
-    expect(within(card).getByText(ru['home.hero.country'])).toBeDefined();
-    expect(within(card).getByRole('link', { name: ru['home.top.all'] }).getAttribute('href')).toBe(
-      '/players',
-    );
-    expect(screen.getByRole('combobox', { name: ru['home.search.label'] })).toBeDefined();
   });
 });
 

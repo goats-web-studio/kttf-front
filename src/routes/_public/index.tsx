@@ -19,9 +19,7 @@ import { clubCities } from '@/features/clubs/cities';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import FeedSection from '@/features/feed/feed-section';
 import FollowSuggestions from '@/features/follows/suggestions';
-import HeroRating from '@/features/home/hero-rating';
 import HeroSearch from '@/features/home/hero-search';
-import HeroTournaments from '@/features/home/hero-tournaments';
 import HomeStats from '@/features/home/home-stats';
 import InterestTiles from '@/features/home/interest-tiles';
 import PersonalStrip from '@/features/home/personal-strip';
@@ -39,12 +37,6 @@ import { useCityScope } from '@/features/places/my-city';
 const searchSchema = z.object({
   city: searchId,
   tcity: searchCity,
-  /**
-   * Вариант первого экрана — на выбор владельцу: `a` поиск в центре
-   * (по умолчанию, в адрес не пишется), `b` поиск и ближайшие турниры,
-   * `c` поиск и рейтинг.
-   */
-  hero: z.enum(['b', 'c']).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/_public/')({
@@ -104,28 +96,21 @@ function HomePage(): ReactNode {
     <>
       {/* Первый экран — у всех (ADR-075): поиск на фирменном постере. У
           вошедшего под ним своё, у гостя — разделы. */}
-      {search.hero === 'b' ? (
-        <HeroTournaments />
-      ) : search.hero === 'c' ? (
-        <HeroRating />
-      ) : (
-        <HeroSearch />
-      )}
+      <HeroSearch />
 
       {/* Ширина — как у шапки и подвала: колонки встают ровно под логотип. */}
       <Container maxWidth="lg" sx={{ pb: { xs: 8, sm: 12 } }}>
         {/* Плитки и личная полоса заходят на постер: первый экран — одно целое. */}
         <Box component="section" sx={{ mt: { xs: -3, md: -5 }, position: 'relative' }}>
-          {user === null ? (
-            <>
-              <Typography variant="h2" sx={VISUALLY_HIDDEN}>
-                {t('home.interests.title')}
-              </Typography>
-              <InterestTiles />
-            </>
-          ) : (
-            <PersonalStrip user={user} />
-          )}
+          {user !== null && <PersonalStrip user={user} />}
+          {/* Разделы видят все: гостю — крупно, с описаниями; вошедшему —
+              строкой под личной полосой, чтобы не уходить в меню. */}
+          <Box sx={user === null ? undefined : { mt: { xs: 2, sm: 3 } }}>
+            <Typography variant="h2" sx={VISUALLY_HIDDEN}>
+              {t('home.interests.title')}
+            </Typography>
+            <InterestTiles compact={user !== null} />
+          </Box>
         </Box>
 
         <Box

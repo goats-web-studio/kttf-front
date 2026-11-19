@@ -7,6 +7,7 @@ import {
   CalendarClock,
   GraduationCap,
   ShoppingBag,
+  Swords,
   TrendingUp,
   Trophy,
   type LucideIcon,
@@ -26,11 +27,12 @@ interface Interest {
 
 /**
  * Зачем приходят на сайт — по одному входу на интерес. Порядок — от игры к
- * покупке: сыграть турнир, посмотреть рейтинг, найти зал, тренера,
- * тренировку, инвентарь.
+ * покупке: сыграть турнир, найти с кем сыграть, посмотреть рейтинг, найти
+ * зал, тренера, тренировку, инвентарь.
  */
 const INTERESTS: readonly Interest[] = [
   { key: 'play', href: '/tournaments', icon: Trophy, major: true },
+  { key: 'sparring', href: '/duels', icon: Swords, major: true },
   { key: 'rating', href: '/players', icon: TrendingUp, major: true },
   { key: 'club', href: '/clubs', icon: Building2 },
   { key: 'coach', href: '/trainings?view=coaches', icon: GraduationCap },
@@ -45,13 +47,84 @@ const INTERESTS: readonly Interest[] = [
  * сделает. Новичок, пришедший с рекламы, не знает, что «Тренировки» — это
  * где найти тренера, а «Маркет» — где посмотреть, чем играют сильные.
  *
- * Плитки разного веса: турниры и рейтинг — то, ради чего сайт открывают
- * чаще всего, — вдвое шире и с описанием на любом экране; остальные четыре
- * ниже и уже. Иконка стоит в строке с заголовком, без собственной
+ * Плитки разного веса: турниры, спарринги и рейтинг — то, ради чего сайт
+ * открывают чаще всего, — крупнее и с описанием на любом экране; остальные
+ * четыре ниже и уже. Иконка стоит в строке с заголовком, без собственной
  * подложки; плитка целиком — одна ссылка.
+ *
+ * `compact` — для вошедшего, под личной полосой: все семь входов одной
+ * строкой, только иконка и название. Он сайт уже знает, описания ему не нужны.
  */
-export default function InterestTiles(): ReactNode {
+export default function InterestTiles({
+  compact = false,
+}: {
+  readonly compact?: boolean;
+}): ReactNode {
   const t = useT();
+
+  if (compact) {
+    return (
+      <Box
+        component="ul"
+        aria-label={t('home.interests.title')}
+        sx={{
+          listStyle: 'none',
+          m: 0,
+          p: 0,
+          display: 'grid',
+          gap: { xs: 1, sm: 1.5 },
+          gridTemplateColumns: {
+            xs: 'repeat(2, minmax(0, 1fr))',
+            sm: 'repeat(4, minmax(0, 1fr))',
+            md: `repeat(${String(INTERESTS.length)}, minmax(0, 1fr))`,
+          },
+        }}
+      >
+        {INTERESTS.map(({ key, href, icon: Icon }) => (
+          <Box component="li" key={key} sx={{ minWidth: 0 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                height: '100%',
+                overflow: 'hidden',
+                transition: 'border-color var(--dur-base) var(--ease)',
+                '&:hover': { borderColor: 'var(--line-strong)' },
+              }}
+            >
+              <CardActionArea
+                href={href}
+                sx={{
+                  height: '100%',
+                  minHeight: 48,
+                  px: 1.5,
+                  py: 1.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  gap: 1,
+                }}
+              >
+                <Box
+                  component="span"
+                  aria-hidden
+                  sx={{ display: 'inline-flex', flexShrink: 0, color: 'var(--ink-700)' }}
+                >
+                  <Icon size={18} strokeWidth={2} />
+                </Box>
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{ fontWeight: 600, lineHeight: '20px', minWidth: 0 }}
+                >
+                  {t(`home.interests.${key}.title` as MessageKey)}
+                </Typography>
+              </CardActionArea>
+            </Paper>
+          </Box>
+        ))}
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -72,8 +145,9 @@ export default function InterestTiles(): ReactNode {
           key={key}
           delay={index * 60}
           sx={{
+            // Три крупных входа — по трети строки; на телефоне во всю ширину.
             gridColumn: major
-              ? { xs: 'span 2', sm: 'span 6' }
+              ? { xs: 'span 2', sm: 'span 4' }
               : { xs: 'span 1', sm: 'span 6', md: 'span 3' },
           }}
         >
