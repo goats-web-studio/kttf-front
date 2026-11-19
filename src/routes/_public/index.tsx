@@ -19,7 +19,9 @@ import { clubCities } from '@/features/clubs/cities';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import FeedSection from '@/features/feed/feed-section';
 import FollowSuggestions from '@/features/follows/suggestions';
-import HeroPoster from '@/features/home/hero-poster';
+import HeroRating from '@/features/home/hero-rating';
+import HeroSearch from '@/features/home/hero-search';
+import HeroTournaments from '@/features/home/hero-tournaments';
 import HomeStats from '@/features/home/home-stats';
 import InterestTiles from '@/features/home/interest-tiles';
 import PersonalStrip from '@/features/home/personal-strip';
@@ -34,7 +36,16 @@ import { useCityScope } from '@/features/places/my-city';
  * Город лидеров и город ближайших турниров — по идентификатору справочника
  * (ADR-046). Раздельно: выбор зала рядом не должен менять рейтинг страны.
  */
-const searchSchema = z.object({ city: searchId, tcity: searchCity });
+const searchSchema = z.object({
+  city: searchId,
+  tcity: searchCity,
+  /**
+   * Вариант первого экрана — на выбор владельцу: `a` поиск в центре
+   * (по умолчанию, в адрес не пишется), `b` поиск и ближайшие турниры,
+   * `c` поиск и рейтинг.
+   */
+  hero: z.enum(['b', 'c']).optional().catch(undefined),
+});
 
 export const Route = createFileRoute('/_public/')({
   validateSearch: (search: Record<string, unknown>) => searchSchema.parse(search),
@@ -47,7 +58,8 @@ const PODIUMS = 6;
 /**
  * Главная — ADR-071, ADR-073.
  *
- * Гостю — постер бренда и плитки разделов: он пришёл узнать, что это.
+ * Первый экран — живой поиск игроков, клубов и тренеров на постере бренда.
+ * Гостю под ним плитки разделов: он пришёл узнать, что это.
  * Вошедшему — личная полоса: рейтинг, уровень, куда записан.
  *
  * Ниже три колонки. Слева турниры строками: что идёт и что ближайшее по
@@ -90,8 +102,15 @@ function HomePage(): ReactNode {
 
   return (
     <>
-      {/* Постер бренда — у всех (ADR-075); у вошедшего под ним своё, у гостя — разделы. */}
-      <HeroPoster />
+      {/* Первый экран — у всех (ADR-075): поиск на фирменном постере. У
+          вошедшего под ним своё, у гостя — разделы. */}
+      {search.hero === 'b' ? (
+        <HeroTournaments />
+      ) : search.hero === 'c' ? (
+        <HeroRating />
+      ) : (
+        <HeroSearch />
+      )}
 
       {/* Ширина — как у шапки и подвала: колонки встают ровно под логотип. */}
       <Container maxWidth="lg" sx={{ pb: { xs: 8, sm: 12 } }}>

@@ -56,7 +56,7 @@ describe('маршрутизация', () => {
   it('корень публичной части открывается', async () => {
     await renderAt('/');
 
-    expect(screen.getByRole('heading', { name: ru['page.home.title'] })).toBeDefined();
+    expect(screen.getByRole('heading', { level: 1, name: ru['home.hero.title'] })).toBeDefined();
   });
 
   it('неизвестный адрес отдаёт страницу «не найдено»', async () => {

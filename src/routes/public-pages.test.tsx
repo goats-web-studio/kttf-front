@@ -768,7 +768,7 @@ describe('главная', () => {
   it('поиск на первом экране ведёт в рейтинг с запросом', async () => {
     renderAt('/');
 
-    fireEvent.change(await screen.findByRole('searchbox', { name: ru['ratings.search'] }), {
+    fireEvent.change(await screen.findByRole('combobox', { name: ru['home.search.label'] }), {
       target: { value: 'Иванов' },
     });
     fireEvent.click(screen.getByRole('button', { name: ru['home.hero.find'] }));
@@ -777,6 +777,60 @@ describe('главная', () => {
       expect(window.location.pathname).toBe('/players');
     });
     expect(decodeURIComponent(window.location.search)).toContain('Иванов');
+  });
+
+  it('первый экран по умолчанию — поиск в центре, без карточек', async () => {
+    renderAt('/');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: ru['home.hero.title'] }),
+    ).toBeDefined();
+    expect(document.querySelector('[data-hero-card]')).toBeNull();
+    // Быстрые ссылки под поиском — в разделы; без города шапки — без города в подписи.
+    const quick = screen.getByRole('navigation', { name: ru['home.hero.quick'] });
+    expect(
+      within(quick)
+        .getByRole('link', { name: ru['home.hero.quick.ratingAll'] })
+        .getAttribute('href'),
+    ).toBe('/players');
+  });
+
+  it('?hero=b — рядом с поиском ближайшие турниры со ссылкой на турнир', async () => {
+    renderAt('/?hero=b');
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-hero-card="tournaments"]')).not.toBeNull();
+    });
+    const card = document.querySelector<HTMLElement>('[data-hero-card="tournaments"]');
+    if (card === null) throw new Error('карточка турниров не найдена');
+
+    expect(
+      (await within(card).findByRole('link', { name: TOURNAMENT.name })).getAttribute('href'),
+    ).toBe(`/tournaments/${TOURNAMENT_ID}`);
+    expect(
+      within(card).getByRole('link', { name: ru['home.hero.calendar'] }).getAttribute('href'),
+    ).toBe('/tournaments');
+    expect(screen.getByRole('combobox', { name: ru['home.search.label'] })).toBeDefined();
+  });
+
+  it('?hero=c — рядом с поиском пятёрка рейтинга страны', async () => {
+    renderAt('/?hero=c');
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-hero-card="rating"]')).not.toBeNull();
+    });
+    const card = document.querySelector<HTMLElement>('[data-hero-card="rating"]');
+    if (card === null) throw new Error('карточка рейтинга не найдена');
+
+    const name = playerName(PLAYERS.first, String);
+    expect((await within(card).findByRole('link', { name })).getAttribute('href')).toBe(
+      `/players/${PLAYERS.first.id}`,
+    );
+    expect(within(card).getByText(ru['home.hero.country'])).toBeDefined();
+    expect(within(card).getByRole('link', { name: ru['home.top.all'] }).getAttribute('href')).toBe(
+      '/players',
+    );
+    expect(screen.getByRole('combobox', { name: ru['home.search.label'] })).toBeDefined();
   });
 });
 
