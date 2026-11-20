@@ -48,9 +48,9 @@ import {
   subjectHref,
   SUBJECT_KEYS,
 } from '@/features/forum/labels';
-import { NewsLanguageSwitch, NewsVersionsEditor } from '@/features/forum/news-versions';
+import { NewsLanguageSwitch } from '@/features/forum/news-versions';
 import PostCard from '@/features/forum/post-card';
-import { useNewsLocale } from '@/features/forum/news-locale';
+import { useNewsLocale, versionImages } from '@/features/forum/news-locale';
 import {
   forumKeys,
   forumPostsQuery,
@@ -184,13 +184,13 @@ function TopicPage(): ReactNode {
               onQuote={onQuote}
               article
               header={isNews(data.subject) ? <NewsHeader topic={data} /> : undefined}
+              news={data.locale === null ? undefined : data}
               version={
                 translation === undefined
                   ? null
                   : {
                       body: translation.body,
-                      images:
-                        translation.image === null ? data.firstPost.images : [translation.image],
+                      images: versionImages(translation, data.firstPost.images),
                     }
               }
               aside={
@@ -463,7 +463,6 @@ function TopicActions({ topic }: { readonly topic: ForumTopicView }): ReactNode 
           {t('forum.topic.rename')}
         </Button>
       )}
-      {user.isAdmin && <NewsVersionsEditor topic={topic} />}
       {user.isAdmin && (
         <ModeratorMenu
           topic={topic}

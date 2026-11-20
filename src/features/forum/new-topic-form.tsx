@@ -25,13 +25,15 @@ import { useSessionStore } from '@/features/auth/session-store';
 import { createForumTopic } from './api';
 import Composer, { WriteGate } from './composer';
 import { topicHref } from './labels';
-import { NewsLocaleField } from './news-versions';
+import { newsTopicInput } from './news-draft';
+import { NewsEditor } from './news-versions';
 import { forumKeys, forumSectionsQuery } from './queries';
 import { VoicePicker } from './voice';
 
 /**
  * Новая тема — `docs/12` 5: раздел, заголовок, первое сообщение с фото;
- * у модератора — «от чьего лица» и язык новости KTTF (ADR-098).
+ * у модератора — «от чьего лица» (ADR-098), а новость KTTF — вкладками
+ * языков, каждый со своими заголовком, текстом и фото (ADR-099).
  * Одна форма на страницу `/forum/new` и на окно «Новая тема» у форума:
  * раздел приходит оттуда, где человек нажал кнопку. Создалась тема —
  * переход в неё.
@@ -56,13 +58,15 @@ export default function NewTopicForm({
     item.manualTopics || (isAdmin && item.slug === FEED_PORTAL_SECTION);
   const section = sections.data?.find((item) => item.slug === sectionSlug && writable(item));
   const titleValid = title.trim().length >= 3;
-  // Новость KTTF — у модератора: по умолчанию от KTTF, с языком оригинала
-  // (ADR-098). Запись игрока — всегда своя.
-  const news = section?.slug === FEED_PORTAL_SECTION;
+  // Новость KTTF — у модератора: вкладки языков, у каждого свои заголовок,
+  // текст и фото, всё одной отправкой (ADR-099). Запись игрока — всегда своя.
   const canVoice = isAdmin && section !== undefined && section.slug !== FEED_POSTS_SECTION;
-  const [voice, setVoice] = useState<ForumAuthoredAs | null>(null);
-  const authoredAs = voice ?? (news ? 'KTTF' : 'SELF');
-  const [newsLocale, setNewsLocale] = useState(uiLocale);
+  const [voice, setVoice] = useState<ForumAuthoredAs>('SELF');
+
+  const done = async (topicId: string): Promise<void> => {
+    await queryClient.invalidateQueries({ queryKey: forumKeys.all });
+    await navigate({ href: topicHref(topicId) });
+  };
 
   return (
     <Box sx={{ display: 'grid', gap: 2.5 }}>
@@ -89,47 +93,58 @@ export default function NewTopicForm({
           </MenuItem>
         ))}
       </TextField>
-      <TextField
-        label={t('forum.new.titleLabel')}
-        value={title}
-        onChange={(event) => {
-          setTitle(event.target.value);
-        }}
-        required
-        error={tried && !titleValid}
-        helperText={tried && !titleValid ? t('forum.new.titleError') : t('forum.new.titleHint')}
-        slotProps={{ htmlInput: { maxLength: FORUM_TOPIC_TITLE_MAX } }}
-      />
-      {news && <NewsLocaleField value={newsLocale} onChange={setNewsLocale} />}
-      <Box>
-        {canVoice && <VoicePicker value={authoredAs} onChange={setVoice} />}
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          {t('forum.new.bodyHint')}
-        </Typography>
-        <Composer
+      {section?.slug === FEED_PORTAL_SECTION ? (
+        <NewsEditor
+          defaultLocale={uiLocale}
           submitLabel={t('forum.new.submit')}
-          validate={() => {
-            setTried(true);
+          submit={async (draft) => {
+            const topic = await createForumTopic(newsTopicInput(section.id, draft));
 
-            return section !== undefined && titleValid;
-          }}
-          submit={async (input) => {
-            if (section === undefined) return;
-
-            const topic = await createForumTopic({
-              sectionId: section.id,
-              title: title.trim(),
-              body: input.body,
-              ...(input.images === undefined ? {} : { images: input.images }),
-              ...(canVoice ? { authoredAs } : {}),
-              ...(news ? { locale: newsLocale } : {}),
-            });
-
-            await queryClient.invalidateQueries({ queryKey: forumKeys.all });
-            await navigate({ href: topicHref(topic.id) });
+            await done(topic.id);
           }}
         />
-      </Box>
+      ) : (
+        <>
+          <TextField
+            label={t('forum.new.titleLabel')}
+            value={title}
+            onChange={(event) => {
+              setTitle(event.target.value);
+            }}
+            required
+            error={tried && !titleValid}
+            helperText={tried && !titleValid ? t('forum.new.titleError') : t('forum.new.titleHint')}
+            slotProps={{ htmlInput: { maxLength: FORUM_TOPIC_TITLE_MAX } }}
+          />
+          <Box>
+            {canVoice && <VoicePicker value={voice} onChange={setVoice} />}
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {t('forum.new.bodyHint')}
+            </Typography>
+            <Composer
+              submitLabel={t('forum.new.submit')}
+              validate={() => {
+                setTried(true);
+
+                return section !== undefined && titleValid;
+              }}
+              submit={async (input) => {
+                if (section === undefined) return;
+
+                const topic = await createForumTopic({
+                  sectionId: section.id,
+                  title: title.trim(),
+                  body: input.body,
+                  ...(input.images === undefined ? {} : { images: input.images }),
+                  ...(canVoice ? { authoredAs: voice } : {}),
+                });
+
+                await done(topic.id);
+              }}
+            />
+          </Box>
+        </>
+      )}
     </Box>
   );
 }

@@ -16,6 +16,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { fill } from '@/common/i18n';
 import { createI18nValue, I18nContext } from '@/common/i18n/context';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
@@ -23,8 +24,9 @@ import FeedCard from '@/features/feed/feed-card';
 import { USER_WITH_PROFILE } from '@/test/fixtures';
 
 import Composer from './composer';
-import { pickNewsLocale } from './news-locale';
-import { NewsVersionsEditor } from './news-versions';
+import { pickNewsLocale, versionImages } from './news-locale';
+import type { NewsDraft } from './news-draft';
+import { NewsEditor } from './news-versions';
 import PostCard from './post-card';
 import PostAuthor from './voice';
 
@@ -42,6 +44,17 @@ const COVER = {
   url: '/api/v1/files/forum/00000000-0000-4000-8000-00000000a301.webp',
   width: 1600,
   height: 900,
+};
+
+const PHOTO = {
+  url: '/api/v1/files/forum/00000000-0000-4000-8000-00000000a302.webp',
+  width: 1200,
+  height: 800,
+};
+const ORIGINAL_PHOTO = {
+  url: '/api/v1/files/forum/00000000-0000-4000-8000-00000000a303.webp',
+  width: 1200,
+  height: 800,
 };
 
 const AUTHOR: ForumAuthor = {
@@ -97,7 +110,16 @@ const TOPIC: ForumTopicView = {
   unread: null,
   firstUnread: null,
   locale: 'ru',
-  translations: [{ locale: 'kk', title: 'KTTF ашылды', body: 'Мәтін', image: null, updatedAt: AT }],
+  translations: [
+    {
+      locale: 'kk',
+      title: 'KTTF ашылды',
+      body: 'Мәтін',
+      images: [COVER],
+      image: COVER,
+      updatedAt: AT,
+    },
+  ],
   firstPost: POST,
   subscribed: false,
   canReply: true,
@@ -122,7 +144,7 @@ const PORTAL: FeedTopicItem = {
   hidden: false,
   title: 'KTTF открыт',
   excerpt: 'Платформа открыта для всех клубов.',
-  images: [],
+  images: [ORIGINAL_PHOTO],
   archived: false,
   coauthor: { playerId: PLAYER_ID, name: 'Аманбаев Арлан', photoUrl: null },
   locale: 'ru',
@@ -131,13 +153,21 @@ const PORTAL: FeedTopicItem = {
       locale: 'kk',
       title: 'KTTF ашылды',
       excerpt: 'Платформа барлық клубтарға ашық.',
+      images: [COVER, PHOTO],
       image: COVER,
     },
-    { locale: 'en', title: 'KTTF is open', excerpt: 'The platform is open.', image: null },
+    {
+      locale: 'en',
+      title: 'KTTF is open',
+      excerpt: 'The platform is open.',
+      images: [],
+      image: null,
+    },
   ],
 };
 
 let requests: { method: string; url: string; body: unknown }[] = [];
+let uploads = 0;
 
 function reply(body: unknown): Response {
   return {
@@ -149,6 +179,7 @@ function reply(body: unknown): Response {
 
 beforeEach(() => {
   requests = [];
+  uploads = 0;
   useSessionStore.setState({ user: null, accessToken: null, isRestoring: false });
   vi.stubGlobal('fetch', (input: unknown, init?: RequestInit) => {
     const url = decodeURIComponent(String(input));
@@ -159,6 +190,16 @@ beforeEach(() => {
       body: typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined,
     });
     if (method === 'DELETE') return Promise.resolve(reply(undefined));
+    if (url.includes('/files/forum')) {
+      uploads += 1;
+      return Promise.resolve(
+        reply({
+          url: `/api/v1/files/forum/00000000-0000-4000-8000-00000000b${String(uploads).padStart(3, '0')}.webp`,
+          width: 800,
+          height: 600,
+        }),
+      );
+    }
     if (url.includes('/forum/me')) {
       return Promise.resolve(
         reply({ canPost: true, profileRequired: false, mute: null, moderator: true }),
@@ -330,12 +371,15 @@ describe('версия новости по языку', () => {
     expect(pickNewsLocale(null, [], 'kk')).toBeNull();
   });
 
-  it('карточка новости на казахском — казахская версия с её обложкой; «Перевод» — к оригиналу', async () => {
+  it('карточка новости на казахском — казахская версия с её фото; «Перевод» — к оригиналу', async () => {
     renderUi(<FeedCard item={PORTAL} />, 'kk');
 
     expect(await screen.findByRole('heading', { name: 'KTTF ашылды' })).toBeDefined();
     const card = screen.getByRole('article');
-    expect(card.querySelector('img')?.getAttribute('src')).toContain('00000000a301');
+    const sources = [...card.querySelectorAll('img')].map((img) => img.getAttribute('src'));
+    expect(sources.some((src) => src?.includes('00000000a301'))).toBe(true);
+    expect(sources.some((src) => src?.includes('00000000a302'))).toBe(true);
+    expect(sources.some((src) => src?.includes('00000000a303'))).toBe(false);
     expect(screen.getByText(ru['forum.voice.coauthor'], { exact: false })).toBeDefined();
 
     fireEvent.click(screen.getByRole('button', { name: 'Қазақша' }));
@@ -359,6 +403,17 @@ describe('версия новости по языку', () => {
     fireEvent.click(within(menu).getByRole('menuitem', { name: 'English' }));
 
     expect(await screen.findByRole('heading', { name: 'KTTF is open' })).toBeDefined();
+    // У английской версии своих фото нет — фото оригинала (ADR-099).
+    const sources = [...screen.getByRole('article').querySelectorAll('img')].map((img) =>
+      img.getAttribute('src'),
+    );
+    expect(sources.some((src) => src?.includes('00000000a303'))).toBe(true);
+  });
+
+  it('фото версии — свои, без них — оригинала', () => {
+    expect(versionImages({ images: [COVER, PHOTO] }, [ORIGINAL_PHOTO])).toEqual([COVER, PHOTO]);
+    expect(versionImages({ images: [] }, [ORIGINAL_PHOTO])).toEqual([ORIGINAL_PHOTO]);
+    expect(versionImages(undefined, [ORIGINAL_PHOTO])).toEqual([ORIGINAL_PHOTO]);
   });
 
   it('у записи игрока переключателя нет', async () => {
@@ -373,77 +428,259 @@ describe('версия новости по языку', () => {
   });
 });
 
-describe('редактор версий новости', () => {
-  it('вкладки по языкам, «Добавить язык» и сохранение версии', async () => {
-    asModerator();
-    renderUi(<NewsVersionsEditor topic={TOPIC} />);
+describe('редактор новости — вкладки языков (ADR-099)', () => {
+  function tabs(): (string | null)[] {
+    return screen.getAllByRole('tab').map((tab) => tab.textContent);
+  }
 
-    fireEvent.click(
-      await screen.findByRole('button', {
-        name: ru['news.versions.open'].replace('{count}', '2'),
-      }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    expect(
-      within(dialog)
-        .getAllByRole('tab')
-        .map((tab) => tab.textContent),
-    ).toEqual(['Оригинал (Русский)', 'Қазақша']);
-
-    fireEvent.click(within(dialog).getByRole('button', { name: ru['news.versions.add'] }));
-    fireEvent.click(await screen.findByRole('menuitem', { name: '中文' }));
-
-    expect(within(dialog).getByRole('tab', { name: '中文' }).getAttribute('aria-selected')).toBe(
-      'true',
+  function fillPage(title: string, body: string): void {
+    fireEvent.change(
+      screen.getByRole<HTMLInputElement>('textbox', { name: ru['news.versions.titleLabel'] }),
+      { target: { value: title } },
     );
     fireEvent.change(
-      within(dialog).getByRole('textbox', { name: ru['news.versions.titleLabel'] }),
-      {
-        target: { value: 'KTTF 开放了' },
-      },
+      screen.getByRole<HTMLTextAreaElement>('textbox', { name: ru['news.versions.bodyLabel'] }),
+      { target: { value: body } },
     );
-    fireEvent.change(within(dialog).getByRole('textbox', { name: ru['news.versions.bodyLabel'] }), {
-      target: { value: '平台已开放' },
+  }
+
+  async function addLanguage(name: string): Promise<void> {
+    fireEvent.click(screen.getByRole('button', { name: ru['news.versions.add'] }));
+    fireEvent.click(await screen.findByRole('menuitem', { name }));
+  }
+
+  it('«Добавить язык» — только свободные языки; вкладку можно убрать', async () => {
+    asModerator();
+    renderUi(<NewsEditor defaultLocale="ru" submitLabel="Опубликовать" submit={vi.fn()} />);
+
+    await screen.findByRole('tab', { name: 'Оригинал (Русский)' });
+    fireEvent.click(screen.getByRole('button', { name: ru['news.versions.add'] }));
+    const menu = await screen.findByRole('menu');
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['Қазақша', 'English', '中文', '한국어', '日本語']);
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'English' }));
+
+    expect(tabs()).toEqual(['Оригинал (Русский)', 'English']);
+    expect(screen.getByRole('tab', { name: 'English' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByText(ru['news.versions.photosHint'])).toBeDefined();
+
+    await addLanguage('Қазақша');
+    fireEvent.click(screen.getByRole('button', { name: ru['news.versions.add'] }));
+    const next = await screen.findByRole('menu');
+    expect(within(next).queryByRole('menuitem', { name: 'English' })).toBeNull();
+    expect(within(next).queryByRole('menuitem', { name: 'Русский' })).toBeNull();
+    fireEvent.keyDown(next, { key: 'Escape' });
+
+    fireEvent.click(screen.getByRole('button', { name: ru['news.versions.remove'] }));
+    await waitFor(() => {
+      expect(tabs()).toEqual(['Оригинал (Русский)', 'English']);
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: ru['news.versions.save'] }));
+    expect(
+      screen.getByRole('tab', { name: 'Оригинал (Русский)' }).getAttribute('aria-selected'),
+    ).toBe('true');
+  });
+
+  it('одна отправка — оригинал, голос, язык и версии с фото по порядку', async () => {
+    asModerator();
+    const submit = vi.fn((draft: NewsDraft) => Promise.resolve(draft));
+    renderUi(<NewsEditor defaultLocale="ru" submitLabel="Опубликовать" submit={submit} />);
+
+    await screen.findByRole('tab', { name: 'Оригинал (Русский)' });
+    fillPage(' KTTF открыт ', 'Платформа открыта');
+    await addLanguage('Қазақша');
+    fillPage('KTTF ашылды', 'Платформа ашық');
+
+    const input = screen
+      .getByRole('tabpanel')
+      .querySelector<HTMLInputElement>('input[type="file"]');
+    if (input === null) throw new Error('поля фото нет');
+    const photo = (name: string): File => new File(['x'], name, { type: 'image/jpeg' });
+    fireEvent.change(input, { target: { files: [photo('1.jpg'), photo('2.jpg')] } });
+    expect(
+      await screen.findByRole('button', {
+        name: fill(ru['forum.composer.addImage'], { count: '2', max: '4' }),
+      }),
+    ).toBeDefined();
+
+    // Оригинал без фото — его фото не тронуты загрузкой во вкладке версии.
+    fireEvent.click(screen.getByRole('tab', { name: 'Оригинал (Русский)' }));
+    expect(
+      screen.getByRole('button', {
+        name: fill(ru['forum.composer.addImage'], { count: '0', max: '4' }),
+      }),
+    ).toBeDefined();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Опубликовать' }));
 
     await waitFor(() => {
-      expect(requests.find((row) => row.method === 'PUT')).toMatchObject({
-        url: expect.stringContaining(`/forum/topics/${TOPIC_ID}/translations/zh`) as unknown,
-        body: { title: 'KTTF 开放了', body: '平台已开放', image: null },
-      });
+      expect(submit).toHaveBeenCalledTimes(1);
+    });
+    expect(submit.mock.calls[0]?.[0]).toEqual({
+      title: 'KTTF открыт',
+      body: 'Платформа открыта',
+      images: [],
+      locale: 'ru',
+      authoredAs: 'KTTF',
+      translations: [
+        {
+          locale: 'kk',
+          title: 'KTTF ашылды',
+          body: 'Платформа ашық',
+          images: [
+            {
+              url: '/api/v1/files/forum/00000000-0000-4000-8000-00000000b001.webp',
+              width: 800,
+              height: 600,
+            },
+            {
+              url: '/api/v1/files/forum/00000000-0000-4000-8000-00000000b002.webp',
+              width: 800,
+              height: 600,
+            },
+          ],
+        },
+      ],
     });
   });
 
-  it('у существующей версии — «Удалить версию»', async () => {
+  it('пустая версия — переход к её вкладке и подсказка, ничего не отправлено', async () => {
     asModerator();
-    renderUi(<NewsVersionsEditor topic={TOPIC} />);
+    const submit = vi.fn(() => Promise.resolve());
+    renderUi(<NewsEditor defaultLocale="ru" submitLabel="Опубликовать" submit={submit} />);
 
-    fireEvent.click(
-      await screen.findByRole('button', {
-        name: ru['news.versions.open'].replace('{count}', '2'),
+    await screen.findByRole('tab', { name: 'Оригинал (Русский)' });
+    fillPage('KTTF открыт', 'Платформа открыта');
+    await addLanguage('English');
+    fireEvent.click(screen.getByRole('tab', { name: 'Оригинал (Русский)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Опубликовать' }));
+
+    expect(await screen.findByText(ru['news.versions.invalid'])).toBeDefined();
+    expect(screen.getByRole('tab', { name: 'English' }).getAttribute('aria-selected')).toBe('true');
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('язык оригинала не предлагает языков версий', async () => {
+    asModerator();
+    renderUi(<NewsEditor defaultLocale="ru" submitLabel="Опубликовать" submit={vi.fn()} />);
+
+    await screen.findByRole('tab', { name: 'Оригинал (Русский)' });
+    await addLanguage('English');
+    fireEvent.click(screen.getByRole('tab', { name: 'Оригинал (Русский)' }));
+    fireEvent.mouseDown(
+      within(screen.getByRole('tabpanel')).getByRole('combobox', {
+        name: ru['news.versions.originalLanguage'],
       }),
     );
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('tab', { name: 'Қазақша' }));
+    const list = await screen.findByRole('listbox');
+    expect(within(list).queryByRole('option', { name: 'English' })).toBeNull();
+    expect(within(list).getByRole('option', { name: 'Қазақша' })).toBeDefined();
+  });
+});
+
+describe('правка новости — те же вкладки (ADR-099)', () => {
+  it('модератор правит оригинал и версии одним сохранением; заголовок тот же — без переименования', async () => {
+    asModerator();
+    renderUi(<PostCard post={{ ...POST, author: AUTHOR }} canReply article news={TOPIC} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['forum.action.more'] }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: ru['forum.action.edit'] }));
+
+    expect((await screen.findAllByRole('tab')).map((tab) => tab.textContent)).toEqual([
+      'Оригинал (Русский)',
+      'Қазақша',
+    ]);
     expect(
-      within(dialog).getByRole<HTMLInputElement>('textbox', {
-        name: ru['news.versions.titleLabel'],
-      }).value,
+      screen.getByRole<HTMLInputElement>('textbox', { name: ru['news.versions.titleLabel'] }).value,
+    ).toBe('KTTF открыт');
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Қазақша' }));
+    expect(
+      screen.getByRole<HTMLInputElement>('textbox', { name: ru['news.versions.titleLabel'] }).value,
     ).toBe('KTTF ашылды');
-    fireEvent.click(within(dialog).getByRole('button', { name: ru['news.versions.delete'] }));
+    expect(screen.getAllByRole('button', { name: ru['forum.composer.removeImage'] })).toHaveLength(
+      1,
+    );
+    fireEvent.change(
+      screen.getByRole<HTMLInputElement>('textbox', { name: ru['news.versions.titleLabel'] }),
+      { target: { value: 'KTTF ашық' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: ru['news.versions.add'] }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'English' }));
+    fireEvent.change(
+      screen.getByRole<HTMLInputElement>('textbox', { name: ru['news.versions.titleLabel'] }),
+      { target: { value: 'KTTF is open' } },
+    );
+    fireEvent.change(
+      screen.getByRole<HTMLTextAreaElement>('textbox', { name: ru['news.versions.bodyLabel'] }),
+      { target: { value: 'Open for all' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: ru['forum.action.save'] }));
 
     await waitFor(() => {
-      expect(requests.find((row) => row.method === 'DELETE')?.url).toContain(
-        `/forum/topics/${TOPIC_ID}/translations/kk`,
-      );
+      expect(requests.find((row) => row.method === 'PATCH')).toMatchObject({
+        url: expect.stringContaining(`/forum/posts/${POST_ID}`) as unknown,
+        body: {
+          body: POST.body,
+          images: [],
+          authoredAs: 'KTTF',
+          locale: 'ru',
+          translations: [
+            { locale: 'kk', title: 'KTTF ашық', body: 'Мәтін', images: [COVER] },
+            { locale: 'en', title: 'KTTF is open', body: 'Open for all', images: [] },
+          ],
+        },
+      });
+    });
+    expect(requests.some((row) => row.url.includes('/admin/forum/topics'))).toBe(false);
+  });
+
+  it('убранная вкладка уходит из набора; новый заголовок оригинала — переименование темы', async () => {
+    asModerator();
+    renderUi(<PostCard post={{ ...POST, author: AUTHOR }} canReply article news={TOPIC} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: ru['forum.action.more'] }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: ru['forum.action.edit'] }));
+    fireEvent.change(
+      await screen.findByRole<HTMLInputElement>('textbox', {
+        name: ru['news.versions.titleLabel'],
+      }),
+      { target: { value: 'KTTF открыт для всех' } },
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Қазақша' }));
+    fireEvent.click(screen.getByRole('button', { name: ru['news.versions.remove'] }));
+    fireEvent.click(screen.getByRole('button', { name: ru['forum.action.save'] }));
+
+    await waitFor(() => {
+      expect(
+        requests.find((row) => row.method === 'PATCH' && row.url.includes('/posts/')),
+      ).toMatchObject({ body: { translations: [] } });
+    });
+    expect(
+      requests.find((row) => row.method === 'PATCH' && row.url.includes('/admin/forum/topics')),
+    ).toMatchObject({
+      url: expect.stringContaining(TOPIC_ID) as unknown,
+      body: { title: 'KTTF открыт для всех' },
     });
   });
 
-  it('не новость — редактора нет', () => {
+  it('не модератор и не новость — обычная правка без вкладок', async () => {
     asModerator();
-    renderUi(<NewsVersionsEditor topic={{ ...TOPIC, locale: null, translations: [] }} />);
+    renderUi(
+      <PostCard
+        post={{ ...POST, author: AUTHOR }}
+        canReply
+        article
+        news={{ ...TOPIC, locale: null, translations: [] }}
+      />,
+    );
 
-    expect(screen.queryByRole('button', { name: /Языки новости/ })).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: ru['forum.action.more'] }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: ru['forum.action.edit'] }));
+
+    await screen.findByRole('radiogroup', { name: ru['forum.voice.label'] });
+    expect(screen.queryByRole('tab')).toBeNull();
   });
 });

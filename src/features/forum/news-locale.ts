@@ -1,4 +1,4 @@
-import type { SiteLocale } from '@kttf/shared/types';
+import type { ForumImage, SiteLocale } from '@kttf/shared/types';
 import { useState } from 'react';
 
 /** Выбор версии новости KTTF по языку — ADR-098. */
@@ -30,4 +30,15 @@ export function useNewsLocale(
   const valid = picked !== null && (picked === original || available.includes(picked));
 
   return [valid ? picked : pickNewsLocale(original, available, ui), setPicked] as const;
+}
+
+/**
+ * Фото версии новости (ADR-099): свои, если есть, иначе — фото оригинала.
+ * Нет версии — фото оригинала.
+ */
+export function versionImages(
+  version: { readonly images: readonly ForumImage[] } | undefined,
+  original: readonly ForumImage[],
+): readonly ForumImage[] {
+  return version === undefined || version.images.length === 0 ? original : version.images;
 }

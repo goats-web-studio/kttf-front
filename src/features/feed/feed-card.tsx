@@ -34,7 +34,7 @@ import PhotoViewer from '@/common/ui/photo-viewer';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import { forumImageVariant, sectionHref, splitName, topicHref } from '@/features/forum/labels';
 import LikeButton from '@/features/forum/like-button';
-import { useNewsLocale } from '@/features/forum/news-locale';
+import { useNewsLocale, versionImages } from '@/features/forum/news-locale';
 import { NewsLanguageSwitch } from '@/features/forum/news-versions';
 import { CoauthorLine } from '@/features/forum/voice';
 
@@ -376,14 +376,15 @@ function TopicBody({ item }: { readonly item: FeedTopicItem }): ReactNode {
   const uiLocale = useLocale();
   const href = item.discussion === null ? undefined : topicHref(item.discussion.topicId);
   // Новость KTTF — на языке интерфейса, если есть версия; «Перевод»
-  // переключает (ADR-098). Обложка версии — вместо фото оригинала.
+  // переключает (ADR-098). Фото версии — вместо фото оригинала, без них —
+  // фото оригинала (ADR-099).
   const available = item.translations.map((row) => row.locale);
   const [locale, setLocale] = useNewsLocale(item.locale, available, uiLocale);
   const version =
     locale === null || locale === item.locale
       ? undefined
       : item.translations.find((row) => row.locale === locale);
-  const images = version?.image == null ? item.images : [version.image];
+  const images = versionImages(version, item.images);
   const title = version?.title ?? item.title;
 
   return (

@@ -1,14 +1,8 @@
-import {
-  FEED_PORTAL_SECTION,
-  FORUM_TOPIC_TITLE_MAX,
-  type FeedItem,
-  type ForumAuthoredAs,
-} from '@kttf/shared/types';
+import { FEED_PORTAL_SECTION, type FeedItem } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
@@ -26,10 +20,9 @@ import { curateFeed, fetchAdminFeed } from '@/features/feed/api';
 import FeedCard from '@/features/feed/feed-card';
 import { feedKeys } from '@/features/feed/queries';
 import { createForumTopic } from '@/features/forum/api';
-import Composer from '@/features/forum/composer';
-import { NewsLocaleField } from '@/features/forum/news-versions';
+import { newsTopicInput } from '@/features/forum/news-draft';
+import { NewsEditor } from '@/features/forum/news-versions';
 import { forumKeys, forumSectionsQuery } from '@/features/forum/queries';
-import { VoicePicker } from '@/features/forum/voice';
 
 export const Route = createFileRoute('/_app/admin/feed')({
   component: AdminFeedPage,
@@ -178,58 +171,29 @@ function CurationButtons({
   );
 }
 
-/** Новость KTTF: заголовок и текст с фото — тема раздела «Новости KTTF». */
+/**
+ * Новость KTTF — тема раздела «Новости KTTF»: вкладки языков, у каждого свои
+ * заголовок, текст и фото (ADR-099). Опубликовалась — форма чистая.
+ */
 function PortalNews({ onPublished }: { readonly onPublished: () => void }): ReactNode {
   const t = useT();
   const sections = useQuery(forumSectionsQuery);
   const section = sections.data?.find((row) => row.slug === FEED_PORTAL_SECTION);
-  const [title, setTitle] = useState('');
-  const [titleError, setTitleError] = useState(false);
-  // Новость — по умолчанию от лица KTTF, язык оригинала — язык интерфейса (ADR-098).
-  const [voice, setVoice] = useState<ForumAuthoredAs>('KTTF');
   const uiLocale = useLocale();
-  const [locale, setLocale] = useState(uiLocale);
+  // Новая новость — новый редактор: прошлые вкладки и фото не остаются.
+  const [round, setRound] = useState(0);
 
   if (section === undefined) return null;
 
   return (
     <Surface title={t('admin.feed.news')} subtitle={t('admin.feed.newsLead')}>
-      <TextField
-        label={t('admin.feed.newsTitle')}
-        value={title}
-        error={titleError}
-        fullWidth
-        slotProps={{ htmlInput: { maxLength: FORUM_TOPIC_TITLE_MAX } }}
-        onChange={(event) => {
-          setTitle(event.target.value);
-          setTitleError(false);
-        }}
-        sx={{ mb: 2 }}
-      />
-      <Box sx={{ mb: 2 }}>
-        <NewsLocaleField value={locale} onChange={setLocale} />
-      </Box>
-      <VoicePicker value={voice} onChange={setVoice} />
-      <Composer
-        draftKey="admin-portal-news"
+      <NewsEditor
+        key={round}
+        defaultLocale={uiLocale}
         submitLabel={t('admin.feed.publish')}
-        validate={() => {
-          const ok = title.trim().length >= 3;
-          setTitleError(!ok);
-          return ok;
-        }}
-        submit={(input) =>
-          createForumTopic({
-            sectionId: section.id,
-            title: title.trim(),
-            body: input.body,
-            ...(input.images === undefined ? {} : { images: input.images }),
-            authoredAs: voice,
-            locale,
-          })
-        }
+        submit={(draft) => createForumTopic(newsTopicInput(section.id, draft))}
         onDone={() => {
-          setTitle('');
+          setRound((previous) => previous + 1);
           onPublished();
         }}
       />

@@ -306,7 +306,7 @@ describe('«Новая тема» — окном прямо на форуме', 
     expect(within(dialog).queryByRole('radiogroup', { name: ru['forum.voice.label'] })).toBeNull();
   });
 
-  it('модератор в окне пишет новость от KTTF и выбирает язык оригинала (ADR-098)', async () => {
+  it('модератор в окне пишет новость от KTTF сразу на двух языках (ADR-098, ADR-099)', async () => {
     renderAt('/forum/kttf', { ...USER_WITH_PROFILE, isAdmin: true });
 
     const [button] = await screen.findAllByRole('button', { name: ru['forum.newTopic'] });
@@ -328,24 +328,46 @@ describe('«Новая тема» — окном прямо на форуме', 
     ).toBeGreaterThan(0);
 
     fireEvent.change(
-      within(dialog).getByRole<HTMLInputElement>('textbox', { name: ru['forum.new.titleLabel'] }),
-      { target: { value: 'Новая тема про мячи' } },
+      within(dialog).getByRole<HTMLInputElement>('textbox', {
+        name: ru['news.versions.titleLabel'],
+      }),
+      { target: { value: 'Турнир в субботу' } },
     );
     fireEvent.change(
       within(dialog).getByRole<HTMLTextAreaElement>('textbox', {
-        name: ru['forum.composer.placeholder'],
+        name: ru['news.versions.bodyLabel'],
       }),
-      { target: { value: 'Турнир в субботу' } },
+      { target: { value: 'Ждём всех' } },
+    );
+    fireEvent.click(within(dialog).getByRole('button', { name: ru['news.versions.add'] }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Қазақша' }));
+    fireEvent.change(
+      within(dialog).getByRole<HTMLInputElement>('textbox', {
+        name: ru['news.versions.titleLabel'],
+      }),
+      { target: { value: 'Сенбіде турнир' } },
+    );
+    fireEvent.change(
+      within(dialog).getByRole<HTMLTextAreaElement>('textbox', {
+        name: ru['news.versions.bodyLabel'],
+      }),
+      { target: { value: 'Бәрін күтеміз' } },
     );
     fireEvent.click(within(dialog).getByRole('button', { name: ru['forum.new.submit'] }));
 
     await waitFor(() => {
-      const created = calls.find((call) => call.method === 'POST' && call.url.endsWith('/topics'));
-      expect(created?.body).toMatchObject({
-        sectionId: SECTIONS[2]?.id,
-        authoredAs: 'KTTF',
-        locale: 'ru',
-      });
+      expect(window.location.pathname).toBe(`/forum/topics/${NEW_TOPIC_ID}`);
+    });
+    const created = calls.filter((call) => call.method === 'POST' && call.url.endsWith('/topics'));
+    expect(created).toHaveLength(1);
+    expect(created[0]?.body).toEqual({
+      sectionId: SECTIONS[2]?.id,
+      title: 'Турнир в субботу',
+      body: 'Ждём всех',
+      images: [],
+      authoredAs: 'KTTF',
+      locale: 'ru',
+      translations: [{ locale: 'kk', title: 'Сенбіде турнир', body: 'Бәрін күтеміз', images: [] }],
     });
   });
 

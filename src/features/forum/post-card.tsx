@@ -3,6 +3,7 @@ import {
   FORUM_QUOTE_MAX,
   type ForumImage,
   type ForumPostView,
+  type ForumTopicView,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -24,6 +25,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import {
   deleteForumPost,
   hideForumPost,
+  moderateForumTopic,
   muteForumUser,
   updateForumPost,
   warnForumUser,
@@ -32,6 +34,8 @@ import Composer, { type DraftQuote } from './composer';
 import { MuteDialog, ReasonDialog, ReportDialog, WarnDialog } from './dialogs';
 import { topicHref } from './labels';
 import LikeButton from './like-button';
+import { newsDraftOf } from './news-draft';
+import { NewsEditor } from './news-versions';
 import { ForumImages, ForumQuote, ForumText } from './post-body';
 import { forumKeys } from './queries';
 import PostAuthor from './voice';
@@ -55,6 +59,11 @@ interface PostCardProps {
   readonly version?: { readonly body: string; readonly images: readonly ForumImage[] } | null;
   /** Справа от даты: «Перевод» у новости. */
   readonly aside?: ReactNode;
+  /**
+   * Тема новости KTTF, чьё это первое сообщение: модератор правит его
+   * вкладками языков — оригинал и версии с фото (ADR-099).
+   */
+  readonly news?: ForumTopicView | undefined;
 }
 
 /**
@@ -72,6 +81,7 @@ export default function PostCard({
   header,
   version = null,
   aside,
+  news,
 }: PostCardProps): ReactNode {
   const t = useT();
   const locale = useLocale();
@@ -92,6 +102,7 @@ export default function PostCard({
   const official = post.authoredAs !== 'SELF';
   const body = version?.body ?? post.body;
   const images = version?.images ?? post.images;
+  const newsEditor = isAdmin && post.number === 1 && news?.locale != null ? news : null;
 
   const quote = (): void => {
     if (onQuote === undefined) return;
@@ -180,6 +191,36 @@ export default function PostCard({
       <Box sx={{ mt: article ? 2 : 1.5, pl: article ? 0 : { sm: 6 } }}>
         {post.deleted ? (
           <Placeholder>{t('forum.post.deleted')}</Placeholder>
+        ) : editing && newsEditor !== null ? (
+          <NewsEditor
+            initial={newsDraftOf(newsEditor, post)}
+            submitLabel={t('forum.action.save')}
+            onCancel={() => {
+              setEditing(false);
+            }}
+            onDone={() => {
+              setEditing(false);
+            }}
+            submit={async (draft) => {
+              // Заголовок оригинала — у темы: его правит модератор, как «Переименовать».
+              if (draft.title !== newsEditor.title) {
+                await moderateForumTopic(newsEditor.id, { title: draft.title });
+              }
+              await updateForumPost(post.id, {
+                body: draft.body,
+                images: [...draft.images],
+                authoredAs: draft.authoredAs,
+                locale: draft.locale,
+                translations: draft.translations.map((row) => ({
+                  locale: row.locale,
+                  title: row.title,
+                  body: row.body,
+                  images: [...row.images],
+                })),
+              });
+              await refresh();
+            }}
+          />
         ) : editing ? (
           <Composer
             initial={{ body: post.body, images: post.images, authoredAs: post.authoredAs }}
