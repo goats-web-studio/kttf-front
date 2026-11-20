@@ -293,7 +293,20 @@ describe('страница «Лента» — ADR-097', () => {
 
 describe('вход в ленту из навигации — ADR-097', () => {
   it('«Лента» — первый пункт меню «Сообщество»', () => {
-    expect(NAV_MENUS['/forum']?.[0]?.href).toBe('/feed');
+    expect(NAV_MENUS['/feed']?.[0]?.href).toBe('/feed');
+  });
+
+  it('сам пункт «Сообщество» в шапке ведёт в ленту, а не на форум', async () => {
+    renderAt('/players');
+
+    const [link] = await screen.findAllByRole('link', { name: ru['nav.community'] });
+    expect(link?.getAttribute('href')).toBe('/feed');
+  });
+
+  it('форум в меню «Сообщество» назван «Форум», а не «Все разделы»', () => {
+    const forum = NAV_MENUS['/feed']?.find((item) => item.href === '/forum');
+    expect(forum?.key).toBe('forum.all');
+    expect(ru['nav.menu.forum.all.title']).toBe('Форум');
   });
 
   it('на телефоне «Сообщество» открывает лист с «Лентой»', async () => {

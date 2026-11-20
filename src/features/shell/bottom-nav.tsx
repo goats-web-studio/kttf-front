@@ -32,7 +32,7 @@ const ICONS: Readonly<Record<string, LucideIcon>> = {
   '/tournaments': CalendarDays,
   '/players': Trophy,
   '/clubs': MapPin,
-  '/forum': MessagesSquare,
+  '/feed': MessagesSquare,
   '/market': ShoppingBag,
 };
 
@@ -133,7 +133,7 @@ export default function BottomNav(): ReactNode {
 }
 
 /** Раздел, который на телефоне открывает лист со своим меню. */
-const SHEET_SECTION = '/forum';
+const SHEET_SECTION = '/feed';
 
 /**
  * Лист «Сообщество» — пункты меню шапки (`NAV_MENUS`) строками под палец.
