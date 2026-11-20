@@ -657,7 +657,9 @@ describe('мои клубы у владельца', () => {
   });
 
   it('администратору — заявки клубов, а не создание клуба', async () => {
-    renderAt('/cabinet/clubs', { ...ADMIN_USER, clubRoles: USER_WITH_PROFILE.clubRoles });
+    // «Мои клубы» перечитывают вошедшего (ADR-100): сервер отдаёт его же.
+    me = { ...ADMIN_USER, clubRoles: USER_WITH_PROFILE.clubRoles };
+    renderAt('/cabinet/clubs', me);
 
     // Та же ссылка есть и в меню кабинета: проверяется раздел, а не меню.
     const main = (await screen.findByRole('navigation', { name: ru['cabinet.nav.label'] }))

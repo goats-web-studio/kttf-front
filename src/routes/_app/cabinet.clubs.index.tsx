@@ -7,12 +7,13 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
 import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
+import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
 import ClubMark from '@/features/clubs/club-mark';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
@@ -40,6 +41,12 @@ function MyClubsPage(): ReactNode {
   const clubs = useQuery(clubDirectoryQuery);
   const roles = user?.clubRoles ?? [];
   const isAdmin = user?.isAdmin === true;
+
+  // Роль в клубе выдаёт другой человек (ADR-100): открыв «Мои клубы», человек
+  // ждёт увидеть клуб, в который его только что добавили, без перезагрузки.
+  useEffect(() => {
+    reloadUser().catch(() => undefined);
+  }, []);
   // Клуб заводится только из заявки (ADR-049): администратор — разбирая
   // заявки, остальные — подавая её.
   const newClub = (

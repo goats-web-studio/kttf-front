@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import { useEffect, type ReactNode } from 'react';
 
 import ThemeRoot from '@/common/ui/theme';
+import useFreshUser from '@/features/auth/use-fresh-user';
 
 import BottomNav, { BOTTOM_NAV_HEIGHT } from './bottom-nav';
 import SiteBackdrop from './site-backdrop';
@@ -24,6 +25,9 @@ interface SiteLayoutProps {
  * что попадает в консоль, считается против бюджета 400 КБ (ТС 8.1).
  */
 export default function SiteLayout({ children }: SiteLayoutProps): ReactNode {
+  // Роли, выданные другим человеком, видны без перезагрузки (ADR-100).
+  useFreshUser();
+
   // Сайт без обводки фокуса (styles.css, `data-focus`). Метка на <html>, а не
   // на обёртке: меню и диалоги рисуются в портале вне неё.
   useEffect(() => {
