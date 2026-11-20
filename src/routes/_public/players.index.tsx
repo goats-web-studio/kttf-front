@@ -1,4 +1,4 @@
-import type { PlayerListItemView } from '@kttf/shared/types';
+import type { HomeStatsPeriod, PlayerListItemView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -15,7 +15,7 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { ChevronRight, Swords } from 'lucide-react';
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 
 import { fill, formatCount, formatDate, useLocale, useT, type MessageKey } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
@@ -30,6 +30,7 @@ import QueryState from '@/common/ui/query-state';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { DUELS_HREF } from '@/features/duels/labels';
+import HomeStats from '@/features/home/home-stats';
 import type { PickedProduct } from '@/features/market/picked-product';
 import { useCityLabel } from '@/features/places/city-label';
 import { useCityScope } from '@/features/places/my-city';
@@ -73,6 +74,11 @@ const WIDEST = { display: { xs: 'none', md: 'table-cell' } } as const;
  * Фильтры — рейтинг «от / до», несколько городов, клуб, пол, рука и поиск по
  * ФИО. Логина в таблице и в поиске нет: им входят на сайт (ADR-054).
  * Направление одно — настольный теннис; рейтинга федерации пока нет.
+ *
+ * Рядом с таблицей — «Статистика» сайта (ADR-071): кто больше играл и
+ * выигрывал за период и лучшие победы. На главной от неё короткие блоки,
+ * целиком — здесь: на компьютере колонкой справа, не сдвигая таблицу вниз,
+ * уже — под таблицей.
  *
  * История изменений рейтинга живёт в профиле игрока, куда ведёт фамилия.
  * Фильтры, порядок и страница — в адресе (docs/07-design-system.md, 6.2):
@@ -232,113 +238,142 @@ function PlayersPage(): ReactNode {
         onReset={reset}
       />
 
-      <Box sx={{ mt: 2 }}>
-        <QueryState
-          isPending={players.isPending}
-          error={players.error}
-          onRetry={() => void players.refetch()}
-          loading={<RowsSkeleton />}
-        >
-          {players.data === undefined ? null : players.data.items.length > 0 ? (
-            // До 640px таблица сжимается до трёх колонок, а город уходит
-            // подписью под фамилию (docs/08-ux-draft.md, 3.3): место и
-            // рейтинг остаются крупными, горизонтальной прокрутки нет.
-            // Шапка липкая (раздел 6.1).
-            <Paper variant="outlined">
-              <Table stickyHeader size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell align="center" sx={{ width: 56 }}>
-                      {t('ratings.column.rank')}
-                    </TableCell>
-                    <TableCell>{t('ratings.column.player')}</TableCell>
-                    {equipmentView ? null : (
-                      <TableCell sx={WIDE}>{t('ratings.column.city')}</TableCell>
-                    )}
-                    <TableCell align="right" sortDirection={descending ? 'desc' : 'asc'}>
-                      <TableSortLabel
-                        active
-                        direction={descending ? 'desc' : 'asc'}
-                        onClick={() => {
-                          filter({ order: descending ? 'asc' : undefined });
-                        }}
-                        sx={{ minHeight: 44 }}
-                      >
-                        {t('ratings.column.rating')}
-                      </TableSortLabel>
-                    </TableCell>
-                    {equipmentView ? (
-                      <>
-                        <TableCell sx={WIDE}>{t('player.form.blade')}</TableCell>
-                        <TableCell sx={WIDE}>{t('players.column.forehand')}</TableCell>
-                        <TableCell sx={WIDE}>{t('players.column.backhand')}</TableCell>
-                      </>
-                    ) : (
-                      <>
-                        <TableCell align="right" sx={WIDE}>
-                          {t('ratings.column.matches')}
-                        </TableCell>
-                        <TableCell align="right" sx={WIDEST}>
-                          {t('players.column.updated')}
-                        </TableCell>
-                      </>
-                    )}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {players.data.items.map((player, index) => {
-                    // Место — в отобранном списке по силе: при порядке «слабые
-                    // первыми» первая строка — последнее место, а не первое.
-                    const position = (page - 1) * players.data.limit + index;
-                    const rank = descending ? position + 1 : total - position;
-
-                    return (
-                      <PlayerRow
-                        key={player.id}
-                        player={player}
-                        rank={rank}
-                        rankLabel={formatCount(rank, locale)}
-                        city={placeName(player.city)}
-                        updated={
-                          player.ratingUpdatedAt === null
-                            ? '—'
-                            : formatDate(player.ratingUpdatedAt, locale)
-                        }
-                        matches={formatCount(player.ratedMatches, locale)}
-                        provisional={t('ratings.provisional')}
-                        equipment={equipmentView}
-                      />
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </Paper>
-          ) : active.length > 0 ? (
-            <EmptyState
-              title={t('ratings.notFound.title')}
-              text={t('ratings.notFound.text')}
-              action={<Button onClick={reset}>{t('filter.resetAll')}</Button>}
-            />
-          ) : (
-            <EmptyState
-              title={t('ratings.emptyState.title')}
-              text={t('ratings.emptyState.text')}
-              action={<Button href="/tournaments">{t('ratings.emptyState.action')}</Button>}
-            />
-          )}
-        </QueryState>
-      </Box>
-
-      <Pagination
-        page={page}
-        pages={pages}
-        onPage={(next) => {
-          void navigate({
-            search: (previous) => ({ ...previous, page: next === 1 ? undefined : next }),
-          });
+      <Box
+        sx={{
+          mt: 2,
+          display: 'grid',
+          gap: { xs: 6, lg: 3 },
+          alignItems: 'start',
+          gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1fr) 340px' },
         }}
-      />
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <QueryState
+            isPending={players.isPending}
+            error={players.error}
+            onRetry={() => void players.refetch()}
+            loading={<RowsSkeleton />}
+          >
+            {players.data === undefined ? null : players.data.items.length > 0 ? (
+              // До 640px таблица сжимается до трёх колонок, а город уходит
+              // подписью под фамилию (docs/08-ux-draft.md, 3.3): место и
+              // рейтинг остаются крупными, горизонтальной прокрутки нет.
+              // Шапка липкая (раздел 6.1).
+              <Paper variant="outlined">
+                <Table stickyHeader size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell align="center" sx={{ width: 56 }}>
+                        {t('ratings.column.rank')}
+                      </TableCell>
+                      <TableCell>{t('ratings.column.player')}</TableCell>
+                      {equipmentView ? null : (
+                        <TableCell sx={WIDE}>{t('ratings.column.city')}</TableCell>
+                      )}
+                      <TableCell align="right" sortDirection={descending ? 'desc' : 'asc'}>
+                        <TableSortLabel
+                          active
+                          direction={descending ? 'desc' : 'asc'}
+                          onClick={() => {
+                            filter({ order: descending ? 'asc' : undefined });
+                          }}
+                          sx={{ minHeight: 44 }}
+                        >
+                          {t('ratings.column.rating')}
+                        </TableSortLabel>
+                      </TableCell>
+                      {equipmentView ? (
+                        <>
+                          <TableCell sx={WIDE}>{t('player.form.blade')}</TableCell>
+                          <TableCell sx={WIDE}>{t('players.column.forehand')}</TableCell>
+                          <TableCell sx={WIDE}>{t('players.column.backhand')}</TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell align="right" sx={WIDE}>
+                            {t('ratings.column.matches')}
+                          </TableCell>
+                          <TableCell align="right" sx={WIDEST}>
+                            {t('players.column.updated')}
+                          </TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {players.data.items.map((player, index) => {
+                      // Место — в отобранном списке по силе: при порядке «слабые
+                      // первыми» первая строка — последнее место, а не первое.
+                      const position = (page - 1) * players.data.limit + index;
+                      const rank = descending ? position + 1 : total - position;
+
+                      return (
+                        <PlayerRow
+                          key={player.id}
+                          player={player}
+                          rank={rank}
+                          rankLabel={formatCount(rank, locale)}
+                          city={placeName(player.city)}
+                          updated={
+                            player.ratingUpdatedAt === null
+                              ? '—'
+                              : formatDate(player.ratingUpdatedAt, locale)
+                          }
+                          matches={formatCount(player.ratedMatches, locale)}
+                          provisional={t('ratings.provisional')}
+                          equipment={equipmentView}
+                        />
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </Paper>
+            ) : active.length > 0 ? (
+              <EmptyState
+                title={t('ratings.notFound.title')}
+                text={t('ratings.notFound.text')}
+                action={<Button onClick={reset}>{t('filter.resetAll')}</Button>}
+              />
+            ) : (
+              <EmptyState
+                title={t('ratings.emptyState.title')}
+                text={t('ratings.emptyState.text')}
+                action={<Button href="/tournaments">{t('ratings.emptyState.action')}</Button>}
+              />
+            )}
+          </QueryState>
+
+          <Pagination
+            page={page}
+            pages={pages}
+            onPage={(next) => {
+              void navigate({
+                search: (previous) => ({ ...previous, page: next === 1 ? undefined : next }),
+              });
+            }}
+          />
+        </Box>
+        <PlayersStats />
+      </Box>
     </Container>
+  );
+}
+
+/**
+ * «Статистика» целиком — период, «Турниры» и «Победы», лучшие победы. На
+ * неё ведут «Вся статистика» и «Все» у коротких блоков главной (`#stats`).
+ */
+function PlayersStats(): ReactNode {
+  const t = useT();
+  const [period, setPeriod] = useState<HomeStatsPeriod>('MONTH');
+
+  return (
+    <Box component="aside" id="stats" sx={{ minWidth: 0, scrollMarginTop: 88 }}>
+      <Typography variant="h2" sx={{ mb: 2 }}>
+        {t('home.stats.title')}
+      </Typography>
+      <HomeStats period={period} onPeriod={setPeriod} />
+    </Box>
   );
 }
 

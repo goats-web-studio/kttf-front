@@ -108,6 +108,20 @@ function answer(url: string): Response {
   if (pathname.endsWith('/like')) return reply({ likes: 3, liked: true });
   if (pathname.includes('/follows')) return reply([]);
   if (pathname.endsWith('/forum/sections')) return reply([]);
+  // Тема записи — полный текст для «Показать ещё».
+  if (pathname.endsWith(`/forum/topics/${TOPIC_ID}`)) {
+    return reply({
+      id: TOPIC_ID,
+      locale: null,
+      translations: [],
+      firstPost: {
+        id: POST_ID,
+        body: `${PLAYER_POST.excerpt}
+
+Счёт 3:1. Победил **Ерлан**.`,
+      },
+    });
+  }
   if (pathname.includes('/notifications')) return reply({ items: [], unread: 0 });
   // Шапка вошедшего — его профиль игрока.
   if (pathname.endsWith(`/players/${String(USER_WITH_PROFILE.playerId)}`))
@@ -460,12 +474,13 @@ describe('карточка ленты: «нравится», фото, длин�
 
       fireEvent.click(more);
 
-      expect(card.querySelector('[data-feed-excerpt="open"]')).not.toBeNull();
-      expect(
-        within(card)
-          .getByRole('button', { name: ru['feed.excerpt.less'] })
-          .getAttribute('aria-expanded'),
-      ).toBe('true');
+      // Целиком — первое сообщение темы, с разметкой (ADR-076).
+      const less = await within(card).findByRole('button', { name: ru['feed.excerpt.less'] });
+      expect(less.getAttribute('aria-expanded')).toBe('true');
+      const full = card.querySelector('[data-feed-excerpt="full"]');
+      expect(full?.textContent).toContain('Счёт 3:1.');
+      expect(full?.querySelector('strong')?.textContent).toBe('Ерлан');
+      expect(requests.some((url) => url.endsWith(`/forum/topics/${TOPIC_ID}`))).toBe(true);
       expect(
         within(card).getByRole('link', { name: ru['feed.discuss'] }).getAttribute('href'),
       ).toBe(topicHref(TOPIC_ID));

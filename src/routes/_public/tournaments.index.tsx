@@ -30,6 +30,8 @@ import { RowsSkeleton } from '@/common/ui/skeleton';
 import { useSessionStore } from '@/features/auth/session-store';
 import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { managedClubIds } from '@/features/clubs/roles';
+import Podiums from '@/features/home/podiums';
+import { homePodiumsQuery } from '@/features/home/stats-queries';
 import CityFilter from '@/features/places/city-filter';
 import { useCityLabel } from '@/features/places/city-label';
 import { useCityScope } from '@/features/places/my-city';
@@ -403,6 +405,8 @@ function TournamentsPage(): ReactNode {
 
       <FilterSummary total={total} filters={active} onReset={reset} />
 
+      {search.status === 'FINISHED' && <LatestPodiums />}
+
       <Box sx={{ mt: 2 }}>
         {view === 'calendar' ? (
           <QueryState
@@ -464,6 +468,29 @@ function TournamentsPage(): ReactNode {
         )}
       </Box>
     </Container>
+  );
+}
+
+/**
+ * «Последние результаты турниров» — над итогами (ADR-071): свежие турниры с
+ * тройкой призёров карточками, ниже — весь список завершённых. С главной
+ * сюда ведёт «Все итоги». Призёры — по всем городам: это лента итогов
+ * сайта, а не выборка фильтра. Пусто — блока нет.
+ */
+function LatestPodiums(): ReactNode {
+  const t = useT();
+  const podiums = useQuery(homePodiumsQuery);
+  const items = podiums.data?.items ?? [];
+
+  if (items.length === 0) return null;
+
+  return (
+    <Box component="section" sx={{ mt: 3, mb: 5 }} data-results-podiums>
+      <Typography variant="h2" sx={{ mb: 2 }}>
+        {t('home.results.title')}
+      </Typography>
+      <Podiums items={items} wide />
+    </Box>
   );
 }
 

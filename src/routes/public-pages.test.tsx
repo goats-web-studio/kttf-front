@@ -53,7 +53,7 @@ function answer(url: string): Response {
   }
 
   if (url.includes('/stats/leaders')) {
-    return reply({ period: 'MONTH', tournaments: [], wins: [] });
+    return reply(HOME_LEADERS);
   }
 
   if (url.includes('/stats/upsets')) {
@@ -148,6 +148,33 @@ const HOME_PODIUMS = {
           name: playerName(PLAYERS.third, String),
         },
       ],
+    },
+  ],
+};
+
+/** Статистика за месяц: больше всех турниров у первого, побед — у второго. */
+const HOME_LEADERS = {
+  period: 'MONTH',
+  tournaments: [
+    {
+      player: {
+        id: PLAYERS.first.id,
+        name: playerName(PLAYERS.first, String),
+        photoUrl: null,
+        rating: '520.00',
+      },
+      count: 6,
+    },
+  ],
+  wins: [
+    {
+      player: {
+        id: PLAYERS.second.id,
+        name: playerName(PLAYERS.second, String),
+        photoUrl: null,
+        rating: '410.00',
+      },
+      count: 17,
     },
   ],
 };
@@ -482,6 +509,63 @@ describe('игроки — ADR-054', () => {
   });
 });
 
+describe('полные блоки — в своих разделах', () => {
+  it('итоги турниров: сетка призёров над списком, делённое третье подписано', async () => {
+    renderAt('/tournaments?status=FINISHED&view=list');
+
+    const title = await screen.findByRole('heading', { name: ru['home.results.title'] });
+    const section = title.closest('section');
+    if (section === null) throw new Error('раздел призёров не найден');
+
+    expect(section.querySelector('[data-home-podiums]')).not.toBeNull();
+    expect(
+      within(section)
+        .getByRole('link', { name: playerName(PLAYERS.first, String) })
+        .getAttribute('href'),
+    ).toBe(`/players/${PLAYERS.first.id}`);
+    expect(
+      within(section).getByLabelText(fill(ru['home.results.place'], { place: '3–4' })),
+    ).toBeDefined();
+    // Над списком прошедших, а не под ним.
+    const past = await screen.findByRole('heading', { name: ru['tournaments.past'] });
+    expect(title.compareDocumentPosition(past) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('календарь без «Завершён» — без сетки призёров', async () => {
+    renderAt(`/tournaments?month=${FIXTURE_MONTH}`);
+
+    await screen.findByRole('link', { name: TOURNAMENT.name });
+    expect(screen.queryByRole('heading', { name: ru['home.results.title'] })).toBeNull();
+    expect(requests.some((url) => url.includes('/stats/podiums'))).toBe(false);
+  });
+
+  it('рейтинг: «Статистика» целиком рядом с таблицей — обе таблицы и лучшие победы', async () => {
+    renderAt('/players');
+
+    await screen.findAllByRole('row');
+    const aside = document.getElementById('stats');
+    if (aside === null) throw new Error('статистика не найдена');
+
+    expect(within(aside).getByRole('heading', { name: ru['home.stats.title'] })).toBeDefined();
+    expect(
+      await within(aside).findByRole('heading', { name: ru['home.stats.tournaments'] }),
+    ).toBeDefined();
+    expect(within(aside).getByRole('heading', { name: ru['home.stats.wins'] })).toBeDefined();
+
+    const upsets = aside.querySelector('[data-home-upsets]');
+    if (!(upsets instanceof HTMLElement)) throw new Error('лучшие победы не найдены');
+    expect(within(upsets).getByText('3:1')).toBeDefined();
+    expect(within(upsets).getByText('+14.50')).toBeDefined();
+    expect(within(upsets).getByText('−14.50')).toBeDefined();
+
+    // Период — один на весь блок.
+    fireEvent.click(within(aside).getByRole('radio', { name: ru['home.stats.period.WEEK'] }));
+    await waitFor(() => {
+      expect(requests.some((url) => url.includes('/stats/upsets?period=WEEK'))).toBe(true);
+    });
+  });
+});
+
 describe('неверная ссылка на турнир', () => {
   it('объясняет оборванную ссылку вместо просьбы проверить поля', async () => {
     vi.stubGlobal('fetch', () =>
@@ -612,7 +696,8 @@ describe('фильтры в адресе', () => {
   it('старая ссылка с «Рейтинг начислен» открывается как «Завершён»', async () => {
     renderAt(`/tournaments?month=${FIXTURE_MONTH}&status=RATED`);
 
-    await screen.findByRole('link', { name: TOURNAMENT.name });
+    // Турнир — и в календаре, и в сетке призёров над ним.
+    await screen.findAllByRole('link', { name: TOURNAMENT.name });
 
     expect(
       requests.some(
@@ -761,36 +846,117 @@ describe('главная', () => {
     expect(within(tiles).getAllByRole('link')).toHaveLength(7);
   });
 
-  it('результаты турниров — турнир ссылкой и призёры ссылками на профили', async () => {
+  it('центр начинается с ленты: итогов, статистики и лучших побед в нём нет', async () => {
     renderAt('/');
 
-    const podiums = await screen.findByText(ru['home.results.title']);
-    const section = podiums.closest('section');
-    if (section === null) throw new Error('раздел результатов не найден');
+    await screen.findByRole('link', { name: HOME_FEED_TITLE });
+    const portal = document.querySelector('[data-home-portal]');
+    const main = portal?.children[1];
+    if (!(main instanceof HTMLElement)) throw new Error('центральная колонка не найдена');
 
-    const winner = await within(section).findByRole('link', {
-      name: playerName(PLAYERS.first, String),
-    });
-    expect(winner.getAttribute('href')).toBe(`/players/${PLAYERS.first.id}`);
-    expect(within(section).getByRole('link', { name: TOURNAMENT.name }).getAttribute('href')).toBe(
-      `/tournaments/${TOURNAMENT_ID}`,
-    );
-    // Делённое третье подписано диапазоном для чтеца.
-    expect(
-      within(section).getByLabelText(fill(ru['home.results.place'], { place: '3–4' })),
-    ).toBeDefined();
+    // Первый раздел центра — лента.
+    expect(main.querySelector('section')?.querySelector('[data-home-feed]')).not.toBeNull();
+    expect(within(main).queryByText(ru['home.results.title'])).toBeNull();
+    expect(main.querySelector('[data-home-podiums]')).toBeNull();
+    expect(main.querySelector('[data-home-stats]')).toBeNull();
+    expect(main.querySelector('[data-home-upsets]')).toBeNull();
+    // Полные блоки ушли в разделы: на главной их нет вовсе.
+    expect(document.querySelector('[data-home-podiums]')).toBeNull();
+    expect(document.querySelector('[data-home-stats]')).toBeNull();
   });
 
-  it('лучшие победы — счёт по партиям и прирост победителя со знаком', async () => {
+  it('слева под турнирами — последние итоги: турнир, победитель с золотом, «Все итоги»', async () => {
     renderAt('/');
 
-    const title = await screen.findByText(ru['home.stats.upsets']);
-    const table = title.closest('[data-home-upsets]');
-    if (!(table instanceof HTMLElement)) throw new Error('таблица лучших побед не найдена');
+    const title = await screen.findByRole('heading', { name: ru['home.results.short'] });
+    const block = title.closest('section');
+    if (block === null) throw new Error('блок итогов не найден');
+    // В колонке турниров, после «Ближайших».
+    const rail = block.closest('aside');
+    const upcoming = within(rail ?? document.body).getByText(ru['home.upcoming.title']);
+    expect(upcoming.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-    expect(within(table).getByText('3:1')).toBeDefined();
-    expect(within(table).getByText('+14.50')).toBeDefined();
-    expect(within(table).getByText('−14.50')).toBeDefined();
+    expect(within(block).getByRole('link', { name: TOURNAMENT.name }).getAttribute('href')).toBe(
+      `/tournaments/${TOURNAMENT_ID}`,
+    );
+    expect(
+      within(block)
+        .getByRole('link', { name: playerName(PLAYERS.first, String) })
+        .getAttribute('href'),
+    ).toBe(`/players/${PLAYERS.first.id}`);
+    expect(
+      within(block).getByLabelText(fill(ru['home.results.place'], { place: '1' })),
+    ).toBeDefined();
+    // Третьих мест в коротком блоке нет — они в сетке итогов.
+    expect(
+      within(block).queryByLabelText(fill(ru['home.results.place'], { place: '3–4' })),
+    ).toBeNull();
+    expect(
+      within(block).getByRole('link', { name: ru['home.results.all'] }).getAttribute('href'),
+    ).toBe('/tournaments?status=FINISHED&view=list');
+  });
+
+  it('справа: лидеры рейтинга, затем статистика, затем лучшие победы', async () => {
+    renderAt('/');
+
+    const stats = await screen.findByRole('heading', { name: ru['home.stats.title'] });
+    const upsets = await screen.findByRole('heading', { name: ru['home.stats.upsets'] });
+    const leaders = await screen.findByRole('heading', { name: ru['home.top.title'] });
+
+    expect(leaders.compareDocumentPosition(stats) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(stats.compareDocumentPosition(upsets) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(stats.closest('aside')).toBe(leaders.closest('aside'));
+  });
+
+  it('статистика коротко: вкладки «Турниры» / «Победы», период в запросе', async () => {
+    renderAt('/');
+
+    const title = await screen.findByRole('heading', { name: ru['home.stats.title'] });
+    const card = title.closest('section');
+    if (card === null) throw new Error('блок статистики не найден');
+
+    const first = playerName(PLAYERS.first, String);
+    const second = playerName(PLAYERS.second, String);
+    expect(await within(card).findByRole('link', { name: first })).toBeDefined();
+    expect(within(card).queryByRole('link', { name: second })).toBeNull();
+
+    fireEvent.click(within(card).getByRole('tab', { name: ru['home.stats.wins'] }));
+    expect(within(card).getByRole('link', { name: second })).toBeDefined();
+    expect(within(card).getByText('17')).toBeDefined();
+
+    fireEvent.click(within(card).getByRole('radio', { name: ru['home.stats.period.YEAR'] }));
+    await waitFor(() => {
+      expect(requests.some((url) => url.includes('/stats/leaders?period=YEAR'))).toBe(true);
+    });
+    // Лучшие победы — за тот же период.
+    await waitFor(() => {
+      expect(requests.some((url) => url.includes('/stats/upsets?period=YEAR'))).toBe(true);
+    });
+    expect(
+      within(card).getByRole('link', { name: ru['home.stats.all'] }).getAttribute('href'),
+    ).toBe('/players#stats');
+  });
+
+  it('лучшие победы коротко — победитель, проигравший, счёт и прирост со знаком', async () => {
+    renderAt('/');
+
+    const title = await screen.findByRole('heading', { name: ru['home.stats.upsets'] });
+    const card = title.closest('section');
+    if (card === null) throw new Error('блок лучших побед не найден');
+
+    expect(within(card).getByText(ru['home.stats.over.MONTH'])).toBeDefined();
+    expect(
+      within(card)
+        .getByRole('link', { name: playerName(PLAYERS.fourth, String) })
+        .getAttribute('href'),
+    ).toBe(`/players/${PLAYERS.fourth.id}`);
+    expect(
+      within(card)
+        .getByRole('link', { name: playerName(PLAYERS.first, String) })
+        .getAttribute('href'),
+    ).toBe(`/players/${PLAYERS.first.id}`);
+    expect(within(card).getByText('3:1')).toBeDefined();
+    expect(within(card).getByText('+14.50')).toBeDefined();
   });
 
   it('ближайшие турниры — строками в колонке турниров, со ссылкой на календарь', async () => {

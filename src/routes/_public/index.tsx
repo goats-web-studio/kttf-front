@@ -12,7 +12,6 @@ import { z } from 'zod';
 import { useLocale, useT } from '@/common/i18n';
 import { searchCity, searchId } from '@/common/search';
 import AdSlot from '@/common/ui/ad-slot';
-import { RowsSkeleton } from '@/common/ui/skeleton';
 import { VISUALLY_HIDDEN } from '@/common/ui/visually-hidden';
 import { useSessionStore } from '@/features/auth/session-store';
 import { clubCities } from '@/features/clubs/cities';
@@ -20,13 +19,12 @@ import { clubDirectoryQuery } from '@/features/clubs/queries';
 import FeedSection from '@/features/feed/feed-section';
 import FollowSuggestions from '@/features/follows/suggestions';
 import HeroSearch from '@/features/home/hero-search';
-import HomeStats from '@/features/home/home-stats';
+import { StatsCard, UpsetsCard } from '@/features/home/home-stats';
 import InterestTiles from '@/features/home/interest-tiles';
 import PersonalStrip from '@/features/home/personal-strip';
-import Podiums from '@/features/home/podiums';
+import { RecentResults } from '@/features/home/podiums';
 import RatingLeaders from '@/features/home/rating-leaders';
 import SiteLife from '@/features/home/site-life';
-import { homePodiumsQuery } from '@/features/home/stats-queries';
 import TournamentRail from '@/features/home/tournament-rail';
 import { useCityScope } from '@/features/places/my-city';
 
@@ -44,9 +42,6 @@ export const Route = createFileRoute('/_public/')({
   component: HomePage,
 });
 
-/** Призёров в центре — два ряда по три: дальше уже архив, он в турнирах. */
-const PODIUMS = 6;
-
 /**
  * Главная — ADR-071, ADR-073.
  *
@@ -54,14 +49,18 @@ const PODIUMS = 6;
  * Гостю под ним плитки разделов: он пришёл узнать, что это.
  * Вошедшему — личная полоса: рейтинг, уровень, куда записан.
  *
- * Ниже три колонки. Слева турниры строками: что идёт и что ближайшее по
- * дням. В центре — интересное: итоги с призёрами, статистика и лучшие
- * победы, под ними лента — новости и акции клубов и тренеров, новости
- * KTTF, турниры, события и записи игроков. Справа — короткое: лидеры
- * рейтинга, на кого подписаться, жизнь на форуме, дуэли, дни рождения.
+ * Ниже три колонки. В центре сразу лента — новости и акции клубов и
+ * тренеров, новости KTTF, турниры, итоги, события и записи игроков: ради
+ * неё возвращаются. Слева турниры строками: что идёт, что ближайшее по
+ * дням и коротко последние итоги — победитель каждого. Справа — короткое:
+ * лидеры рейтинга, статистика за период, лучшие победы, на кого
+ * подписаться, жизнь на форуме, дуэли, дни рождения.
+ *
+ * Полные блоки живут в своих разделах: сетка призёров — в итогах турниров,
+ * статистика с лучшими победами — в рейтинге. Короткие ведут туда.
  *
  * На планшете правая колонка встаёт под левую; на телефоне всё в одну
- * колонку: турниры, итоги, лента, остальное.
+ * колонку: лента, турниры с итогами, остальное.
  *
  * Пустой блок не показывается вовсе, а не пишет «нет данных»: на пилотной
  * базе главная иначе выглядела бы заброшенной.
@@ -77,7 +76,6 @@ function HomePage(): ReactNode {
   const [period, setPeriod] = useState<HomeStatsPeriod>('MONTH');
 
   const clubs = useQuery(clubDirectoryQuery);
-  const podiums = useQuery(homePodiumsQuery);
 
   const cities = useMemo(
     () => clubCities(clubs.data?.values() ?? [], locale),
@@ -130,8 +128,10 @@ function HomePage(): ReactNode {
             // строка растягивалась бы под него, и между турнирами и жизнью
             // сайта зиял бы разрыв.
             gridTemplateRows: { md: 'auto 1fr', lg: 'auto' },
+            // На телефоне лента — сразу под плитками; турниры и короткие
+            // блоки — под ней.
             gridTemplateAreas: {
-              xs: '"rail" "main" "life"',
+              xs: '"main" "rail" "life"',
               md: '"rail main" "life main"',
               lg: '"rail main life"',
             },
@@ -139,13 +139,9 @@ function HomePage(): ReactNode {
         >
           <Box
             component="aside"
-            sx={{
-              gridArea: 'rail',
-              minWidth: 0,
-              // Турниры под рукой, пока листается лента.
-              position: { lg: 'sticky' },
-              top: { lg: 88 },
-            }}
+            // Не липкая: с итогами под ближайшими колонка выше экрана, и
+            // липкая прятала бы свой низ до конца ленты.
+            sx={{ gridArea: 'rail', minWidth: 0 }}
           >
             <Typography variant="h2" sx={VISUALLY_HIDDEN}>
               {t('home.rail.title')}
@@ -160,33 +156,17 @@ function HomePage(): ReactNode {
               }}
               clubs={clubs.data}
             />
+            <Box sx={{ mt: 3 }}>
+              <RecentResults />
+            </Box>
           </Box>
 
           <Stack spacing={{ xs: 6, sm: 7 }} sx={{ gridArea: 'main', minWidth: 0 }}>
-            {podiums.isPending ? (
-              <Section title={t('home.results.title')}>
-                <RowsSkeleton rows={3} />
-              </Section>
-            ) : (
-              (podiums.data?.items.length ?? 0) > 0 && (
-                <Section
-                  title={t('home.results.title')}
-                  more={{ href: '/tournaments?status=RATED', label: t('home.results.all') }}
-                >
-                  <Podiums items={(podiums.data?.items ?? []).slice(0, PODIUMS)} />
-                </Section>
-              )
-            )}
-
-            <Section title={t('home.stats.title')}>
-              <HomeStats period={period} onPeriod={setPeriod} />
-            </Section>
-
-            <AdSlot placement="home-feed" />
-
             <Section title={t('feed.title')} more={{ href: '/feed', label: t('feed.all') }}>
               <FeedSection />
             </Section>
+
+            <AdSlot placement="home-feed" />
           </Stack>
 
           <Box component="aside" sx={{ gridArea: 'life', minWidth: 0 }}>
@@ -195,6 +175,9 @@ function HomePage(): ReactNode {
             </Typography>
             <Box sx={{ display: 'grid', gap: 3, alignContent: 'start' }}>
               <RatingLeaders />
+              {/* Период один на оба блока: лучшие победы — за тот же срок. */}
+              <StatsCard period={period} onPeriod={setPeriod} />
+              <UpsetsCard period={period} />
               <FollowSuggestions />
               <SiteLife />
             </Box>
