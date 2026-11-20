@@ -1,11 +1,8 @@
-import Box from '@mui/material/Box';
 import ButtonBase from '@mui/material/ButtonBase';
-import Dialog from '@mui/material/Dialog';
-import IconButton from '@mui/material/IconButton';
-import { X } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
+import PhotoViewer from '@/common/ui/photo-viewer';
 import PlayerAvatar from '@/common/ui/player-avatar';
 
 interface ProfilePhotoProps {
@@ -60,61 +57,15 @@ export default function ProfilePhoto({
         {avatar}
       </ButtonBase>
 
-      <Dialog
-        open={open}
+      <PhotoViewer
+        photos={[{ src: photoUrl, alt: name }]}
+        index={open ? 0 : null}
         onClose={() => {
           setOpen(false);
         }}
-        maxWidth={false}
-        slotProps={{
-          paper: {
-            // Роль `dialog` у MUI — на листе, а не на корне: название вешается сюда.
-            'aria-label': name,
-            sx: {
-              m: 2,
-              bgcolor: 'transparent',
-              boxShadow: 'none',
-              border: 0,
-              overflow: 'visible',
-              position: 'relative',
-            },
-          },
-        }}
-      >
-        <Box
-          component="img"
-          src={photoUrl}
-          alt={name}
-          sx={{
-            display: 'block',
-            maxWidth: 'min(90vw, 720px)',
-            maxHeight: '85vh',
-            objectFit: 'contain',
-            borderRadius: 4,
-            bgcolor: 'var(--paper)',
-            boxShadow: 'var(--shadow-modal)',
-          }}
-        />
-        <IconButton
-          onClick={() => {
-            setOpen(false);
-          }}
-          aria-label={t('profile.photo.close')}
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            width: 44,
-            height: 44,
-            bgcolor: 'var(--paper)',
-            color: 'var(--ink-900)',
-            boxShadow: 'var(--shadow-pop)',
-            '&:hover': { bgcolor: 'var(--paper-hover)' },
-          }}
-        >
-          <X size={20} aria-hidden />
-        </IconButton>
-      </Dialog>
+        label={name}
+        maxWidth="min(90vw, 720px)"
+      />
     </>
   );
 }

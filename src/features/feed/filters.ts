@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import type { MessageKey } from '@/common/i18n';
+import { FORUM_HREF } from '@/features/forum/labels';
 
 export interface FeedFilterOption {
   /** `undefined` — «Всё», без фильтра. */
@@ -22,6 +23,12 @@ export interface FeedFilterOption {
   readonly icon: LucideIcon;
   /** Пусто под этим фильтром — коротко и по-человечески. */
   readonly empty: MessageKey;
+  /**
+   * Пункт ведёт не в ленту, а на свою страницу: «Форум» открывает сам форум,
+   * там темы с разделами, поиском и «Новой темой». Фильтр `?filter=FORUM`
+   * по прямой ссылке работает по-прежнему.
+   */
+  readonly href?: string;
 }
 
 /** «Что показывать» — ADR-097, в порядке списка на странице. */
@@ -42,7 +49,13 @@ export const FEED_FILTER_OPTIONS: readonly FeedFilterOption[] = [
     icon: Trophy,
     empty: 'feed.empty.TOURNAMENTS',
   },
-  { value: 'FORUM', label: 'feed.filter.FORUM', icon: MessagesSquare, empty: 'feed.empty.FORUM' },
+  {
+    value: 'FORUM',
+    label: 'feed.filter.FORUM',
+    icon: MessagesSquare,
+    empty: 'feed.empty.FORUM',
+    href: FORUM_HREF,
+  },
 ];
 
 export interface FeedTabOption {
@@ -60,6 +73,11 @@ export const FEED_TAB_OPTIONS: readonly FeedTabOption[] = [
 
 /** Вкладка по умолчанию у вошедшего — в адрес не пишется. */
 export const DEFAULT_FEED_TAB: FeedTab = 'FOR_YOU';
+
+/** Куда ведёт пункт «Что показывать»: своя страница пункта или лента с фильтром. */
+export function filterHref(tab: FeedTab | undefined, option: FeedFilterOption): string {
+  return option.href ?? feedHref(tab, option.value);
+}
 
 /**
  * Адрес страницы «Лента» с вкладкой и фильтром. Умолчания в адрес не

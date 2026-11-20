@@ -77,7 +77,7 @@ export const NAV_MENUS: Readonly<Record<string, readonly NavMenuItem[]>> = {
   ],
   // Сообщество: лента, форум и дуэли — всё, где игроки находят друг друга.
   // Лента первой — ADR-097: туда приходят читать, что нового.
-  '/forum': [
+  '/feed': [
     { href: '/feed', icon: Newspaper, key: 'forum.feed' },
     { href: '/forum', icon: MessagesSquare, key: 'forum.all' },
     // Дуэли и спарринги — ADR-065, `docs/13` 5.1.

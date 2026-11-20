@@ -11,7 +11,7 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { Lock, MessagesSquare, PenLine, Pin } from 'lucide-react';
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { fill, formatCount, formatDateTime, useLocale, useT } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
@@ -24,14 +24,8 @@ import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
 
-import {
-  FORUM_HREF,
-  newTopicHref,
-  sectionHref,
-  splitName,
-  SUBJECT_KEYS,
-  topicHref,
-} from './labels';
+import { FORUM_HREF, sectionHref, splitName, SUBJECT_KEYS, topicHref } from './labels';
+import { NewTopicDialog } from './new-topic-form';
 import { forumSectionsQuery, forumTopicsQuery } from './queries';
 import { Birthdays, OnlineAndLinks } from './sidebar';
 import { KttfMark } from './voice';
@@ -81,7 +75,12 @@ export default function ForumBoard({
     topics.data === undefined ? 1 : Math.max(1, Math.ceil(topics.data.total / topics.data.limit));
   // В «Новостях клубов и тренеров» тему публикуют клуб или тренер (ADR-067 §2).
   const canPost = section?.manualTopics !== false;
-  const newHref = slug === undefined || !canPost ? newTopicHref() : newTopicHref(slug);
+  // «Новая тема» открывается окном прямо здесь, с этим разделом (если в нём
+  // можно открывать темы); страница `/forum/new` — для прямых ссылок.
+  const [writing, setWriting] = useState(false);
+  const write = (): void => {
+    setWriting(true);
+  };
 
   return (
     <Container maxWidth="lg" component="section" sx={{ py: { xs: 4, sm: 6 } }}>
@@ -104,10 +103,11 @@ export default function ForumBoard({
           }}
         >
           <Button
-            href={newHref}
+            onClick={write}
             variant="contained"
             size="large"
             startIcon={<PenLine size={18} aria-hidden />}
+            aria-haspopup="dialog"
             sx={{ minHeight: 44 }}
           >
             {t('forum.newTopic')}
@@ -187,7 +187,12 @@ export default function ForumBoard({
                 {...(canPost
                   ? {
                       action: (
-                        <Button href={newHref} variant="contained" sx={{ minHeight: 44 }}>
+                        <Button
+                          onClick={write}
+                          variant="contained"
+                          aria-haspopup="dialog"
+                          sx={{ minHeight: 44 }}
+                        >
                           {t('forum.newTopic')}
                         </Button>
                       ),
@@ -213,6 +218,14 @@ export default function ForumBoard({
           </Box>
         </Box>
       </Box>
+      {/* Раздел, где писать нельзя, форма не выберет; новости KTTF — выберет модератору. */}
+      <NewTopicDialog
+        open={writing}
+        section={slug}
+        onClose={() => {
+          setWriting(false);
+        }}
+      />
     </Container>
   );
 }

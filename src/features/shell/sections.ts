@@ -26,6 +26,8 @@ export const SECTIONS: readonly Section[] = [
   { to: '/tournaments', label: 'nav.tournaments', match: ['/tournaments'] },
   { to: '/players', label: 'nav.ratings', match: ['/players'] },
   { to: '/clubs', label: 'nav.places', match: ['/clubs', '/trainings', '/coaches'] },
-  { to: '/forum', label: 'nav.community', match: ['/feed', '/forum', '/duels'] },
+  // Сам пункт «Сообщество» ведёт в ленту: туда приходят читать, что нового;
+  // форум и дуэли — в его меню.
+  { to: '/feed', label: 'nav.community', match: ['/feed', '/forum', '/duels'] },
   { to: '/market', label: 'nav.market', match: ['/market'] },
 ];

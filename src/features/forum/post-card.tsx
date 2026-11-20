@@ -15,25 +15,23 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocation } from '@tanstack/react-router';
-import { EllipsisVertical, Heart, Quote } from 'lucide-react';
+import { EllipsisVertical, Quote } from 'lucide-react';
 import { useId, useRef, useState, type ReactNode } from 'react';
 
 import { fill, formatDateTime, useLocale, useT } from '@/common/i18n';
-import { authHref } from '@/features/auth/redirect';
 import { useSessionStore } from '@/features/auth/session-store';
 
 import {
   deleteForumPost,
   hideForumPost,
   muteForumUser,
-  setForumLike,
   updateForumPost,
   warnForumUser,
 } from './api';
 import Composer, { type DraftQuote } from './composer';
 import { MuteDialog, ReasonDialog, ReportDialog, WarnDialog } from './dialogs';
 import { topicHref } from './labels';
+import LikeButton from './like-button';
 import { ForumImages, ForumQuote, ForumText } from './post-body';
 import { forumKeys } from './queries';
 import PostAuthor from './voice';
@@ -228,7 +226,7 @@ export default function PostCard({
 
         {!post.deleted && !post.hidden && !editing && (
           <Box sx={{ mt: 1.5, display: 'flex', gap: 0.5, alignItems: 'center', ml: -1 }}>
-            <LikeButton post={post} signedIn={user !== null} />
+            <LikeButton postId={post.id} likes={post.likes} liked={post.liked} mine={post.mine} />
             {canReply && onQuote !== undefined && (
               <Button
                 variant="text"
@@ -322,80 +320,6 @@ function Placeholder({ children }: { readonly children: ReactNode }): ReactNode 
     >
       {children}
     </Typography>
-  );
-}
-
-/**
- * «Нравится» со счётчиком. Своё сообщение не отмечается — у автора только
- * число. Гостю кнопка ведёт на вход и возвращает сюда же.
- */
-function LikeButton({
-  post,
-  signedIn,
-}: {
-  readonly post: ForumPostView;
-  readonly signedIn: boolean;
-}): ReactNode {
-  const t = useT();
-  const location = useLocation();
-  const [state, setState] = useState({ likes: post.likes, liked: post.liked });
-  const [pending, setPending] = useState(false);
-  const label = fill(t(state.liked ? 'forum.action.unlike' : 'forum.action.like'), {
-    count: String(state.likes),
-  });
-  const icon = (
-    <Heart
-      size={16}
-      aria-hidden
-      fill={state.liked ? 'var(--red-500)' : 'none'}
-      color={state.liked ? 'var(--red-500)' : 'currentColor'}
-    />
-  );
-
-  if (post.mine) {
-    return state.likes === 0 ? null : (
-      <Box
-        sx={{
-          display: 'inline-flex',
-          gap: 0.75,
-          alignItems: 'center',
-          px: 1,
-          color: 'text.secondary',
-        }}
-        aria-label={label}
-      >
-        {icon}
-        <Typography variant="body2">{state.likes}</Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <Button
-      variant="text"
-      color="inherit"
-      aria-pressed={state.liked}
-      aria-label={label}
-      startIcon={icon}
-      disabled={pending}
-      data-forum-like={state.liked}
-      {...(signedIn
-        ? {
-            onClick: () => {
-              setPending(true);
-              setForumLike(post.id, !state.liked)
-                .then(setState)
-                .catch(() => undefined)
-                .finally(() => {
-                  setPending(false);
-                });
-            },
-          }
-        : { href: authHref('/login', location.href) })}
-      sx={{ minHeight: 44, minWidth: 0, color: state.liked ? 'var(--red-700)' : 'text.secondary' }}
-    >
-      {state.likes > 0 ? state.likes : t('forum.action.likeShort')}
-    </Button>
   );
 }
 

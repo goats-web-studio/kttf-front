@@ -7,7 +7,7 @@ import { useId, type ReactNode } from 'react';
 
 import { useT } from '@/common/i18n';
 
-import { FEED_FILTER_OPTIONS, FEED_TAB_OPTIONS, feedHref } from './filters';
+import { FEED_FILTER_OPTIONS, FEED_TAB_OPTIONS, feedHref, filterHref } from './filters';
 
 interface FeedNavProps {
   /** Вкладка из адреса; у гостя — `undefined`, вкладок нет. */
@@ -60,7 +60,7 @@ export function FeedSideNav({ tab, filter, signedIn }: FeedNavProps): ReactNode 
           {FEED_FILTER_OPTIONS.map((option) => (
             <SideItem
               key={option.value ?? 'ALL'}
-              href={feedHref(tab, option.value)}
+              href={filterHref(tab, option)}
               icon={option.icon}
               active={option.value === filter}
             >
@@ -143,13 +143,14 @@ export function FeedFilterChips({ tab, filter }: Omit<FeedNavProps, 'signedIn'>)
       }}
     >
       <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'flex', gap: 1 }}>
-        {FEED_FILTER_OPTIONS.map(({ value, label, icon: Icon }) => {
+        {FEED_FILTER_OPTIONS.map((option) => {
+          const { value, label, icon: Icon } = option;
           const active = value === filter;
 
           return (
             <Box component="li" key={value ?? 'ALL'} sx={{ flexShrink: 0 }}>
               <Link
-                href={feedHref(tab, value)}
+                href={filterHref(tab, option)}
                 underline="none"
                 aria-current={active ? 'page' : undefined}
                 sx={{
