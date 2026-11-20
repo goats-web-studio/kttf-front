@@ -201,6 +201,18 @@ describe('страница «Лента» — ADR-097', () => {
     ).toBe('page');
   });
 
+  it('«Форум» в «Что показывать» ведёт на страницу форума, а не фильтрует ленту', async () => {
+    renderAt('/feed');
+
+    const chips = await screen.findByRole('navigation', { name: ru['feed.filter.title'] });
+    const forum = within(chips).getByRole('link', { name: ru['feed.filter.FORUM'] });
+    expect(forum.getAttribute('href')).toBe('/forum');
+    // Остальные пункты — по-прежнему фильтры ленты.
+    expect(
+      within(chips).getByRole('link', { name: ru['feed.filter.CLUBS'] }).getAttribute('href'),
+    ).toBe('/feed?filter=CLUBS');
+  });
+
   it('фильтр из адреса — пусто: своя подпись и «Показать всё»', async () => {
     feedReply = (params) => ({ ...defaultFeed(params), items: [], total: 0 });
     renderAt('/feed?filter=COACHES');
@@ -274,7 +286,7 @@ describe('страница «Лента» — ADR-097', () => {
     const side = await screen.findByRole('navigation', { name: ru['feed.title'] });
     expect(
       within(side).getByRole('link', { name: ru['feed.filter.FORUM'] }).getAttribute('href'),
-    ).toBe('/feed?filter=FORUM');
+    ).toBe('/forum');
     expect(
       within(side).getByRole('link', { name: ru['feed.filter.all'] }).getAttribute('aria-current'),
     ).toBe('page');
