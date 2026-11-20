@@ -423,7 +423,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'clubs.new.fromApplicationOnly.text':
     'クラブの申請を開いて「クラブを登録」を押してください。フォームに申請内容が入力され、申請は完了扱いになります。',
   'clubs.new.adminLead':
-    'あなたがクラブのオーナーになります。作成後、「主催者」タブで卓球場の担当者をオーナーとして追加してください。',
+    '申請者が登録ユーザーなら、その人がクラブのオーナーになります。匿名の申請なら、あなたがオーナーになります。作成後、「主催者」タブで卓球場の担当者をオーナーとして追加してください。',
   'clubs.new.fromApplication':
     'フォームは申請「{club}」の内容で入力されています。都市は一覧から選んでください。',
   'club.amenities.title': '設備',
@@ -806,6 +806,18 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'participants.new.rating': '初期レーティング',
   'participants.new.submit': '登録してエントリー',
   'participants.new.cancel': 'キャンセル',
+  'participants.closed':
+    '参加者はエントリー受付中に追加できます。大会を公開し、受付を開始してください。',
+  'participants.duplicate.title': 'この選手はすでに登録されています',
+  'participants.duplicate.lead':
+    '既存の選手をエントリーしてください。2つ目のプロフィールを作ると、同じ人のレーティングと履歴が分かれてしまいます。',
+  'participants.duplicate.register': 'この選手をエントリー',
+  'participants.duplicate.anyway': '別の人です — 新しく作成',
+  'participants.duplicate.sheetTitle': 'この人にはすでにレーティング付きのプロフィールがあります',
+  'participants.duplicate.sheetLead':
+    '選手カードを確認する必要はありません。プロフィールをエントリーし、本人にマイページ（「自分のレーティング」）で紐付けてもらってください。カードは自動で統合されます。',
+  'participants.duplicate.registered': 'エントリー済み',
+  'participants.duplicate.anywayConfirm': '別の人です — カードを確認',
   'registration.status.REGISTERED': 'エントリー済み',
   'registration.status.WAITLIST': 'キャンセル待ち',
   'registration.status.CONFIRMED': '確定',
@@ -2970,6 +2982,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
     'レーティング未設定の選手カードです。主催者がレーティングを設定すると、大会と対戦に参加できます',
   'error.api.PLAYER_CLAIM_INVALID':
     'このプロフィールは紐づけできません。すでにマイページがあるか、あなたにレーティング付きのプロフィールがあります',
+  'error.api.PLAYER_DUPLICATE': '同じ姓・名・生年の選手がすでに存在します',
   'claim.title': '自分のレーティング',
   'claim.lead':
     '大会に出場済みの場合、主催者がレーティング付きのプロフィールを作成しています。自分を見つけると、対戦履歴とレーティングがあなたのものになります。',

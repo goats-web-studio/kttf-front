@@ -16,8 +16,10 @@ import { useSessionStore } from '@/features/auth/session-store';
 import { playerName } from '@/features/players/player-name';
 import { COACH_LIST_ITEM } from '@/test/coach-fixtures';
 import {
+  CITIES,
   CLUB,
   pageOf,
+  placesReply,
   PLAYERS,
   OWN_REGISTRATION,
   REGISTRATIONS,
@@ -68,12 +70,20 @@ function openTournament(): TournamentView {
   };
 }
 
+const REGISTRATIONS_URL = /\/registrations$/;
+const PLAYERS_URL = /\/players$/;
+const NEW_PLAYER_ID = '00000000-0000-4000-8000-0000000000e1';
+
 let tournament: TournamentView = openTournament();
 let registrations: readonly RegistrationView[] = [];
 /** Профиль вошедшего: по нему считается допуск до нажатия. */
 let profile: PlayerView = PLAYERS.first;
 /** Выдача поиска организатора. */
 let found: readonly PlayerView[] = [PLAYERS.second];
+/** Ответ на заведение игрока организатором. `null` — заведён. */
+let playerRefusal: { readonly code: string; readonly details?: unknown } | null = null;
+/** Ответ на подтверждение анкеты. `null` — подтверждена. */
+let confirmRefusal: { readonly code: string; readonly details?: unknown } | null = null;
 /** Ответ сервера на запись. `null` — успех. */
 let refusal: { readonly code: string; readonly details?: unknown } | null = null;
 
@@ -122,6 +132,33 @@ function answer(url: string, init: RequestInit | undefined): Response {
     return reply(pageOf([COACH_LIST_ITEM]));
   }
 
+  if (url.endsWith('/confirm') && method === 'POST' && confirmRefusal !== null) {
+    const refused = confirmRefusal;
+
+    return {
+      ok: false,
+      status: 409,
+      text: () => Promise.resolve(JSON.stringify({ error: { message: 'refused', ...refused } })),
+    } as unknown as Response;
+  }
+
+  if (url.endsWith('/players') && method === 'POST') {
+    const refused = playerRefusal;
+
+    if (refused !== null) {
+      return {
+        ok: false,
+        status: 409,
+        text: () => Promise.resolve(JSON.stringify({ error: { message: 'refused', ...refused } })),
+      } as unknown as Response;
+    }
+
+    return reply({ ...PLAYERS.second, id: NEW_PLAYER_ID });
+  }
+
+  const places = placesReply(url);
+  if (places !== undefined) return reply(places);
+
   // Свой профиль читается ради допуска до нажатия, поиск организатором — ради
   // состава. Маршруты различаются идентификатором в конце, и путать их нельзя:
   // страница вместо игрока дала бы правилу допуска пустой рейтинг.
@@ -161,6 +198,8 @@ beforeEach(() => {
   profile = PLAYERS.first;
   found = [PLAYERS.second];
   refusal = null;
+  playerRefusal = null;
+  confirmRefusal = null;
   vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) =>
     Promise.resolve(answer(String(input), init)),
   );
@@ -675,5 +714,246 @@ describe('тренер на турнире — ADR-059, T3', () => {
     expect(screen.queryByRole('link', { name: 'Сериков Тимур' })).toBeNull();
     // Гостю править нечего.
     expect(screen.queryByRole('button', { name: ru['participants.editCoach'] })).toBeNull();
+  });
+});
+
+describe('новый игрок из состава — ADR-100', () => {
+  /** Поиск без результата и форма нового игрока, заполненная целиком. */
+  async function openNewPlayer(): Promise<void> {
+    found = [];
+    renderTournament(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
+      target: { value: 'Халилов' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
+    fireEvent.click(await screen.findByRole('button', { name: ru['participants.new.open'] }));
+
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(ru['player.form.firstName']) }),
+      {
+        target: { value: 'Родион' },
+      },
+    );
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(ru['player.form.birthYear']) }),
+      {
+        target: { value: '2002' },
+      },
+    );
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(ru['participants.new.rating']) }),
+      {
+        target: { value: '900' },
+      },
+    );
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['player.form.city'] }));
+    fireEvent.click(await screen.findByRole('option', { name: CITIES.almaty.name }));
+  }
+
+  function posts(path: RegExp): Sent[] {
+    return sent.filter((request) => request.method === 'POST' && path.test(request.url));
+  }
+
+  it('в черновике участника не добавить — подсказка открыть запись вместо формы', async () => {
+    tournament = { ...openTournament(), status: 'DRAFT' };
+    renderTournament(USER_WITH_PROFILE);
+
+    expect(await screen.findByText(ru['participants.closed'])).toBeDefined();
+    expect(screen.queryByLabelText(ru['participants.search'])).toBeNull();
+  });
+
+  it('запись отказала — повтор записывает того же игрока, второй профиль не заводится', async () => {
+    await openNewPlayer();
+    refusal = { code: 'VALIDATION_FAILED' };
+
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.new.submit'] }));
+    await screen.findByText(ru['error.api.VALIDATION_FAILED']);
+
+    refusal = null;
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.new.submit'] }));
+
+    await waitFor(() => {
+      expect(posts(REGISTRATIONS_URL)).toHaveLength(2);
+    });
+    expect(posts(PLAYERS_URL)).toHaveLength(1);
+    expect(posts(REGISTRATIONS_URL).map((request) => request.body)).toEqual([
+      { playerId: NEW_PLAYER_ID },
+      { playerId: NEW_PLAYER_ID },
+    ]);
+  });
+
+  it('такой игрок уже есть — форма предлагает записать найденного', async () => {
+    const existing = {
+      id: PLAYERS.second.id,
+      lastName: 'Халилов',
+      firstName: 'Родион',
+      birthYear: 2002,
+      rating: 900,
+    };
+    playerRefusal = { code: 'PLAYER_DUPLICATE', details: { players: [existing] } };
+    await openNewPlayer();
+
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.new.submit'] }));
+
+    expect(await screen.findByText(ru['participants.duplicate.title'])).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.duplicate.register'] }));
+
+    await waitFor(() => {
+      expect(posts(REGISTRATIONS_URL)).toHaveLength(1);
+    });
+    expect(posts(REGISTRATIONS_URL)[0]?.body).toEqual({ playerId: PLAYERS.second.id });
+    expect(posts(PLAYERS_URL)).toHaveLength(1);
+  });
+
+  it('«это другой человек» — заводит тёзку с allowDuplicate', async () => {
+    playerRefusal = {
+      code: 'PLAYER_DUPLICATE',
+      details: {
+        players: [
+          { id: 'p-1', lastName: 'Халилов', firstName: 'Родион', birthYear: 2002, rating: 900 },
+        ],
+      },
+    };
+    await openNewPlayer();
+
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.new.submit'] }));
+    const anyway = await screen.findByRole('button', {
+      name: ru['participants.duplicate.anyway'],
+    });
+    playerRefusal = null;
+    fireEvent.click(anyway);
+
+    await waitFor(() => {
+      expect(posts(PLAYERS_URL)).toHaveLength(2);
+    });
+    expect(posts(PLAYERS_URL)[1]?.body).toMatchObject({
+      lastName: 'Халилов',
+      allowDuplicate: true,
+    });
+  });
+});
+
+describe('анкета того, у кого профиль уже есть — ADR-100', () => {
+  const RATED = {
+    id: PLAYERS.second.id,
+    lastName: PLAYERS.second.lastName,
+    firstName: PLAYERS.second.firstName,
+    birthYear: 2000,
+    rating: 600,
+    confirmed: true,
+  };
+  const SHEET = { ...PLAYERS.second, id: '00000000-0000-4000-8000-0000000000f1', confirmed: false };
+
+  async function confirmSheet(): Promise<void> {
+    found = [SHEET];
+    renderTournament(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
+      target: { value: PLAYERS.second.lastName },
+    });
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
+    fireEvent.click(await screen.findByRole('button', { name: ru['participants.confirm.open'] }));
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(ru['participants.new.rating']) }),
+      { target: { value: '600' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.confirm.submit'] }));
+  }
+
+  it('подтверждение отказано — форма называет профиль, а записанного не предлагает записать снова', async () => {
+    registrations = [{ ...OWN_REGISTRATION, player: { ...OWN_REGISTRATION.player, id: RATED.id } }];
+    confirmRefusal = { code: 'PLAYER_DUPLICATE', details: { players: [RATED] } };
+
+    await confirmSheet();
+
+    expect(await screen.findByText(ru['participants.duplicate.sheetTitle'])).toBeDefined();
+    expect(screen.getByText(ru['participants.duplicate.registered'])).toBeDefined();
+    expect(
+      screen.queryByRole('button', { name: ru['participants.duplicate.register'] }),
+    ).toBeNull();
+    expect(
+      sent.some((request) => request.method === 'POST' && request.url.endsWith('/registrations')),
+    ).toBe(false);
+  });
+
+  it('«это другой человек» — подтверждение уходит с allowDuplicate', async () => {
+    confirmRefusal = { code: 'PLAYER_DUPLICATE', details: { players: [RATED] } };
+
+    await confirmSheet();
+    const anyway = await screen.findByRole('button', {
+      name: ru['participants.duplicate.anywayConfirm'],
+    });
+    confirmRefusal = null;
+    fireEvent.click(anyway);
+
+    await waitFor(() => {
+      expect(
+        sent.filter((request) => request.method === 'POST' && request.url.endsWith('/confirm')),
+      ).toHaveLength(2);
+    });
+    const confirms = sent.filter(
+      (request) => request.method === 'POST' && request.url.endsWith('/confirm'),
+    );
+    expect(confirms[1]?.body).toMatchObject({ startRating: 600, allowDuplicate: true });
+  });
+
+  it('новый игрок, а у человека анкета — «Подтвердить и записать» её, второй профиль не заводится', async () => {
+    playerRefusal = {
+      code: 'PLAYER_DUPLICATE',
+      details: { players: [{ ...RATED, id: SHEET.id, confirmed: false }] },
+    };
+    found = [];
+    renderTournament(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
+      target: { value: 'Халилов' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
+    fireEvent.click(await screen.findByRole('button', { name: ru['participants.new.open'] }));
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(ru['player.form.firstName']) }),
+      {
+        target: { value: 'Родион' },
+      },
+    );
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(ru['player.form.birthYear']) }),
+      {
+        target: { value: '2000' },
+      },
+    );
+    fireEvent.change(
+      screen.getByRole('textbox', { name: new RegExp(ru['participants.new.rating']) }),
+      {
+        target: { value: '700' },
+      },
+    );
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: ru['player.form.city'] }));
+    fireEvent.click(await screen.findByRole('option', { name: CITIES.almaty.name }));
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.new.submit'] }));
+
+    const offer = await screen.findByText(ru['participants.duplicate.title']);
+    const alert = offer.closest<HTMLElement>('[role="alert"]');
+    if (alert === null) throw new Error('Нет предупреждения о дубле');
+    fireEvent.click(within(alert).getByRole('button', { name: ru['participants.confirm.submit'] }));
+
+    await waitFor(() => {
+      expect(
+        sent.some((request) => request.method === 'POST' && request.url.endsWith('/registrations')),
+      ).toBe(true);
+    });
+    const confirm = sent.find(
+      (request) => request.method === 'POST' && request.url.endsWith('/confirm'),
+    );
+    expect(confirm?.url).toContain(SHEET.id);
+    expect(confirm?.body).toMatchObject({ startRating: 700 });
+    expect(
+      sent.find((request) => request.method === 'POST' && request.url.endsWith('/registrations'))
+        ?.body,
+    ).toEqual({ playerId: SHEET.id });
+    expect(
+      sent.filter((request) => request.method === 'POST' && request.url.endsWith('/players')),
+    ).toHaveLength(1);
   });
 });

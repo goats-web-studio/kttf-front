@@ -75,6 +75,19 @@ export default function AddParticipant({
 
   const problems = eligibilityProblems(add.error);
 
+  // До открытия записи сервер участника не примет (ADR-100): форма здесь
+  // обещала бы запись, которой не будет, а «Новый игрок» заводил бы профиль
+  // без записи — и на повторе ещё один.
+  if (tournament.status === 'DRAFT' || tournament.status === 'PUBLISHED') {
+    return (
+      <Paper variant="outlined" sx={{ mt: 2, p: 2, bgcolor: 'var(--paper-sunken)' }}>
+        <Typography variant="body2" color="text.secondary">
+          {t('participants.closed')}
+        </Typography>
+      </Paper>
+    );
+  }
+
   return (
     <Paper variant="outlined" sx={{ mt: 2, p: 2, bgcolor: 'var(--paper-sunken)' }}>
       <Stack
@@ -137,6 +150,7 @@ export default function AddParticipant({
                   key={player.id}
                   tournament={tournament}
                   player={player}
+                  registered={registered}
                   city={placeName(player.city)}
                 />
               ) : (
@@ -176,7 +190,12 @@ export default function AddParticipant({
         </List>
       )}
 
-      <NewParticipant key={search} tournament={tournament} lastName={search} />
+      <NewParticipant
+        key={search}
+        tournament={tournament}
+        lastName={search}
+        registered={registered}
+      />
     </Paper>
   );
 }

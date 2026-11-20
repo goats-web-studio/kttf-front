@@ -17,12 +17,16 @@ import { playerKeys } from '@/features/players/queries';
 import StartRatingField from '@/features/players/start-rating-field';
 
 import { registerForTournament } from './api';
+import NamesakeOffer from './namesake-offer';
+import { duplicatesOf } from './namesakes';
 import { tournamentKeys } from './queries';
 
 interface ConfirmParticipantProps {
   readonly tournament: TournamentView;
   readonly player: PlayerListItemView;
   readonly city: string;
+  /** Кто уже в составе — для подсказки «профиль уже есть». */
+  readonly registered: ReadonlySet<string>;
 }
 
 /**
@@ -37,6 +41,7 @@ export default function ConfirmParticipant({
   tournament,
   player,
   city,
+  registered,
 }: ConfirmParticipantProps): ReactNode {
   const t = useT();
   const queryClient = useQueryClient();
@@ -44,8 +49,18 @@ export default function ConfirmParticipant({
   const [rating, setRating] = useState<number | null>(null);
 
   const confirm = useMutation({
-    mutationFn: async (startRating: number) => {
-      await confirmPlayer(player.id, { clubId: tournament.clubId, startRating });
+    mutationFn: async ({
+      startRating,
+      allowDuplicate,
+    }: {
+      startRating: number;
+      allowDuplicate?: boolean;
+    }) => {
+      await confirmPlayer(player.id, {
+        clubId: tournament.clubId,
+        startRating,
+        ...(allowDuplicate === true ? { allowDuplicate } : {}),
+      });
       await registerForTournament(tournament.id, { playerId: player.id });
     },
     onSuccess: () => {
@@ -60,6 +75,8 @@ export default function ConfirmParticipant({
       ]);
     },
   });
+
+  const namesakes = duplicatesOf(confirm.error);
 
   return (
     <ListItem
@@ -92,7 +109,7 @@ export default function ConfirmParticipant({
           component="form"
           onSubmit={(event) => {
             event.preventDefault();
-            if (rating !== null) confirm.mutate(rating);
+            if (rating !== null) confirm.mutate({ startRating: rating });
           }}
           sx={{ pb: 2 }}
         >
@@ -124,10 +141,31 @@ export default function ConfirmParticipant({
               {t('participants.new.cancel')}
             </Button>
           </Stack>
-          {confirm.error !== null && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {t(errorMessageKey(confirm.error))}
-            </Alert>
+          {namesakes.length > 0 ? (
+            // У человека уже есть профиль с рейтингом (ADR-100): подтверждение
+            // дало бы ему второй рейтинг и вторую запись на этот же турнир.
+            <NamesakeOffer
+              tournament={tournament}
+              namesakes={namesakes}
+              registered={registered}
+              startRating={rating}
+              title="participants.duplicate.sheetTitle"
+              lead="participants.duplicate.sheetLead"
+              anywayLabel="participants.duplicate.anywayConfirm"
+              anywayDisabled={rating === null || confirm.isPending}
+              onAnyway={() => {
+                if (rating !== null) confirm.mutate({ startRating: rating, allowDuplicate: true });
+              }}
+              onDone={() => {
+                setOpen(false);
+              }}
+            />
+          ) : (
+            confirm.error !== null && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {t(errorMessageKey(confirm.error))}
+              </Alert>
+            )
           )}
         </Box>
       )}

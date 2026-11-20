@@ -418,7 +418,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'clubs.new.fromApplicationOnly.text':
     '클럽 신청서를 열고 "클럽 등록"을 누르세요. 신청 내용으로 양식이 채워지고 신청은 종료돼요.',
   'clubs.new.adminLead':
-    '회원님이 클럽 소유자가 돼요. 클럽을 만든 뒤 "주최자" 탭에서 탁구장 담당자를 소유자로 추가하세요.',
+    '가입한 회원이 신청했다면 그 회원이 클럽 소유자가 돼요. 익명 신청이라면 회원님이 소유자가 돼요. 클럽을 만든 뒤 "주최자" 탭에서 탁구장 담당자를 소유자로 추가하세요.',
   'clubs.new.fromApplication':
     '"{club}" 신청서 내용으로 양식을 채웠어요. 도시는 목록에서 선택하세요.',
   'club.amenities.title': '편의시설',
@@ -801,6 +801,18 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'participants.new.rating': '초기 레이팅',
   'participants.new.submit': '등록 및 신청',
   'participants.new.cancel': '취소',
+  'participants.closed':
+    '참가 신청이 열려 있을 때 참가자를 추가할 수 있습니다. 대회를 공개하고 신청을 여세요.',
+  'participants.duplicate.title': '이 선수는 이미 등록되어 있습니다',
+  'participants.duplicate.lead':
+    '기존 선수를 등록하세요. 두 번째 프로필을 만들면 한 사람의 레이팅과 기록이 나뉩니다.',
+  'participants.duplicate.register': '이 선수 등록',
+  'participants.duplicate.anyway': '다른 사람입니다 — 새로 만들기',
+  'participants.duplicate.sheetTitle': '이 사람은 이미 레이팅이 있는 프로필이 있어요',
+  'participants.duplicate.sheetLead':
+    '선수 카드를 확인할 필요 없어요. 프로필을 등록하고, 본인이 내 페이지(「내 레이팅」)에서 연결하게 하세요. 카드는 자동으로 합쳐져요.',
+  'participants.duplicate.registered': '이미 등록됨',
+  'participants.duplicate.anywayConfirm': '다른 사람입니다 — 카드 확인',
   'registration.status.REGISTERED': '신청 완료',
   'registration.status.WAITLIST': '대기자',
   'registration.status.CONFIRMED': '참가 확정',
@@ -2949,6 +2961,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
     '레이팅이 없는 선수 카드예요. 대회와 대결은 주최자가 레이팅을 정한 후 참가할 수 있어요',
   'error.api.PLAYER_CLAIM_INVALID':
     '이 프로필은 연결할 수 없어요. 이미 마이페이지가 있거나 회원님에게 레이팅 프로필이 이미 있어요',
+  'error.api.PLAYER_DUPLICATE': '같은 성, 이름, 출생 연도의 선수가 이미 있습니다',
   'claim.title': '내 레이팅',
   'claim.lead':
     '이미 대회에서 경기했다면 주최자가 레이팅이 있는 프로필을 만들어 두었어요. 본인을 찾으면 경기 기록과 레이팅이 내 것이 돼요.',

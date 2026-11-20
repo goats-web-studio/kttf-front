@@ -13,9 +13,12 @@ import { useT } from '@/common/i18n';
 import IntegerField from '@/common/ui/integer-field';
 import CityPicker from '@/features/places/city-picker';
 import { createPlayer } from '@/features/players/api';
+import { playerKeys } from '@/features/players/queries';
 import StartRatingField from '@/features/players/start-rating-field';
 
 import { registerForTournament } from './api';
+import NamesakeOffer from './namesake-offer';
+import { duplicatesOf } from './namesakes';
 import { newParticipantInput, type NewParticipantForm } from './new-participant-input';
 import { tournamentKeys } from './queries';
 
@@ -23,6 +26,8 @@ interface NewParticipantProps {
   readonly tournament: TournamentView;
   /** Фамилия из поиска, по которой никого не нашли: её и заводят. */
   readonly lastName: string;
+  /** Кто уже в составе — для подсказки «такой игрок уже есть». */
+  readonly registered: ReadonlySet<string>;
 }
 
 /**
@@ -35,7 +40,11 @@ interface NewParticipantProps {
  *
  * Профиль заводится в клубе турнира и сразу записывается на турнир.
  */
-export default function NewParticipant({ tournament, lastName }: NewParticipantProps): ReactNode {
+export default function NewParticipant({
+  tournament,
+  lastName,
+  registered,
+}: NewParticipantProps): ReactNode {
   const t = useT();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -47,19 +56,35 @@ export default function NewParticipant({ tournament, lastName }: NewParticipantP
     cityId: '',
     startRating: null,
   });
+  // Профиль заведён, а запись отказала (ADR-100): повтор только записывает
+  // его же. Иначе каждое нажатие заводило бы ещё одного такого же игрока.
+  const [createdId, setCreatedId] = useState<string | null>(null);
   const input = newParticipantInput(form, tournament.clubId);
+
+  const done = async (): Promise<void> => {
+    setOpen(false);
+    setCreatedId(null);
+    await queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+  };
 
   const create = useMutation({
     mutationFn: async (profile: CreatePlayerInput) => {
-      const player = await createPlayer(profile);
+      let playerId = createdId;
 
-      await registerForTournament(tournament.id, { playerId: player.id });
+      if (playerId === null) {
+        playerId = (await createPlayer(profile)).id;
+        setCreatedId(playerId);
+        // Новый профиль должен находиться поиском сразу, даже если запись
+        // ниже откажет.
+        void queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      }
+
+      await registerForTournament(tournament.id, { playerId });
     },
-    onSuccess: async () => {
-      setOpen(false);
-      await queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
-    },
+    onSuccess: done,
   });
+
+  const namesakes = duplicatesOf(create.error);
 
   if (!open) {
     return (
@@ -145,10 +170,27 @@ export default function NewParticipant({ tournament, lastName }: NewParticipantP
         />
       </Box>
 
-      {create.error !== null && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {t(errorMessageKey(create.error))}
-        </Alert>
+      {namesakes.length > 0 ? (
+        <NamesakeOffer
+          tournament={tournament}
+          namesakes={namesakes}
+          registered={registered}
+          startRating={form.startRating}
+          title="participants.duplicate.title"
+          lead="participants.duplicate.lead"
+          anywayLabel="participants.duplicate.anyway"
+          anywayDisabled={input === null || create.isPending}
+          onAnyway={() => {
+            if (input !== null) create.mutate({ ...input, allowDuplicate: true });
+          }}
+          onDone={() => void done()}
+        />
+      ) : (
+        create.error !== null && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {t(errorMessageKey(create.error))}
+          </Alert>
+        )
       )}
 
       <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>

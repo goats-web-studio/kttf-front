@@ -429,7 +429,7 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'clubs.new.fromApplicationOnly.text':
     'Open the club\'s application and click "Create club": the form is filled in from the application, and the application is closed.',
   'clubs.new.adminLead':
-    'You\'ll become the club owner. After creating it, add the venue\'s representative as an owner on the "Organizers" tab.',
+    'If the application came from a registered user, they become the club owner. If it is anonymous, you become the owner: after creating the club, add the venue representative as an owner on the "Organizers" tab.',
   'clubs.new.fromApplication':
     'Form pre-filled from the "{club}" application. Pick the city from the list.',
   'club.amenities.title': 'Amenities',
@@ -814,6 +814,18 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'participants.new.rating': 'Starting rating',
   'participants.new.submit': 'Create and register',
   'participants.new.cancel': 'Cancel',
+  'participants.closed':
+    'Participants can be added once registration is open: publish the tournament and open registration.',
+  'participants.duplicate.title': 'This player is already in the database',
+  'participants.duplicate.lead':
+    "Register the existing player: a second profile would split one person's rating and history.",
+  'participants.duplicate.register': 'Register this player',
+  'participants.duplicate.anyway': "It's a different person — create a new one",
+  'participants.duplicate.sheetTitle': 'This person already has a rated profile',
+  'participants.duplicate.sheetLead':
+    'No need to confirm the player card: register their profile, and let the person link to it in their account ("My rating") — the card will merge into it.',
+  'participants.duplicate.registered': 'already registered',
+  'participants.duplicate.anywayConfirm': "It's a different person — confirm the card",
   'registration.status.REGISTERED': 'Registered',
   'registration.status.WAITLIST': 'Waitlist',
   'registration.status.CONFIRMED': 'Confirmed',
@@ -2976,6 +2988,8 @@ export const en: Readonly<Record<MessageKey, string>> = {
     'Unrated player card: tournaments and duels open once an organizer sets your rating',
   'error.api.PLAYER_CLAIM_INVALID':
     "This profile can't be linked: it's already linked to an account, or you already have a rated profile",
+  'error.api.PLAYER_DUPLICATE':
+    'This player already exists: same last name, first name and birth year',
   'claim.title': 'My rating',
   'claim.lead':
     "If you've already played in a tournament, an organizer has created a rated profile for you. Find yourself to claim its match history and rating.",

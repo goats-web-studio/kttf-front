@@ -405,7 +405,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'clubs.new.fromApplicationOnly.text':
     '打开俱乐部申请并点击“创建俱乐部”：表单会按申请自动填写，申请随之关闭。',
   'clubs.new.adminLead':
-    '你将成为俱乐部所有者。创建后，请在“组织者”标签页中把球馆负责人添加为所有者。',
+    '如果申请人是注册用户，他将成为俱乐部所有者。如果是匿名申请，你将成为所有者：创建后，请在“组织者”标签页中把球馆负责人添加为所有者。',
   'clubs.new.fromApplication': '表单已按申请“{club}”填写。请从列表中选择城市。',
   'club.amenities.title': '设施',
   'club.amenity.AIR_CONDITIONING': '空调',
@@ -774,6 +774,16 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'participants.new.rating': '初始积分',
   'participants.new.submit': '创建并报名',
   'participants.new.cancel': '取消',
+  'participants.closed': '报名开放后才能添加参赛者：请先发布比赛并开放报名。',
+  'participants.duplicate.title': '该球员已在数据库中',
+  'participants.duplicate.lead': '请为已有球员报名：再建一个档案会把同一人的积分和历史拆开。',
+  'participants.duplicate.register': '为该球员报名',
+  'participants.duplicate.anyway': '这是另一个人——新建档案',
+  'participants.duplicate.sheetTitle': '此人已有带积分的档案',
+  'participants.duplicate.sheetLead':
+    '无需确认资料卡：为其档案报名，并让本人在个人中心（“我的积分”）中关联该档案，资料卡会自动合并。',
+  'participants.duplicate.registered': '已在名单中',
+  'participants.duplicate.anywayConfirm': '这是另一个人——确认资料卡',
   'registration.status.REGISTERED': '已报名',
   'registration.status.WAITLIST': '候补',
   'registration.status.CONFIRMED': '已确认',
@@ -2830,6 +2840,7 @@ export const zh: Readonly<Record<MessageKey, string>> = {
   'players.duelsLink': '约战与陪练——找对手',
   'error.api.PLAYER_NOT_CONFIRMED': '资料卡暂无积分：组织者设定积分后才能参加比赛和约战',
   'error.api.PLAYER_CLAIM_INVALID': '无法认领该球员主页：它已关联账号，或您已有带积分的主页',
+  'error.api.PLAYER_DUPLICATE': '已存在姓名和出生年份相同的球员',
   'claim.title': '我的积分',
   'claim.lead':
     '如果您参加过比赛，组织者已为您建立了带积分的球员主页。找到自己，对局记录和积分就归到您名下。',
