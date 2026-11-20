@@ -9,6 +9,11 @@ interface PillTabsProps<T extends string> {
   readonly options: readonly (readonly [T, MessageKey])[];
   readonly label: string;
   readonly onChange: (next: T) => void;
+  /**
+   * Равными колонками во всю ширину на любом экране, а не только на
+   * телефоне, — в узкой колонке, где по содержимому пилюли не влезают.
+   */
+  readonly fullWidth?: boolean;
 }
 
 /**
@@ -25,6 +30,7 @@ export default function PillTabs<T extends string>({
   options,
   label,
   onChange,
+  fullWidth = false,
 }: PillTabsProps<T>): ReactNode {
   const t = useT();
 
@@ -35,11 +41,11 @@ export default function PillTabs<T extends string>({
       sx={{
         // На телефоне — равные колонки во всю ширину: четыре периода встают
         // в строку, а не переносятся овалом на две.
-        display: { xs: 'grid', sm: 'inline-flex' },
+        display: fullWidth ? 'grid' : { xs: 'grid', sm: 'inline-flex' },
         gridTemplateColumns: `repeat(${String(options.length)}, minmax(0, 1fr))`,
         gap: 0.5,
         p: 0.5,
-        width: { xs: '100%', sm: 'auto' },
+        width: fullWidth ? '100%' : { xs: '100%', sm: 'auto' },
         borderRadius: 999,
         bgcolor: 'var(--ink-100)',
       }}
@@ -57,10 +63,10 @@ export default function PillTabs<T extends string>({
             }}
             sx={{
               minHeight: 36,
-              px: { xs: 0.5, sm: 2 },
+              px: fullWidth ? 0.5 : { xs: 0.5, sm: 2 },
               borderRadius: 999,
               typography: 'body2',
-              fontSize: { xs: 13, sm: 14 },
+              fontSize: fullWidth ? 13 : { xs: 13, sm: 14 },
               fontWeight: 600,
               whiteSpace: 'nowrap',
               color: selected ? 'text.primary' : 'text.secondary',

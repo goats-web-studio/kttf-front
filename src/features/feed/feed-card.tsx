@@ -8,14 +8,18 @@ import {
   type FeedResultItem,
   type FeedTopicItem,
   type FeedTournamentItem,
+  type ForumTopicView,
+  type SiteLocale,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonBase from '@mui/material/ButtonBase';
+import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { useQuery } from '@tanstack/react-query';
 import { Eye, Heart, MessageSquare, Pin, TrendingUp, Trophy } from 'lucide-react';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
@@ -29,12 +33,14 @@ import {
   useT,
   type MessageKey,
 } from '@/common/i18n';
+import RichText from '@/common/rich/rich-text';
 import { LEVEL_NAME } from '@/common/ui/level-name';
 import PhotoViewer from '@/common/ui/photo-viewer';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import { forumImageVariant, sectionHref, splitName, topicHref } from '@/features/forum/labels';
 import LikeButton from '@/features/forum/like-button';
 import { useNewsLocale, versionImages } from '@/features/forum/news-locale';
+import { forumTopicQuery } from '@/features/forum/queries';
 import { NewsLanguageSwitch } from '@/features/forum/news-versions';
 import { CoauthorLine } from '@/features/forum/voice';
 
@@ -174,14 +180,40 @@ function Title({
 
 /**
  * Текст записи — первые четыре строки. Длиннее — «Показать ещё»
- * раскрывает его здесь же, без перехода; целиком с ответами — в обсуждении.
- * Длинный ли текст, решает сама вёрстка: обрезано ли что-то по высоте.
+ * раскрывает его здесь же, без перехода: целиком, как в теме, с разметкой,
+ * отметками и ссылками (ADR-076), а не только начало из карточки.
+ *
+ * В карточке — начало до `FEED_EXCERPT_MAX` знаков без разметки. Полный
+ * текст — первое сообщение темы обсуждения; его спрашивают, только когда
+ * раскрыли. Новость KTTF — в той версии, что выбрана в карточке (ADR-098).
+ * Темы нет или она не ответила — раскрывается начало, как раньше.
+ *
+ * Длинный ли текст, решает сама вёрстка — обрезано ли что-то по высоте, —
+ * и сервер: начало с многоточием на конце уже обрезано им.
  */
-function Excerpt({ text }: { readonly text: string }): ReactNode {
+function Excerpt({
+  text,
+  topicId = null,
+  locale = null,
+}: {
+  readonly text: string;
+  /** Тема обсуждения записи — в ней полный текст. */
+  readonly topicId?: string | null;
+  /** Версия новости KTTF, выбранная в карточке; `null` — оригинал. */
+  readonly locale?: SiteLocale | null;
+}): ReactNode {
   const t = useT();
   const ref = useRef<HTMLParagraphElement>(null);
+  const top = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [long, setLong] = useState(false);
+  const cut = text.endsWith('…');
+  const topic = useQuery({
+    ...forumTopicQuery(topicId ?? ''),
+    enabled: open && topicId !== null,
+  });
+  const full = open ? fullBody(topic.data, locale) : null;
+  const loading = open && topicId !== null && topic.isPending;
 
   useLayoutEffect(() => {
     const element = ref.current;
@@ -202,43 +234,73 @@ function Excerpt({ text }: { readonly text: string }): ReactNode {
     };
   }, [text, open]);
 
+  const textSx = { mt: 0.75, color: 'var(--ink-700)', overflowWrap: 'anywhere' } as const;
+
   return (
-    <>
-      <Typography
-        ref={ref}
-        data-feed-excerpt={open ? 'open' : 'clamped'}
-        sx={{
-          mt: 0.75,
-          color: 'var(--ink-700)',
-          whiteSpace: 'pre-line',
-          overflowWrap: 'anywhere',
-          ...(open
-            ? {}
-            : {
-                display: '-webkit-box',
-                WebkitLineClamp: 4,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }),
-        }}
-      >
-        {text}
-      </Typography>
-      {(long || open) && (
+    <Box ref={top} sx={{ scrollMarginTop: 96 }}>
+      {full === null ? (
+        <Typography
+          ref={ref}
+          data-feed-excerpt={open ? 'open' : 'clamped'}
+          aria-busy={loading}
+          sx={{
+            ...textSx,
+            whiteSpace: 'pre-line',
+            ...(open
+              ? {}
+              : {
+                  display: '-webkit-box',
+                  WebkitLineClamp: 4,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }),
+          }}
+        >
+          {text}
+        </Typography>
+      ) : (
+        <RichText text={full} sx={textSx} data-feed-excerpt="full" />
+      )}
+      {(long || cut || open) && (
         <Button
           variant="text"
           size="small"
           aria-expanded={open}
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}
           onClick={() => {
+            if (open) {
+              // Свёрнутый длинный текст оставил бы читателя далеко под
+              // карточкой — возвращаем её начало в окно.
+              const box = top.current;
+              if (box !== null && box.getBoundingClientRect().top < 0) {
+                box.scrollIntoView({ block: 'start' });
+              }
+            }
             setOpen((value) => !value);
           }}
           sx={{ mt: 0.25, ml: -1, px: 1, minHeight: 44, fontWeight: 600 }}
         >
-          {t(open ? 'feed.excerpt.less' : 'feed.excerpt.more')}
+          {t(loading ? 'common.loading' : open ? 'feed.excerpt.less' : 'feed.excerpt.more')}
         </Button>
       )}
-    </>
+    </Box>
   );
+}
+
+/**
+ * Полный текст записи из темы: версия на выбранном языке, если она есть,
+ * иначе первое сообщение. Темы нет или первого сообщения не видно — `null`.
+ */
+function fullBody(topic: ForumTopicView | undefined, locale: SiteLocale | null): string | null {
+  if (topic?.firstPost == null) return null;
+
+  const version =
+    locale === null || locale === topic.locale
+      ? undefined
+      : topic.translations.find((row) => row.locale === locale);
+
+  return version?.body ?? topic.firstPost.body;
 }
 
 interface CardPhoto {
@@ -361,7 +423,7 @@ function PostBody({ item }: { readonly item: FeedPostItem }): ReactNode {
         </Box>
       )}
       <Title href={href}>{item.title}</Title>
-      <Excerpt text={item.excerpt} />
+      <Excerpt text={item.excerpt} topicId={item.discussion?.topicId ?? null} />
       {item.imageUrl !== null && (
         <CardPhotos
           photos={[{ thumb: postImage(item.imageUrl), full: item.imageUrl }]}
@@ -396,7 +458,11 @@ function TopicBody({ item }: { readonly item: FeedTopicItem }): ReactNode {
       )}
       {/* Заголовок записи игрока выведен из её первой строки — не повторяем. */}
       {item.type === 'PORTAL' && <Title href={href}>{title}</Title>}
-      <Excerpt text={version?.excerpt ?? item.excerpt} />
+      <Excerpt
+        text={version?.excerpt ?? item.excerpt}
+        topicId={item.discussion?.topicId ?? null}
+        locale={locale}
+      />
       {item.locale !== null && locale !== null && available.length > 0 && (
         <Box sx={{ ml: -1 }} data-feed-lang>
           <NewsLanguageSwitch
@@ -462,7 +528,9 @@ function ForumBody({ item }: { readonly item: FeedForumItem }): ReactNode {
         </Box>
       </Stack>
       <Title href={href}>{item.title}</Title>
-      {item.excerpt !== '' && <Excerpt text={item.excerpt} />}
+      {item.excerpt !== '' && (
+        <Excerpt text={item.excerpt} topicId={item.discussion?.topicId ?? null} />
+      )}
     </>
   );
 }
