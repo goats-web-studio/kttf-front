@@ -14,7 +14,6 @@ import EmptyState from '@/common/ui/empty-state';
 import { BackLink } from '@/common/ui/page-header';
 import { reloadUser } from '@/features/auth/session';
 import { useSessionStore } from '@/features/auth/session-store';
-import { updateClubApplication } from '@/features/club-applications/api';
 import { clubApplicationKeys } from '@/features/club-applications/queries';
 import { createClub } from '@/features/clubs/api';
 import ClubForm from '@/features/clubs/club-form';
@@ -104,24 +103,32 @@ function AdminForm(): ReactNode {
   const search = Route.useSearch();
 
   const create = useMutation({
-    mutationFn: (input: CreateClubInput) => createClub(input),
+    // Заявка уходит вместе с клубом (ADR-100): сервер отдаёт клуб тому, кто
+    // её подал, и отмечает её обработанной той же транзакцией.
+    mutationFn: (input: CreateClubInput) =>
+      createClub(
+        search.application === undefined ? input : { ...input, applicationId: search.application },
+      ),
     onSuccess: async (club) => {
-      // Заявка, по которой заведён клуб, — обработана: второй раз её не
-      // разбирать. Отказ отметки клуб не отменяет — отметят руками.
-      if (search.application !== undefined) {
-        await updateClubApplication(search.application, { status: 'DONE' }).catch(() => undefined);
-        void queryClient.invalidateQueries({ queryKey: clubApplicationKeys.all });
-      }
-
+      void queryClient.invalidateQueries({ queryKey: clubApplicationKeys.all });
       // Роль владельца приходит в сессии, а не в ответе создания: без
       // перечитывания пользователя «Мои клубы» не увидели бы новый клуб.
       await Promise.all([reloadUser(), queryClient.invalidateQueries({ queryKey: clubKeys.all })]);
-      // Сразу в состав: следующий шаг — сделать владельцем представителя зала.
-      await navigate({
-        to: '/cabinet/club/$clubId',
-        params: { clubId: club.id },
-        search: { tab: 'staff' },
-      });
+
+      const own = useSessionStore
+        .getState()
+        .user?.clubRoles.some((role) => role.clubId === club.id);
+
+      // Клуб достался заявителю — администратору в нём делать нечего, он
+      // смотрит, что получилось. Свой клуб — сразу в состав: следующий шаг —
+      // передать его представителю зала.
+      await (own === true
+        ? navigate({
+            to: '/cabinet/club/$clubId',
+            params: { clubId: club.id },
+            search: { tab: 'staff' },
+          })
+        : navigate({ to: '/clubs/$clubId', params: { clubId: club.id } }));
     },
   });
 

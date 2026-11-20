@@ -49,6 +49,8 @@ const APPLICATION: ClubApplicationView = {
   handledAt: null,
 };
 
+const NEW_CLUB_ID = '00000000-0000-4000-8000-0000000000c1';
+
 function reply(body: unknown, status = 200): Response {
   return {
     ok: status < 400,
@@ -76,6 +78,13 @@ function answer(url: string, init: RequestInit | undefined): Response {
     }
     return reply({ items: [listed], total: 1, page: 1, limit: 20 });
   }
+
+  if (url.endsWith('/clubs') && method === 'POST') {
+    return reply({ id: NEW_CLUB_ID, ...(body as object) }, 201);
+  }
+
+  // Заведший клуб перечитывается: роли клуба у него нет — клуб достался заявителю.
+  if (url.includes('/auth/me')) return reply(ADMIN_USER);
 
   const places = placesReply(url);
   if (places !== undefined) return reply(places);
@@ -289,6 +298,35 @@ describe('клуб из заявки с городом справочника �
           name: new RegExp(ru['club.field.city']),
         }).value,
       ).toBe(CITIES.oskemen.name);
+    });
+  });
+});
+
+describe('клуб из заявки достаётся заявителю — ADR-100', () => {
+  it('заявка уходит вместе с клубом одним запросом, отдельной отметки нет', async () => {
+    renderAt(
+      `/cabinet/clubs/new?application=${APPLICATION.id}&name=${APPLICATION.clubName}&city=${CITIES.oskemen.id}`,
+      ADMIN_USER,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole<HTMLInputElement>('combobox', {
+          name: new RegExp(ru['club.field.city']),
+        }).value,
+      ).toBe(CITIES.oskemen.name);
+    });
+    fireEvent.click(screen.getByRole('button', { name: ru['club.create'] }));
+
+    await waitFor(() => {
+      expect(posts().find((request) => request.url.endsWith('/clubs'))).toMatchObject({
+        body: { name: APPLICATION.clubName, applicationId: APPLICATION.id },
+      });
+    });
+    expect(sent.some((request) => request.method === 'PATCH')).toBe(false);
+    // Владелец — заявитель, не администратор: ведём на страницу клуба, а не в его кабинет.
+    await waitFor(() => {
+      expect(window.location.pathname).toBe(`/clubs/${NEW_CLUB_ID}`);
     });
   });
 });
