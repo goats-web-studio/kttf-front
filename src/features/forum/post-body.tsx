@@ -1,11 +1,13 @@
 import { markupToPlain, type ForumImage, type ForumPostView } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
+import ButtonBase from '@mui/material/ButtonBase';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { fill, useT } from '@/common/i18n';
 import RichText from '@/common/rich/rich-text';
+import PhotoViewer from '@/common/ui/photo-viewer';
 
 import { forumImageVariant } from './labels';
 
@@ -80,8 +82,14 @@ export function ForumQuote({
   );
 }
 
-/** Фото сообщения: сеткой, по нажатию — во всю ширину в новой вкладке. */
+/**
+ * Фото сообщения: сеткой; по нажатию — целиком поверх страницы, со
+ * стрелками между фото сообщения (то же окно, что у ленты и аватара).
+ */
 export function ForumImages({ images }: { readonly images: readonly ForumImage[] }): ReactNode {
+  const t = useT();
+  const [open, setOpen] = useState<number | null>(null);
+
   if (images.length === 0) return null;
 
   return (
@@ -95,14 +103,25 @@ export function ForumImages({ images }: { readonly images: readonly ForumImage[]
           images.length === 1 ? 'minmax(0, 480px)' : 'repeat(2, minmax(0, 240px))',
       }}
     >
-      {images.map((image) => (
-        <Box
+      {images.map((image, index) => (
+        <ButtonBase
           key={image.url}
-          component="a"
-          href={image.url}
-          target="_blank"
-          rel="noopener"
-          sx={{ display: 'block', borderRadius: 2, overflow: 'hidden', bgcolor: 'var(--ink-100)' }}
+          onClick={() => {
+            setOpen(index);
+          }}
+          aria-label={
+            images.length > 1
+              ? `${t('feed.image.open')} ${String(index + 1)} / ${String(images.length)}`
+              : t('feed.image.open')
+          }
+          aria-haspopup="dialog"
+          sx={{
+            display: 'block',
+            borderRadius: 2,
+            overflow: 'hidden',
+            cursor: 'zoom-in',
+            bgcolor: 'var(--ink-100)',
+          }}
         >
           <Box
             component="img"
@@ -118,8 +137,17 @@ export function ForumImages({ images }: { readonly images: readonly ForumImage[]
               aspectRatio: `${String(image.width)} / ${String(image.height)}`,
             }}
           />
-        </Box>
+        </ButtonBase>
       ))}
+      <PhotoViewer
+        photos={images.map((image) => ({ src: image.url, alt: '' }))}
+        index={open}
+        onIndex={setOpen}
+        onClose={() => {
+          setOpen(null);
+        }}
+        label={t('feed.image.open')}
+      />
     </Box>
   );
 }

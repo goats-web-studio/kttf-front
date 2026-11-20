@@ -8,15 +8,17 @@ import {
   type FeedResultItem,
   type FeedTopicItem,
   type FeedTournamentItem,
+  type AuthUserView,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import ButtonBase from '@mui/material/ButtonBase';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Eye, Heart, MessageSquare, Pin, TrendingUp, Trophy } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 import {
   fill,
@@ -29,8 +31,11 @@ import {
   type MessageKey,
 } from '@/common/i18n';
 import { LEVEL_NAME } from '@/common/ui/level-name';
+import PhotoViewer from '@/common/ui/photo-viewer';
 import PlayerAvatar from '@/common/ui/player-avatar';
+import { useSessionStore } from '@/features/auth/session-store';
 import { forumImageVariant, sectionHref, splitName, topicHref } from '@/features/forum/labels';
+import LikeButton from '@/features/forum/like-button';
 
 import { sourceHref } from './labels';
 import { SourceMark } from './source-mark';
@@ -84,7 +89,7 @@ export default function FeedCard({
           </Stack>
         )}
       </Box>
-      {item.discussion !== null && <CardFoot discussion={item.discussion} />}
+      {item.discussion !== null && <CardFoot item={item} discussion={item.discussion} />}
     </Paper>
   );
 }
@@ -166,42 +171,166 @@ function Title({
   );
 }
 
-/** Текст записи — первые строки; целиком — в обсуждении. */
+/**
+ * Текст записи — первые четыре строки. Длиннее — «Показать ещё»
+ * раскрывает его здесь же, без перехода; целиком с ответами — в обсуждении.
+ * Длинный ли текст, решает сама вёрстка: обрезано ли что-то по высоте.
+ */
 function Excerpt({ text }: { readonly text: string }): ReactNode {
+  const t = useT();
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [open, setOpen] = useState(false);
+  const [long, setLong] = useState(false);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (element === null || open) return undefined;
+
+    const measure = (): void => {
+      setLong(element.scrollHeight > element.clientHeight + 1);
+    };
+
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [text, open]);
+
   return (
-    <Typography
-      sx={{
-        mt: 0.75,
-        color: 'var(--ink-700)',
-        whiteSpace: 'pre-line',
-        display: '-webkit-box',
-        WebkitLineClamp: 4,
-        WebkitBoxOrient: 'vertical',
-        overflow: 'hidden',
-      }}
-    >
-      {text}
-    </Typography>
+    <>
+      <Typography
+        ref={ref}
+        data-feed-excerpt={open ? 'open' : 'clamped'}
+        sx={{
+          mt: 0.75,
+          color: 'var(--ink-700)',
+          whiteSpace: 'pre-line',
+          overflowWrap: 'anywhere',
+          ...(open
+            ? {}
+            : {
+                display: '-webkit-box',
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }),
+        }}
+      >
+        {text}
+      </Typography>
+      {(long || open) && (
+        <Button
+          variant="text"
+          size="small"
+          aria-expanded={open}
+          onClick={() => {
+            setOpen((value) => !value);
+          }}
+          sx={{ mt: 0.25, ml: -1, px: 1, minHeight: 44, fontWeight: 600 }}
+        >
+          {t(open ? 'feed.excerpt.less' : 'feed.excerpt.more')}
+        </Button>
+      )}
+    </>
   );
 }
 
-function Picture({ src }: { readonly src: string }): ReactNode {
-  return (
-    <Box
-      component="img"
-      src={src}
-      alt=""
-      loading="lazy"
+interface CardPhoto {
+  /** Вариант под карточку. */
+  readonly thumb: string;
+  /** Целиком — в окне просмотра. */
+  readonly full: string;
+}
+
+/**
+ * Фото записи: первое крупно, остальные — под ним по три. Нажатие открывает
+ * фото целиком поверх ленты, со стрелками между фото записи.
+ */
+function CardPhotos({
+  photos,
+  title,
+}: {
+  readonly photos: readonly CardPhoto[];
+  /** Название окна просмотра — заголовок записи. */
+  readonly title: string;
+}): ReactNode {
+  const t = useT();
+  const [open, setOpen] = useState<number | null>(null);
+  const [first, ...rest] = photos;
+
+  if (first === undefined) return null;
+
+  const button = (index: number, children: ReactNode, sx: object): ReactNode => (
+    <ButtonBase
+      key={photos[index]?.full}
+      onClick={() => {
+        setOpen(index);
+      }}
+      aria-label={
+        photos.length > 1
+          ? `${t('feed.image.open')} ${String(index + 1)} / ${String(photos.length)}`
+          : t('feed.image.open')
+      }
+      aria-haspopup="dialog"
+      data-feed-photo={index}
       sx={{
-        mt: 1.5,
         display: 'block',
         width: '100%',
-        aspectRatio: '16 / 9',
-        objectFit: 'cover',
-        borderRadius: 2,
+        overflow: 'hidden',
+        cursor: 'zoom-in',
         bgcolor: 'var(--paper-sunken)',
+        ...sx,
       }}
-    />
+    >
+      {children}
+    </ButtonBase>
+  );
+
+  return (
+    <>
+      {button(
+        0,
+        <Box
+          component="img"
+          src={first.thumb}
+          alt=""
+          loading="lazy"
+          sx={{ display: 'block', width: '100%', aspectRatio: '16 / 9', objectFit: 'cover' }}
+        />,
+        { mt: 1.5, borderRadius: 2 },
+      )}
+      {rest.length > 0 && (
+        <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+          {rest.map((photo, index) =>
+            button(
+              index + 1,
+              <Box
+                component="img"
+                src={photo.thumb}
+                alt=""
+                loading="lazy"
+                sx={{ display: 'block', width: '100%', aspectRatio: '1', objectFit: 'cover' }}
+              />,
+              { borderRadius: 1.5 },
+            ),
+          )}
+        </Box>
+      )}
+      <PhotoViewer
+        photos={photos.map((photo) => ({ src: photo.full, alt: '' }))}
+        index={open}
+        onIndex={setOpen}
+        onClose={() => {
+          setOpen(null);
+        }}
+        label={title}
+      />
+    </>
   );
 }
 
@@ -232,35 +361,31 @@ function PostBody({ item }: { readonly item: FeedPostItem }): ReactNode {
       )}
       <Title href={href}>{item.title}</Title>
       <Excerpt text={item.excerpt} />
-      {item.imageUrl !== null && <Picture src={postImage(item.imageUrl)} />}
+      {item.imageUrl !== null && (
+        <CardPhotos
+          photos={[{ thumb: postImage(item.imageUrl), full: item.imageUrl }]}
+          title={item.title}
+        />
+      )}
     </>
   );
 }
 
 function TopicBody({ item }: { readonly item: FeedTopicItem }): ReactNode {
   const href = item.discussion === null ? undefined : topicHref(item.discussion.topicId);
-  const [first, ...rest] = item.images;
 
   return (
     <>
       {/* Заголовок записи игрока выведен из её первой строки — не повторяем. */}
       {item.type === 'PORTAL' && <Title href={href}>{item.title}</Title>}
       <Excerpt text={item.excerpt} />
-      {first !== undefined && <Picture src={forumImageVariant(first.url, 960)} />}
-      {rest.length > 0 && (
-        <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-          {rest.map((image) => (
-            <Box
-              key={image.url}
-              component="img"
-              src={forumImageVariant(image.url, 480)}
-              alt=""
-              loading="lazy"
-              sx={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 1.5 }}
-            />
-          ))}
-        </Box>
-      )}
+      <CardPhotos
+        photos={item.images.map((image, index) => ({
+          thumb: forumImageVariant(image.url, index === 0 ? 960 : 480),
+          full: image.url,
+        }))}
+        title={item.type === 'PORTAL' ? item.title : item.source.name}
+      />
     </>
   );
 }
@@ -487,13 +612,30 @@ function AchievementBody({ item }: { readonly item: FeedAchievementItem }): Reac
   );
 }
 
+/**
+ * Своя ли запись: сервер не даёт отметить своё сообщение. Лента не говорит,
+ * кто автор первого сообщения темы, — узнаём по источнику: запись игрока и
+ * тема форума — от его профиля, новость тренера — с его страницы. Новость
+ * клуба пишет кто-то из клуба — её решит сервер.
+ */
+function ownItem(item: FeedItem, user: AuthUserView | null): boolean {
+  if (user === null || item.source.id === null) return false;
+  if (item.source.kind === 'PLAYER') return item.source.id === user.playerId;
+  if (item.source.kind === 'COACH') return item.source.id === user.coach?.id;
+
+  return false;
+}
+
 function CardFoot({
+  item,
   discussion,
 }: {
+  readonly item: FeedItem;
   readonly discussion: NonNullable<FeedItem['discussion']>;
 }): ReactNode {
   const t = useT();
   const locale = useLocale();
+  const user = useSessionStore((state) => state.user);
   const counter = (icon: ReactNode, value: number, label: MessageKey) => (
     <Box
       component="span"
@@ -519,7 +661,21 @@ function CardFoot({
         typography: 'body2',
       }}
     >
-      {counter(<Heart size={16} aria-hidden />, discussion.likes, 'feed.likes')}
+      {discussion.postId === null ? (
+        counter(<Heart size={16} aria-hidden />, discussion.likes, 'feed.likes')
+      ) : (
+        // Сердце — кнопка: «нравится» первому сообщению темы (ADR-075).
+        <Box sx={{ ml: -1 }}>
+          <LikeButton
+            key={`${discussion.postId}:${String(discussion.likes)}`}
+            postId={discussion.postId}
+            likes={discussion.likes}
+            liked={false}
+            mine={ownItem(item, user)}
+            alwaysCount
+          />
+        </Box>
+      )}
       {counter(<MessageSquare size={16} aria-hidden />, discussion.comments, 'feed.comments')}
       {counter(<Eye size={16} aria-hidden />, discussion.views, 'feed.views')}
       <Box sx={{ flexGrow: 1 }} />

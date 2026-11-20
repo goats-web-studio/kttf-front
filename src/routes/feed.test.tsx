@@ -4,6 +4,7 @@ import type {
   FeedItem,
   FeedPage,
   FeedPostItem,
+  FeedTopicItem,
 } from '@kttf/shared/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
@@ -11,6 +12,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAppRouter } from '@/app/router';
+import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { useSessionStore } from '@/features/auth/session-store';
 import { topicHref } from '@/features/forum/labels';
@@ -95,6 +97,7 @@ function answer(url: string): Response {
 
   const { pathname, searchParams } = new URL(url, 'http://localhost');
   if (pathname.endsWith('/feed')) return reply(feedReply(searchParams));
+  if (pathname.endsWith('/like')) return reply({ likes: 3, liked: true });
   if (pathname.includes('/follows')) return reply([]);
   if (pathname.endsWith('/forum/sections')) return reply([]);
   if (pathname.includes('/notifications')) return reply({ items: [], unread: 0 });
@@ -107,13 +110,17 @@ function answer(url: string): Response {
 }
 
 let requests: string[] = [];
+/** Запросы с методом — для «нравится»: `PUT /forum/posts/…/like`. */
+let calls: string[] = [];
 
 beforeEach(() => {
   requests = [];
+  calls = [];
   feedReply = defaultFeed;
   useSessionStore.setState({ user: null, accessToken: null, isRestoring: false });
-  vi.stubGlobal('fetch', (input: unknown) => {
+  vi.stubGlobal('fetch', (input: unknown, init?: { method?: string }) => {
     requests.push(decodeURIComponent(String(input)));
+    calls.push(`${init?.method ?? 'GET'} ${String(input)}`);
     return Promise.resolve(answer(String(input)));
   });
 });
@@ -300,6 +307,142 @@ describe('страница «Лента» — ADR-097', () => {
     expect(
       feedRequests().some((url) => url.includes('filter=FORUM') && url.includes('limit=5')),
     ).toBe(true);
+  });
+});
+
+const POST_ID = '00000000-0000-4000-8000-00000000f201';
+
+/** Запись игрока с фото и длинным текстом — первое сообщение темы «лайкают». */
+const PLAYER_POST: FeedTopicItem = {
+  id: 'player-post:00000000-0000-4000-8000-00000000f301',
+  type: 'PLAYER_POST',
+  at: AT,
+  source: {
+    kind: 'PLAYER',
+    id: PLAYERS.first.id,
+    name: 'Аманбаев Арлан',
+    imageUrl: null,
+    slug: null,
+  },
+  discussion: { topicId: TOPIC_ID, postId: POST_ID, comments: 0, likes: 2, views: 9 },
+  pinned: false,
+  hidden: false,
+  title: 'Сыграли вечером',
+  excerpt: 'Сыграли вечером в клубе. '.repeat(20).trim(),
+  images: [
+    { url: '/files/forum/a.webp', width: 1200, height: 800 },
+    { url: '/files/forum/b.webp', width: 1200, height: 800 },
+  ],
+  archived: false,
+};
+
+const likeLabel = (count: number, liked = false): string =>
+  fill(ru[liked ? 'forum.action.unlike' : 'forum.action.like'], { count: String(count) });
+
+/** jsdom не вёрстает: высоту текста задаём сами — обрезан ли он по четырём строкам. */
+function clampedText(): () => void {
+  const scroll = vi
+    .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+    .mockImplementation(function height(this: HTMLElement) {
+      return this.dataset.feedExcerpt === undefined ? 0 : 240;
+    });
+  const client = vi
+    .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+    .mockImplementation(function height(this: HTMLElement) {
+      return this.dataset.feedExcerpt === 'clamped' ? 96 : 0;
+    });
+
+  return () => {
+    scroll.mockRestore();
+    client.mockRestore();
+  };
+}
+
+describe('карточка ленты: «нравится», фото, длинный текст', () => {
+  beforeEach(() => {
+    feedReply = (params) => ({ ...defaultFeed(params), items: [PLAYER_POST], total: 1 });
+  });
+
+  it('сердце — кнопка: вошедший отмечает первое сообщение темы, число растёт сразу', async () => {
+    // Чужая запись: автор — другой игрок.
+    const other = { ...PLAYER_POST, source: { ...PLAYER_POST.source, id: PLAYERS.second.id } };
+    feedReply = (params) => ({ ...defaultFeed(params), items: [other], total: 1 });
+    renderAt('/feed', USER_WITH_PROFILE);
+
+    const like = await screen.findByRole('button', { name: likeLabel(2) });
+    fireEvent.click(like);
+
+    expect(screen.getByRole('button', { name: likeLabel(3, true) })).toBeDefined();
+    await waitFor(() => {
+      expect(
+        calls.some(
+          (call) => call.startsWith('PUT ') && call.endsWith(`/forum/posts/${POST_ID}/like`),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it('гостю сердце ведёт на вход', async () => {
+    renderAt('/feed');
+
+    const like = await screen.findByRole('link', { name: likeLabel(2) });
+    expect(like.getAttribute('href')).toBe(`/login?redirect=${encodeURIComponent('/feed')}`);
+  });
+
+  it('свою запись не отметить: кнопка выключена', async () => {
+    renderAt('/feed', USER_WITH_PROFILE);
+
+    const own = await screen.findByRole('button', { name: likeLabel(2) });
+    expect((own as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('фото открывается поверх ленты, стрелка листает к следующему', async () => {
+    renderAt('/feed');
+
+    fireEvent.click(await screen.findByRole('button', { name: `${ru['feed.image.open']} 1 / 2` }));
+
+    const viewer = await screen.findByRole('dialog', { name: PLAYER_POST.source.name });
+    expect(viewer.querySelector('img')?.getAttribute('src')).toBe('/files/forum/a.webp');
+
+    fireEvent.click(within(viewer).getByRole('button', { name: ru['club.gallery.next'] }));
+    await waitFor(() => {
+      expect(viewer.querySelector('img')?.getAttribute('src')).toBe('/files/forum/b.webp');
+    });
+  });
+
+  it('длинный текст раскрывается «Показать ещё» на месте; «Обсудить» остаётся', async () => {
+    const restore = clampedText();
+
+    try {
+      renderAt('/feed');
+
+      const more = await screen.findByRole('button', { name: ru['feed.excerpt.more'] });
+      const card = more.closest('article');
+      if (card === null) throw new Error('карточка не найдена');
+      expect(card.querySelector('[data-feed-excerpt="clamped"]')).not.toBeNull();
+
+      fireEvent.click(more);
+
+      expect(card.querySelector('[data-feed-excerpt="open"]')).not.toBeNull();
+      expect(
+        within(card)
+          .getByRole('button', { name: ru['feed.excerpt.less'] })
+          .getAttribute('aria-expanded'),
+      ).toBe('true');
+      expect(
+        within(card).getByRole('link', { name: ru['feed.discuss'] }).getAttribute('href'),
+      ).toBe(topicHref(TOPIC_ID));
+    } finally {
+      restore();
+    }
+  });
+
+  it('короткий текст — без «Показать ещё»', async () => {
+    feedReply = (params) => ({ ...defaultFeed(params), items: [CLUB_POST], total: 1 });
+    renderAt('/feed');
+
+    expect(await screen.findByText(CLUB_POST.title)).toBeDefined();
+    expect(screen.queryByRole('button', { name: ru['feed.excerpt.more'] })).toBeNull();
   });
 });
 
