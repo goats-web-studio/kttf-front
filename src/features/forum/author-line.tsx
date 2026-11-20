@@ -11,7 +11,7 @@ import RatingValue from '@/common/ui/rating-value';
 import { ROLE_KEYS, splitName } from './labels';
 
 /** Метка у имени — «Модератор», «Организатор», «Тренер»: маленькая плашка. */
-function Tag({
+export function Tag({
   children,
   tone,
   href,

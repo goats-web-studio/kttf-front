@@ -1013,6 +1013,9 @@ describe('стена игрока — ADR-075', () => {
     excerpt: 'Поставил новую накладку, впечатления после турнира',
     images: [],
     archived: false,
+    coauthor: null,
+    locale: null,
+    translations: [],
   };
 
   it('чужая пустая стена не показывается', async () => {

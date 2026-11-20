@@ -31,6 +31,9 @@ import {
 import { LEVEL_NAME } from '@/common/ui/level-name';
 import PlayerAvatar from '@/common/ui/player-avatar';
 import { forumImageVariant, sectionHref, splitName, topicHref } from '@/features/forum/labels';
+import { useNewsLocale } from '@/features/forum/news-locale';
+import { NewsLanguageSwitch } from '@/features/forum/news-versions';
+import { CoauthorLine } from '@/features/forum/voice';
 
 import { sourceHref } from './labels';
 import { SourceMark } from './source-mark';
@@ -238,14 +241,39 @@ function PostBody({ item }: { readonly item: FeedPostItem }): ReactNode {
 }
 
 function TopicBody({ item }: { readonly item: FeedTopicItem }): ReactNode {
+  const uiLocale = useLocale();
   const href = item.discussion === null ? undefined : topicHref(item.discussion.topicId);
-  const [first, ...rest] = item.images;
+  // Новость KTTF — на языке интерфейса, если есть версия; «Перевод»
+  // переключает (ADR-098). Обложка версии — вместо фото оригинала.
+  const available = item.translations.map((row) => row.locale);
+  const [locale, setLocale] = useNewsLocale(item.locale, available, uiLocale);
+  const version =
+    locale === null || locale === item.locale
+      ? undefined
+      : item.translations.find((row) => row.locale === locale);
+  const images = version?.image == null ? item.images : [version.image];
+  const [first, ...rest] = images;
 
   return (
-    <>
+    <Box lang={version?.locale}>
+      {item.coauthor !== null && (
+        <Box sx={{ mb: 0.75 }}>
+          <CoauthorLine coauthor={item.coauthor} />
+        </Box>
+      )}
       {/* Заголовок записи игрока выведен из её первой строки — не повторяем. */}
-      {item.type === 'PORTAL' && <Title href={href}>{item.title}</Title>}
-      <Excerpt text={item.excerpt} />
+      {item.type === 'PORTAL' && <Title href={href}>{version?.title ?? item.title}</Title>}
+      <Excerpt text={version?.excerpt ?? item.excerpt} />
+      {item.locale !== null && locale !== null && available.length > 0 && (
+        <Box sx={{ ml: -1 }} data-feed-lang>
+          <NewsLanguageSwitch
+            original={item.locale}
+            available={available}
+            value={locale}
+            onChange={setLocale}
+          />
+        </Box>
+      )}
       {first !== undefined && <Picture src={forumImageVariant(first.url, 960)} />}
       {rest.length > 0 && (
         <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
@@ -261,7 +289,7 @@ function TopicBody({ item }: { readonly item: FeedTopicItem }): ReactNode {
           ))}
         </Box>
       )}
-    </>
+    </Box>
   );
 }
 

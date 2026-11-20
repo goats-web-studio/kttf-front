@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 
 import PlayerAvatar from '@/common/ui/player-avatar';
 import { splitName } from '@/features/forum/labels';
+import { KttfMark } from '@/features/forum/voice';
 
 /** Знак источника: логотип клуба, фото тренера и игрока, у KTTF — знак бренда. */
 export function SourceMark({ source }: { readonly source: FeedSource }): ReactNode {
@@ -20,6 +21,8 @@ export function SourceMark({ source }: { readonly source: FeedSource }): ReactNo
     );
   }
 
+  if (source.kind === 'KTTF') return <KttfMark />;
+
   return (
     <Avatar
       variant="rounded"
@@ -29,15 +32,14 @@ export function SourceMark({ source }: { readonly source: FeedSource }): ReactNo
         width: 36,
         height: 36,
         borderRadius: '28%',
-        bgcolor: source.kind === 'KTTF' ? 'var(--night)' : 'var(--red-50)',
-        color: source.kind === 'KTTF' ? 'var(--night-red)' : 'var(--red-700)',
+        bgcolor: 'var(--red-50)',
+        color: 'var(--red-700)',
         fontFamily: 'var(--font-display)',
         fontWeight: 800,
-        fontSize: source.kind === 'KTTF' ? 11 : 15,
-        fontStyle: source.kind === 'KTTF' ? 'italic' : 'normal',
+        fontSize: 15,
       }}
     >
-      {source.kind === 'KTTF' ? 'KTTF' : source.name.trim().charAt(0).toUpperCase()}
+      {source.name.trim().charAt(0).toUpperCase()}
     </Avatar>
   );
 }

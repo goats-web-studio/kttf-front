@@ -1,4 +1,9 @@
-import { FORUM_QUOTE_MAX, type ForumPostView } from '@kttf/shared/types';
+import {
+  FORUM_BRAND_NAME,
+  FORUM_QUOTE_MAX,
+  type ForumImage,
+  type ForumPostView,
+} from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -26,12 +31,12 @@ import {
   updateForumPost,
   warnForumUser,
 } from './api';
-import AuthorLine from './author-line';
 import Composer, { type DraftQuote } from './composer';
 import { MuteDialog, ReasonDialog, ReportDialog, WarnDialog } from './dialogs';
 import { topicHref } from './labels';
 import { ForumImages, ForumQuote, ForumText } from './post-body';
 import { forumKeys } from './queries';
+import PostAuthor from './voice';
 
 interface PostCardProps {
   readonly post: ForumPostView;
@@ -45,6 +50,13 @@ interface PostCardProps {
   readonly article?: boolean;
   /** Над текстом статьи: шапка новости клуба или тренера. */
   readonly header?: ReactNode;
+  /**
+   * Версия новости на другом языке (ADR-098): показывается вместо текста и
+   * фото оригинала. Правка — всегда оригинала.
+   */
+  readonly version?: { readonly body: string; readonly images: readonly ForumImage[] } | null;
+  /** Справа от даты: «Перевод» у новости. */
+  readonly aside?: ReactNode;
 }
 
 /**
@@ -60,6 +72,8 @@ export default function PostCard({
   onQuote,
   article = false,
   header,
+  version = null,
+  aside,
 }: PostCardProps): ReactNode {
   const t = useT();
   const locale = useLocale();
@@ -74,7 +88,12 @@ export default function PostCard({
   };
   const isAdmin = user?.isAdmin === true;
   const removed = post.deleted || (post.hidden && post.body === '');
-  const name = post.author?.name ?? t('forum.author.gone');
+  // Цитата сообщения KTTF подписана знаком, а не человеком (ADR-098).
+  const name =
+    post.authoredAs === 'SELF' ? (post.author?.name ?? t('forum.author.gone')) : FORUM_BRAND_NAME;
+  const official = post.authoredAs !== 'SELF';
+  const body = version?.body ?? post.body;
+  const images = version?.images ?? post.images;
 
   const quote = (): void => {
     if (onQuote === undefined) return;
@@ -87,7 +106,7 @@ export default function PostCard({
       textRef.current?.contains(selection.anchorNode ?? null) === true
         ? selection.toString().trim()
         : '';
-    const text = (selected === '' ? post.body : selected).slice(0, FORUM_QUOTE_MAX).trim();
+    const text = (selected === '' ? body : selected).slice(0, FORUM_QUOTE_MAX).trim();
 
     onQuote({ postId: post.id, number: post.number, authorName: name, text });
   };
@@ -115,8 +134,10 @@ export default function PostCard({
       <Box
         sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', justifyContent: 'space-between' }}
       >
-        <AuthorLine
+        <PostAuthor
+          authoredAs={post.authoredAs}
           author={post.author}
+          coauthor={post.coauthor}
           role={post.role}
           meta={
             <Typography variant="body2" color="text.secondary">
@@ -137,10 +158,13 @@ export default function PostCard({
             </Typography>
           }
         />
+        <Box sx={{ flexGrow: 1 }} />
+        {aside}
         {!post.deleted && (
           <PostMenu
             post={post}
-            canEdit={post.mine && !post.hidden && canReply}
+            // Сообщение KTTF правит любой модератор — оно принадлежит порталу.
+            canEdit={(post.mine || (isAdmin && official)) && !post.hidden && canReply}
             isAdmin={isAdmin}
             signedIn={user !== null}
             onPick={(action) => {
@@ -160,7 +184,8 @@ export default function PostCard({
           <Placeholder>{t('forum.post.deleted')}</Placeholder>
         ) : editing ? (
           <Composer
-            initial={{ body: post.body, images: post.images }}
+            initial={{ body: post.body, images: post.images, authoredAs: post.authoredAs }}
+            voices={isAdmin}
             submitLabel={t('forum.action.save')}
             onCancel={() => {
               setEditing(false);
@@ -169,7 +194,11 @@ export default function PostCard({
               setEditing(false);
             }}
             submit={async (input) => {
-              await updateForumPost(post.id, { body: input.body, images: input.images ?? [] });
+              await updateForumPost(post.id, {
+                body: input.body,
+                images: input.images ?? [],
+                ...(input.authoredAs === undefined ? {} : { authoredAs: input.authoredAs }),
+              });
               await refresh();
             }}
           />
@@ -190,8 +219,8 @@ export default function PostCard({
                     }
                   />
                 )}
-                <ForumText text={post.body} large={article} />
-                <ForumImages images={post.images} />
+                <ForumText text={body} large={article} />
+                <ForumImages images={images} />
               </Box>
             )}
           </>

@@ -48,7 +48,9 @@ import {
   subjectHref,
   SUBJECT_KEYS,
 } from '@/features/forum/labels';
+import { NewsLanguageSwitch, NewsVersionsEditor } from '@/features/forum/news-versions';
 import PostCard from '@/features/forum/post-card';
+import { useNewsLocale } from '@/features/forum/news-locale';
 import {
   forumKeys,
   forumPostsQuery,
@@ -93,6 +95,19 @@ function TopicPage(): ReactNode {
   const replies = useQuery({ ...forumPostsQuery(topicId, page, sort), enabled: topic.isSuccess });
   const composer = useRef<HTMLTextAreaElement>(null);
   const [quote, setQuote] = useState<DraftQuote | null>(null);
+  const uiLocale = useLocale();
+  const isAdmin = useSessionStore((state) => state.user?.isAdmin === true);
+  // Новость KTTF — на языке интерфейса, если есть версия, иначе оригинал (ADR-098).
+  const available = topic.data?.translations.map((row) => row.locale) ?? [];
+  const [newsLocale, setNewsLocale] = useNewsLocale(
+    topic.data?.locale ?? null,
+    available,
+    uiLocale,
+  );
+  const translation =
+    newsLocale === null || newsLocale === topic.data?.locale
+      ? undefined
+      : topic.data?.translations.find((row) => row.locale === newsLocale);
 
   // К сообщению из адреса — когда страница с ним пришла.
   useEffect(() => {
@@ -140,8 +155,13 @@ function TopicPage(): ReactNode {
             back={{ href: sectionHref(data.section.slug), label: data.section.title }}
             eyebrow={<TopicBadges topic={data} />}
             title={
-              <Box component="span" sx={{ overflowWrap: 'anywhere' }}>
-                {data.title}
+              <Box
+                component="span"
+                lang={translation?.locale}
+                sx={{ overflowWrap: 'anywhere' }}
+                data-news-title
+              >
+                {translation?.title ?? data.title}
               </Box>
             }
             actions={<TopicActions topic={data} />}
@@ -157,13 +177,34 @@ function TopicPage(): ReactNode {
 
       {data?.firstPost != null && (
         <Surface component="article">
-          <PostCard
-            post={data.firstPost}
-            canReply={data.canReply}
-            onQuote={onQuote}
-            article
-            header={isNews(data.subject) ? <NewsHeader topic={data} /> : undefined}
-          />
+          <Box lang={translation?.locale}>
+            <PostCard
+              post={data.firstPost}
+              canReply={data.canReply}
+              onQuote={onQuote}
+              article
+              header={isNews(data.subject) ? <NewsHeader topic={data} /> : undefined}
+              version={
+                translation === undefined
+                  ? null
+                  : {
+                      body: translation.body,
+                      images:
+                        translation.image === null ? data.firstPost.images : [translation.image],
+                    }
+              }
+              aside={
+                data.locale !== null && newsLocale !== null ? (
+                  <NewsLanguageSwitch
+                    original={data.locale}
+                    available={available}
+                    value={newsLocale}
+                    onChange={setNewsLocale}
+                  />
+                ) : undefined
+              }
+            />
+          </Box>
           <Typography
             variant="body2"
             color="text.secondary"
@@ -242,6 +283,7 @@ function TopicPage(): ReactNode {
                 <Composer
                   ref={composer}
                   draftKey={`topic:${topicId}`}
+                  voices={isAdmin}
                   quote={quote}
                   onClearQuote={() => {
                     setQuote(null);
@@ -421,6 +463,7 @@ function TopicActions({ topic }: { readonly topic: ForumTopicView }): ReactNode 
           {t('forum.topic.rename')}
         </Button>
       )}
+      {user.isAdmin && <NewsVersionsEditor topic={topic} />}
       {user.isAdmin && (
         <ModeratorMenu
           topic={topic}

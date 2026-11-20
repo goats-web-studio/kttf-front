@@ -1,4 +1,9 @@
-import { FORUM_TOPIC_TITLE_MAX } from '@kttf/shared/types';
+import {
+  FEED_PORTAL_SECTION,
+  FEED_POSTS_SECTION,
+  FORUM_TOPIC_TITLE_MAX,
+  type ForumAuthoredAs,
+} from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import MenuItem from '@mui/material/MenuItem';
@@ -9,13 +14,16 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState, type ReactNode } from 'react';
 import { z } from 'zod';
 
-import { useT } from '@/common/i18n';
+import { useLocale, useT } from '@/common/i18n';
 import PageHeader from '@/common/ui/page-header';
 import Surface from '@/common/ui/surface';
+import { useSessionStore } from '@/features/auth/session-store';
 import { createForumTopic } from '@/features/forum/api';
 import Composer, { WriteGate } from '@/features/forum/composer';
 import { FORUM_HREF, sectionHref, topicHref } from '@/features/forum/labels';
+import { NewsLocaleField } from '@/features/forum/news-versions';
 import { forumKeys, forumSectionsQuery } from '@/features/forum/queries';
+import { VoicePicker } from '@/features/forum/voice';
 
 const searchSchema = z.object({
   section: z.string().max(40).optional().catch(undefined),
@@ -41,6 +49,15 @@ function NewTopicPage(): ReactNode {
   const [tried, setTried] = useState(false);
   const section = sections.data?.find((item) => item.slug === sectionSlug);
   const titleValid = title.trim().length >= 3;
+  const isAdmin = useSessionStore((state) => state.user?.isAdmin === true);
+  const uiLocale = useLocale();
+  // Новость KTTF — у модератора: по умолчанию от KTTF, с языком оригинала
+  // (ADR-098). Запись игрока — всегда своя.
+  const news = section?.slug === FEED_PORTAL_SECTION;
+  const canVoice = isAdmin && section !== undefined && section.slug !== FEED_POSTS_SECTION;
+  const [voice, setVoice] = useState<ForumAuthoredAs | null>(null);
+  const authoredAs = voice ?? (news ? 'KTTF' : 'SELF');
+  const [newsLocale, setNewsLocale] = useState(uiLocale);
 
   return (
     <Container maxWidth="md" component="section" sx={{ py: { xs: 5, sm: 6 } }}>
@@ -74,7 +91,9 @@ function NewTopicPage(): ReactNode {
                 </MenuItem>
               )}
               {sections.data
-                ?.filter((item) => item.manualTopics)
+                ?.filter(
+                  (item) => item.manualTopics || (isAdmin && item.slug === FEED_PORTAL_SECTION),
+                )
                 .map((item) => (
                   <MenuItem key={item.id} value={item.slug} sx={{ minHeight: 44 }}>
                     {item.title}
@@ -94,7 +113,9 @@ function NewTopicPage(): ReactNode {
               }
               slotProps={{ htmlInput: { maxLength: FORUM_TOPIC_TITLE_MAX } }}
             />
+            {news && <NewsLocaleField value={newsLocale} onChange={setNewsLocale} />}
             <Box>
+              {canVoice && <VoicePicker value={authoredAs} onChange={setVoice} />}
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 {t('forum.new.bodyHint')}
               </Typography>
@@ -113,6 +134,8 @@ function NewTopicPage(): ReactNode {
                     title: title.trim(),
                     body: input.body,
                     ...(input.images === undefined ? {} : { images: input.images }),
+                    ...(canVoice ? { authoredAs } : {}),
+                    ...(news ? { locale: newsLocale } : {}),
                   });
 
                   await queryClient.invalidateQueries({ queryKey: forumKeys.all });

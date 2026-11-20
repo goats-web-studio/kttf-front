@@ -1,4 +1,9 @@
-import type { ForumSectionView, ForumTopicItem, ListForumTopicsQuery } from '@kttf/shared/types';
+import {
+  FORUM_BRAND_NAME,
+  type ForumSectionView,
+  type ForumTopicItem,
+  type ListForumTopicsQuery,
+} from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -29,6 +34,7 @@ import {
 } from './labels';
 import { forumSectionsQuery, forumTopicsQuery } from './queries';
 import { Birthdays, OnlineAndLinks } from './sidebar';
+import { KttfMark } from './voice';
 
 export interface BoardSearch {
   readonly q?: string | undefined;
@@ -340,7 +346,11 @@ function BoardRow({
   const t = useT();
   const locale = useLocale();
   const replies = Math.max(0, topic.postsCount - 1);
-  const authorName = topic.subject?.owner?.name ?? topic.author?.name ?? t('forum.author.gone');
+  // Тема от лица KTTF — знак портала, а не человек (ADR-098).
+  const official = topic.authoredAs !== 'SELF';
+  const authorName = official
+    ? FORUM_BRAND_NAME
+    : (topic.subject?.owner?.name ?? topic.author?.name ?? t('forum.author.gone'));
   const { lastName, firstName } = splitName(authorName);
   const unread = topic.unread !== null && topic.unread > 0 && topic.firstUnread !== null;
 
@@ -360,13 +370,17 @@ function BoardRow({
         '&:first-of-type': { borderTop: 0 },
       }}
     >
-      <PlayerAvatar
-        lastName={lastName}
-        firstName={firstName}
-        // У новости аватар — буквы клуба или тренера: фото автора поста было бы чужим.
-        photoUrl={topic.subject?.owner == null ? (topic.author?.photoUrl ?? null) : null}
-        size="sm"
-      />
+      {official ? (
+        <KttfMark size="sm" />
+      ) : (
+        <PlayerAvatar
+          lastName={lastName}
+          firstName={firstName}
+          // У новости аватар — буквы клуба или тренера: фото автора поста было бы чужим.
+          photoUrl={topic.subject?.owner == null ? (topic.author?.photoUrl ?? null) : null}
+          size="sm"
+        />
+      )}
 
       <Box sx={{ minWidth: 0 }}>
         <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>

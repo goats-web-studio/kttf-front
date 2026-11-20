@@ -31,6 +31,8 @@ import type {
   UpdateForumPostInput,
   UpdateForumSectionInput,
   UploadedImage,
+  ForumTranslationInput,
+  SiteLocale,
 } from '@kttf/shared/types';
 
 import { apiRequest, queryString } from '@/common/api';
@@ -67,6 +69,34 @@ export function renameForumTopic(
   input: RenameForumTopicInput,
 ): Promise<ForumTopicView> {
   return apiRequest<ForumTopicView>(`/forum/topics/${topicId}`, { method: 'PATCH', body: input });
+}
+
+// ---------------------------------------------------------------- версии новости (ADR-098)
+
+/** Версия новости KTTF на языке — создать или заменить. Только модератор. */
+export function putForumTranslation(
+  topicId: string,
+  locale: SiteLocale,
+  input: ForumTranslationInput,
+): Promise<ForumTopicView> {
+  return apiRequest<ForumTopicView>(`/forum/topics/${topicId}/translations/${locale}`, {
+    method: 'PUT',
+    body: input,
+  });
+}
+
+export async function deleteForumTranslation(topicId: string, locale: SiteLocale): Promise<void> {
+  await apiRequest<undefined>(`/forum/topics/${topicId}/translations/${locale}`, {
+    method: 'DELETE',
+  });
+}
+
+/** Язык оригинала новости. */
+export function setForumTopicLocale(topicId: string, locale: SiteLocale): Promise<ForumTopicView> {
+  return apiRequest<ForumTopicView>(`/forum/topics/${topicId}/locale`, {
+    method: 'PUT',
+    body: { locale },
+  });
 }
 
 export async function setForumSubscription(topicId: string, subscribed: boolean): Promise<void> {

@@ -25,7 +25,7 @@ import QueryState from '@/common/ui/query-state';
 import SearchInput from '@/common/ui/search-input';
 import { RowsSkeleton } from '@/common/ui/skeleton';
 import Surface from '@/common/ui/surface';
-import AuthorLine from '@/features/forum/author-line';
+import PostAuthor from '@/features/forum/voice';
 import { FORUM_HREF, SUBJECT_KEYS, topicHref } from '@/features/forum/labels';
 import { forumFeedQuery, forumSectionsQuery } from '@/features/forum/queries';
 
@@ -212,8 +212,10 @@ function FeedRow({ item }: { readonly item: ForumPostItem }): ReactNode {
         '&:first-of-type': { borderTop: 0 },
       }}
     >
-      <AuthorLine
+      <PostAuthor
+        authoredAs={item.authoredAs}
         author={item.author}
+        coauthor={item.coauthor}
         role={item.role}
         size="sm"
         meta={

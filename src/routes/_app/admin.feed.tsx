@@ -1,4 +1,9 @@
-import { FEED_PORTAL_SECTION, FORUM_TOPIC_TITLE_MAX, type FeedItem } from '@kttf/shared/types';
+import {
+  FEED_PORTAL_SECTION,
+  FORUM_TOPIC_TITLE_MAX,
+  type FeedItem,
+  type ForumAuthoredAs,
+} from '@kttf/shared/types';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -10,7 +15,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Eye, EyeOff, Pin, PinOff } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
-import { useT, type MessageKey } from '@/common/i18n';
+import { useLocale, useT, type MessageKey } from '@/common/i18n';
 import EmptyState from '@/common/ui/empty-state';
 import Pagination from '@/common/ui/pagination';
 import PillTabs from '@/common/ui/pill-tabs';
@@ -22,7 +27,9 @@ import FeedCard from '@/features/feed/feed-card';
 import { feedKeys } from '@/features/feed/queries';
 import { createForumTopic } from '@/features/forum/api';
 import Composer from '@/features/forum/composer';
+import { NewsLocaleField } from '@/features/forum/news-versions';
 import { forumKeys, forumSectionsQuery } from '@/features/forum/queries';
+import { VoicePicker } from '@/features/forum/voice';
 
 export const Route = createFileRoute('/_app/admin/feed')({
   component: AdminFeedPage,
@@ -178,6 +185,10 @@ function PortalNews({ onPublished }: { readonly onPublished: () => void }): Reac
   const section = sections.data?.find((row) => row.slug === FEED_PORTAL_SECTION);
   const [title, setTitle] = useState('');
   const [titleError, setTitleError] = useState(false);
+  // Новость — по умолчанию от лица KTTF, язык оригинала — язык интерфейса (ADR-098).
+  const [voice, setVoice] = useState<ForumAuthoredAs>('KTTF');
+  const uiLocale = useLocale();
+  const [locale, setLocale] = useState(uiLocale);
 
   if (section === undefined) return null;
 
@@ -195,6 +206,10 @@ function PortalNews({ onPublished }: { readonly onPublished: () => void }): Reac
         }}
         sx={{ mb: 2 }}
       />
+      <Box sx={{ mb: 2 }}>
+        <NewsLocaleField value={locale} onChange={setLocale} />
+      </Box>
+      <VoicePicker value={voice} onChange={setVoice} />
       <Composer
         draftKey="admin-portal-news"
         submitLabel={t('admin.feed.publish')}
@@ -209,6 +224,8 @@ function PortalNews({ onPublished }: { readonly onPublished: () => void }): Reac
             title: title.trim(),
             body: input.body,
             ...(input.images === undefined ? {} : { images: input.images }),
+            authoredAs: voice,
+            locale,
           })
         }
         onDone={() => {

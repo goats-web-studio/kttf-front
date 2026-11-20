@@ -5,6 +5,7 @@ import {
   markupToPlain,
   rejectPhoto,
   type CreateForumPostInput,
+  type ForumAuthoredAs,
   type ForumImage,
 } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
@@ -26,6 +27,7 @@ import { useSessionStore } from '@/features/auth/session-store';
 import { uploadForumImage } from './api';
 import { forumImageVariant } from './labels';
 import { forumMeQuery } from './queries';
+import { VoicePicker } from './voice';
 
 /** Цитата, которую человек выбрал кнопкой «Цитировать» у сообщения. */
 export interface DraftQuote {
@@ -124,7 +126,18 @@ interface ComposerProps {
   readonly placeholder?: string;
   readonly submitLabel?: string;
   /** Текст и фото правки; без них — новое сообщение. */
-  readonly initial?: { readonly body: string; readonly images: readonly ForumImage[] };
+  readonly initial?: {
+    readonly body: string;
+    readonly images: readonly ForumImage[];
+    readonly authoredAs?: ForumAuthoredAs;
+  };
+  /**
+   * Выбор «от чьего лица» (ADR-098) — только модератору. Без него режим не
+   * отправляется: сервер ставит свой по умолчанию.
+   */
+  readonly voices?: boolean;
+  /** Режим по умолчанию: у новости KTTF — от KTTF, у ответа — от себя. */
+  readonly defaultVoice?: ForumAuthoredAs;
   readonly onCancel?: () => void;
   readonly onDone?: () => void;
   /** Проверка полей вокруг формы (заголовок новой темы): `false` — не отправлять. */
@@ -153,6 +166,8 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
     onDone,
     validate,
     draftKey,
+    voices = false,
+    defaultVoice = 'SELF',
   },
   ref,
 ) {
@@ -165,6 +180,7 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
   const fileInput = useRef<HTMLInputElement>(null);
   const [body, setBody] = useState(initial?.body ?? readDraft(draftKey));
   const [images, setImages] = useState<readonly ForumImage[]>(initial?.images ?? []);
+  const [voice, setVoice] = useState<ForumAuthoredAs>(initial?.authoredAs ?? defaultVoice);
   const [pending, setPending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -214,6 +230,7 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
           body: body.trim(),
           ...(quote === null ? {} : { quote: { postId: quote.postId, text: quote.text } }),
           ...(images.length === 0 && initial === undefined ? {} : { images: [...images] }),
+          ...(voices ? { authoredAs: voice } : {}),
         })
           .then(() => {
             if (initial === undefined) {
@@ -232,6 +249,8 @@ const Composer = forwardRef<HTMLTextAreaElement, ComposerProps>(function Compose
           });
       }}
     >
+      {voices && <VoicePicker value={voice} onChange={setVoice} />}
+
       {quote !== null && (
         <Box
           data-forum-draft-quote
