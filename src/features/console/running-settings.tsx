@@ -6,6 +6,8 @@ import type {
   UpdateTournamentInput,
 } from '@kttf/shared/types';
 import Box from '@mui/material/Box';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { useMutation } from '@tanstack/react-query';
@@ -15,6 +17,14 @@ import { errorMessageKey } from '@/common/api';
 import { useT } from '@/common/i18n';
 import IntegerField from '@/common/ui/integer-field';
 import { updateTournament } from '@/features/tournaments/api';
+import FormatFit from '@/features/tournaments/format-fit';
+import {
+  fromFormatConfig,
+  toFormatConfig,
+  type FormatDraft,
+  type FormatType,
+} from '@/features/tournaments/format-draft';
+import { isMatchStarted, nothingStarted } from '@/features/tournaments/format-reshape';
 import SetsField from '@/features/tournaments/sets-field';
 import PlayoffLengths from '@/features/tournaments/playoff-lengths';
 
@@ -54,6 +64,12 @@ export default function RunningSettings({
   const t = useT();
   const [tables, setTables] = useState<number | null>(tournament.tableCount);
   const [format, setFormat] = useState<FormatConfig>(tournament.formatConfig);
+  // Ни одна встреча не начата — схему можно сменить целиком (ADR-101).
+  // Тогда правится черновик, а длины задаются вместе со схемой.
+  const reshapable = nothingStarted(stages);
+  const [draft, setDraft] = useState<FormatDraft>(() => fromFormatConfig(tournament.formatConfig));
+  const baseline = JSON.stringify(toFormatConfig(fromFormatConfig(tournament.formatConfig)));
+  const drafted = toFormatConfig(draft);
 
   const save = useMutation({
     mutationFn: (input: UpdateTournamentInput) => updateTournament(tournament.id, input),
@@ -62,15 +78,19 @@ export default function RunningSettings({
 
   const changes: UpdateTournamentInput = {
     ...(tables !== null && tables !== tournament.tableCount ? { tableCount: tables } : {}),
-    ...(JSON.stringify(format) !== JSON.stringify(tournament.formatConfig)
-      ? { formatConfig: format }
-      : {}),
+    ...(reshapable
+      ? JSON.stringify(drafted) === baseline
+        ? {}
+        : { formatConfig: drafted }
+      : JSON.stringify(format) === JSON.stringify(tournament.formatConfig)
+        ? {}
+        : { formatConfig: format }),
   };
 
   return (
     <ConsoleDialog caption={tournament.name} title={t('console.settings.title')} onClose={onClose}>
       <Typography variant="body2" color="text.secondary" component="p" sx={{ mb: 2 }}>
-        {t('console.settings.lead')}
+        {t(reshapable ? 'console.settings.formatLead' : 'console.settings.lead')}
       </Typography>
 
       <DialogSection title={t('console.settings.tables')}>
@@ -83,58 +103,138 @@ export default function RunningSettings({
         />
       </DialogSection>
 
-      <DialogSection title={t('console.settings.lengths')}>
-        <Box
-          sx={{ mt: 1, display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}
-        >
-          {format.type === 'GROUPS_KNOCKOUT' ? (
-            <>
+      {reshapable ? (
+        <DialogSection title={t('console.settings.format')}>
+          <Box sx={{ mt: 1 }}>
+            <FormatFit
+              format={drafted}
+              participants={participants}
+              onSwitch={(next) => {
+                setDraft(fromFormatConfig(next));
+              }}
+            />
+          </Box>
+          <Box
+            sx={{
+              mt: 2,
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            }}
+          >
+            <TextField
+              select
+              label={t('tournament.form.format')}
+              value={draft.type}
+              onChange={(event) => {
+                setDraft({ ...draft, type: event.target.value as FormatType });
+              }}
+            >
+              {FORMAT_TYPES.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {t(`tournament.format.${type}`)}
+                </MenuItem>
+              ))}
+            </TextField>
+            {draft.type === 'GROUPS_KNOCKOUT' || draft.type === 'GROUPS_FINAL_GROUPS' ? (
+              <IntegerField
+                label={t('tournament.form.groupCount')}
+                value={draft.groupCount}
+                onChange={(groupCount) => {
+                  setDraft({ ...draft, sizing: 'count', groupCount });
+                }}
+                slotProps={{ htmlInput: { min: 1, max: 64 } }}
+              />
+            ) : null}
+            {draft.type === 'GROUPS_KNOCKOUT' ? (
+              <>
+                <SetsField
+                  label="tournament.form.groupSetsToWin"
+                  value={draft.groupSetsToWin}
+                  onChange={(value) => {
+                    setDraft({ ...draft, groupSetsToWin: value });
+                  }}
+                />
+                <SetsField
+                  label="tournament.form.koSetsToWin"
+                  value={draft.koSetsToWin}
+                  onChange={(value) => {
+                    setDraft({ ...draft, koSetsToWin: value });
+                  }}
+                />
+              </>
+            ) : (
               <SetsField
-                label="tournament.form.groupSetsToWin"
-                value={format.groupSetsToWin}
+                label="tournament.form.setsToWin"
+                value={draft.setsToWin}
                 onChange={(value) => {
-                  setFormat({ ...format, groupSetsToWin: value });
+                  setDraft({ ...draft, setsToWin: value });
                 }}
               />
+            )}
+          </Box>
+        </DialogSection>
+      ) : (
+        <DialogSection title={t('console.settings.lengths')}>
+          <Box
+            sx={{
+              mt: 1,
+              display: 'grid',
+              gap: 2,
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            }}
+          >
+            {format.type === 'GROUPS_KNOCKOUT' ? (
+              <>
+                <SetsField
+                  label="tournament.form.groupSetsToWin"
+                  value={format.groupSetsToWin}
+                  onChange={(value) => {
+                    setFormat({ ...format, groupSetsToWin: value });
+                  }}
+                />
+                <SetsField
+                  label="tournament.form.koSetsToWin"
+                  value={format.koSetsToWin}
+                  onChange={(value) => {
+                    setFormat({ ...format, koSetsToWin: value });
+                  }}
+                />
+              </>
+            ) : (
               <SetsField
-                label="tournament.form.koSetsToWin"
-                value={format.koSetsToWin}
+                label="tournament.form.setsToWin"
+                value={format.setsToWin}
                 onChange={(value) => {
-                  setFormat({ ...format, koSetsToWin: value });
+                  setFormat({ ...format, setsToWin: value });
                 }}
               />
-            </>
-          ) : (
-            <SetsField
-              label="tournament.form.setsToWin"
-              value={format.setsToWin}
-              onChange={(value) => {
-                setFormat({ ...format, setsToWin: value });
+            )}
+          </Box>
+
+          {(format.type === 'KNOCKOUT' || format.type === 'GROUPS_KNOCKOUT') && (
+            <PlayoffLengths
+              base={format.type === 'GROUPS_KNOCKOUT' ? format.koSetsToWin : format.setsToWin}
+              lengths={format.playoffSetsToWin ?? {}}
+              bracketSize={bracketSizeOf(format, stages, participants)}
+              thirdPlace={format.thirdPlace}
+              onChange={(lengths) => {
+                setFormat({ ...format, playoffSetsToWin: lengths });
               }}
             />
           )}
-        </Box>
 
-        {(format.type === 'KNOCKOUT' || format.type === 'GROUPS_KNOCKOUT') && (
-          <PlayoffLengths
-            base={format.type === 'GROUPS_KNOCKOUT' ? format.koSetsToWin : format.setsToWin}
-            lengths={format.playoffSetsToWin ?? {}}
-            bracketSize={bracketSizeOf(format, stages, participants)}
-            thirdPlace={format.thirdPlace}
-            onChange={(lengths) => {
-              setFormat({ ...format, playoffSetsToWin: lengths });
-            }}
-          />
-        )}
-
-        <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 1.5 }}>
-          {t('console.settings.lengthsHint')}
-        </Typography>
-      </DialogSection>
+          <Typography variant="caption" color="text.secondary" component="p" sx={{ mt: 1.5 }}>
+            {t('console.settings.lengthsHint')}
+          </Typography>
+        </DialogSection>
+      )}
 
       {save.error !== null && (
         <Typography role="alert" variant="body2" color="error" sx={{ mt: 2 }}>
-          {t(errorMessageKey(save.error))}
+          {isMatchStarted(save.error)
+            ? t('lifecycle.reshape.started')
+            : t(errorMessageKey(save.error))}
         </Typography>
       )}
       {!online && (
@@ -162,6 +262,14 @@ export default function RunningSettings({
     </ConsoleDialog>
   );
 }
+
+/** Порядок — как в форме турнира. */
+const FORMAT_TYPES: readonly FormatType[] = [
+  'ROUND_ROBIN',
+  'KNOCKOUT',
+  'GROUPS_KNOCKOUT',
+  'GROUPS_FINAL_GROUPS',
+];
 
 /**
  * Размер основной сетки: по самой сетке, если она построена. Иначе — по

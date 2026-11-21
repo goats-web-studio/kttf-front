@@ -9,6 +9,7 @@ import { fill } from '@/common/i18n';
 import { ru } from '@/common/i18n/ru';
 import { db } from '@/features/console/db';
 import { pending } from '@/features/console/outbox';
+import { FORM_CHECK_TEXTS } from '@/features/tournaments/tournament-form-texts';
 import { CONSOLE_SNAPSHOT, PLAYERS, RESULTS, TOURNAMENT, TOURNAMENT_ID } from '@/test/fixtures';
 
 /**
@@ -38,6 +39,8 @@ const SIGNED_IN: AuthUserView = {
 
 /** Запросы, ушедшие на сервер: по ним видно, что действие правда отправлено. */
 let sent: string[] = [];
+/** Запросы с методом и телом — для правок турнира из консоли (ADR-101). */
+let calls: { readonly url: string; readonly method: string; readonly body: unknown }[] = [];
 /** Снимок, который отдаёт сервер. Тесты равенства меняют его под себя. */
 let snapshot: TournamentSnapshotView = CONSOLE_SNAPSHOT;
 
@@ -82,13 +85,19 @@ function renderConsole(): void {
 
 beforeEach(async () => {
   sent = [];
+  calls = [];
   snapshot = CONSOLE_SNAPSHOT;
   await db.snapshots.clear();
   await db.outbox.clear();
-  vi.stubGlobal('fetch', (input: unknown) => {
+  vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) => {
     const url = String(input);
 
     sent.push(url);
+    calls.push({
+      url,
+      method: init?.method ?? 'GET',
+      body: typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : undefined,
+    });
 
     return answer(url);
   });
@@ -570,5 +579,50 @@ describe('изменение рейтинга в таблице — ADR-077', ()
     // Проигравший сильный — в минусе; кто ещё не играл рейтинговых — прочерк.
     expect(cells).toContain('−7.00');
     expect(cells).toContain('—');
+  });
+});
+
+describe('схема под фактический состав — ADR-101', () => {
+  /** Жеребьёвка проведена, старт нажат, ни одна встреча не начата. */
+  function untouched(): TournamentSnapshotView {
+    return {
+      ...CONSOLE_SNAPSHOT,
+      stages: CONSOLE_SNAPSHOT.stages.map((stage) => ({
+        ...stage,
+        matches: stage.matches.map((match) => ({
+          ...match,
+          status: 'PENDING' as const,
+          tableNumber: null,
+          setsA: null,
+          setsB: null,
+          setScores: null,
+          resultType: null,
+        })),
+      })),
+    };
+  }
+
+  it('четверо на «группы», ничего не сыграно — консоль предлагает круговую', async () => {
+    snapshot = untouched();
+    renderConsole();
+
+    const advice = await screen.findByText(fill(FORM_CHECK_TEXTS.ru.adviceSmall, { n: '4' }));
+    const box = advice.closest('[data-format-advice]');
+    if (!(box instanceof HTMLElement)) throw new Error('Нет совета по схеме');
+    fireEvent.click(within(box).getByRole('button', { name: FORM_CHECK_TEXTS.ru.adviceSwitch }));
+
+    await waitFor(() => {
+      expect(calls.some((call) => call.method === 'PATCH')).toBe(true);
+    });
+    const patch = calls.find((call) => call.method === 'PATCH');
+    expect(patch?.url).toMatch(new RegExp(`/tournaments/${TOURNAMENT_ID}$`));
+    expect(patch?.body).toMatchObject({ formatConfig: { type: 'ROUND_ROBIN' } });
+  });
+
+  it('встреча уже сыграна — совета нет: сыгранное не стирается', async () => {
+    renderConsole();
+
+    await screen.findByRole('heading', { name: ru['console.tables.title'] });
+    expect(screen.queryByText(fill(FORM_CHECK_TEXTS.ru.adviceSmall, { n: '4' }))).toBeNull();
   });
 });

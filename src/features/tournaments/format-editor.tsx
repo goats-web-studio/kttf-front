@@ -12,19 +12,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { CircleHelp, Maximize2, Sparkles } from 'lucide-react';
+import { CircleHelp, Maximize2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
-import { fill, useLocale, useT, type MessageKey } from '@/common/i18n';
+import { useLocale, useT, type MessageKey } from '@/common/i18n';
 import IntegerField from '@/common/ui/integer-field';
 
-import {
-  adviceApplied,
-  adviseGroups,
-  applyAdvice,
-  MAX_FOR_ROUND_ROBIN,
-  MIN_FOR_GROUPS,
-} from './format-advice';
 import FormatPicker from './format-picker';
 import { FORM_UI_TEXTS } from './format-texts';
 import { previewFormat } from './format-preview';
@@ -33,6 +26,7 @@ import PlayoffLengths from './playoff-lengths';
 import SetsField from './sets-field';
 import StructurePreview from './structure-preview';
 import { FORM_CHECK_TEXTS, type FormCheckText } from './tournament-form-texts';
+import { FormatAdvice } from './format-advice-box';
 
 interface FormatEditorProps {
   readonly draft: FormatDraft;
@@ -101,7 +95,7 @@ export default function FormatEditor({
           onChange={onParticipantsChange}
           helperText={check.participantsHint}
         />
-        <Advice draft={draft} participants={participants} texts={check} onChange={onChange} />
+        <FormatAdvice draft={draft} participants={participants} texts={check} onChange={onChange} />
       </Box>
 
       <FormatPicker
@@ -466,120 +460,6 @@ function NumberField({
   const t = useT();
 
   return <IntegerField label={t(label)} value={value} onChange={onChange} />;
-}
-
-/**
- * Совет по группам под ожидаемый состав — `format-advice.ts`.
- *
- * У схем с группами — «Подобрать»: число групп ставится так, чтобы
- * вышедших было ровно на сетку. У круговой на большой состав и у групп на
- * маленький — «Переключить» на подходящую схему. Совет только предлагает:
- * поля остаются в руках организатора.
- */
-function Advice({
-  draft,
-  participants,
-  texts,
-  onChange,
-}: {
-  readonly draft: FormatDraft;
-  readonly participants: number;
-  readonly texts: FormCheckText;
-  readonly onChange: (draft: FormatDraft) => void;
-}): ReactNode {
-  const n = String(participants);
-  const hasGroups = draft.type === 'GROUPS_KNOCKOUT' || draft.type === 'GROUPS_FINAL_GROUPS';
-
-  if (draft.type === 'ROUND_ROBIN' && participants > MAX_FOR_ROUND_ROBIN) {
-    const matches = previewFormat(toFormatConfig(draft), participants).totalMatches;
-    const advice = adviseGroups('GROUPS_KNOCKOUT', participants);
-    return (
-      <AdviceBox
-        text={fill(texts.adviceRoundRobin, { n, matches: String(matches) })}
-        action={texts.adviceSwitch}
-        onAction={() => {
-          const next = { ...draft, type: 'GROUPS_KNOCKOUT' as const };
-          onChange(advice === null ? next : applyAdvice(next, advice));
-        }}
-      />
-    );
-  }
-
-  if (hasGroups && participants < MIN_FOR_GROUPS) {
-    return (
-      <AdviceBox
-        text={fill(texts.adviceSmall, { n })}
-        action={texts.adviceSwitch}
-        onAction={() => {
-          onChange({ ...draft, type: 'ROUND_ROBIN' });
-        }}
-      />
-    );
-  }
-
-  const advice = adviseGroups(draft.type, participants);
-  if (advice === null) return null;
-
-  if (adviceApplied(draft, advice)) {
-    return (
-      <Typography variant="body2" color="text.secondary" sx={{ pt: { sm: 2 } }}>
-        {fill(texts.adviceApplied, { n })}
-      </Typography>
-    );
-  }
-
-  const sizes = previewFormat(toFormatConfig(applyAdvice(draft, advice)), participants).groups;
-  const min = Math.min(...sizes);
-  const max = Math.max(...sizes);
-
-  return (
-    <AdviceBox
-      text={fill(texts.adviceGroups, {
-        n,
-        groups: String(advice.groupCount),
-        sizes: min === max ? String(min) : `${String(min)}–${String(max)}`,
-        advance: String(advice.advancePerGroup),
-      })}
-      action={texts.adviceApply}
-      onAction={() => {
-        onChange(applyAdvice(draft, advice));
-      }}
-    />
-  );
-}
-
-function AdviceBox({
-  text,
-  action,
-  onAction,
-}: {
-  readonly text: string;
-  readonly action: string;
-  readonly onAction: () => void;
-}): ReactNode {
-  return (
-    <Box
-      data-format-advice
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        gap: 1.5,
-        p: 1.5,
-        borderRadius: 3,
-        bgcolor: 'var(--gold-50)',
-        border: '1px solid var(--line)',
-      }}
-    >
-      <Sparkles size={18} aria-hidden style={{ flexShrink: 0 }} />
-      <Typography variant="body2" sx={{ flex: 1, minWidth: 200 }}>
-        {text}
-      </Typography>
-      <Button variant="outlined" size="small" onClick={onAction} sx={{ minHeight: 40 }}>
-        {action}
-      </Button>
-    </Box>
-  );
 }
 
 /** Что такое «равенство очков» — по наведению или касанию значка. */

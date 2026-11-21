@@ -1,4 +1,10 @@
-import type { ClubCollisionView, DrawResult, TournamentView } from '@kttf/shared/types';
+import type {
+  ClubCollisionView,
+  DrawResult,
+  FormatConfig,
+  StageView,
+  TournamentView,
+} from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
@@ -26,7 +32,10 @@ import {
   openRegistration,
   publishTournament,
   startTournament,
+  updateTournament,
 } from './api';
+import FormatFit from './format-fit';
+import { isMatchStarted, nothingStarted } from './format-reshape';
 import { availableActions, type LifecycleAction } from './lifecycle';
 import { tournamentKeys } from './queries';
 import StatusBadge from './status-badge';
@@ -35,6 +44,10 @@ interface LifecyclePanelProps {
   readonly tournament: TournamentView;
   /** Имена игроков: несведённые одноклубники приходят идентификаторами. */
   readonly names: ReadonlyMap<string, string>;
+  /** Сколько человек на самом деле записано — для совета по схеме (ADR-101). */
+  readonly participants: number;
+  /** Этапы: после старта схему можно сменить, пока ни одна встреча не начата. */
+  readonly stages: readonly StageView[];
 }
 
 /** Жеребьёвка отвечает расстановкой, остальные действия — самим турниром. */
@@ -89,7 +102,12 @@ function perform(id: string, action: LifecycleAction): Promise<ActionResult> {
  * проверяет сервер, и он же стережёт условия сверх статуса: старт без
  * жеребьёвки и завершение с несыгранными встречами он отвергает.
  */
-export default function LifecyclePanel({ tournament, names }: LifecyclePanelProps): ReactNode {
+export default function LifecyclePanel({
+  tournament,
+  names,
+  participants,
+  stages,
+}: LifecyclePanelProps): ReactNode {
   const t = useT();
   const queryClient = useQueryClient();
   const user = useSessionStore((state) => state.user);
@@ -109,9 +127,24 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
     },
   });
 
+  // Пришли не все, кого ждали (ADR-101): до старта смена схемы сбрасывает
+  // жеребьёвку, после старта сервер проводит её заново сам.
+  const reshape = useMutation({
+    mutationFn: (formatConfig: FormatConfig) => updateTournament(tournament.id, { formatConfig }),
+    onSuccess: async () => {
+      setCollisions(null);
+      await queryClient.invalidateQueries({ queryKey: tournamentKeys.all });
+    },
+  });
+
   if (!isClubStaff(user, tournament.clubId)) {
     return null;
   }
+
+  const reshapable =
+    tournament.status === 'REG_OPEN' ||
+    tournament.status === 'REG_CLOSED' ||
+    (tournament.status === 'RUNNING' && nothingStarted(stages));
 
   const actions = availableActions(tournament.status);
   const hint = HINTS[tournament.status];
@@ -136,6 +169,25 @@ export default function LifecyclePanel({ tournament, names }: LifecyclePanelProp
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
           {t(hint)}
         </Typography>
+      )}
+
+      {reshapable && (
+        <Box sx={{ mt: 2 }}>
+          <FormatFit
+            format={tournament.formatConfig}
+            participants={participants}
+            onSwitch={(format) => {
+              reshape.mutate(format);
+            }}
+          />
+          {reshape.error !== null && (
+            <Alert severity="error" sx={{ mt: 1 }}>
+              {isMatchStarted(reshape.error)
+                ? t('lifecycle.reshape.started')
+                : t(errorMessageKey(reshape.error))}
+            </Alert>
+          )}
+        </Box>
       )}
 
       <Stack

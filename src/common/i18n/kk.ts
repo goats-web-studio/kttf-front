@@ -834,6 +834,11 @@ export const kk: Record<MessageKey, string> = {
   'participants.new.rating': 'Бастапқы рейтинг',
   'participants.new.submit': 'Ашу және жазу',
   'participants.new.cancel': 'Болдырмау',
+  'participants.seeding.ignored':
+    '«Себу» бағанындағы нөмірлерді жеребе тек қолмен себуде ескереді. Қазір себу — {method}, жазылған нөмірлер ештеңені өзгертпейді.',
+  'participants.seeding.manual':
+    'Қолмен себу: нөмірі бар ойыншылар сол ретпен бірінші тұрады, қалғандары — рейтинг бойынша соңынан.',
+  'participants.seeding.switch': 'Қолмен себу',
   'participants.closed':
     'Қатысушыларды тіркеу ашық болғанда қосуға болады: турнирді жариялап, тіркеуді ашыңыз.',
   'participants.duplicate.title': 'Бұл ойыншы базада бар',
@@ -1176,6 +1181,10 @@ export const kk: Record<MessageKey, string> = {
   'console.settings.offline': 'Желісіз баптауларды сақтау мүмкін емес.',
   'console.settings.save': 'Сақтау',
   'console.settings.saved': 'Турнир баптаулары сақталды',
+  'console.settings.format': 'Турнир сызбасы',
+  'console.settings.formatLead':
+    'Әзірге бірде-бір кездесу басталған жоқ — сызбаны ауыстыруға болады: жеребе ойнап жатқандар арасында қайта өтеді.',
+  'console.reshaped': 'Сызба ауыстырылды, жеребе қайта өтті',
   'console.tie.alert': 'Топ тең ұпаймен аяқталды — орындарды төреші қояды.',
   'console.tie.open': 'Шешу',
 
@@ -1360,6 +1369,11 @@ export const kk: Record<MessageKey, string> = {
   'tournament.repeat.title': 'Турнирді қайталау',
   'tournament.repeat.hint': 'Барлық баптауымен көшірме. Тек күні өзгереді.',
   'tournament.repeat.submit': 'Қайталау',
+  'tournament.template.title': 'Өткен турнир үлгісі бойынша',
+  'tournament.template.hint':
+    'Барлық баптау таңдалған турнирдегідей: сызба, жарна, үстелдер, шарттар. Тек күні өзгереді.',
+  'tournament.template.pick': 'Үлгі турнир',
+  'tournament.template.submit': 'Үлгі бойынша құру',
   'error.form.club': 'Клубты таңдаңыз',
   'error.form.startsAt': 'Басталу күні мен уақытын көрсетіңіз',
   'error.form.entryFee': 'Жарна — бүтін сан, нөл болуы мүмкін',
@@ -1419,6 +1433,8 @@ export const kk: Record<MessageKey, string> = {
   'account.password.changed': 'Құпия сөз ауыстырылды. Басқа сессиялар аяқталды.',
   'page.editTournament.title': 'Турнирді өңдеу',
   'lifecycle.edit': 'Өңдеу',
+  'lifecycle.reshape.started':
+    'Кездесулердің бірі басталып кетті — сызбаны енді ауыстыру мүмкін емес.',
   'editTournament.forbidden': 'Турнирді клубтың иесі мен ұйымдастырушылары өңдей алады.',
   'editTournament.locked': 'Басталған немесе болдырылмаған турнир өңделмейді.',
   'editTournament.drawReset':

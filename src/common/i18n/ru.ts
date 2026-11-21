@@ -826,6 +826,11 @@ export const ru = {
   'participants.new.rating': 'Стартовый рейтинг',
   'participants.new.submit': 'Завести и записать',
   'participants.new.cancel': 'Отмена',
+  'participants.seeding.ignored':
+    'Номера в колонке «Посев» жеребьёвка учитывает только при ручном посеве. Сейчас посев {method} — вписанные номера ничего не изменят.',
+  'participants.seeding.manual':
+    'Ручной посев: игроки с номерами идут первыми в их порядке, остальные — следом по рейтингу.',
+  'participants.seeding.switch': 'Сеять вручную',
   'participants.closed':
     'Участников можно добавлять, когда запись открыта: опубликуйте турнир и откройте запись.',
   'participants.duplicate.title': 'Такой игрок уже есть в базе',
@@ -1163,6 +1168,10 @@ export const ru = {
   'console.settings.offline': 'Без сети настройки не сохранить.',
   'console.settings.save': 'Сохранить',
   'console.settings.saved': 'Настройки турнира сохранены',
+  'console.settings.format': 'Схема турнира',
+  'console.settings.formatLead':
+    'Ни одна встреча ещё не начата — схему можно сменить: жеребьёвка пройдёт заново среди тех, кто играет.',
+  'console.reshaped': 'Схема сменена, жеребьёвка проведена заново',
   'console.tie.alert': 'Группа доиграна с равенством — места расставляет судья.',
   'console.tie.open': 'Разрешить',
 
@@ -1351,6 +1360,11 @@ export const ru = {
   'tournament.repeat.title': 'Повторить турнир',
   'tournament.repeat.hint': 'Копия со всеми настройками. Меняется только дата.',
   'tournament.repeat.submit': 'Повторить',
+  'tournament.template.title': 'По образцу прошлого турнира',
+  'tournament.template.hint':
+    'Все настройки — как у выбранного турнира: схема, взнос, столы, условия. Меняется только дата.',
+  'tournament.template.pick': 'Турнир-образец',
+  'tournament.template.submit': 'Создать по образцу',
   'error.form.club': 'Выберите клуб',
   'error.form.startsAt': 'Укажите дату и время начала',
   'error.form.entryFee': 'Взнос — целое число, может быть нулём',
@@ -1410,6 +1424,7 @@ export const ru = {
   'account.password.changed': 'Пароль изменён. Остальные сессии завершены.',
   'page.editTournament.title': 'Редактирование турнира',
   'lifecycle.edit': 'Редактировать',
+  'lifecycle.reshape.started': 'Одна из встреч уже начата — схему больше не сменить.',
   'editTournament.forbidden': 'Править турнир могут владелец и организаторы клуба.',
   'editTournament.locked': 'Начатый или отменённый турнир не правится.',
   'editTournament.drawReset':

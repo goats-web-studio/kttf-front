@@ -12,6 +12,7 @@ import { searchId } from '@/common/search';
 import { useSessionStore } from '@/features/auth/session-store';
 import { managedClubIds } from '@/features/clubs/roles';
 import { createTournament } from '@/features/tournaments/api';
+import FromTemplate from '@/features/tournaments/from-template';
 import { tournamentKeys } from '@/features/tournaments/queries';
 import TournamentForm from '@/features/tournaments/tournament-form';
 
@@ -72,14 +73,18 @@ function NewTournamentPage(): ReactNode {
           {t('tournament.form.noClubs')} <Link href="/feedback">{t('clubs.apply')}</Link>
         </Typography>
       ) : (
-        <TournamentForm
-          clubIds={clubIds}
-          isPending={create.isPending}
-          error={create.error}
-          onSubmit={(values) => {
-            create.mutate(values);
-          }}
-        />
+        <>
+          {/* По образцу — первым: чаще всего турнир клуба тот же, что неделю назад. */}
+          <FromTemplate clubIds={clubIds} />
+          <TournamentForm
+            clubIds={clubIds}
+            isPending={create.isPending}
+            error={create.error}
+            onSubmit={(values) => {
+              create.mutate(values);
+            }}
+          />
+        </>
       )}
     </Container>
   );

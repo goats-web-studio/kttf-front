@@ -2,23 +2,25 @@ import { DEFAULT_PAGE_SIZE, type RegistrationView, type TournamentView } from '@
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { errorMessageKey } from '@/common/api';
-import { formatRating, useT } from '@/common/i18n';
+import { useT } from '@/common/i18n';
+import { clubDirectoryQuery } from '@/features/clubs/queries';
 import { usePlaceName } from '@/features/places/place-name';
 import { playerName } from '@/features/players/player-name';
 import { playersQuery } from '@/features/players/queries';
 
 import { registerForTournament } from './api';
+import { candidateDetails } from './candidate-details';
 import ConfirmParticipant from './confirm-participant';
 import { eligibilityProblems } from './eligibility-problems';
 import NewParticipant from './new-participant';
@@ -35,9 +37,13 @@ interface AddParticipantProps {
  * Поиск по фамилии в базе платформы: у половины игроков клуба аккаунта нет
  * вовсе, их заводит организатор, и записывать их на турнир тоже ему.
  *
- * Поиск по кнопке «Найти», а не на каждую букву: выдача — список с кнопкой у
- * каждой строки, и перестраивать его под пальцем, пока человек печатает,
- * значит промахиваться мимо «Добавить».
+ * Выдача — по мере набора, от двух букв, после паузы: кнопка «Найти» была
+ * лишним шагом (замечание владельца, 21.11.2026). Пауза держит список
+ * неподвижным, пока человек печатает, — по «Добавить» не промахнуться.
+ *
+ * В строке — год, клуб, город и рейтинг, имя ведёт на профиль: однофамильцев
+ * различают по ним. Уже записанный не прячется, а назван «уже в составе» —
+ * иначе «Игроков не найдено» про того, кто стоит в составе, сбивает с толку.
  *
  * Кого в базе нет, организатор заводит здесь же — «Новый игрок» со
  * стартовым рейтингом (ADR-062). Это не вторая анкета: только поля, без
@@ -53,6 +59,18 @@ export default function AddParticipant({
 
   const [draft, setDraft] = useState('');
   const [search, setSearch] = useState('');
+  const clubs = useQuery(clubDirectoryQuery);
+
+  useEffect(() => {
+    const text = draft.trim();
+    const timer = setTimeout(() => {
+      setSearch(text.length >= MIN_SEARCH ? text : '');
+    }, SEARCH_PAUSE_MS);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [draft]);
 
   const found = useQuery({
     // С анкетами без рейтинга (ADR-072): пришедшему со своей анкетой
@@ -68,10 +86,14 @@ export default function AddParticipant({
     },
   });
 
-  // Уже записанных в выдаче не показываем: записать дважды сервер не даст,
-  // а строка с кнопкой, которая всегда откажет, — ложное обещание.
   const registered = new Set(registrations.map((registration) => registration.player.id));
-  const candidates = (found.data?.items ?? []).filter((player) => !registered.has(player.id));
+  const candidates = found.data?.items ?? [];
+  const details = (player: (typeof candidates)[number]): string =>
+    candidateDetails(player, {
+      club: player.clubId === null ? null : (clubs.data?.get(player.clubId)?.name ?? null),
+      city: placeName(player.city),
+      unrated: t('participants.sheet'),
+    });
 
   const problems = eligibilityProblems(add.error);
 
@@ -90,14 +112,12 @@ export default function AddParticipant({
 
   return (
     <Paper variant="outlined" sx={{ mt: 2, p: 2, bgcolor: 'var(--paper-sunken)' }}>
-      <Stack
+      <Box
         component="form"
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={1.5}
-        sx={{ alignItems: { sm: 'flex-start' } }}
         onSubmit={(event) => {
           event.preventDefault();
-          setSearch(draft.trim());
+          const text = draft.trim();
+          setSearch(text.length >= MIN_SEARCH ? text : '');
         }}
       >
         <TextField
@@ -107,12 +127,9 @@ export default function AddParticipant({
           onChange={(event) => {
             setDraft(event.target.value);
           }}
-          sx={{ maxWidth: { sm: 320 } }}
+          sx={{ width: '100%', maxWidth: { sm: 320 } }}
         />
-        <Button type="submit" sx={{ minHeight: { xs: 44, sm: 40 } }}>
-          {t('participants.find')}
-        </Button>
-      </Stack>
+      </Box>
 
       {(tournament.status === 'REG_CLOSED' || tournament.status === 'RUNNING') && (
         // Поздняя запись (ADR-062): после жеребьёвки игрок встаёт в группу.
@@ -145,13 +162,20 @@ export default function AddParticipant({
             </ListItem>
           ) : (
             candidates.map((player) =>
-              !player.confirmed ? (
+              registered.has(player.id) ? (
+                <ListItem key={player.id} disableGutters divider data-registered>
+                  <ListItemText
+                    primary={<ProfileLink id={player.id} name={playerName(player, t)} />}
+                    secondary={`${details(player)} · ${t('participants.duplicate.registered')}`}
+                  />
+                </ListItem>
+              ) : !player.confirmed ? (
                 <ConfirmParticipant
                   key={player.id}
                   tournament={tournament}
                   player={player}
                   registered={registered}
-                  city={placeName(player.city)}
+                  details={details(player)}
                 />
               ) : (
                 <ListItem
@@ -173,15 +197,9 @@ export default function AddParticipant({
                   }
                 >
                   <ListItemText
-                    primary={playerName(player, t)}
-                    secondary={
-                      <>
-                        {placeName(player.city)}{' '}
-                        <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                          {formatRating(player.rating)}
-                        </Box>
-                      </>
-                    }
+                    primary={<ProfileLink id={player.id} name={playerName(player, t)} />}
+                    secondary={details(player)}
+                    slotProps={{ secondary: { sx: { fontVariantNumeric: 'tabular-nums' } } }}
                   />
                 </ListItem>
               ),
@@ -197,5 +215,22 @@ export default function AddParticipant({
         registered={registered}
       />
     </Paper>
+  );
+}
+
+/** Пауза после набора: запрос — когда человек перестал печатать. */
+const SEARCH_PAUSE_MS = 300;
+/** С одной буквы выдача — полбазы: искать начинаем со второй. */
+const MIN_SEARCH = 2;
+
+/**
+ * Имя — ссылка на профиль в новой вкладке: сверить человека и вернуться к
+ * записи, не потеряв набранное.
+ */
+function ProfileLink({ id, name }: { readonly id: string; readonly name: string }): ReactNode {
+  return (
+    <Link component="a" href={`/players/${id}`} target="_blank" rel="noopener" underline="hover">
+      {name}
+    </Link>
   );
 }

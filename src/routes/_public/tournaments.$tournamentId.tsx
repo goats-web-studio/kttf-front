@@ -22,6 +22,7 @@ import DrawPreview from '@/features/tournaments/draw-preview';
 import LifecyclePanel from '@/features/tournaments/lifecycle-panel';
 import ParticipantsPanel from '@/features/tournaments/participants-panel';
 import { registrationsQuery, tournamentResultsQuery } from '@/features/tournaments/queries';
+import { playingCount } from '@/features/tournaments/format-reshape';
 import RegistrationPanel from '@/features/tournaments/registration-panel';
 import RepeatTournament from '@/features/tournaments/repeat-tournament';
 import ResultsBracket from '@/features/tournaments/results-bracket';
@@ -131,7 +132,12 @@ function TournamentPage(): ReactNode {
                     У завершённого турнира делать уже нечего, кроме экрана и
                     повтора, — панель уходит под итоги и не заслоняет их. */}
                 {data.tournament.finishedAt === null && (
-                  <LifecyclePanel tournament={data.tournament} names={names} />
+                  <LifecyclePanel
+                    tournament={data.tournament}
+                    names={names}
+                    participants={playingCount(registrations.data ?? [])}
+                    stages={data.stages}
+                  />
                 )}
                 {/* Игроку запись идёт сразу за карточкой: пока турнир не
                     сыгран, это единственное, ради чего он открывает страницу.
@@ -191,7 +197,12 @@ function TournamentPage(): ReactNode {
                   />
                 )}
                 {data.tournament.finishedAt !== null && (
-                  <LifecyclePanel tournament={data.tournament} names={names} />
+                  <LifecyclePanel
+                    tournament={data.tournament}
+                    names={names}
+                    participants={playingCount(registrations.data ?? [])}
+                    stages={data.stages}
+                  />
                 )}
                 {staff && (
                   <RegistrationPanel

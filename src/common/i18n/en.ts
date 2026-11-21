@@ -814,6 +814,11 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'participants.new.rating': 'Starting rating',
   'participants.new.submit': 'Create and register',
   'participants.new.cancel': 'Cancel',
+  'participants.seeding.ignored':
+    'The draw uses the numbers in the “Seed” column only with manual seeding. Seeding is now {method}, so the numbers change nothing.',
+  'participants.seeding.manual':
+    'Manual seeding: players with numbers go first in that order, the rest follow by rating.',
+  'participants.seeding.switch': 'Seed manually',
   'participants.closed':
     'Participants can be added once registration is open: publish the tournament and open registration.',
   'participants.duplicate.title': 'This player is already in the database',
@@ -1140,6 +1145,10 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'console.settings.offline': 'Settings cannot be saved offline.',
   'console.settings.save': 'Save',
   'console.settings.saved': 'Tournament settings saved',
+  'console.settings.format': 'Tournament format',
+  'console.settings.formatLead':
+    'No match has started yet, so you can change the format: the draw will be redone among those who are playing.',
+  'console.reshaped': 'Format changed, the draw has been redone',
   'console.tie.alert': 'Tie in the group — the referee must decide the places.',
   'console.tie.open': 'Resolve',
   'console.sync.synced': 'All synced',
@@ -1324,6 +1333,11 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'tournament.repeat.title': 'Duplicate tournament',
   'tournament.repeat.hint': 'A copy with all settings. Only the date changes.',
   'tournament.repeat.submit': 'Duplicate',
+  'tournament.template.title': 'Based on a past tournament',
+  'tournament.template.hint':
+    'All settings are copied from the chosen tournament: format, entry fee, tables, conditions. Only the date changes.',
+  'tournament.template.pick': 'Template tournament',
+  'tournament.template.submit': 'Create from template',
   'error.form.club': 'Select a club',
   'error.form.startsAt': 'Enter the start date and time',
   'error.form.entryFee': 'Entry fee must be a whole number (0 is fine)',
@@ -1377,6 +1391,8 @@ export const en: Readonly<Record<MessageKey, string>> = {
   'account.password.changed': 'Password changed. Other sessions have been signed out.',
   'page.editTournament.title': 'Edit tournament',
   'lifecycle.edit': 'Edit',
+  'lifecycle.reshape.started':
+    'A match has already started, so the format can no longer be changed.',
   'editTournament.forbidden': 'Only the owner and club organizers can edit a tournament.',
   'editTournament.locked': "A started or cancelled tournament can't be edited.",
   'editTournament.drawReset':

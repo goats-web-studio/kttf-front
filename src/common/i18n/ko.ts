@@ -801,6 +801,11 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'participants.new.rating': '초기 레이팅',
   'participants.new.submit': '등록 및 신청',
   'participants.new.cancel': '취소',
+  'participants.seeding.ignored':
+    '「시드」 열의 번호는 수동 시드일 때만 대진에 반영돼요. 지금은 {method} 시드라서 번호가 아무것도 바꾸지 않아요.',
+  'participants.seeding.manual':
+    '수동 시드: 번호가 있는 선수가 그 순서대로 먼저 들어가고, 나머지는 레이팅순으로 뒤따라요.',
+  'participants.seeding.switch': '수동으로 시드',
   'participants.closed':
     '참가 신청이 열려 있을 때 참가자를 추가할 수 있습니다. 대회를 공개하고 신청을 여세요.',
   'participants.duplicate.title': '이 선수는 이미 등록되어 있습니다',
@@ -1123,6 +1128,10 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'console.settings.offline': '오프라인에서는 설정을 저장할 수 없어요.',
   'console.settings.save': '저장',
   'console.settings.saved': '대회 설정이 저장되었어요',
+  'console.settings.format': '대회 방식',
+  'console.settings.formatLead':
+    '아직 시작된 경기가 없어요. 방식을 바꿀 수 있어요. 대진은 참가 중인 선수들로 다시 짜여요.',
+  'console.reshaped': '방식을 바꾸고 대진을 다시 짰어요',
   'console.tie.alert': '조 경기가 동률로 끝났어요. 심판이 순위를 정해야 해요.',
   'console.tie.open': '순위 정하기',
   'console.sync.synced': '모두 전송됨',
@@ -1301,6 +1310,11 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'tournament.repeat.title': '대회 복제',
   'tournament.repeat.hint': '모든 설정을 그대로 복사해요. 날짜만 바꾸면 돼요.',
   'tournament.repeat.submit': '복제',
+  'tournament.template.title': '지난 대회를 바탕으로',
+  'tournament.template.hint':
+    '모든 설정은 선택한 대회와 같아요(방식, 참가비, 테이블, 조건). 날짜만 바뀌어요.',
+  'tournament.template.pick': '기준 대회',
+  'tournament.template.submit': '이대로 만들기',
   'error.form.club': '클럽을 선택해 주세요',
   'error.form.startsAt': '시작 날짜와 시간을 입력해 주세요',
   'error.form.entryFee': '참가비는 0 이상의 정수여야 합니다',
@@ -1354,6 +1368,7 @@ export const ko: Readonly<Record<MessageKey, string>> = {
   'account.password.changed': '비밀번호를 변경했어요. 다른 기기에서는 모두 로그아웃됐어요.',
   'page.editTournament.title': '대회 수정',
   'lifecycle.edit': '수정',
+  'lifecycle.reshape.started': '이미 시작된 경기가 있어 방식을 더 이상 바꿀 수 없어요.',
   'editTournament.forbidden': '대회는 클럽 소유자와 주최자만 수정할 수 있어요.',
   'editTournament.locked': '이미 시작했거나 취소된 대회는 수정할 수 없어요.',
   'editTournament.drawReset':

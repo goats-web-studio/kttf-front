@@ -26,6 +26,8 @@ interface Sent {
 }
 
 let sent: Sent[] = [];
+/** Турниры клуба — образцы для «По образцу прошлого турнира». */
+let past: (typeof TOURNAMENT)[] = [];
 
 function reply(body: unknown): Response {
   return {
@@ -43,7 +45,7 @@ function answer(url: string, init: RequestInit | undefined): Response {
 
   if (url.includes('/clubs')) return reply(pageOf([CLUB]));
   if (url.includes('/tournaments')) {
-    return method === 'POST' ? reply(TOURNAMENT) : reply(pageOf([]));
+    return method === 'POST' ? reply(TOURNAMENT) : reply(pageOf(past));
   }
 
   throw new Error(`Неожидаемый запрос: ${url}`);
@@ -111,6 +113,7 @@ const REFEREE: AuthUserView = {
 
 beforeEach(() => {
   sent = [];
+  past = [];
   vi.stubGlobal('fetch', (input: unknown, init: RequestInit | undefined) =>
     Promise.resolve(answer(String(input), init)),
   );
@@ -337,5 +340,52 @@ describe('предпросчёт схемы', () => {
     });
 
     expect(screen.getByText(ru['tournament.preview.tooFewAdvancing'])).toBeDefined();
+  });
+});
+
+describe('новый турнир по образцу прошлого', () => {
+  it('без турниров клуба блока нет: первый турнир — формой', async () => {
+    renderAt(`/tournaments/new?club=${CLUB.id}`, USER_WITH_PROFILE);
+
+    // Список образцов запрошен и пришёл пустым.
+    await waitFor(() => {
+      expect(sent.some((row) => row.url.includes(`clubId=${CLUB.id}`))).toBe(true);
+    });
+    await screen.findByRole('heading', { name: ru['page.newTournament.title'] });
+    expect(screen.queryByText(ru['tournament.template.title'])).toBeNull();
+  });
+
+  it('образец и дата — копия с сервера, меняется только дата', async () => {
+    past = [TOURNAMENT];
+    renderAt(`/tournaments/new?club=${CLUB.id}`, USER_WITH_PROFILE);
+
+    const section = (await screen.findByText(ru['tournament.template.title'])).closest('section');
+    if (section === null) throw new Error('Нет блока образца');
+
+    fireEvent.mouseDown(
+      within(section).getByRole('combobox', { name: ru['tournament.template.pick'] }),
+    );
+    fireEvent.click(await screen.findByRole('option', { name: new RegExp(TOURNAMENT.name) }));
+
+    const [field] = within(section)
+      .getAllByLabelText(ru['tournament.form.startsAt'])
+      .filter((node) => node instanceof HTMLInputElement);
+    if (field === undefined) throw new Error('Поле даты не найдено');
+    fireEvent.change(field, { target: { value: '01.12.2030 10:00' } });
+    fireEvent.click(
+      within(section).getByRole('button', { name: ru['tournament.template.submit'] }),
+    );
+
+    await waitFor(() => {
+      expect(
+        sent.some((request) => request.url.includes(`/tournaments/${TOURNAMENT.id}/duplicate`)),
+      ).toBe(true);
+    });
+    const request = sent.find((row) => row.url.includes('/duplicate'));
+    expect(request?.body).toEqual({ startsAt: new Date('2030-12-01T10:00').toISOString() });
+    // Список образцов — турниры этого клуба, свежие сверху.
+    expect(
+      sent.some((row) => row.url.includes(`clubId=${CLUB.id}`) && row.url.includes('order=desc')),
+    ).toBe(true);
   });
 });

@@ -31,6 +31,7 @@ import {
 } from '@/test/fixtures';
 
 import { OWN_COACH_TEXTS } from './own-coach-texts';
+import { FORM_CHECK_TEXTS } from './tournament-form-texts';
 
 /**
  * Запись на турнир — ТЗ 4.3.
@@ -117,6 +118,11 @@ function answer(url: string, init: RequestInit | undefined): Response {
     }
 
     return reply(OWN_REGISTRATION);
+  }
+
+  // Правка турнира — посев и схема из панели (ADR-101): сервер отвечает турниром.
+  if (/\/tournaments\/[^/?]+$/.test(url) && method === 'PATCH') {
+    return reply(tournament);
   }
 
   if (/\/tournaments\/[^/]+\/results$/.test(url)) {
@@ -464,7 +470,6 @@ describe('панель организатора', () => {
     fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
       target: { value: 'Смагулов' },
     });
-    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
 
     fireEvent.click(await screen.findByRole('button', { name: ru['participants.add'] }));
 
@@ -485,7 +490,6 @@ describe('панель организатора', () => {
     fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
       target: { value: 'Смагулов' },
     });
-    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
 
     // В поиск организатора анкеты попадают — по флагу запроса.
     await screen.findByText(new RegExp(ru['participants.sheet']));
@@ -513,7 +517,7 @@ describe('панель организатора', () => {
     expect(register?.body).toEqual({ playerId: PLAYERS.second.id });
   });
 
-  it('найденный уже записанный игрок не предлагается повторно', async () => {
+  it('найденный уже записанный назван «уже в составе», кнопки записи у него нет', async () => {
     registrations = [{ ...OWN_REGISTRATION, player: PLAYERS.second }];
 
     renderTournament(USER_WITH_PROFILE);
@@ -521,12 +525,35 @@ describe('панель организатора', () => {
     fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
       target: { value: 'Смагулов' },
     });
-    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
 
-    // Кнопка, которая всегда откажет, — ложное обещание: записать дважды
-    // сервер не даст.
-    expect(await screen.findByText(ru['ratings.empty'])).toBeDefined();
+    // «Игроков не найдено» про того, кто стоит в составе, сбивало с толку,
+    // а кнопка, которая всегда откажет, — ложное обещание.
+    expect(
+      await screen.findByText(new RegExp(ru['participants.duplicate.registered'])),
+    ).toBeDefined();
+    expect(screen.queryByText(ru['ratings.empty'])).toBeNull();
     expect(screen.queryByRole('button', { name: ru['participants.add'] })).toBeNull();
+  });
+
+  it('выдача — по мере набора, с годом, клубом и ссылкой на профиль', async () => {
+    renderTournament(USER_WITH_PROFILE);
+
+    fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
+      target: { value: 'Смагулов' },
+    });
+
+    // Кнопки «Найти» нет: запрос уходит сам после паузы в наборе. Строка
+    // выдачи — с кнопкой «Добавить»; в ней год рождения и ссылка на профиль.
+    const add = await screen.findByRole('button', { name: ru['participants.add'] });
+    const row = add.closest('li');
+    if (row === null) throw new Error('Нет строки выдачи');
+    const link = within(row).getByRole('link', {
+      name: playerName(PLAYERS.second, (key) => ru[key]),
+    });
+    expect(link.getAttribute('href')).toBe(`/players/${PLAYERS.second.id}`);
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(within(row).getByText(new RegExp(String(PLAYERS.second.birthYear)))).toBeDefined();
+    expect(screen.queryByRole('button', { name: ru['participants.find'] })).toBeNull();
   });
 
   it('организатор повторяет турнир, меняя только дату', async () => {
@@ -726,8 +753,9 @@ describe('новый игрок из состава — ADR-100', () => {
     fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
       target: { value: 'Халилов' },
     });
-    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
-    fireEvent.click(await screen.findByRole('button', { name: ru['participants.new.open'] }));
+    // Форма нового игрока открывается, когда выдача по набранному пришла.
+    await screen.findByText(ru['ratings.empty']);
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.new.open'] }));
 
     fireEvent.change(
       screen.getByRole('textbox', { name: new RegExp(ru['player.form.firstName']) }),
@@ -852,7 +880,6 @@ describe('анкета того, у кого профиль уже есть — 
     fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
       target: { value: PLAYERS.second.lastName },
     });
-    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
     fireEvent.click(await screen.findByRole('button', { name: ru['participants.confirm.open'] }));
     fireEvent.change(
       screen.getByRole('textbox', { name: new RegExp(ru['participants.new.rating']) }),
@@ -909,8 +936,8 @@ describe('анкета того, у кого профиль уже есть — 
     fireEvent.change(await screen.findByLabelText(ru['participants.search']), {
       target: { value: 'Халилов' },
     });
-    fireEvent.click(screen.getByRole('button', { name: ru['participants.find'] }));
-    fireEvent.click(await screen.findByRole('button', { name: ru['participants.new.open'] }));
+    await screen.findByText(ru['ratings.empty']);
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.new.open'] }));
     fireEvent.change(
       screen.getByRole('textbox', { name: new RegExp(ru['player.form.firstName']) }),
       {
@@ -955,5 +982,85 @@ describe('анкета того, у кого профиль уже есть — 
     expect(
       sent.filter((request) => request.method === 'POST' && request.url.endsWith('/players')),
     ).toHaveLength(1);
+  });
+});
+
+describe('посев и схема под фактический состав — ADR-101', () => {
+  /** Четверо записанных: столько пришло на турнир, рассчитанный на группы. */
+  function four(): RegistrationView[] {
+    return [PLAYERS.first, PLAYERS.second, PLAYERS.first, PLAYERS.second].map((player, index) => ({
+      ...OWN_REGISTRATION,
+      id: `reg-${String(index)}`,
+      status: 'CONFIRMED' as const,
+      player: { ...player, id: `00000000-0000-4000-8000-00000000020${String(index)}` },
+    }));
+  }
+
+  function patches(): Sent[] {
+    return sent.filter(
+      (request) => request.method === 'PATCH' && !request.url.includes('/registrations'),
+    );
+  }
+
+  it('посев по рейтингу — колонка «Посев» объяснена, ручной включается кнопкой', async () => {
+    registrations = four();
+    renderTournament(USER_WITH_PROFILE);
+
+    expect(
+      await screen.findByText(
+        fill(ru['participants.seeding.ignored'], {
+          method: ru['tournament.seeding.RATING'].toLowerCase(),
+        }),
+      ),
+    ).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: ru['participants.seeding.switch'] }));
+
+    await waitFor(() => {
+      expect(patches()).toHaveLength(1);
+    });
+    expect(patches()[0]?.body).toEqual({
+      seedingConfig: { method: 'MANUAL', separateByClub: true },
+    });
+  });
+
+  it('ручной посев — кнопки нет, сказано, как работают номера', async () => {
+    tournament = {
+      ...openTournament(),
+      seedingConfig: { method: 'MANUAL', separateByClub: true },
+    };
+    registrations = four();
+    renderTournament(USER_WITH_PROFILE);
+
+    expect(await screen.findByText(ru['participants.seeding.manual'])).toBeDefined();
+    expect(screen.queryByRole('button', { name: ru['participants.seeding.switch'] })).toBeNull();
+  });
+
+  it('четверо на «группы» — панель предлагает круговую и сохраняет её одним нажатием', async () => {
+    tournament = {
+      ...openTournament(),
+      status: 'REG_CLOSED',
+      formatConfig: {
+        type: 'GROUPS_KNOCKOUT',
+        groupCount: 4,
+        groupRounds: 1,
+        advancePerGroup: 2,
+        groupSetsToWin: 3,
+        koSetsToWin: 3,
+        thirdPlace: true,
+        exitBracket: false,
+      },
+    };
+    registrations = four();
+    renderTournament(USER_WITH_PROFILE);
+
+    const advice = await screen.findByText(fill(FORM_CHECK_TEXTS.ru.adviceSmall, { n: '4' }));
+    const box = advice.closest('[data-format-advice]');
+    if (!(box instanceof HTMLElement)) throw new Error('Нет совета по схеме');
+    fireEvent.click(within(box).getByRole('button', { name: FORM_CHECK_TEXTS.ru.adviceSwitch }));
+
+    await waitFor(() => {
+      expect(patches()).toHaveLength(1);
+    });
+    expect(patches()[0]?.body).toMatchObject({ formatConfig: { type: 'ROUND_ROBIN' } });
   });
 });

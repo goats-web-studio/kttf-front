@@ -2,6 +2,7 @@ import type { PlayerListItemView, TournamentView } from '@kttf/shared/types';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
@@ -24,7 +25,8 @@ import { tournamentKeys } from './queries';
 interface ConfirmParticipantProps {
   readonly tournament: TournamentView;
   readonly player: PlayerListItemView;
-  readonly city: string;
+  /** Год, клуб, город — как у остальных строк выдачи. */
+  readonly details: string;
   /** Кто уже в составе — для подсказки «профиль уже есть». */
   readonly registered: ReadonlySet<string>;
 }
@@ -40,7 +42,7 @@ interface ConfirmParticipantProps {
 export default function ConfirmParticipant({
   tournament,
   player,
-  city,
+  details,
   registered,
 }: ConfirmParticipantProps): ReactNode {
   const t = useT();
@@ -100,8 +102,18 @@ export default function ConfirmParticipant({
       }
     >
       <ListItemText
-        primary={playerName(player, t)}
-        secondary={`${city} · ${t('participants.sheet')}`}
+        primary={
+          <Link
+            component="a"
+            href={`/players/${player.id}`}
+            target="_blank"
+            rel="noopener"
+            underline="hover"
+          >
+            {playerName(player, t)}
+          </Link>
+        }
+        secondary={details}
       />
 
       {open && (

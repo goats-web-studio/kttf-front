@@ -806,6 +806,11 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'participants.new.rating': '初期レーティング',
   'participants.new.submit': '登録してエントリー',
   'participants.new.cancel': 'キャンセル',
+  'participants.seeding.ignored':
+    '「シード」列の番号は手動シードのときだけ組み合わせに使われます。現在のシードは{method}なので、番号は何も変えません。',
+  'participants.seeding.manual':
+    '手動シード：番号のある選手がその順で先に入り、残りはレーティング順で続きます。',
+  'participants.seeding.switch': '手動でシードする',
   'participants.closed':
     '参加者はエントリー受付中に追加できます。大会を公開し、受付を開始してください。',
   'participants.duplicate.title': 'この選手はすでに登録されています',
@@ -1132,6 +1137,10 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'console.settings.offline': 'オフラインでは設定を保存できません。',
   'console.settings.save': '保存',
   'console.settings.saved': '大会の設定を保存しました',
+  'console.settings.format': '大会形式',
+  'console.settings.formatLead':
+    'まだ試合は始まっていません。形式を変更できます。組み合わせは参加中の選手で作り直されます。',
+  'console.reshaped': '形式を変更し、組み合わせを作り直しました',
   'console.tie.alert': 'グループの全試合が終了し、同率の選手がいます。順位は審判が決めます。',
   'console.tie.open': '決定する',
   'console.sync.synced': 'すべて送信済み',
@@ -1314,6 +1323,11 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'tournament.repeat.title': '大会を再開催',
   'tournament.repeat.hint': 'すべての設定を引き継いだコピーを作成します。変わるのは日付のみです。',
   'tournament.repeat.submit': '再開催',
+  'tournament.template.title': '過去の大会をもとに作成',
+  'tournament.template.hint':
+    '設定はすべて選んだ大会と同じです（形式、参加費、台数、条件）。変わるのは日付だけです。',
+  'tournament.template.pick': 'もとにする大会',
+  'tournament.template.submit': 'この内容で作成',
   'error.form.club': 'クラブを選択してください',
   'error.form.startsAt': '開始日時を入力してください',
   'error.form.entryFee': '参加費は0以上の整数で入力してください',
@@ -1367,6 +1381,7 @@ export const ja: Readonly<Record<MessageKey, string>> = {
   'account.password.changed': 'パスワードを変更しました。他のセッションは終了しました。',
   'page.editTournament.title': '大会の編集',
   'lifecycle.edit': '編集',
+  'lifecycle.reshape.started': 'すでに試合が始まっているため、形式は変更できません。',
   'editTournament.forbidden': '大会を編集できるのは、クラブのオーナーと主催者です。',
   'editTournament.locked': '開始済みまたは中止された大会は編集できません。',
   'editTournament.drawReset':

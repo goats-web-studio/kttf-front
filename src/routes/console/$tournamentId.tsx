@@ -43,6 +43,7 @@ import TiePanel from '@/features/console/tie-panel';
 import { shortNamesOf } from '@/features/screen/names';
 import { consoleResultsQuery, useConsole } from '@/features/console/use-console';
 import { useNow } from '@/features/console/use-now';
+import { nothingStarted, playingCount } from '@/features/tournaments/format-reshape';
 
 /**
  * «Столы и длины» — лениво (ADR-061). Окну нужна сеть, и грузить его заранее
@@ -51,6 +52,8 @@ import { useNow } from '@/features/console/use-now';
  * обязательном наборе.
  */
 const RunningSettings = lazy(() => import('@/features/console/running-settings'));
+// Совет по схеме — отдельным чанком: он тянет предпросчёт схемы (ADR-032).
+const ReshapeAdvice = lazy(() => import('@/features/console/reshape-advice'));
 // Состав с поиском и формой игрока — отдельным чанком: в офлайн-бюджет
 // консоли (ADR-004) он не входит, нужен он только при сети.
 const ParticipantsDialog = lazy(() => import('@/features/console/participants-dialog'));
@@ -437,6 +440,20 @@ function ConsoleScreen(): ReactNode {
                   </Alert>
                 ))}
 
+              {running && online && queue.queued === 0 && nothingStarted(snapshot.stages) && (
+                <Suspense fallback={null}>
+                  <ReshapeAdvice
+                    tournament={snapshot.tournament}
+                    participants={playingCount(snapshot.registrations)}
+                    onReshaped={() => {
+                      queue.syncNow();
+                      void state.refetch();
+                      notify(t('console.reshaped'), null);
+                    }}
+                  />
+                </Suspense>
+              )}
+
               {running && view.ties && (
                 <Alert
                   severity="warning"
@@ -714,7 +731,7 @@ function ConsoleScreen(): ReactNode {
           <RunningSettings
             tournament={snapshot.tournament}
             stages={snapshot.stages}
-            participants={snapshot.registrations.length}
+            participants={playingCount(snapshot.registrations)}
             online={online && queue.connection !== 'OFFLINE'}
             onClose={() => {
               setSettings(false);
@@ -722,6 +739,9 @@ function ConsoleScreen(): ReactNode {
             onSaved={() => {
               setSettings(false);
               queue.syncNow();
+              // Схема могла смениться с новой жеребьёвкой (ADR-101): встречи
+              // берутся из свежего снимка, а не из прежнего.
+              void state.refetch();
               notify(t('console.settings.saved'), null);
             }}
           />

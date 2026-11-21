@@ -27,6 +27,7 @@ import { isClubStaff } from '@/features/clubs/roles';
 import { playerName } from '@/features/players/player-name';
 
 import AddParticipant from './add-participant';
+import SeedingHint from './seeding-hint';
 import { removeRegistration, updateRegistration } from './api';
 import CoachDialog from './coach-dialog';
 import CoachNote from './coach-note';
@@ -153,6 +154,11 @@ export default function ParticipantsPanel({
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+
+      {/* Посев решает жеребьёвка: до старта — пояснение к колонке. */}
+      {isStaff && tournament.startedAt === null && participants.length > 0 && (
+        <SeedingHint tournament={tournament} />
       )}
     </Box>
   );
